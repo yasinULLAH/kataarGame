@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#F5EBDC" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Katar (قطار) — Royal Pashtun Strategy Board Game</title>
+  <title>Katar (قطار) &amp; Navakankari — By Yasin Ullah (Dedicated to Muhib Ullah)</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -83,13 +83,12 @@
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
-    /* Subtle Geometric Tabletop Pattern Backdrop */
     body::before {
       content: "";
       position: fixed;
       inset: 0;
       pointer-events: none;
-      opacity: 0.25;
+      opacity: 0.24;
       background-image: radial-gradient(#B48A5A 1px, transparent 1px), radial-gradient(#B48A5A 1px, #F4E8D4 1px);
       background-size: 28px 28px;
       background-position: 0 0, 14px 14px;
@@ -102,7 +101,6 @@
       -webkit-touch-callout: default !important;
     }
 
-    /* Royal Pashtun Mosaic Trim */
     .pashtun-border {
       background-image: repeating-linear-gradient(
         90deg,
@@ -119,7 +117,6 @@
       width: 100%;
     }
 
-    /* Tactile 3D Mobile Game Buttons */
     .android-btn {
       position: relative;
       overflow: hidden;
@@ -198,12 +195,12 @@
   <div class="pashtun-border shrink-0 z-20"></div>
 
   <!-- Top Arcade Game Bar -->
-  <header class="shrink-0 bg-parchment-50/95 backdrop-blur border-b-2 border-parchment-300 px-3 sm:px-4 py-2 flex items-center justify-between gap-2 z-20 shadow-sm">
-    <div class="flex items-center gap-2.5 min-w-0">
+  <header class="shrink-0 bg-parchment-50/95 backdrop-blur border-b-2 border-parchment-300 px-2.5 sm:px-4 py-1.5 flex items-center justify-between gap-2 z-20 shadow-sm">
+    <div class="flex items-center gap-2 min-w-0">
       <!-- Royal Medallion Logo -->
-      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-walnut-800 p-0.5 shadow-md shrink-0">
+      <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-walnut-800 p-0.5 shadow-md shrink-0">
         <div class="w-full h-full rounded-[14px] bg-parchment-50 flex items-center justify-center">
-          <svg class="w-6 h-6 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <polygon points="12 2 22 12 12 22 2 12" fill="rgba(217,119,6,0.15)" stroke-linejoin="round" />
             <circle cx="12" cy="12" r="3" fill="currentColor" />
             <line x1="12" y1="2" x2="12" y2="22" stroke-opacity="0.45" />
@@ -213,18 +210,21 @@
       </div>
       <div class="truncate">
         <div class="flex items-center gap-1.5">
-          <h1 class="font-display text-base sm:text-lg font-extrabold tracking-wide text-walnut-900">KATAR</h1>
-          <span class="text-[11px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded-md">قطار</span>
+          <h1 class="font-display text-sm sm:text-base font-extrabold tracking-wide text-walnut-900">KATAR</h1>
+          <span class="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded-md">قطار</span>
+          <span class="hidden md:inline-flex items-center gap-1 text-[10px] font-bold text-teal-900 bg-teal-100/80 border border-teal-300 px-2 py-0.5 rounded-full">
+            By Yasin Ullah • For Little Brother Muhib Ullah ❤️
+          </span>
           <span id="timerBadge" class="hidden text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-sm">30s</span>
         </div>
-        <p id="modeSubtitle" class="text-[11px] font-semibold text-walnut-600 truncate">Pass &amp; Play • 6×6 Grid (36 Nodes • 18 Beads)</p>
+        <p id="modeSubtitle" class="text-[10px] sm:text-[11px] font-semibold text-walnut-600 truncate">By Yasin Ullah (For Muhib Ullah) • 6×6 Katar</p>
       </div>
     </div>
 
     <!-- Top Right Tactile Game Buttons -->
-    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-      <button id="btnOpenRulesModal" type="button" class="android-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 border border-amber-600/40 shadow-[0_3px_0_#B45309]" aria-label="Grid &amp; Match Settings" title="Customize Grid &amp; All Game Settings">
-        <svg class="w-4 h-4 text-walnut-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button id="btnOpenRulesModal" type="button" class="android-btn flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 border border-amber-600/40 shadow-[0_3px_0_#B45309]" aria-label="Grid &amp; Match Settings" title="Customize Grid, Bead Count &amp; Rules">
+        <svg class="w-3.5 h-3.5 text-walnut-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <rect x="3" y="3" width="7" height="7" rx="1.5" />
           <rect x="14" y="3" width="7" height="7" rx="1.5" />
           <rect x="14" y="14" width="7" height="7" rx="1.5" />
@@ -234,7 +234,7 @@
         <span class="sm:hidden">Setup</span>
       </button>
 
-      <button id="btnOpenConnectionModal" type="button" class="android-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-white to-parchment-200 hover:from-white hover:to-parchment-100 text-walnut-800 border border-parchment-400 shadow-[0_3px_0_#C4A67C]" title="Multiplayer &amp; Mode Settings">
+      <button id="btnOpenConnectionModal" type="button" class="android-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-white to-parchment-200 hover:from-white hover:to-parchment-100 text-walnut-800 border border-parchment-400 shadow-[0_3px_0_#C4A67C]" title="Multiplayer &amp; Offline Guide">
         <span id="connStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200"></span>
         <span id="connStatusLabel">Mode / P2P</span>
       </button>
@@ -254,9 +254,15 @@
     </div>
   </header>
 
-  <!-- Quick One-Tap Grid Preset Switcher Ribbon -->
-  <nav class="shrink-0 bg-parchment-100/95 border-b border-parchment-300 px-3 py-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar z-10">
-    <span class="text-[10px] font-extrabold uppercase tracking-wider text-walnut-700 shrink-0 mr-1">Board:</span>
+  <!-- Quick One-Tap Board & Game Variant Ribbon (Includes Navakankari Nine Men's Morris + Katar Grids) -->
+  <nav class="shrink-0 bg-parchment-100/95 border-b border-parchment-300 px-2.5 py-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar z-10">
+    <span class="text-[10px] font-extrabold uppercase tracking-wider text-walnut-700 shrink-0">Game:</span>
+    <button type="button" data-grid-preset="navakankari_9" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold shrink-0 bg-white text-amber-900 border border-amber-400 shadow-sm">
+      ⭐ Navakankari (Nine Men's Morris • 9 Beads)
+    </button>
+    <button type="button" data-grid-preset="navakankari_12" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 bg-white text-walnut-800 border border-parchment-300">
+      ⭐ 12-Men's Katar Mill (Diagonal • 12 Beads)
+    </button>
     <button type="button" data-grid-preset="6x6" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold shrink-0 bg-teal-600 text-white shadow-sm">
       6×6 Katar (36 Nodes • 18v18)
     </button>
@@ -283,80 +289,98 @@
     </button>
   </nav>
 
-  <!-- Main-Screen Solo AI vs 2P Pass & Play + 4-Tier Difficulty Selector Bar -->
-  <div class="shrink-0 bg-parchment-50/90 border-b border-parchment-300 px-3 py-1.5 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar z-10">
-    <div class="flex items-center gap-1.5 shrink-0">
-      <span class="text-[10px] font-extrabold uppercase tracking-wider text-walnut-700 mr-0.5">Opponent:</span>
-      <button id="btnMainModeAI" type="button" class="android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1">
+  <!-- Main-Screen Opponent, AI Level, Capture Rule (1/Bari vs Multi) & Bead Count Bar -->
+  <div class="shrink-0 bg-parchment-50/95 border-b border-parchment-300 px-2.5 py-1 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar z-10">
+    <!-- Opponent Mode & AI Difficulty -->
+    <div class="flex items-center gap-1 shrink-0">
+      <button id="btnMainModeAI" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1">
         <span>🤖 Solo vs AI</span>
       </button>
-      <button id="btnMainMode2P" type="button" class="android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1">
+      <button id="btnMainMode2P" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1">
         <span>👥 2P Local</span>
       </button>
+
+      <div id="mainAIDiffGroup" class="flex items-center gap-1 ml-1 pl-1.5 border-l border-parchment-300 shrink-0">
+        <button type="button" data-ai-diff="easy" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-700 border border-parchment-300">
+          Easy
+        </button>
+        <button type="button" data-ai-diff="medium" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm">
+          Medium
+        </button>
+        <button type="button" data-ai-diff="hard" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-700 border border-parchment-300">
+          Hard
+        </button>
+        <button type="button" data-ai-diff="hardest" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-rose-800 border border-rose-300">
+          🔥 Hardest
+        </button>
+      </div>
     </div>
 
-    <div id="mainAIDiffGroup" class="flex items-center gap-1 shrink-0">
-      <span class="text-[10px] font-extrabold uppercase tracking-wider text-walnut-700 mr-0.5">AI Level:</span>
-      <button type="button" data-ai-diff="easy" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[11px] font-bold bg-white text-walnut-700 border border-parchment-300">
-        Easy
-      </button>
-      <button type="button" data-ai-diff="medium" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm">
-        Medium
-      </button>
-      <button type="button" data-ai-diff="hard" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[11px] font-bold bg-white text-walnut-700 border border-parchment-300">
-        Hard
-      </button>
-      <button type="button" data-ai-diff="hardest" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[11px] font-bold bg-white text-rose-800 border border-rose-300">
-        🔥 Hardest
-      </button>
+    <!-- Right Quick Rule Controls: 1 Bead per Bari vs Multi-Eat & Bead Count Stepper -->
+    <div class="flex items-center gap-1.5 shrink-0 pl-2 border-l border-parchment-300">
+      <!-- Capture Style Toggle (1 Bead / Bari vs Multi-Eat Chain) -->
+      <div id="mainCaptureRuleGroup" class="flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
+        <button id="btnQuickMultiEat" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm" title="Allow eating multiple beads in a single turn (chain jumps)">
+          ⚡ Multi-Eat
+        </button>
+        <button id="btnQuickSingleEat" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60" title="Eat strictly 1 bead per bari (turn)">
+          1️⃣ 1 Bead/Bari
+        </button>
+      </div>
+
+      <!-- Direct Bead Count Selector -->
+      <div class="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-lg border border-parchment-300 shadow-sm">
+        <span class="text-[10px] font-extrabold text-walnut-700">Beads:</span>
+        <button id="btnBeadsMinus" type="button" class="android-btn w-5 h-5 rounded bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs flex items-center justify-center">−</button>
+        <span id="lblQuickBeadCount" class="text-[11px] font-mono font-extrabold text-amber-800 min-w-[20px] text-center">18</span>
+        <button id="btnBeadsPlus" type="button" class="android-btn w-5 h-5 rounded bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs flex items-center justify-center">+</button>
+      </div>
     </div>
   </div>
 
   <!-- Main Tabletop Game Stage -->
-  <main class="flex-1 flex flex-col lg:flex-row items-center justify-between lg:justify-center gap-2 sm:gap-4 px-3 py-2 min-h-0 overflow-hidden z-10">
+  <main class="flex-1 flex flex-col lg:flex-row items-center justify-between lg:justify-center gap-1.5 sm:gap-4 px-2.5 py-1.5 min-h-0 overflow-hidden z-10">
 
     <!-- Left / Top Player HUD Column (Player 2 + Turn Banner) -->
-    <section class="w-full lg:w-72 flex flex-col gap-2 shrink-0">
+    <section class="w-full lg:w-72 flex flex-col gap-1.5 shrink-0">
       <!-- Player 2 (North) Tabletop Medallion Card -->
-      <div id="cardPlayer2" class="game-card rounded-2xl p-2.5 sm:p-3.5 transition-all duration-200">
+      <div id="cardPlayer2" class="game-card rounded-2xl p-2 sm:p-3 transition-all duration-200">
         <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <!-- 3D Ruby Agate Stone Avatar -->
-            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-400 via-rose-600 to-rose-900 p-0.5 shadow-md flex items-center justify-center shrink-0">
+          <div class="flex items-center gap-2 min-w-0">
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-rose-400 via-rose-600 to-rose-900 p-0.5 shadow-md flex items-center justify-center shrink-0">
               <div class="w-full h-full rounded-[14px] border-2 border-rose-200/60 flex items-center justify-center bg-rose-700/40">
-                <div class="w-3 h-3 rounded-full bg-rose-100 shadow-inner"></div>
+                <div class="w-2.5 h-2.5 rounded-full bg-rose-100 shadow-inner"></div>
               </div>
             </div>
             <div class="truncate">
               <div class="flex items-center gap-1.5">
-                <span id="p2NameLabel" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Player 2 (Sang)</span>
+                <span id="p2NameLabel" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Medium AI (Sang)</span>
                 <span id="p2RoleBadge" class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300">NORTH</span>
               </div>
               <div class="flex items-center gap-2 text-[11px] font-semibold text-walnut-700 mt-0.5">
-                <span>In Play: <strong id="p2RemainingCount" class="text-rose-700 font-mono font-extrabold">18</strong>/<span id="p2MaxPiecesLabel" class="font-mono">18</span></span>
+                <span>Active: <strong id="p2RemainingCount" class="text-rose-700 font-mono font-extrabold">18</strong>/<span id="p2MaxPiecesLabel" class="font-mono">18</span></span>
                 <span>•</span>
-                <span>Reserve: <strong id="p2ReserveCount" class="text-amber-700 font-mono font-extrabold">2</strong></span>
+                <span id="p2HandLabelWrap">In Hand: <strong id="p2ReserveCount" class="text-amber-700 font-mono font-extrabold">2</strong></span>
               </div>
             </div>
           </div>
 
-          <!-- Captured Counter Trophy Pill -->
           <div class="bg-white/90 border border-parchment-300 rounded-xl px-2.5 py-1 text-right shrink-0 shadow-inner">
-            <div class="text-[9px] uppercase tracking-wider text-walnut-600 font-extrabold">Captured</div>
+            <div class="text-[9px] uppercase tracking-wider text-walnut-600 font-extrabold">Eaten</div>
             <div class="flex items-center justify-end gap-0.5">
               <span id="p2CapturedCount" class="text-sm sm:text-base font-extrabold font-mono text-rose-600">0</span>
               <span id="p2TargetCapLabel" class="text-xs text-walnut-600 font-mono font-bold">/18</span>
             </div>
           </div>
         </div>
-        <div class="w-full h-2 bg-parchment-200 rounded-full overflow-hidden mt-2 border border-parchment-300 flex">
+        <div class="w-full h-1.5 bg-parchment-200 rounded-full overflow-hidden mt-1.5 border border-parchment-300 flex">
           <div id="p2CaptureBar" class="h-full bg-gradient-to-r from-rose-500 to-amber-500 transition-all duration-300" style="width: 0%"></div>
         </div>
       </div>
 
       <!-- Active Turn & Tactical Prompt Banner -->
-      <div id="turnBanner" class="game-card rounded-2xl px-3.5 py-2 flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2.5 min-w-0">
+      <div id="turnBanner" class="game-card rounded-2xl px-3 py-1.5 sm:py-2 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0">
           <span id="turnIndicatorDot" class="w-3.5 h-3.5 rounded-full bg-teal-600 shrink-0 ring-4 ring-teal-500/20"></span>
           <div class="truncate">
             <div id="turnHeadline" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Player 1's Turn (Feroza)</div>
@@ -364,7 +388,7 @@
           </div>
         </div>
 
-        <button id="btnEndChainTurn" type="button" class="hidden android-btn chain-pulse px-3 py-1.5 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-xs shrink-0 shadow-[0_3px_0_#B45309] border border-amber-600/40">
+        <button id="btnEndChainTurn" type="button" class="hidden android-btn chain-pulse px-3 py-1 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-xs shrink-0 shadow-[0_3px_0_#B45309] border border-amber-600/40">
           End Chain ✓
         </button>
       </div>
@@ -382,16 +406,15 @@
       </div>
     </section>
 
-    <!-- Right / Bottom Player HUD Column (Player 1 + Tactile Action Dock) -->
-    <section class="w-full lg:w-72 flex flex-col gap-2 shrink-0">
+    <!-- Right / Bottom Player HUD Column (Player 1 + Tactile Action Dock + Dedication) -->
+    <section class="w-full lg:w-72 flex flex-col gap-1.5 shrink-0">
       <!-- Player 1 (South) Tabletop Medallion Card -->
-      <div id="cardPlayer1" class="game-card-active-p1 rounded-2xl p-2.5 sm:p-3.5 transition-all duration-200">
+      <div id="cardPlayer1" class="game-card-active-p1 rounded-2xl p-2 sm:p-3 transition-all duration-200">
         <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <!-- 3D Feroza Turquoise Bead Avatar -->
-            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-300 via-teal-600 to-teal-900 p-0.5 shadow-md flex items-center justify-center shrink-0">
+          <div class="flex items-center gap-2 min-w-0">
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-teal-300 via-teal-600 to-teal-900 p-0.5 shadow-md flex items-center justify-center shrink-0">
               <div class="w-full h-full rounded-[14px] border-2 border-amber-300/80 flex items-center justify-center bg-teal-700/40">
-                <div class="w-3 h-3 rounded-full bg-amber-300 shadow-inner"></div>
+                <div class="w-2.5 h-2.5 rounded-full bg-amber-300 shadow-inner"></div>
               </div>
             </div>
             <div class="truncate">
@@ -400,30 +423,29 @@
                 <span id="p1RoleBadge" class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-300">SOUTH</span>
               </div>
               <div class="flex items-center gap-2 text-[11px] font-semibold text-walnut-700 mt-0.5">
-                <span>In Play: <strong id="p1RemainingCount" class="text-teal-700 font-mono font-extrabold">18</strong>/<span id="p1MaxPiecesLabel" class="font-mono">18</span></span>
+                <span>Active: <strong id="p1RemainingCount" class="text-teal-700 font-mono font-extrabold">18</strong>/<span id="p1MaxPiecesLabel" class="font-mono">18</span></span>
                 <span>•</span>
-                <span>Reserve: <strong id="p1ReserveCount" class="text-amber-700 font-mono font-extrabold">2</strong></span>
+                <span id="p1HandLabelWrap">In Hand: <strong id="p1ReserveCount" class="text-amber-700 font-mono font-extrabold">2</strong></span>
               </div>
             </div>
           </div>
 
-          <!-- Captured Counter Trophy Pill -->
           <div class="bg-white/90 border border-parchment-300 rounded-xl px-2.5 py-1 text-right shrink-0 shadow-inner">
-            <div class="text-[9px] uppercase tracking-wider text-walnut-600 font-extrabold">Captured</div>
+            <div class="text-[9px] uppercase tracking-wider text-walnut-600 font-extrabold">Eaten</div>
             <div class="flex items-center justify-end gap-0.5">
               <span id="p1CapturedCount" class="text-sm sm:text-base font-extrabold font-mono text-teal-700">0</span>
               <span id="p1TargetCapLabel" class="text-xs text-walnut-600 font-mono font-bold">/18</span>
             </div>
           </div>
         </div>
-        <div class="w-full h-2 bg-parchment-200 rounded-full overflow-hidden mt-2 border border-parchment-300 flex">
+        <div class="w-full h-1.5 bg-parchment-200 rounded-full overflow-hidden mt-1.5 border border-parchment-300 flex">
           <div id="p1CaptureBar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-300" style="width: 0%"></div>
         </div>
       </div>
 
       <!-- Tactile Mobile Game Action Dock -->
-      <div class="grid grid-cols-4 gap-2 bg-parchment-100 border-2 border-parchment-300 rounded-2xl p-1.5 shadow-md">
-        <button id="btnUndoMove" type="button" class="android-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[11px] font-bold gap-0.5" title="Undo Last Turn">
+      <div class="grid grid-cols-4 gap-1.5 bg-parchment-100 border-2 border-parchment-300 rounded-2xl p-1.5 shadow-md">
+        <button id="btnUndoMove" type="button" class="android-btn flex flex-col items-center justify-center py-1 px-2 rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[11px] font-bold gap-0.5" title="Undo Last Turn">
           <svg class="w-4 h-4 text-walnut-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M3 7v6h6" />
             <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
@@ -431,7 +453,7 @@
           <span>Undo</span>
         </button>
 
-        <button id="btnHintMove" type="button" class="android-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[11px] font-bold gap-0.5" title="Highlight a Tactical Move">
+        <button id="btnHintMove" type="button" class="android-btn flex flex-col items-center justify-center py-1 px-2 rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[11px] font-bold gap-0.5" title="Highlight a Tactical Move">
           <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M9 18h6" />
             <path d="M10 22h4" />
@@ -440,7 +462,7 @@
           <span>Hint</span>
         </button>
 
-        <button id="btnFlipBoard" type="button" class="android-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[11px] font-bold gap-0.5" title="Flip Board Perspective">
+        <button id="btnFlipBoard" type="button" class="android-btn flex flex-col items-center justify-center py-1 px-2 rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[11px] font-bold gap-0.5" title="Flip Board Perspective">
           <svg class="w-4 h-4 text-teal-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <polyline points="17 1 21 5 17 9" />
             <path d="M3 11V9a4 4 0 0 1 4-4h14" />
@@ -450,12 +472,17 @@
           <span>Rotate</span>
         </button>
 
-        <button id="btnResetMatch" type="button" class="android-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl bg-gradient-to-b from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white border border-rose-700 shadow-[0_2px_0_#9F1239] text-[11px] font-extrabold gap-0.5" title="New Match">
+        <button id="btnResetMatch" type="button" class="android-btn flex flex-col items-center justify-center py-1 px-2 rounded-xl bg-gradient-to-b from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white border border-rose-700 shadow-[0_2px_0_#9F1239] text-[11px] font-extrabold gap-0.5" title="New Match">
           <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
           </svg>
           <span>Restart</span>
         </button>
+      </div>
+
+      <!-- Author & Dedication Tribute Banner -->
+      <div class="text-center text-[10px] font-bold text-walnut-700 bg-parchment-100/90 border border-parchment-300 rounded-xl py-1 px-2 shadow-sm">
+        Crafted by <strong class="text-walnut-900">Yasin Ullah</strong> • Dedicated to my little brother <strong class="text-teal-800">Muhib Ullah</strong> ❤️
       </div>
     </section>
   </main>
@@ -514,7 +541,7 @@
               <div>
                 <h3 class="text-sm font-extrabold text-walnut-900">Single-Device Pass &amp; Play or AI Sparring</h3>
                 <p class="text-xs text-walnut-600 mt-0.5 leading-relaxed">
-                  Play face-to-face on a single phone or tablet with zero internet required, or challenge the Pashtun Tactical AI.
+                  Play face-to-face with your brother or friend on one phone with zero internet, or challenge the 4-tier AI.
                 </p>
               </div>
             </div>
@@ -525,8 +552,8 @@
                 <div class="text-[11px] text-walnut-600">2-Player Human vs. Tactical AI Bot</div>
               </div>
               <div class="flex items-center gap-1.5 bg-parchment-100 p-1 rounded-xl border border-parchment-300">
-                <button id="btnOpponentHuman" type="button" class="android-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-teal-600 text-white shadow-sm">2P Human</button>
-                <button id="btnOpponentAI" type="button" class="android-btn px-2.5 py-1 rounded-lg text-xs font-bold text-walnut-700">Tactical AI</button>
+                <button id="btnOpponentHuman" type="button" class="android-btn px-2.5 py-1 rounded-lg text-xs font-bold text-walnut-700">2P Human</button>
+                <button id="btnOpponentAI" type="button" class="android-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-teal-600 text-white shadow-sm">Tactical AI</button>
               </div>
             </div>
 
@@ -561,6 +588,15 @@
 
         <!-- PANEL B: OFFLINE WEBRTC PEER-TO-PEER SIGNALING UI -->
         <div id="panelWebRTC" class="hidden space-y-3.5">
+          <!-- Step-by-Step Guide Box -->
+          <div class="bg-amber-50 border border-amber-300 rounded-2xl p-3 text-[11px] text-walnut-800 space-y-1">
+            <div class="font-extrabold text-amber-900">📱 How 2 Players Connect Offline on 2 Phones:</div>
+            <p>1. Turn on <strong>Mobile Hotspot</strong> on Phone 1 (mobile data/internet is NOT needed) and connect Phone 2 to that Wi-Fi hotspot.</p>
+            <p>2. <strong>Phone 1 (Host)</strong> taps <em>Generate Offer Code</em> and sends the code to Phone 2 (via WhatsApp, SMS, Bluetooth, or Nearby Share).</p>
+            <p>3. <strong>Phone 2 (Guest)</strong> pastes that Offer in <em>2. Guest (P2)</em>, taps <em>Generate Return Answer Code</em>, and sends the Answer back to Phone 1.</p>
+            <p>4. <strong>Phone 1</strong> pastes the Answer in Step 1B and taps <em>Verify Answer &amp; Launch P2P Match</em>!</p>
+          </div>
+
           <div id="rtcStatusCard" class="bg-white border-2 border-parchment-300 rounded-2xl p-3 flex items-center justify-between gap-2">
             <div class="flex items-center gap-2.5 min-w-0">
               <span id="rtcModalDot" class="w-3 h-3 rounded-full bg-amber-500 shrink-0"></span>
@@ -595,7 +631,7 @@
               </button>
             </div>
             <p class="text-[11px] text-walnut-600 leading-relaxed">
-              Tap <strong>Generate Offer Code</strong>, then copy or scan the code below on Player 2's device.
+              Tap <strong>Generate Offer Code</strong>, then copy or share the code below with Player 2's device.
             </p>
 
             <div class="flex flex-col sm:flex-row gap-2.5 items-stretch">
@@ -684,7 +720,7 @@
       <div class="px-5 py-3.5 bg-parchment-100 border-b border-parchment-300 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="w-3 h-3 rounded-full bg-teal-600"></span>
-          <h2 class="font-display text-base sm:text-lg font-extrabold text-walnut-900">Grid Combinations &amp; Match Settings Studio</h2>
+          <h2 class="font-display text-base sm:text-lg font-extrabold text-walnut-900">Grid Combinations, Navakankari &amp; Settings</h2>
         </div>
         <button id="btnCloseRulesModal" type="button" class="android-btn p-1.5 rounded-xl bg-white border border-parchment-300 text-walnut-700 hover:text-walnut-900" aria-label="Close Settings">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -695,6 +731,15 @@
       </div>
 
       <div class="p-4 sm:p-5 overflow-y-auto custom-scroll space-y-4 text-xs sm:text-sm text-walnut-800">
+
+        <!-- Dedication Card Inside Studio -->
+        <div class="bg-gradient-to-r from-amber-100 via-parchment-100 to-teal-50 border-2 border-amber-300 rounded-2xl p-3 flex items-center justify-between gap-2">
+          <div>
+            <div class="text-xs font-extrabold text-walnut-900">Created by Yasin Ullah</div>
+            <div class="text-[11px] font-semibold text-teal-800">Dedicated with love to my little brother Muhib Ullah ❤️</div>
+          </div>
+          <span class="text-xs font-mono font-extrabold px-2.5 py-1 rounded-xl bg-white border border-amber-300 text-amber-900">2-in-1 Royal Edition</span>
+        </div>
 
         <!-- QUICK SHORTCUT BAR -->
         <div class="grid grid-cols-3 gap-2 bg-parchment-200 p-2 rounded-2xl border border-parchment-300">
@@ -709,17 +754,19 @@
           </button>
         </div>
 
-        <!-- SECTION 1: ALL GRID COMBINATIONS & CUSTOM R×C BUILDER -->
+        <!-- SECTION 1: ALL GRID COMBINATIONS & NAVAKANKARI -->
         <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3.5 shadow-sm">
           <div class="flex items-center justify-between">
-            <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-700">1. Board Grid Architecture &amp; Dimensions</h3>
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-700">1. Game Type &amp; Board Grid Combination</h3>
             <span id="lblActiveGridSummary" class="text-[11px] font-mono font-bold text-teal-800 bg-teal-50 border border-teal-300 px-2 py-0.5 rounded-md">36 Intersections</span>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label for="selGridPreset" class="block text-xs font-extrabold text-walnut-900 mb-1">Grid Combination Preset</label>
+              <label for="selGridPreset" class="block text-xs font-extrabold text-walnut-900 mb-1">Game Variant &amp; Grid Preset</label>
               <select id="selGridPreset" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
+                <option value="navakankari_9">⭐ Navakankari / Nine Men's Morris (24 Nodes • 9 Beads)</option>
+                <option value="navakankari_12">⭐ 12-Men's Katar Mill with Diagonals (24 Nodes • 12 Beads)</option>
                 <option value="6x6" selected>6×6 Katar Classic (36 Nodes • 18 Beads)</option>
                 <option value="6x7">6×7 Extended Katar (42 Nodes • 18 On-Board)</option>
                 <option value="37_sholo">37-Point Sholo Guti (5×5 + 2 Triangular Camps)</option>
@@ -776,7 +823,7 @@
 
         <!-- SECTION 2: PIECE COUNT, OPEN CENTER GEOMETRY & RESERVES -->
         <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3.5 shadow-sm">
-          <h3 class="text-xs font-extrabold uppercase tracking-wider text-teal-700">2. Piece Allocation, Open Center &amp; Reserve Rules</h3>
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-teal-700">2. How Many Beads &amp; Open Center Setup</h3>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -792,7 +839,7 @@
             <div>
               <label for="selReserveMode" class="block text-xs font-extrabold text-walnut-900 mb-1">Reserve Reinforcement Mode</label>
               <select id="selReserveMode" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-teal-800 focus:outline-none">
-                <option value="auto_backrank" selected>Auto-Deploy Reserves to Back Rank</option>
+                <option value="auto_backrank" selected>Deploy Reserves as Captures Open Space</option>
                 <option value="no_reserves">Strictly On-Board Only (Zero Reserves)</option>
               </select>
             </div>
@@ -801,10 +848,10 @@
           <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="flex-1">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-extrabold text-walnut-900">Pieces Per Player (Beads / Stones)</span>
+                <span class="text-xs font-extrabold text-walnut-900">Beads Per Player (Choose Any Count)</span>
                 <span id="valPiecesPerPlayer" class="text-xs font-mono font-extrabold text-amber-800">18 Pieces Each</span>
               </div>
-              <input id="rngPiecesPerPlayer" type="range" min="4" max="36" step="1" value="18" class="w-full accent-amber-600 cursor-pointer mt-1.5" />
+              <input id="rngPiecesPerPlayer" type="range" min="3" max="36" step="1" value="18" class="w-full accent-amber-600 cursor-pointer mt-1.5" />
             </div>
             <button id="btnAutoFitPieces" type="button" class="android-btn px-3 py-2 rounded-xl bg-white hover:bg-parchment-50 border border-parchment-400 text-xs font-extrabold text-teal-800 shrink-0 shadow-sm">
               Auto-Fit to Grid
@@ -812,17 +859,17 @@
           </div>
         </div>
 
-        <!-- SECTION 3: MOVEMENT, CAPTURE & TURN RULES -->
+        <!-- SECTION 3: MOVEMENT, CAPTURE (1 PER BARI VS MULTI) & TURN RULES -->
         <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
-          <h3 class="text-xs font-extrabold uppercase tracking-wider text-rose-700">3. Combat, Capture &amp; Movement Rules</h3>
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-rose-700">3. Eating / Capture Style (1 Bead per Bari vs. Multi-Bead)</h3>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label for="selChainRule" class="block text-xs font-extrabold text-walnut-900 mb-1">Consecutive Jump Captures</label>
+              <label for="selChainRule" class="block text-xs font-extrabold text-walnut-900 mb-1">Beads Eaten Per Bari (Turn)</label>
               <select id="selChainRule" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
-                <option value="multi_optional" selected>Multi-Jump Chain (Can Stop Early)</option>
-                <option value="multi_mandatory">Multi-Jump Chain (Must Finish All Jumps)</option>
-                <option value="single_only">Single Jump Per Turn Only</option>
+                <option value="multi_optional" selected>Multiple Beads per Bari (Can Stop Early)</option>
+                <option value="multi_mandatory">Multiple Beads per Bari (Must Eat All Available)</option>
+                <option value="single_only">Strictly 1 Bead Eaten per Bari (Single Jump Only)</option>
               </select>
             </div>
 
@@ -946,13 +993,16 @@
       </div>
       <div class="grid grid-cols-2 gap-2 bg-white rounded-2xl p-3 border-2 border-parchment-300 text-xs shadow-inner">
         <div>
-          <div class="text-walnut-600 font-bold">P1 Captures</div>
+          <div class="text-walnut-600 font-bold">P1 Eaten</div>
           <div id="victoryP1Score" class="text-base font-extrabold font-mono text-teal-700 mt-0.5">18 / 18</div>
         </div>
         <div>
-          <div class="text-walnut-600 font-bold">P2 Captures</div>
+          <div class="text-walnut-600 font-bold">P2 Eaten</div>
           <div id="victoryP2Score" class="text-base font-extrabold font-mono text-rose-600 mt-0.5">11 / 18</div>
         </div>
+      </div>
+      <div class="text-[11px] font-bold text-walnut-700">
+        Created by Yasin Ullah • Dedicated to Muhib Ullah ❤️
       </div>
       <div class="flex gap-2">
         <button id="btnVictoryPlayAgain" type="button" class="android-btn flex-1 py-3 rounded-2xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-sm shadow-[0_4px_0_#B45309]">
@@ -966,7 +1016,7 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- COMPLETE PARAMETRIC GAME ENGINE, CUSTOM GRID BUILDER & WEBRTC SCRIPT  -->
+  <!-- COMPLETE DUAL-GAME ENGINE (LEAP KATAR + NAVAKANKARI NINE MEN'S MORRIS)-->
   <!-- ===================================================================== -->
   <script>
     (function () {
@@ -1037,6 +1087,12 @@
           setTimeout(() => this.playTone(base * 1.5, 'sine', 0.16, 0.14, base * 1.85), 55);
         },
 
+        millFormed() {
+          this.haptic([40, 30, 60]);
+          this.playTone(523.25, 'triangle', 0.15, 0.18, 659.25);
+          setTimeout(() => this.playTone(783.99, 'sine', 0.18, 0.16), 70);
+        },
+
         invalid() {
           this.haptic([25, 40, 25]);
           this.playTone(165, 'sawtooth', 0.12, 0.09, 130);
@@ -1055,17 +1111,20 @@
       let Adjacency = [];
       let Edges = [];
       let CollinearJumps = [];
+      let MillLines = []; // List of 3-node lines [a, b, c] for Navakankari / Nine Men's Morris
 
       const GameState = {
+        gameFamily: 'leap',             // 'leap' (Sholo Guti / 18-Bead Katar) | 'morris' (Navakankari / Nine Men's Morris)
         gridPreset: '6x6',
         rows: 6,
         cols: 6,
         hasTriangularCamps: false,
+        morrisDiagonals: false,
         diagonalMode: 'full',
         openCenterMode: 'four_open',
         reserveMode: 'auto_backrank',
         piecesPerPlayer: 18,
-        chainRule: 'multi_optional',
+        chainRule: 'multi_optional',    // 'multi_optional' | 'multi_mandatory' | 'single_only' (1 Bead per Bari)
         mandatoryCapture: 'optional',
         stepDirection: 'all',
         firstTurnSetting: '1',
@@ -1077,12 +1136,14 @@
         aiDifficulty: 'medium',
 
         board: [],
-        reserves: { 1: 2, 2: 2 },
+        reserves: { 1: 2, 2: 2 },       // In 'leap' mode: reinforcement reserves; In 'morris' mode: unplaced beads in hand
         capturedBy: { 1: 0, 2: 0 },
         currentTurn: 1,
         selectedNode: null,
         chainJumpingNode: null,
         chainCount: 0,
+        morrisPendingRemove: false,     // True when current player just formed a 3-in-a-row line and must remove an opponent bead
+        lastFormedMill: null,           // [a, b, c] highlight for recently formed 3-in-a-row line
         gameOver: false,
         winner: null,
         winReason: '',
@@ -1097,9 +1158,19 @@
         localPlayerRole: null
       };
 
+      /* -------------------------------------------------------------------
+       * 2. BOARD GRAPH BUILDER: SUPPORTS BOTH LEAP KATAR & NAVAKANKARI
+       * ------------------------------------------------------------------- */
       function buildDynamicBoardGraph() {
         Nodes = [];
         Edges = [];
+        MillLines = [];
+
+        if (GameState.gameFamily === 'morris') {
+          buildNavakankariGraph(GameState.morrisDiagonals);
+          return;
+        }
+
         const R = GameState.rows;
         const C = GameState.cols;
         const withCamps = GameState.hasTriangularCamps;
@@ -1235,9 +1306,136 @@
         }
       }
 
+      /* -------------------------------------------------------------------
+       * NAVAKANKARI / NINE MEN'S MORRIS (24-Node Concentric 3-Square Grid)
+       * ------------------------------------------------------------------- */
+      function buildNavakankariGraph(includeCornerDiagonals = false) {
+        // 24 classic intersections on a 7x7 coordinate system (0..6, 0..6):
+        const coords = [
+          // Outer Square (0..7)
+          [0, 0], [0, 3], [0, 6],
+          [1, 1], [1, 3], [1, 5],
+          [2, 2], [2, 3], [2, 4],
+          [3, 0], [3, 1], [3, 2], [3, 4], [3, 5], [3, 6],
+          [4, 2], [4, 3], [4, 4],
+          [5, 1], [5, 3], [5, 5],
+          [6, 0], [6, 3], [6, 6]
+        ];
+
+        coords.forEach(([r, c], idx) => {
+          const coordLabel = `${String.fromCharCode(65 + c)}${r + 1}`;
+          Nodes.push({ id: idx, r, c, zone: 'morris', label: coordLabel, x: 0, y: 0 });
+        });
+
+        Adjacency = Array.from({ length: 24 }, () => new Set());
+        CollinearJumps = Array.from({ length: 24 }, () => []);
+
+        function link(u, v) {
+          if (!Adjacency[u].has(v)) {
+            Adjacency[u].add(v);
+            Adjacency[v].add(u);
+            Edges.push([Math.min(u, v), Math.max(u, v)]);
+          }
+        }
+
+        // Horizontal segments (8 lines of 3)
+        const horizMills = [
+          [0, 1, 2],
+          [3, 4, 5],
+          [6, 7, 8],
+          [9, 10, 11],
+          [12, 13, 14],
+          [15, 16, 17],
+          [18, 19, 20],
+          [21, 22, 23]
+        ];
+
+        // Vertical segments (8 lines of 3)
+        const vertMills = [
+          [0, 9, 21],
+          [3, 10, 18],
+          [6, 11, 15],
+          [1, 4, 7],
+          [16, 19, 22],
+          [8, 12, 17],
+          [5, 13, 20],
+          [2, 14, 23]
+        ];
+
+        const allMills = [...horizMills, ...vertMills];
+
+        if (includeCornerDiagonals) {
+          const diagMills = [
+            [0, 3, 6],
+            [2, 5, 8],
+            [15, 18, 21],
+            [17, 20, 23]
+          ];
+          allMills.push(...diagMills);
+        }
+
+        for (const [a, b, c] of allMills) {
+          link(a, b);
+          link(b, c);
+          MillLines.push([a, b, c]);
+        }
+      }
+
+      // Check if placing/moving a piece of `player` onto `nodeId` forms a 3-in-a-row Mill
+      function getMillsContainingNode(nodeId, player, board = GameState.board) {
+        const formed = [];
+        for (const line of MillLines) {
+          if (line.includes(nodeId)) {
+            if (board[line[0]] === player && board[line[1]] === player && board[line[2]] === player) {
+              formed.push(line);
+            }
+          }
+        }
+        return formed;
+      }
+
+      function isNodeInAnyMill(nodeId, board = GameState.board) {
+        const p = board[nodeId];
+        if (!p) return false;
+        return getMillsContainingNode(nodeId, p, board).length > 0;
+      }
+
+      // Return list of opponent node IDs that can be legally removed when a Mill is formed
+      function getRemovableOpponentNodes(opponent, board = GameState.board) {
+        const nonMill = [];
+        const allOpp = [];
+        for (let i = 0; i < Nodes.length; i++) {
+          if (board[i] === opponent) {
+            allOpp.push(i);
+            if (!isNodeInAnyMill(i, board)) {
+              nonMill.push(i);
+            }
+          }
+        }
+        // Standard Navakankari / Nine Men's Morris rule:
+        // Prefer pieces not currently in a mill; if all opponent pieces are in mills, any can be removed.
+        return nonMill.length > 0 ? nonMill : allOpp;
+      }
+
+      /* -------------------------------------------------------------------
+       * 3. LEGAL MOVES FOR BOTH GAME FAMILIES
+       * ------------------------------------------------------------------- */
       function getLegalActionsForPiece(fromId, board = GameState.board) {
         const piece = board[fromId];
         if (!piece) return { steps: [], jumps: [] };
+
+        if (GameState.gameFamily === 'morris') {
+          // In Navakankari movement phase, pieces slide 1 step along connected edges
+          // (or can "fly" to any empty node if player has exactly 3 pieces left and reserves === 0)
+          const steps = [];
+          for (const toId of Adjacency[fromId]) {
+            if (board[toId] === 0) {
+              steps.push({ from: fromId, to: toId, type: 'step' });
+            }
+          }
+          return { steps, jumps: [] };
+        }
+
         const opponent = piece === 1 ? 2 : 1;
         const fromNode = Nodes[fromId];
         const steps = [];
@@ -1267,7 +1465,28 @@
         return { steps, jumps };
       }
 
-      function getAllLegalActionsForPlayer(player, board = GameState.board) {
+      function getAllLegalActionsForPlayer(player, board = GameState.board, reserves = GameState.reserves) {
+        if (GameState.gameFamily === 'morris') {
+          const unplaced = reserves ? (reserves[player] || 0) : 0;
+          if (unplaced > 0) {
+            const drops = [];
+            for (let i = 0; i < Nodes.length; i++) {
+              if (board[i] === 0) {
+                drops.push({ from: -1, to: i, type: 'drop' });
+              }
+            }
+            return { allSteps: drops, allJumps: [], total: drops.length };
+          }
+          const allSteps = [];
+          for (let i = 0; i < Nodes.length; i++) {
+            if (board[i] === player) {
+              const { steps } = getLegalActionsForPiece(i, board);
+              allSteps.push(...steps);
+            }
+          }
+          return { allSteps, allJumps: [], total: allSteps.length };
+        }
+
         const allSteps = [];
         const allJumps = [];
         for (let i = 0; i < Nodes.length; i++) {
@@ -1287,17 +1506,43 @@
         };
       }
 
-      function countPlayerTotalPieces(player) {
+      function countPlayerTotalPieces(player, board = GameState.board, reserves = GameState.reserves) {
         let onBoard = 0;
-        for (let i = 0; i < GameState.board.length; i++) {
-          if (GameState.board[i] === player) onBoard++;
+        for (let i = 0; i < board.length; i++) {
+          if (board[i] === player) onBoard++;
         }
-        return onBoard + (GameState.reserves[player] || 0);
+        return onBoard + (reserves[player] || 0);
       }
 
+      function countEmptyNodes(board = GameState.board) {
+        let empty = 0;
+        for (let i = 0; i < board.length; i++) {
+          if (board[i] === 0) empty++;
+        }
+        return empty;
+      }
+
+      /* -------------------------------------------------------------------
+       * 4. PRESET PROFILES & STARTING BOARD PLACEMENT ENGINE
+       * ------------------------------------------------------------------- */
       function applyGridPresetConfig(preset) {
         GameState.gridPreset = preset;
-        if (preset === '6x6') {
+        if (preset === 'navakankari_9') {
+          GameState.gameFamily = 'morris';
+          GameState.morrisDiagonals = false;
+          GameState.rows = 7;
+          GameState.cols = 7;
+          GameState.hasTriangularCamps = false;
+          GameState.piecesPerPlayer = 9;
+        } else if (preset === 'navakankari_12') {
+          GameState.gameFamily = 'morris';
+          GameState.morrisDiagonals = true;
+          GameState.rows = 7;
+          GameState.cols = 7;
+          GameState.hasTriangularCamps = false;
+          GameState.piecesPerPlayer = 12;
+        } else if (preset === '6x6') {
+          GameState.gameFamily = 'leap';
           GameState.rows = 6;
           GameState.cols = 6;
           GameState.hasTriangularCamps = false;
@@ -1305,6 +1550,7 @@
           GameState.reserveMode = 'auto_backrank';
           GameState.piecesPerPlayer = 18;
         } else if (preset === '6x7') {
+          GameState.gameFamily = 'leap';
           GameState.rows = 7;
           GameState.cols = 6;
           GameState.hasTriangularCamps = false;
@@ -1312,6 +1558,7 @@
           GameState.reserveMode = 'no_reserves';
           GameState.piecesPerPlayer = 18;
         } else if (preset === '37_sholo') {
+          GameState.gameFamily = 'leap';
           GameState.rows = 5;
           GameState.cols = 5;
           GameState.hasTriangularCamps = true;
@@ -1319,6 +1566,7 @@
           GameState.reserveMode = 'auto_backrank';
           GameState.piecesPerPlayer = 16;
         } else if (preset === '5x5') {
+          GameState.gameFamily = 'leap';
           GameState.rows = 5;
           GameState.cols = 5;
           GameState.hasTriangularCamps = false;
@@ -1326,6 +1574,7 @@
           GameState.reserveMode = 'no_reserves';
           GameState.piecesPerPlayer = 12;
         } else if (preset === '5x7') {
+          GameState.gameFamily = 'leap';
           GameState.rows = 7;
           GameState.cols = 5;
           GameState.hasTriangularCamps = false;
@@ -1333,6 +1582,7 @@
           GameState.reserveMode = 'no_reserves';
           GameState.piecesPerPlayer = 15;
         } else if (preset === '7x7') {
+          GameState.gameFamily = 'leap';
           GameState.rows = 7;
           GameState.cols = 7;
           GameState.hasTriangularCamps = false;
@@ -1340,6 +1590,7 @@
           GameState.reserveMode = 'no_reserves';
           GameState.piecesPerPlayer = 24;
         } else if (preset === '8x8') {
+          GameState.gameFamily = 'leap';
           GameState.rows = 8;
           GameState.cols = 8;
           GameState.hasTriangularCamps = false;
@@ -1347,6 +1598,7 @@
           GameState.reserveMode = 'no_reserves';
           GameState.piecesPerPlayer = 24;
         } else if (preset === '4x4') {
+          GameState.gameFamily = 'leap';
           GameState.rows = 4;
           GameState.cols = 4;
           GameState.hasTriangularCamps = false;
@@ -1358,6 +1610,9 @@
       }
 
       function computeRecommendedPieces() {
+        if (GameState.gameFamily === 'morris') {
+          return GameState.morrisDiagonals ? 12 : 9;
+        }
         const total = GameState.rows * GameState.cols + (GameState.hasTriangularCamps ? 12 : 0);
         let openNodes = 4;
         if (GameState.openCenterMode === 'single_center') openNodes = (total % 2 === 1) ? 1 : 2;
@@ -1392,6 +1647,8 @@
         GameState.selectedNode = null;
         GameState.chainJumpingNode = null;
         GameState.chainCount = 0;
+        GameState.morrisPendingRemove = false;
+        GameState.lastFormedMill = null;
         GameState.gameOver = false;
         GameState.winner = null;
         GameState.winReason = '';
@@ -1400,65 +1657,72 @@
         VisualFX.movingPiece = null;
         VisualFX.hintHighlight = null;
 
-        const midR = (GameState.rows - 1) / 2;
-        const midC = (GameState.cols - 1) / 2;
+        if (GameState.gameFamily === 'morris') {
+          // Navakankari starts with an empty 24-node board and all beads in hand (reserves)
+          const maxMorrisPieces = Math.min(12, Math.max(3, GameState.piecesPerPlayer));
+          GameState.piecesPerPlayer = maxMorrisPieces;
+          GameState.reserves = { 1: maxMorrisPieces, 2: maxMorrisPieces };
+        } else {
+          const midR = (GameState.rows - 1) / 2;
+          const midC = (GameState.cols - 1) / 2;
 
-        const openSet = new Set();
-        for (const n of Nodes) {
-          if (n.zone !== 'grid') continue;
-          if (GameState.openCenterMode === 'center_row') {
-            if (Math.abs(n.r - midR) <= 0.55) openSet.add(n.id);
-          } else if (GameState.openCenterMode === 'four_open') {
-            if (Math.abs(n.r - midR) <= 0.65 && Math.abs(n.c - midC) <= 0.65) openSet.add(n.id);
-          } else if (GameState.openCenterMode === 'two_open') {
-            if (Math.abs(n.r - midR) <= 0.65 && Math.abs(n.c - midC) <= 0.65) {
-              if ((n.r < midR && n.c <= midC) || (n.r > midR && n.c >= midC) || n.r === midR) {
+          const openSet = new Set();
+          for (const n of Nodes) {
+            if (n.zone !== 'grid') continue;
+            if (GameState.openCenterMode === 'center_row') {
+              if (Math.abs(n.r - midR) <= 0.55) openSet.add(n.id);
+            } else if (GameState.openCenterMode === 'four_open') {
+              if (Math.abs(n.r - midR) <= 0.65 && Math.abs(n.c - midC) <= 0.65) openSet.add(n.id);
+            } else if (GameState.openCenterMode === 'two_open') {
+              if (Math.abs(n.r - midR) <= 0.65 && Math.abs(n.c - midC) <= 0.65) {
+                if ((n.r < midR && n.c <= midC) || (n.r > midR && n.c >= midC) || n.r === midR) {
+                  openSet.add(n.id);
+                }
+              }
+            } else if (GameState.openCenterMode === 'single_center') {
+              if (Math.abs(n.r - midR) <= 0.55 && Math.abs(n.c - midC) <= 0.55) {
                 openSet.add(n.id);
               }
             }
-          } else if (GameState.openCenterMode === 'single_center') {
-            if (Math.abs(n.r - midR) <= 0.55 && Math.abs(n.c - midC) <= 0.55) {
-              openSet.add(n.id);
-            }
           }
-        }
 
-        if (openSet.size === 0) {
-          let bestCenterId = 0;
-          let bestDist = Infinity;
-          for (const n of Nodes) {
-            const d = Math.hypot(n.r - midR, n.c - midC);
-            if (d < bestDist) {
-              bestDist = d;
-              bestCenterId = n.id;
+          if (openSet.size === 0) {
+            let bestCenterId = 0;
+            let bestDist = Infinity;
+            for (const n of Nodes) {
+              const d = Math.hypot(n.r - midR, n.c - midC);
+              if (d < bestDist) {
+                bestDist = d;
+                bestCenterId = n.id;
+              }
             }
+            openSet.add(bestCenterId);
           }
-          openSet.add(bestCenterId);
+
+          const northSlots = Nodes
+            .filter((n) => !openSet.has(n.id) && (n.r < midR || (n.r === midR && n.c < midC)))
+            .sort((a, b) => a.r - b.r || a.c - b.c);
+
+          const southSlots = Nodes
+            .filter((n) => !openSet.has(n.id) && (n.r > midR || (n.r === midR && n.c > midC)))
+            .sort((a, b) => b.r - a.r || b.c - a.c);
+
+          const maxBoardSlots = Math.min(northSlots.length, southSlots.length);
+          let targetPieces = GameState.piecesPerPlayer;
+          if (GameState.reserveMode === 'no_reserves' && targetPieces > maxBoardSlots) {
+            targetPieces = maxBoardSlots;
+            GameState.piecesPerPlayer = targetPieces;
+          }
+
+          const placeCount = Math.min(targetPieces, maxBoardSlots);
+          for (let i = 0; i < placeCount; i++) {
+            GameState.board[northSlots[i].id] = 2;
+            GameState.board[southSlots[i].id] = 1;
+          }
+
+          const reserveCount = Math.max(0, targetPieces - placeCount);
+          GameState.reserves = { 1: reserveCount, 2: reserveCount };
         }
-
-        const northSlots = Nodes
-          .filter((n) => !openSet.has(n.id) && (n.r < midR || (n.r === midR && n.c < midC)))
-          .sort((a, b) => a.r - b.r || a.c - b.c);
-
-        const southSlots = Nodes
-          .filter((n) => !openSet.has(n.id) && (n.r > midR || (n.r === midR && n.c > midC)))
-          .sort((a, b) => b.r - a.r || b.c - a.c);
-
-        const maxBoardSlots = Math.min(northSlots.length, southSlots.length);
-        let targetPieces = GameState.piecesPerPlayer;
-        if (GameState.reserveMode === 'no_reserves' && targetPieces > maxBoardSlots) {
-          targetPieces = maxBoardSlots;
-          GameState.piecesPerPlayer = targetPieces;
-        }
-
-        const placeCount = Math.min(targetPieces, maxBoardSlots);
-        for (let i = 0; i < placeCount; i++) {
-          GameState.board[northSlots[i].id] = 2;
-          GameState.board[southSlots[i].id] = 1;
-        }
-
-        const reserveCount = Math.max(0, targetPieces - placeCount);
-        GameState.reserves = { 1: reserveCount, 2: reserveCount };
 
         if (GameState.autoRotate && GameState.mode === 'pass_play' && !GameState.vsAI) {
           GameState.boardFlipped = (GameState.currentTurn === 2);
@@ -1478,17 +1742,32 @@
         }
 
         if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === 2) {
-          setTimeout(runAITurn, 520);
+          setTimeout(runAITurn, 500);
         }
       }
 
+      /* -------------------------------------------------------------------
+       * BUG FIX: SAFE REINFORCEMENT DEPLOYMENT IN 6x6 (36-NODE) MODE
+       * -------------------------------------------------------------------
+       * Never deploy a reserve piece unless there are at least 5 empty nodes
+       * on the board AND the target node is strictly on the player's own
+       * back rank! This guarantees the 4 open center intersections are never
+       * choked on Turn 1.
+       * ------------------------------------------------------------------- */
       function tryDeployReserve(player) {
+        if (GameState.gameFamily === 'morris') return null;
         if (GameState.reserves[player] <= 0) return null;
-        const candidates = Nodes
-          .slice()
+
+        // Require at least 5 empty intersections before a reserve piece enters
+        // so that at least 4 open intersections ALWAYS remain for movement!
+        if (countEmptyNodes(GameState.board) < 5) return null;
+
+        const midR = (GameState.rows - 1) / 2;
+        const ownHalfNodes = Nodes
+          .filter((n) => (player === 1 ? n.r > midR + 0.4 : n.r < midR - 0.4))
           .sort((a, b) => (player === 1 ? b.r - a.r : a.r - b.r));
 
-        for (const n of candidates) {
+        for (const n of ownHalfNodes) {
           if (GameState.board[n.id] === 0) {
             GameState.board[n.id] = player;
             GameState.reserves[player]--;
@@ -1548,23 +1827,119 @@
           capturedBy: { ...GameState.capturedBy },
           currentTurn: GameState.currentTurn,
           chainJumpingNode: GameState.chainJumpingNode,
-          chainCount: GameState.chainCount
+          chainCount: GameState.chainCount,
+          morrisPendingRemove: GameState.morrisPendingRemove,
+          lastFormedMill: GameState.lastFormedMill ? [...GameState.lastFormedMill] : null
         });
         if (GameState.history.length > 35) {
           GameState.history.shift();
         }
       }
 
+      /* -------------------------------------------------------------------
+       * 6. EXECUTING MOVES FOR BOTH LEAP KATAR & NAVAKANKARI (NINE MEN'S MORRIS)
+       * ------------------------------------------------------------------- */
       function executeAction(action, isRemote = false) {
         if (GameState.gameOver) return;
 
         const player = GameState.currentTurn;
         const opponent = player === 1 ? 2 : 1;
 
-        if (!isRemote && GameState.chainCount === 0) {
+        if (!isRemote && GameState.chainCount === 0 && !GameState.morrisPendingRemove) {
           saveUndoSnapshot();
         }
 
+        // CASE A: NAVAKANKARI / NINE MEN'S MORRIS ACTIONS
+        if (GameState.gameFamily === 'morris') {
+          if (action.type === 'remove_opponent') {
+            const remId = action.capturedId;
+            const remNode = Nodes[remId];
+            GameState.board[remId] = 0;
+            GameState.capturedBy[player]++;
+            GameState.morrisPendingRemove = false;
+            VisualFX.spawnCaptureBurst(remNode.x, remNode.y, opponent);
+            SoundEngine.capture(1);
+            showBoardToast('Katar Line Capture! Opponent bead removed');
+            finishTurnAndCheckWin(player, isRemote, action);
+            return;
+          }
+
+          if (action.type === 'drop') {
+            const toNode = Nodes[action.to];
+            GameState.board[action.to] = player;
+            GameState.reserves[player] = Math.max(0, GameState.reserves[player] - 1);
+            VisualFX.spawnPulseRing(action.to, player === 1 ? '#0D9488' : '#E11D48');
+            SoundEngine.move();
+
+            const mills = getMillsContainingNode(action.to, player);
+            if (mills.length > 0 && getRemovableOpponentNodes(opponent).length > 0) {
+              GameState.morrisPendingRemove = true;
+              GameState.lastFormedMill = mills[0];
+              SoundEngine.millFormed();
+              showBoardToast('KATAR (Line of 3)! Tap an opponent bead to remove it!');
+              updateHUD();
+              requestRender();
+
+              if (!isRemote && WebRTCManager.isConnected()) {
+                WebRTCManager.send({
+                  type: 'MOVE_ACTION',
+                  action,
+                  continueChain: true,
+                  state: serializeGameState()
+                });
+              }
+
+              if (GameState.mode === 'pass_play' && GameState.vsAI && player === 2) {
+                setTimeout(runAITurn, 460);
+              }
+              return;
+            }
+
+            GameState.lastFormedMill = null;
+            finishTurnAndCheckWin(player, isRemote, action);
+            return;
+          }
+
+          if (action.type === 'step') {
+            const fromNode = Nodes[action.from];
+            const toNode = Nodes[action.to];
+            GameState.board[action.from] = 0;
+            GameState.board[action.to] = player;
+            GameState.selectedNode = null;
+            VisualFX.startPieceTween(fromNode, toNode, player, false);
+            SoundEngine.move();
+
+            const mills = getMillsContainingNode(action.to, player);
+            if (mills.length > 0 && getRemovableOpponentNodes(opponent).length > 0) {
+              GameState.morrisPendingRemove = true;
+              GameState.lastFormedMill = mills[0];
+              SoundEngine.millFormed();
+              showBoardToast('KATAR (Line of 3)! Tap an opponent bead to remove it!');
+              updateHUD();
+              requestRender();
+
+              if (!isRemote && WebRTCManager.isConnected()) {
+                WebRTCManager.send({
+                  type: 'MOVE_ACTION',
+                  action,
+                  continueChain: true,
+                  state: serializeGameState()
+                });
+              }
+
+              if (GameState.mode === 'pass_play' && GameState.vsAI && player === 2) {
+                setTimeout(runAITurn, 460);
+              }
+              return;
+            }
+
+            GameState.lastFormedMill = null;
+            finishTurnAndCheckWin(player, isRemote, action);
+            return;
+          }
+        }
+
+        // CASE B: LEAP-AND-CAPTURE KATAR / SHOLO GUTI ACTIONS
         const fromNode = Nodes[action.from];
         const toNode = Nodes[action.to];
 
@@ -1585,7 +1960,7 @@
 
           const label = GameState.chainCount > 1
             ? `Chain Capture x${GameState.chainCount}!`
-            : 'Leap Capture! +1';
+            : (GameState.chainRule === 'single_only' ? '1 Bead Eaten (Turn Complete)!' : 'Leap Capture! +1');
           showBoardToast(label);
 
           tryDeployReserve(player);
@@ -1631,6 +2006,7 @@
         GameState.selectedNode = null;
         GameState.chainJumpingNode = null;
         GameState.chainCount = 0;
+        GameState.morrisPendingRemove = false;
         VisualFX.hintHighlight = null;
 
         tryDeployReserve(opponent);
@@ -1638,27 +2014,57 @@
         const oppRemaining = countPlayerTotalPieces(opponent);
         const oppMoves = getAllLegalActionsForPlayer(opponent);
 
-        if (oppRemaining === 0 || GameState.capturedBy[playerJustMoved] >= GameState.piecesPerPlayer) {
-          GameState.gameOver = true;
-          GameState.winner = playerJustMoved;
-          GameState.winReason = `Captured all ${GameState.piecesPerPlayer} opponent pieces!`;
-          SoundEngine.victory();
-          resetTurnTimer();
-          showVictoryModal();
-        } else if (oppMoves.total === 0) {
-          GameState.gameOver = true;
-          GameState.winner = playerJustMoved;
-          GameState.winReason = 'Opponent is completely trapped with no legal moves!';
-          SoundEngine.victory();
-          resetTurnTimer();
-          showVictoryModal();
-        } else {
-          GameState.currentTurn = opponent;
-          if (GameState.autoRotate && GameState.mode === 'pass_play' && !GameState.vsAI) {
-            GameState.boardFlipped = (GameState.currentTurn === 2);
-            resizeCanvas();
+        if (GameState.gameFamily === 'morris') {
+          // In Navakankari / Nine Men's Morris:
+          // A player wins when the opponent is reduced to 2 pieces (e.g., 7 captured out of 9)
+          // OR when the opponent has 0 legal moves during the movement phase!
+          const winTarget = Math.max(1, GameState.piecesPerPlayer - 2);
+          if (oppRemaining <= 2 || GameState.capturedBy[playerJustMoved] >= winTarget) {
+            GameState.gameOver = true;
+            GameState.winner = playerJustMoved;
+            GameState.winReason = `Captured ${GameState.capturedBy[playerJustMoved]} beads — opponent reduced to ${oppRemaining} beads and cannot form a line of 3!`;
+            SoundEngine.victory();
+            resetTurnTimer();
+            showVictoryModal();
+          } else if (GameState.reserves[opponent] === 0 && oppMoves.total === 0) {
+            GameState.gameOver = true;
+            GameState.winner = playerJustMoved;
+            GameState.winReason = 'Opponent is completely blocked with no legal moves!';
+            SoundEngine.victory();
+            resetTurnTimer();
+            showVictoryModal();
+          } else {
+            GameState.currentTurn = opponent;
+            if (GameState.autoRotate && GameState.mode === 'pass_play' && !GameState.vsAI) {
+              GameState.boardFlipped = (GameState.currentTurn === 2);
+              resizeCanvas();
+            }
+            resetTurnTimer();
           }
-          resetTurnTimer();
+        } else {
+          // Leap & Capture Katar win conditions
+          if (oppRemaining === 0 || GameState.capturedBy[playerJustMoved] >= GameState.piecesPerPlayer) {
+            GameState.gameOver = true;
+            GameState.winner = playerJustMoved;
+            GameState.winReason = `Captured all ${GameState.piecesPerPlayer} opponent beads!`;
+            SoundEngine.victory();
+            resetTurnTimer();
+            showVictoryModal();
+          } else if (oppMoves.total === 0) {
+            GameState.gameOver = true;
+            GameState.winner = playerJustMoved;
+            GameState.winReason = 'Opponent is completely trapped with no legal moves!';
+            SoundEngine.victory();
+            resetTurnTimer();
+            showVictoryModal();
+          } else {
+            GameState.currentTurn = opponent;
+            if (GameState.autoRotate && GameState.mode === 'pass_play' && !GameState.vsAI) {
+              GameState.boardFlipped = (GameState.currentTurn === 2);
+              resizeCanvas();
+            }
+            resetTurnTimer();
+          }
         }
 
         updateHUD();
@@ -1674,7 +2080,7 @@
         }
 
         if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === 2) {
-          setTimeout(runAITurn, 500);
+          setTimeout(runAITurn, 480);
         }
       }
 
@@ -1690,17 +2096,109 @@
       }
 
       /* -------------------------------------------------------------------
-       * 4-TIER PASHTUN AI ENGINE: EASY, MEDIUM, HARD & HARDEST (MINIMAX)
-       * -------------------------------------------------------------------
-       * - easy:    Casual moves; occasionally overlooks non-forced jumps or
-       *            plays random safe steps.
-       * - medium:  Greedy capture & chain-jump seeker with 1-ply blunder check.
-       * - hard:    2-ply tactical lookahead evaluating chain-jump sequences,
-       *            piece protection (backing up friendly pieces), and center hubs.
-       * - hardest: Alpha-Beta Pruning Minimax lookahead (depth 3-4 with full
-       *            multi-jump chain resolution, mobility, hub dominance, and
-       *            vulnerability formation scoring).
+       * 7. 4-TIER AI ENGINE FOR BOTH LEAP KATAR & NAVAKANKARI
        * ------------------------------------------------------------------- */
+      function runNavakankariAI() {
+        const diff = GameState.aiDifficulty;
+
+        // Step A: If AI just formed a 3-in-a-row Mill, choose which Player 1 bead to remove
+        if (GameState.morrisPendingRemove) {
+          const candidates = getRemovableOpponentNodes(1);
+          if (candidates.length === 0) {
+            finishTurnAndCheckWin(2, false, null);
+            return;
+          }
+          if (diff === 'easy') {
+            const pick = candidates[Math.floor(Math.random() * candidates.length)];
+            executeAction({ type: 'remove_opponent', capturedId: pick }, false);
+            return;
+          }
+          // Pick the Player 1 piece that belongs to the most 2-in-a-row potential threats or highest degree
+          let bestRem = candidates[0];
+          let bestScore = -999;
+          for (const cid of candidates) {
+            let threatCount = Adjacency[cid].size;
+            for (const line of MillLines) {
+              if (line.includes(cid)) {
+                const p1InLine = line.filter((id) => GameState.board[id] === 1).length;
+                const emptyInLine = line.filter((id) => GameState.board[id] === 0).length;
+                if (p1InLine === 2 && emptyInLine === 1) threatCount += 20;
+              }
+            }
+            if (threatCount > bestScore) {
+              bestScore = threatCount;
+              bestRem = cid;
+            }
+          }
+          executeAction({ type: 'remove_opponent', capturedId: bestRem }, false);
+          return;
+        }
+
+        const { allSteps } = getAllLegalActionsForPlayer(2);
+        if (allSteps.length === 0) return;
+
+        if (diff === 'easy') {
+          const pick = allSteps[Math.floor(Math.random() * allSteps.length)];
+          executeAction(pick, false);
+          return;
+        }
+
+        // Score each drop or step move:
+        // 1. Does it immediately form a 3-in-a-row Mill for AI (Player 2)? (+100)
+        // 2. Does it block an immediate 3-in-a-row Mill for Player 1? (+75)
+        // 3. Does it create a 2-in-a-row with an open 3rd spot? (+18)
+        // 4. Node connectivity bonus (crossroads have 4 connections)
+        let bestMove = allSteps[0];
+        let bestScore = -99999;
+
+        for (const m of allSteps) {
+          const sim = [...GameState.board];
+          if (m.type === 'step') sim[m.from] = 0;
+          sim[m.to] = 2;
+
+          let score = Adjacency[m.to].size * 2 + Math.random() * 1.5;
+
+          const myMills = getMillsContainingNode(m.to, 2, sim);
+          if (myMills.length > 0) score += 120 * myMills.length;
+
+          // Check if m.to blocks a Player 1 mill
+          const simP1 = [...GameState.board];
+          simP1[m.to] = 1;
+          const p1Mills = getMillsContainingNode(m.to, 1, simP1);
+          if (p1Mills.length > 0) score += 85 * p1Mills.length;
+
+          if (diff === 'hard' || diff === 'hardest') {
+            for (const line of MillLines) {
+              if (line.includes(m.to)) {
+                const p2c = line.filter((id) => sim[id] === 2).length;
+                const emp = line.filter((id) => sim[id] === 0).length;
+                if (p2c === 2 && emp === 1) score += 18;
+              }
+            }
+            // In hardest mode, also penalize leaving an existing mill unprotected if P1 can step in
+            if (m.type === 'step') {
+              const p1Next = getAllLegalActionsForPlayer(1, sim, GameState.reserves).allSteps;
+              for (const p1m of p1Next) {
+                const sim2 = [...sim];
+                if (p1m.type === 'step') sim2[p1m.from] = 0;
+                sim2[p1m.to] = 1;
+                if (getMillsContainingNode(p1m.to, 1, sim2).length > 0) {
+                  score -= 65;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestMove = m;
+          }
+        }
+
+        executeAction(bestMove, false);
+      }
+
       function evaluateBoardPosition(board, reservesP1, reservesP2) {
         let p2Count = reservesP2;
         let p1Count = reservesP1;
@@ -1712,7 +2210,7 @@
           const occ = board[i];
           if (occ === 0) continue;
           const n = Nodes[i];
-          const deg = Adjacency[i].size; // 8-way star hubs are stronger than 4-way nodes
+          const deg = Adjacency[i].size;
           const centerProximity = Math.max(0, 4.5 - Math.hypot(n.r - midR, n.c - midC));
           const nodeVal = deg * 0.45 + centerProximity * 0.9;
 
@@ -1734,7 +2232,6 @@
         if (p1Moves.total === 0) return 88888;
         if (p2Moves.total === 0) return -88888;
 
-        // Evaluate immediate jump threats & piece vulnerability
         const p2ThreatScore = p2Moves.allJumps.length * 16;
         const p1ThreatScore = p1Moves.allJumps.length * 19;
         const mobilityScore = (p2Moves.total - p1Moves.total) * 0.8;
@@ -1743,7 +2240,6 @@
         return materialDiff + positionalScore + (p2ThreatScore - p1ThreatScore) + mobilityScore;
       }
 
-      // Simulates an action (including greedy continuation jumps if chain rule allows) on a cloned board
       function simulateTurnOnBoard(board, action, player) {
         const nextBoard = [...board];
         nextBoard[action.from] = 0;
@@ -1779,7 +2275,6 @@
           return evaluateBoardPosition(board, r1, r2);
         }
 
-        // Order moves: jumps first for faster alpha-beta pruning
         const candidateMoves = allJumps.length > 0
           ? [...allJumps, ...allSteps.slice(0, 10)]
           : allSteps.slice(0, 14);
@@ -1834,11 +2329,14 @@
       function runAITurn() {
         if (GameState.gameOver || GameState.currentTurn !== 2 || !GameState.vsAI) return;
 
-        // 1. Handle active multi-jump chain continuation
+        if (GameState.gameFamily === 'morris') {
+          runNavakankariAI();
+          return;
+        }
+
         if (GameState.chainJumpingNode !== null) {
           const nextJump = chooseBestContinuationJump(GameState.chainJumpingNode);
           if (nextJump) {
-            // In Hardest mode, only stop a chain early if taking the jump walks into a devastating counter-chain
             if (GameState.aiDifficulty === 'hardest' && GameState.chainRule === 'multi_optional') {
               const stayScore = evaluateBoardPosition(GameState.board, GameState.reserves[1], GameState.reserves[2]);
               const jumpBoard = simulateTurnOnBoard(GameState.board, nextJump, 2);
@@ -1860,7 +2358,6 @@
 
         const diff = GameState.aiDifficulty;
 
-        // TIER 1: EASY (Novice — relaxed & forgiving)
         if (diff === 'easy') {
           if (allJumps.length > 0 && (GameState.mandatoryCapture === 'forced' || Math.random() < 0.65)) {
             const pick = allJumps[Math.floor(Math.random() * allJumps.length)];
@@ -1876,7 +2373,6 @@
           return;
         }
 
-        // TIER 2: MEDIUM (Tactical — greedy captures + 1-ply safety check)
         if (diff === 'medium') {
           if (allJumps.length > 0) {
             let bestJump = allJumps[0];
@@ -1918,7 +2414,6 @@
           return;
         }
 
-        // TIER 3 & 4: HARD (2-Ply Commander) & HARDEST (3-Ply Alpha-Beta Minimax Grandmaster)
         const searchDepth = diff === 'hardest' ? 3 : 2;
         const candidatePool = allJumps.length > 0
           ? [...allJumps, ...(GameState.mandatoryCapture === 'forced' ? [] : allSteps.slice(0, 8))]
@@ -1950,7 +2445,7 @@
       }
 
       /* -------------------------------------------------------------------
-       * ROYAL TABLETOP CANVAS RENDERER (Warm Wood, Inlaid Brass & 3D Gems)
+       * 8. ROYAL TABLETOP CANVAS RENDERER
        * ------------------------------------------------------------------- */
       const canvas = document.getElementById('katarCanvas');
       const ctx = canvas.getContext('2d');
@@ -2019,7 +2514,7 @@
 
         const rect = wrapper.getBoundingClientRect();
         const outerSize = Math.max(240, Math.floor(Math.min(rect.width - 8, rect.height - 8, 560)));
-        const size = outerSize - 16; // Account for 8px 3D walnut border padding
+        const size = outerSize - 16;
         aspectBox.style.width = `${outerSize}px`;
         aspectBox.style.height = `${outerSize}px`;
 
@@ -2104,7 +2599,6 @@
             labelColor: '#CBD5E1'
           };
         }
-        // Default: 'sandstone' (Royal Parchment & Inlaid Rosewood — Bright, Crisp Tabletop)
         return {
           inner: '#FFFDF7',
           mid: '#F6E8CE',
@@ -2134,7 +2628,6 @@
         ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, size, size);
 
-        // Ornamental Double-Line Border Inlay + Corner Brass Studs
         const framePad = size * 0.032;
         ctx.strokeStyle = palette.line;
         ctx.lineWidth = 2;
@@ -2144,7 +2637,6 @@
         ctx.lineWidth = 1;
         ctx.strokeRect(framePad + 4, framePad + 4, size - (framePad + 4) * 2, size - (framePad + 4) * 2);
 
-        // Corner Brass Rivets
         const corners = [
           [framePad, framePad],
           [size - framePad, framePad],
@@ -2161,10 +2653,10 @@
           ctx.stroke();
         }
 
-        // Center Maidaan Ornamental Diamond Motif
+        // Center Maidaan Motif
         const centerX = size * 0.5;
         const centerY = size * 0.5;
-        const diamondR = size * 0.13;
+        const diamondR = size * 0.12;
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(centerX, centerY - diamondR);
@@ -2172,14 +2664,14 @@
         ctx.lineTo(centerX, centerY + diamondR);
         ctx.lineTo(centerX - diamondR, centerY);
         ctx.closePath();
-        ctx.fillStyle = 'rgba(217, 119, 6, 0.09)';
+        ctx.fillStyle = 'rgba(217, 119, 6, 0.08)';
         ctx.fill();
-        ctx.strokeStyle = 'rgba(217, 119, 6, 0.4)';
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(217, 119, 6, 0.35)';
+        ctx.lineWidth = 1.4;
         ctx.stroke();
         ctx.restore();
 
-        // 2. Engraved Katar Grid Lines
+        // 2. Engraved Katar / Navakankari Grid Lines
         ctx.save();
         ctx.lineCap = 'round';
         for (const [u, v] of Edges) {
@@ -2190,14 +2682,31 @@
           ctx.moveTo(nu.x, nu.y);
           ctx.lineTo(nv.x, nv.y);
           ctx.strokeStyle = isDiag ? palette.diag : palette.line;
-          ctx.lineWidth = isDiag ? 1.8 : 2.6;
+          ctx.lineWidth = GameState.gameFamily === 'morris' ? 3.0 : (isDiag ? 1.8 : 2.6);
           ctx.stroke();
         }
         ctx.restore();
 
+        // Highlight Recently Formed 3-in-a-Row Mill Line in Navakankari Mode
+        if (GameState.gameFamily === 'morris' && GameState.lastFormedMill) {
+          const [m0, m1, m2] = GameState.lastFormedMill;
+          const n0 = Nodes[m0];
+          const n2 = Nodes[m2];
+          if (n0 && n2) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(n0.x, n0.y);
+            ctx.lineTo(n2.x, n2.y);
+            ctx.strokeStyle = '#F59E0B';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
         // 3. Active Legal Moves for Selected Piece
         let activeMoves = { steps: [], jumps: [] };
-        if (GameState.selectedNode !== null && !GameState.gameOver) {
+        if (GameState.selectedNode !== null && !GameState.gameOver && !GameState.morrisPendingRemove) {
           const raw = getLegalActionsForPiece(GameState.selectedNode);
           if (GameState.chainJumpingNode !== null) {
             activeMoves.jumps = raw.jumps;
@@ -2222,10 +2731,21 @@
             ctx.setLineDash([6, 4]);
             ctx.stroke();
             ctx.restore();
+          } else if (hTo) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(hTo.x, hTo.y, size * 0.048, 0, Math.PI * 2);
+            ctx.strokeStyle = '#D97706';
+            ctx.lineWidth = 3.5;
+            ctx.setLineDash([5, 3]);
+            ctx.stroke();
+            ctx.restore();
           }
         }
 
-        const maxDim = Math.max(GameState.rows + (GameState.hasTriangularCamps ? 4 : 0), GameState.cols);
+        const maxDim = GameState.gameFamily === 'morris'
+          ? 6.2
+          : Math.max(GameState.rows + (GameState.hasTriangularCamps ? 4 : 0), GameState.cols);
         const densityScale = Math.min(1.15, Math.max(0.58, 6 / maxDim));
 
         if (GameState.showGuides && GameState.selectedNode !== null) {
@@ -2264,13 +2784,13 @@
         }
 
         // 4. Intersection Nodes & Optional Coordinates
-        const nodeRadius = Math.max(3.8, size * 0.0155 * densityScale);
+        const nodeRadius = Math.max(4.0, size * 0.016 * densityScale);
         const midR = (GameState.rows - 1) / 2;
         const midC = (GameState.cols - 1) / 2;
 
         for (let i = 0; i < Nodes.length; i++) {
           const n = Nodes[i];
-          const isCenter = Math.abs(n.r - midR) <= 0.65 && Math.abs(n.c - midC) <= 0.65;
+          const isCenter = GameState.gameFamily !== 'morris' && Math.abs(n.r - midR) <= 0.65 && Math.abs(n.c - midC) <= 0.65;
           ctx.beginPath();
           ctx.arc(n.x, n.y, isCenter ? nodeRadius * 1.3 : nodeRadius, 0, Math.PI * 2);
           ctx.fillStyle = isCenter ? '#D97706' : palette.nodeFill;
@@ -2330,6 +2850,9 @@
         // 6. Draw 3D Tactile Gemstone Pieces
         const pieceRadius = size * 0.052 * densityScale;
         const movingDestId = VisualFX.movingPiece ? VisualFX.movingPiece.toId : -1;
+        const removableSet = (GameState.gameFamily === 'morris' && GameState.morrisPendingRemove)
+          ? new Set(getRemovableOpponentNodes(GameState.currentTurn === 1 ? 2 : 1))
+          : null;
 
         for (let i = 0; i < Nodes.length; i++) {
           const occupant = GameState.board[i];
@@ -2337,6 +2860,18 @@
           const n = Nodes[i];
           const isSelected = (GameState.selectedNode === i);
           drawGamePiece(n.x, n.y, pieceRadius, occupant, isSelected, 1);
+
+          // If in Navakankari Mill-Removal state, highlight removable enemy beads with a red target ring
+          if (removableSet && removableSet.has(i)) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, pieceRadius * 1.32, 0, Math.PI * 2);
+            ctx.strokeStyle = '#E11D48';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([4, 3]);
+            ctx.stroke();
+            ctx.restore();
+          }
         }
 
         // 7. Tweening Piece Animation
@@ -2412,7 +2947,6 @@
       function drawGamePiece(x, y, radius, player, isSelected, scale = 1) {
         ctx.save();
 
-        // Selection Halo Ring
         if (isSelected) {
           ctx.beginPath();
           ctx.arc(x, y, radius * 1.34, 0, Math.PI * 2);
@@ -2425,7 +2959,6 @@
           ctx.stroke();
         }
 
-        // Realistic 3D Tabletop Cast Shadow
         ctx.shadowColor = 'rgba(43, 23, 10, 0.48)';
         ctx.shadowBlur = 7 * scale;
         ctx.shadowOffsetY = 3.5 * scale;
@@ -2464,7 +2997,6 @@
             innerRing = 'rgba(140, 98, 57, 0.55)';
             dot = '#8C6239';
           } else {
-            // Feroza Turquoise Gemstone Bead
             grad.addColorStop(0, '#5EEAD4');
             grad.addColorStop(0.52, '#0D9488');
             grad.addColorStop(1, '#115E59');
@@ -2486,7 +3018,6 @@
           ctx.lineWidth = 1.4;
           ctx.stroke();
 
-          // Glossy Specular Highlight
           ctx.beginPath();
           ctx.arc(x - radius * 0.28, y - radius * 0.28, radius * 0.2, 0, Math.PI * 2);
           ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
@@ -2517,7 +3048,6 @@
             rim = '#D97706';
             dot = '#FDE68A';
           } else {
-            // Sang-e-Suleimani Crimson Agate Stone
             grad.addColorStop(0, '#FDA4AF');
             grad.addColorStop(0.48, '#E11D48');
             grad.addColorStop(0.88, '#9F1239');
@@ -2540,7 +3070,6 @@
           ctx.lineWidth = 1.4;
           ctx.stroke();
 
-          // Glossy Specular Highlight
           ctx.beginPath();
           ctx.arc(x - radius * 0.28, y - radius * 0.28, radius * 0.2, 0, Math.PI * 2);
           ctx.fillStyle = 'rgba(255, 255, 255, 0.42)';
@@ -2555,11 +3084,14 @@
         ctx.restore();
       }
 
+      /* -------------------------------------------------------------------
+       * 9. TOUCH / POINTER INPUT FOR BOTH LEAP KATAR & NAVAKANKARI
+       * ------------------------------------------------------------------- */
       function handleBoardTap(clientX, clientY) {
         if (GameState.gameOver) return;
 
         if (GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === 2) {
-          showBoardToast("Wait for Tactical AI's move...");
+          showBoardToast("Wait for AI's move...");
           return;
         }
 
@@ -2575,7 +3107,9 @@
         const x = clientX - rect.left;
         const y = clientY - rect.top;
 
-        const maxDim = Math.max(GameState.rows + (GameState.hasTriangularCamps ? 4 : 0), GameState.cols);
+        const maxDim = GameState.gameFamily === 'morris'
+          ? 6
+          : Math.max(GameState.rows + (GameState.hasTriangularCamps ? 4 : 0), GameState.cols);
         const hitRadius = Math.max(20, (rect.width / maxDim) * 0.52);
         let closestId = -1;
         let closestDist = Infinity;
@@ -2593,6 +3127,59 @@
 
         const tappedOccupant = GameState.board[closestId];
 
+        // CASE A: NAVAKANKARI / NINE MEN'S MORRIS INPUT
+        if (GameState.gameFamily === 'morris') {
+          const opponent = GameState.currentTurn === 1 ? 2 : 1;
+
+          // 1. Removing an opponent bead after forming a 3-in-a-row Mill
+          if (GameState.morrisPendingRemove) {
+            const removable = getRemovableOpponentNodes(opponent);
+            if (removable.includes(closestId)) {
+              executeAction({ type: 'remove_opponent', capturedId: closestId }, false);
+            } else {
+              SoundEngine.invalid();
+              showBoardToast('Tap a highlighted opponent bead (not inside a protected line of 3)!');
+            }
+            return;
+          }
+
+          // 2. Placement Phase (dropping beads from hand onto vacant nodes)
+          if (GameState.reserves[GameState.currentTurn] > 0) {
+            if (tappedOccupant === 0) {
+              executeAction({ from: -1, to: closestId, type: 'drop' }, false);
+            } else {
+              SoundEngine.invalid();
+              showBoardToast('Tap any empty intersection to place a bead from your hand');
+            }
+            return;
+          }
+
+          // 3. Movement Phase (sliding placed beads to adjacent empty nodes)
+          if (GameState.selectedNode !== null) {
+            const { steps } = getLegalActionsForPiece(GameState.selectedNode);
+            const chosenStep = steps.find((s) => s.to === closestId);
+            if (chosenStep) {
+              executeAction(chosenStep, false);
+              return;
+            }
+          }
+
+          if (tappedOccupant === GameState.currentTurn) {
+            GameState.selectedNode = closestId;
+            VisualFX.hintHighlight = null;
+            SoundEngine.select();
+            updateHUD();
+            requestRender();
+          } else {
+            SoundEngine.invalid();
+            GameState.selectedNode = null;
+            updateHUD();
+            requestRender();
+          }
+          return;
+        }
+
+        // CASE B: LEAP-AND-CAPTURE KATAR / SHOLO GUTI INPUT
         if (GameState.chainJumpingNode !== null) {
           const { jumps } = getLegalActionsForPiece(GameState.chainJumpingNode);
           const chosenJump = jumps.find((j) => j.to === closestId);
@@ -2672,7 +3259,7 @@
         toastTimer = setTimeout(() => {
           el.classList.remove('opacity-100');
           el.classList.add('opacity-0');
-        }, 1900);
+        }, 2100);
       }
 
       function syncSettingsControlsFromState() {
@@ -2688,13 +3275,18 @@
         campVal.textContent = GameState.hasTriangularCamps ? 'ON (+12 Nodes)' : 'OFF';
         campBtn.textContent = GameState.hasTriangularCamps ? 'Remove Triangular Camps' : 'Add North/South Camps';
 
-        const totalNodes = GameState.rows * GameState.cols + (GameState.hasTriangularCamps ? 12 : 0);
-        document.getElementById('lblActiveGridSummary').textContent = `${totalNodes} Intersections (${GameState.rows}×${GameState.cols}${GameState.hasTriangularCamps ? '+Camps' : ''})`;
+        const totalNodes = GameState.gameFamily === 'morris'
+          ? 24
+          : (GameState.rows * GameState.cols + (GameState.hasTriangularCamps ? 12 : 0));
+        document.getElementById('lblActiveGridSummary').textContent = GameState.gameFamily === 'morris'
+          ? `24 Intersections (Navakankari Mill)`
+          : `${totalNodes} Intersections (${GameState.rows}×${GameState.cols}${GameState.hasTriangularCamps ? '+Camps' : ''})`;
 
         document.getElementById('selOpenCenterMode').value = GameState.openCenterMode;
         document.getElementById('selReserveMode').value = GameState.reserveMode;
         document.getElementById('rngPiecesPerPlayer').value = String(GameState.piecesPerPlayer);
         document.getElementById('valPiecesPerPlayer').textContent = `${GameState.piecesPerPlayer} Pieces Each`;
+        document.getElementById('lblQuickBeadCount').textContent = String(GameState.piecesPerPlayer);
 
         document.getElementById('selChainRule').value = GameState.chainRule;
         document.getElementById('selMandatoryCapture').value = GameState.mandatoryCapture;
@@ -2709,18 +3301,30 @@
         document.getElementById('chkEnableHaptics').checked = SoundEngine.hapticsEnabled;
         document.getElementById('selAIDifficulty').value = GameState.aiDifficulty;
 
-        // Sync Main-Screen Opponent Mode Buttons & 4 Difficulty Chips
+        // Sync Quick Multi-Eat vs 1 Bead/Bari Buttons on Main Screen
+        const btnMultiEat = document.getElementById('btnQuickMultiEat');
+        const btnSingleEat = document.getElementById('btnQuickSingleEat');
+        if (btnMultiEat && btnSingleEat) {
+          if (GameState.chainRule === 'single_only') {
+            btnSingleEat.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
+            btnMultiEat.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
+          } else {
+            btnMultiEat.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm';
+            btnSingleEat.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
+          }
+        }
+
         const btnMainAI = document.getElementById('btnMainModeAI');
         const btnMain2P = document.getElementById('btnMainMode2P');
         const diffGroup = document.getElementById('mainAIDiffGroup');
         if (btnMainAI && btnMain2P) {
           if (GameState.vsAI && GameState.mode === 'pass_play') {
-            btnMainAI.className = 'android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1';
-            btnMain2P.className = 'android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1';
+            btnMainAI.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1';
+            btnMain2P.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1';
             if (diffGroup) diffGroup.classList.remove('opacity-40', 'pointer-events-none');
           } else {
-            btnMain2P.className = 'android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1';
-            btnMainAI.className = 'android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1';
+            btnMain2P.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1';
+            btnMainAI.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1';
             if (diffGroup) diffGroup.classList.add('opacity-40', 'pointer-events-none');
           }
         }
@@ -2741,18 +3345,18 @@
           const d = chip.getAttribute('data-ai-diff');
           if (d === GameState.aiDifficulty) {
             chip.className = d === 'hardest'
-              ? 'ai-diff-chip android-btn px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-rose-600 text-white shadow-sm'
-              : 'ai-diff-chip android-btn px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
+              ? 'ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-600 text-white shadow-sm'
+              : 'ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
           } else {
             chip.className = d === 'hardest'
-              ? 'ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[11px] font-bold bg-white text-rose-800 border border-rose-300'
-              : 'ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[11px] font-bold bg-white text-walnut-700 border border-parchment-300';
+              ? 'ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-rose-800 border border-rose-300'
+              : 'ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-700 border border-parchment-300';
           }
         });
 
         const btnChain = document.getElementById('btnToggleChainRule');
         if (btnChain) {
-          btnChain.textContent = GameState.chainRule === 'single_only' ? 'Single Jump Only' : 'Multi-Jump Chain';
+          btnChain.textContent = GameState.chainRule === 'single_only' ? '1 Bead / Bari' : 'Multi-Jump Chain';
         }
         const btnPlace = document.getElementById('btnTogglePlacementMode');
         if (btnPlace) {
@@ -2790,6 +3394,7 @@
         const p1Total = countPlayerTotalPieces(1);
         const p2Total = countPlayerTotalPieces(2);
         const maxP = GameState.piecesPerPlayer;
+        const winCapTarget = GameState.gameFamily === 'morris' ? Math.max(1, maxP - 2) : maxP;
 
         document.getElementById('p1RemainingCount').textContent = String(p1Total);
         document.getElementById('p2RemainingCount').textContent = String(p2Total);
@@ -2800,28 +3405,31 @@
 
         document.getElementById('p1CapturedCount').textContent = String(GameState.capturedBy[1]);
         document.getElementById('p2CapturedCount').textContent = String(GameState.capturedBy[2]);
-        document.getElementById('p1TargetCapLabel').textContent = `/${maxP}`;
-        document.getElementById('p2TargetCapLabel').textContent = `/${maxP}`;
+        document.getElementById('p1TargetCapLabel').textContent = `/${winCapTarget}`;
+        document.getElementById('p2TargetCapLabel').textContent = `/${winCapTarget}`;
 
-        const p1Pct = Math.min(100, Math.round((GameState.capturedBy[1] / Math.max(1, maxP)) * 100));
-        const p2Pct = Math.min(100, Math.round((GameState.capturedBy[2] / Math.max(1, maxP)) * 100));
+        const p1Pct = Math.min(100, Math.round((GameState.capturedBy[1] / Math.max(1, winCapTarget)) * 100));
+        const p2Pct = Math.min(100, Math.round((GameState.capturedBy[2] / Math.max(1, winCapTarget)) * 100));
         document.getElementById('p1CaptureBar').style.width = `${p1Pct}%`;
         document.getElementById('p2CaptureBar').style.width = `${p2Pct}%`;
 
         const subEl = document.getElementById('modeSubtitle');
-        const modeTxt = WebRTCManager.isConnected()
-          ? `WebRTC P2P (P${GameState.localPlayerRole || 1})`
-          : (GameState.vsAI ? `vs AI (${GameState.aiDifficulty.toUpperCase()})` : 'Pass & Play');
-        subEl.textContent = `${modeTxt} • ${GameState.rows}×${GameState.cols}${GameState.hasTriangularCamps ? '+Camps' : ''} (${Nodes.length} Nodes • ${maxP} Beads)`;
+        const eatModeTxt = GameState.gameFamily === 'morris'
+          ? '3-in-a-Row Mill'
+          : (GameState.chainRule === 'single_only' ? '1 Bead/Bari' : 'Multi-Eat');
+        const boardTxt = GameState.gameFamily === 'morris'
+          ? `Navakankari (${maxP} Beads)`
+          : `${GameState.rows}×${GameState.cols} (${Nodes.length} Nodes • ${maxP} Beads)`;
+        subEl.textContent = `By Yasin Ullah (For Muhib Ullah) • ${boardTxt} • ${eatModeTxt}`;
 
         const c1 = document.getElementById('cardPlayer1');
         const c2 = document.getElementById('cardPlayer2');
         if (GameState.currentTurn === 1) {
-          c1.className = 'game-card-active-p1 rounded-2xl p-2.5 sm:p-3.5 transition-all duration-200';
-          c2.className = 'game-card rounded-2xl p-2.5 sm:p-3.5 transition-all duration-200 opacity-85';
+          c1.className = 'game-card-active-p1 rounded-2xl p-2 sm:p-3 transition-all duration-200';
+          c2.className = 'game-card rounded-2xl p-2 sm:p-3 transition-all duration-200 opacity-85';
         } else {
-          c2.className = 'game-card-active-p2 rounded-2xl p-2.5 sm:p-3.5 transition-all duration-200';
-          c1.className = 'game-card rounded-2xl p-2.5 sm:p-3.5 transition-all duration-200 opacity-85';
+          c2.className = 'game-card-active-p2 rounded-2xl p-2 sm:p-3 transition-all duration-200';
+          c1.className = 'game-card rounded-2xl p-2 sm:p-3 transition-all duration-200 opacity-85';
         }
 
         const [p1Title, p2Title] = getThemePlayerNames();
@@ -2835,13 +3443,22 @@
 
         if (GameState.currentTurn === 1) {
           dot.className = 'w-3.5 h-3.5 rounded-full bg-teal-600 shrink-0 ring-4 ring-teal-500/20';
-          headline.textContent = `${p1Title}'s Turn`;
+          headline.textContent = `${p1Title}'s Bari (Turn)`;
         } else {
           dot.className = 'w-3.5 h-3.5 rounded-full bg-rose-600 shrink-0 ring-4 ring-rose-500/20';
-          headline.textContent = `${p2Title}'s Turn`;
+          headline.textContent = `${p2Title}'s Bari (Turn)`;
         }
 
-        if (GameState.chainJumpingNode !== null) {
+        if (GameState.gameFamily === 'morris') {
+          btnEndChain.classList.add('hidden');
+          if (GameState.morrisPendingRemove) {
+            subtext.textContent = 'KATAR (Line of 3)! Tap an opponent bead to remove it!';
+          } else if (GameState.reserves[GameState.currentTurn] > 0) {
+            subtext.textContent = `Placement Phase: Tap any empty point to place a bead (${GameState.reserves[GameState.currentTurn]} in hand)`;
+          } else {
+            subtext.textContent = 'Move Phase: Slide a bead along a line to form a row of 3!';
+          }
+        } else if (GameState.chainJumpingNode !== null) {
           if (GameState.chainRule === 'multi_mandatory') {
             subtext.textContent = 'Mandatory Chain Jump! Tap the next gold target';
             btnEndChain.classList.add('hidden');
@@ -2853,12 +3470,12 @@
           btnEndChain.classList.add('hidden');
           if (GameState.mode === 'webrtc' && WebRTCManager.isConnected() && GameState.localPlayerRole) {
             subtext.textContent = GameState.currentTurn === GameState.localPlayerRole
-              ? 'Your turn! Select a piece to move or jump'
+              ? 'Your bari! Select a bead to move or jump'
               : 'Waiting for remote peer over WebRTC DataChannel...';
           } else if (GameState.selectedNode !== null) {
             subtext.textContent = 'Tap a highlighted destination node';
           } else {
-            subtext.textContent = 'Tap one of your pieces to inspect legal moves';
+            subtext.textContent = `Tap one of your beads (${GameState.chainRule === 'single_only' ? '1 Bead/Bari mode' : 'Multi-Eat mode'})`;
           }
         }
 
@@ -2870,12 +3487,16 @@
       function showVictoryModal() {
         const modal = document.getElementById('modalVictory');
         const [p1Title, p2Title] = getThemePlayerNames();
+        const winCapTarget = GameState.gameFamily === 'morris'
+          ? Math.max(1, GameState.piecesPerPlayer - 2)
+          : GameState.piecesPerPlayer;
+
         document.getElementById('victoryHeadline').textContent = GameState.winner === 1
           ? `${p1Title} Wins!`
           : `${p2Title} Wins!`;
         document.getElementById('victoryReason').textContent = GameState.winReason;
-        document.getElementById('victoryP1Score').textContent = `${GameState.capturedBy[1]} / ${GameState.piecesPerPlayer}`;
-        document.getElementById('victoryP2Score').textContent = `${GameState.capturedBy[2]} / ${GameState.piecesPerPlayer}`;
+        document.getElementById('victoryP1Score').textContent = `${GameState.capturedBy[1]} / ${winCapTarget}`;
+        document.getElementById('victoryP2Score').textContent = `${GameState.capturedBy[2]} / ${winCapTarget}`;
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -2883,6 +3504,8 @@
 
       function serializeGameState() {
         return {
+          gameFamily: GameState.gameFamily,
+          morrisDiagonals: GameState.morrisDiagonals,
           gridPreset: GameState.gridPreset,
           rows: GameState.rows,
           cols: GameState.cols,
@@ -2902,6 +3525,8 @@
           selectedNode: GameState.selectedNode,
           chainJumpingNode: GameState.chainJumpingNode,
           chainCount: GameState.chainCount,
+          morrisPendingRemove: GameState.morrisPendingRemove,
+          lastFormedMill: GameState.lastFormedMill,
           gameOver: GameState.gameOver,
           winner: GameState.winner,
           winReason: GameState.winReason
@@ -2911,11 +3536,15 @@
       function applyRemoteGameState(remote) {
         if (!remote) return;
         const topologyChanged = (
+          remote.gameFamily !== GameState.gameFamily ||
+          remote.morrisDiagonals !== GameState.morrisDiagonals ||
           remote.rows !== GameState.rows ||
           remote.cols !== GameState.cols ||
           remote.hasTriangularCamps !== GameState.hasTriangularCamps ||
           remote.diagonalMode !== GameState.diagonalMode
         );
+        GameState.gameFamily = remote.gameFamily || 'leap';
+        GameState.morrisDiagonals = Boolean(remote.morrisDiagonals);
         GameState.gridPreset = remote.gridPreset || GameState.gridPreset;
         GameState.rows = remote.rows || GameState.rows;
         GameState.cols = remote.cols || GameState.cols;
@@ -2941,6 +3570,8 @@
         GameState.selectedNode = remote.selectedNode;
         GameState.chainJumpingNode = remote.chainJumpingNode;
         GameState.chainCount = remote.chainCount || 0;
+        GameState.morrisPendingRemove = Boolean(remote.morrisPendingRemove);
+        GameState.lastFormedMill = remote.lastFormedMill || null;
         GameState.gameOver = Boolean(remote.gameOver);
         GameState.winner = remote.winner;
         GameState.winReason = remote.winReason || '';
@@ -2958,6 +3589,9 @@
         requestRender();
       }
 
+      /* -------------------------------------------------------------------
+       * 11. OFFLINE WEBRTC PEER-TO-PEER ENGINE
+       * ------------------------------------------------------------------- */
       const WebRTCManager = {
         pc: null,
         dc: null,
@@ -3133,6 +3767,7 @@
             );
             SoundEngine.victory();
             showBoardToast(`WebRTC Connected! You are Player ${GameState.localPlayerRole || 1}`);
+            syncSettingsControlsFromState();
             updateHUD();
 
             if (GameState.localPlayerRole === 1) {
@@ -3360,6 +3995,9 @@
         }
       }
 
+      /* -------------------------------------------------------------------
+       * 12. UI EVENT LISTENERS & QUICK BAR WIRING
+       * ------------------------------------------------------------------- */
       document.querySelectorAll('.quick-grid-chip').forEach((chip) => {
         chip.addEventListener('click', () => {
           const preset = chip.getAttribute('data-grid-preset');
@@ -3373,6 +4011,47 @@
           initMatch(true);
           showBoardToast(`Switched to ${chip.textContent.trim()}`);
         });
+      });
+
+      // Main-Screen 1 Bead/Bari vs Multi-Eat Quick Toggle
+      document.getElementById('btnQuickMultiEat').addEventListener('click', () => {
+        GameState.chainRule = 'multi_optional';
+        SoundEngine.select();
+        syncSettingsControlsFromState();
+        updateHUD();
+        showBoardToast('Capture Mode: Multi-Eat (Chain Jumps Enabled)');
+      });
+
+      document.getElementById('btnQuickSingleEat').addEventListener('click', () => {
+        GameState.chainRule = 'single_only';
+        if (GameState.chainJumpingNode !== null) {
+          finishTurnAndCheckWin(GameState.currentTurn, false, { type: 'end_chain' });
+        }
+        SoundEngine.select();
+        syncSettingsControlsFromState();
+        updateHUD();
+        showBoardToast('Capture Mode: Strictly 1 Bead Eaten per Bari (Turn)');
+      });
+
+      // Main-Screen Bead Count Stepper (- / +)
+      document.getElementById('btnBeadsMinus').addEventListener('click', () => {
+        const minB = GameState.gameFamily === 'morris' ? 3 : 4;
+        if (GameState.piecesPerPlayer > minB) {
+          GameState.piecesPerPlayer--;
+          SoundEngine.select();
+          initMatch(true);
+          showBoardToast(`Playing with ${GameState.piecesPerPlayer} Beads per player`);
+        }
+      });
+
+      document.getElementById('btnBeadsPlus').addEventListener('click', () => {
+        const maxB = GameState.gameFamily === 'morris' ? 12 : 36;
+        if (GameState.piecesPerPlayer < maxB) {
+          GameState.piecesPerPlayer++;
+          SoundEngine.select();
+          initMatch(true);
+          showBoardToast(`Playing with ${GameState.piecesPerPlayer} Beads per player`);
+        }
       });
 
       document.getElementById('btnOpenConnectionModal').addEventListener('click', () => {
@@ -3412,6 +4091,7 @@
         GameState.chainRule = GameState.chainRule === 'single_only' ? 'multi_optional' : 'single_only';
         SoundEngine.select();
         syncSettingsControlsFromState();
+        updateHUD();
       });
 
       document.getElementById('btnTogglePlacementMode').addEventListener('click', () => {
@@ -3439,6 +4119,7 @@
       });
 
       document.getElementById('rngCustomRows').addEventListener('input', (e) => {
+        GameState.gameFamily = 'leap';
         GameState.rows = parseInt(e.target.value, 10) || 6;
         GameState.gridPreset = 'custom';
         GameState.piecesPerPlayer = computeRecommendedPieces();
@@ -3446,6 +4127,7 @@
       });
 
       document.getElementById('rngCustomCols').addEventListener('input', (e) => {
+        GameState.gameFamily = 'leap';
         GameState.cols = parseInt(e.target.value, 10) || 6;
         GameState.gridPreset = 'custom';
         GameState.piecesPerPlayer = computeRecommendedPieces();
@@ -3453,6 +4135,7 @@
       });
 
       document.getElementById('btnToggleTriCamps').addEventListener('click', () => {
+        GameState.gameFamily = 'leap';
         GameState.hasTriangularCamps = !GameState.hasTriangularCamps;
         GameState.gridPreset = 'custom';
         GameState.piecesPerPlayer = computeRecommendedPieces();
@@ -3475,17 +4158,19 @@
       document.getElementById('rngPiecesPerPlayer').addEventListener('input', (e) => {
         GameState.piecesPerPlayer = parseInt(e.target.value, 10) || 18;
         document.getElementById('valPiecesPerPlayer').textContent = `${GameState.piecesPerPlayer} Pieces Each`;
+        document.getElementById('lblQuickBeadCount').textContent = String(GameState.piecesPerPlayer);
       });
 
       document.getElementById('btnAutoFitPieces').addEventListener('click', () => {
         GameState.piecesPerPlayer = computeRecommendedPieces();
         SoundEngine.select();
         syncSettingsControlsFromState();
-        showBoardToast(`Auto-fitted to ${GameState.piecesPerPlayer} pieces per player`);
+        showBoardToast(`Auto-fitted to ${GameState.piecesPerPlayer} beads per player`);
       });
 
       document.getElementById('selChainRule').addEventListener('change', (e) => {
         GameState.chainRule = e.target.value;
+        syncSettingsControlsFromState();
       });
 
       document.getElementById('selMandatoryCapture').addEventListener('change', (e) => {
@@ -3534,7 +4219,7 @@
         document.getElementById('modalRules').classList.add('hidden');
         document.getElementById('modalRules').classList.remove('flex');
         initMatch(true);
-        showBoardToast(`Match started: ${Nodes.length} intersections (${GameState.piecesPerPlayer}v${GameState.piecesPerPlayer})`);
+        showBoardToast(`Match started: ${Nodes.length} nodes (${GameState.piecesPerPlayer}v${GameState.piecesPerPlayer} Beads)`);
       });
 
       document.getElementById('btnRestoreDefaultSettings').addEventListener('click', () => {
@@ -3570,6 +4255,8 @@
         GameState.selectedNode = null;
         GameState.chainJumpingNode = snap.chainJumpingNode;
         GameState.chainCount = snap.chainCount;
+        GameState.morrisPendingRemove = Boolean(snap.morrisPendingRemove);
+        GameState.lastFormedMill = snap.lastFormedMill || null;
         SoundEngine.select();
         resetTurnTimer();
         showBoardToast('Undid last move');
@@ -3579,13 +4266,23 @@
 
       document.getElementById('btnHintMove').addEventListener('click', () => {
         if (GameState.gameOver) return;
+        if (GameState.gameFamily === 'morris' && GameState.morrisPendingRemove) {
+          const rem = getRemovableOpponentNodes(GameState.currentTurn === 1 ? 2 : 1);
+          if (rem.length > 0) {
+            VisualFX.hintHighlight = { from: -1, to: rem[0] };
+            SoundEngine.select();
+            showBoardToast('Hint: Tap the highlighted opponent bead to remove it!');
+            requestRender();
+          }
+          return;
+        }
         const { allSteps, allJumps } = getAllLegalActionsForPlayer(GameState.currentTurn);
         const pick = allJumps.length > 0 ? allJumps[0] : (allSteps.length > 0 ? allSteps[0] : null);
         if (!pick) {
           showBoardToast('No legal moves available!');
           return;
         }
-        GameState.selectedNode = pick.from;
+        GameState.selectedNode = pick.from >= 0 ? pick.from : null;
         VisualFX.hintHighlight = { from: pick.from, to: pick.to };
         SoundEngine.select();
         showBoardToast(pick.type === 'jump' ? 'Hint: Leap-and-capture available!' : 'Hint: Suggested move highlighted');
@@ -3603,7 +4300,7 @@
       document.getElementById('btnResetMatch').addEventListener('click', () => {
         SoundEngine.select();
         initMatch(true);
-        showBoardToast('New Katar match started!');
+        showBoardToast('New match started!');
       });
 
       document.getElementById('btnVictoryPlayAgain').addEventListener('click', () => {
