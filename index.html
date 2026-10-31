@@ -1,0 +1,3814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#F5EBDC" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Katar (قطار) — Royal Pashtun Strategy Board Game</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Inter:wght@500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            display: ['Cinzel', 'Georgia', 'serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
+          colors: {
+            parchment: {
+              50: '#FFFDF9',
+              100: '#FBF5EA',
+              200: '#F3E7D3',
+              300: '#E5D2B5',
+              400: '#CFB28A'
+            },
+            walnut: {
+              600: '#7C4D2B',
+              700: '#5C371E',
+              800: '#422512',
+              900: '#2B170A'
+            },
+            feroza: {
+              400: '#2DD4BF',
+              500: '#0D9488',
+              600: '#0F766E',
+              700: '#115E59'
+            },
+            sang: {
+              400: '#FB7185',
+              500: '#E11D48',
+              600: '#BE123C',
+              700: '#9F1239'
+            },
+            brass: {
+              400: '#FBBF24',
+              500: '#D97706',
+              600: '#B45309'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: manipulation;
+      background: radial-gradient(circle at 50% 25%, #FFFDF9 0%, #F4E8D4 55%, #E5D1B3 100%);
+      color: #2B170A;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    /* Subtle Geometric Tabletop Pattern Backdrop */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.25;
+      background-image: radial-gradient(#B48A5A 1px, transparent 1px), radial-gradient(#B48A5A 1px, #F4E8D4 1px);
+      background-size: 28px 28px;
+      background-position: 0 0, 14px 14px;
+      z-index: 0;
+    }
+
+    textarea.selectable-input, input.selectable-input, select.selectable-input {
+      user-select: text !important;
+      -webkit-user-select: text !important;
+      -webkit-touch-callout: default !important;
+    }
+
+    /* Royal Pashtun Mosaic Trim */
+    .pashtun-border {
+      background-image: repeating-linear-gradient(
+        90deg,
+        #0D9488 0px,
+        #0D9488 10px,
+        #D97706 10px,
+        #D97706 20px,
+        #E11D48 20px,
+        #E11D48 30px,
+        #5C371E 30px,
+        #5C371E 40px
+      );
+      height: 4px;
+      width: 100%;
+    }
+
+    /* Tactile 3D Mobile Game Buttons */
+    .android-btn {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.1s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.12s ease, background-color 0.15s ease;
+    }
+    .android-btn:active:not(:disabled) {
+      transform: translateY(2px) scale(0.98);
+    }
+    .android-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .game-card {
+      background: linear-gradient(180deg, #FFFDF9 0%, #F8EFE0 100%);
+      border: 2px solid #DEC8A8;
+      box-shadow: 0 6px 16px -4px rgba(66, 37, 18, 0.14), 0 2px 0 0 #CBB08A;
+    }
+
+    .game-card-active-p1 {
+      background: linear-gradient(180deg, #F0FDFA 0%, #CCFBF1 100%);
+      border: 2px solid #0D9488;
+      box-shadow: 0 8px 20px -4px rgba(13, 148, 136, 0.28), 0 3px 0 0 #0F766E;
+    }
+
+    .game-card-active-p2 {
+      background: linear-gradient(180deg, #FFF1F2 0%, #FFE4E6 100%);
+      border: 2px solid #E11D48;
+      box-shadow: 0 8px 20px -4px rgba(225, 29, 72, 0.25), 0 3px 0 0 #BE123C;
+    }
+
+    .board-3d-frame {
+      padding: 8px;
+      border-radius: 24px;
+      background: linear-gradient(145deg, #6E4223 0%, #4A2A14 55%, #331B0B 100%);
+      box-shadow:
+        0 18px 36px -8px rgba(43, 23, 10, 0.45),
+        0 6px 0 0 #261307,
+        inset 0 2px 3px rgba(255, 235, 200, 0.35);
+      border: 2px solid #8C5832;
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #F3E7D3;
+      border-radius: 9999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #B8976C;
+      border-radius: 9999px;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.55); }
+      50% { box-shadow: 0 0 0 8px rgba(217, 119, 6, 0); }
+    }
+    .chain-pulse {
+      animation: pulseGlow 1.4s infinite;
+    }
+  </style>
+</head>
+<body class="flex flex-col h-full w-full select-none overflow-hidden relative">
+
+  <!-- Decorative Royal Geometric Top Ribbon -->
+  <div class="pashtun-border shrink-0 z-20"></div>
+
+  <!-- Top Arcade Game Bar -->
+  <header class="shrink-0 bg-parchment-50/95 backdrop-blur border-b-2 border-parchment-300 px-3 sm:px-4 py-2 flex items-center justify-between gap-2 z-20 shadow-sm">
+    <div class="flex items-center gap-2.5 min-w-0">
+      <!-- Royal Medallion Logo -->
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-walnut-800 p-0.5 shadow-md shrink-0">
+        <div class="w-full h-full rounded-[14px] bg-parchment-50 flex items-center justify-center">
+          <svg class="w-6 h-6 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polygon points="12 2 22 12 12 22 2 12" fill="rgba(217,119,6,0.15)" stroke-linejoin="round" />
+            <circle cx="12" cy="12" r="3" fill="currentColor" />
+            <line x1="12" y1="2" x2="12" y2="22" stroke-opacity="0.45" />
+            <line x1="2" y1="12" x2="22" y2="12" stroke-opacity="0.45" />
+          </svg>
+        </div>
+      </div>
+      <div class="truncate">
+        <div class="flex items-center gap-1.5">
+          <h1 class="font-display text-base sm:text-lg font-extrabold tracking-wide text-walnut-900">KATAR</h1>
+          <span class="text-[11px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded-md">قطار</span>
+          <span id="timerBadge" class="hidden text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-sm">30s</span>
+        </div>
+        <p id="modeSubtitle" class="text-[11px] font-semibold text-walnut-600 truncate">Pass &amp; Play • 6×6 Grid (36 Nodes • 18 Beads)</p>
+      </div>
+    </div>
+
+    <!-- Top Right Tactile Game Buttons -->
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <button id="btnOpenRulesModal" type="button" class="android-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 border border-amber-600/40 shadow-[0_3px_0_#B45309]" aria-label="Grid &amp; Match Settings" title="Customize Grid &amp; All Game Settings">
+        <svg class="w-4 h-4 text-walnut-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" />
+          <rect x="14" y="3" width="7" height="7" rx="1.5" />
+          <rect x="14" y="14" width="7" height="7" rx="1.5" />
+          <rect x="3" y="14" width="7" height="7" rx="1.5" />
+        </svg>
+        <span class="hidden sm:inline">Grid &amp; Settings</span>
+        <span class="sm:hidden">Setup</span>
+      </button>
+
+      <button id="btnOpenConnectionModal" type="button" class="android-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-white to-parchment-200 hover:from-white hover:to-parchment-100 text-walnut-800 border border-parchment-400 shadow-[0_3px_0_#C4A67C]" title="Multiplayer &amp; Mode Settings">
+        <span id="connStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200"></span>
+        <span id="connStatusLabel">Mode / P2P</span>
+      </button>
+
+      <button id="btnToggleAudio" type="button" class="android-btn p-2 rounded-xl bg-gradient-to-b from-white to-parchment-200 text-walnut-800 border border-parchment-400 shadow-[0_3px_0_#C4A67C]" aria-label="Toggle Sound" title="Toggle Web Audio Synth">
+        <svg id="iconAudioOn" class="w-4 h-4 text-teal-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+        </svg>
+        <svg id="iconAudioOff" class="w-4 h-4 text-walnut-600 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <line x1="23" y1="9" x2="17" y2="15" />
+          <line x1="17" y1="9" x2="23" y2="15" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Quick One-Tap Grid Preset Switcher Ribbon -->
+  <nav class="shrink-0 bg-parchment-100/95 border-b border-parchment-300 px-3 py-1.5 flex items-center gap-1.5 overflow-x-auto no-scrollbar z-10">
+    <span class="text-[10px] font-extrabold uppercase tracking-wider text-walnut-700 shrink-0 mr-1">Board:</span>
+    <button type="button" data-grid-preset="6x6" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold shrink-0 bg-teal-600 text-white shadow-sm">
+      6×6 Katar (36 Nodes • 18v18)
+    </button>
+    <button type="button" data-grid-preset="6x7" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 bg-white text-walnut-800 border border-parchment-300">
+      6×7 Maidaan (42 Nodes • 18v18 On-Board)
+    </button>
+    <button type="button" data-grid-preset="37_sholo" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 bg-white text-walnut-800 border border-parchment-300">
+      37-Pt Sholo Guti (Camps • 16v16 / 18v18)
+    </button>
+    <button type="button" data-grid-preset="5x5" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 bg-white text-walnut-800 border border-parchment-300">
+      5×5 Baro Guti (25 Nodes • 12v12)
+    </button>
+    <button type="button" data-grid-preset="5x7" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 bg-white text-walnut-800 border border-parchment-300">
+      5×7 Extended (35 Nodes • 15v15)
+    </button>
+    <button type="button" data-grid-preset="7x7" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 bg-white text-walnut-800 border border-parchment-300">
+      7×7 Grand (49 Nodes • 24v24)
+    </button>
+    <button type="button" data-grid-preset="4x4" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 bg-white text-walnut-800 border border-parchment-300">
+      4×4 Blitz (16 Nodes • 6v6)
+    </button>
+    <button type="button" data-grid-preset="custom" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold shrink-0 bg-amber-100 text-amber-900 border border-amber-400">
+      Custom R×C...
+    </button>
+  </nav>
+
+  <!-- Main-Screen Solo AI vs 2P Pass & Play + 4-Tier Difficulty Selector Bar -->
+  <div class="shrink-0 bg-parchment-50/90 border-b border-parchment-300 px-3 py-1.5 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar z-10">
+    <div class="flex items-center gap-1.5 shrink-0">
+      <span class="text-[10px] font-extrabold uppercase tracking-wider text-walnut-700 mr-0.5">Opponent:</span>
+      <button id="btnMainModeAI" type="button" class="android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1">
+        <span>🤖 Solo vs AI</span>
+      </button>
+      <button id="btnMainMode2P" type="button" class="android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1">
+        <span>👥 2P Local</span>
+      </button>
+    </div>
+
+    <div id="mainAIDiffGroup" class="flex items-center gap-1 shrink-0">
+      <span class="text-[10px] font-extrabold uppercase tracking-wider text-walnut-700 mr-0.5">AI Level:</span>
+      <button type="button" data-ai-diff="easy" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[11px] font-bold bg-white text-walnut-700 border border-parchment-300">
+        Easy
+      </button>
+      <button type="button" data-ai-diff="medium" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm">
+        Medium
+      </button>
+      <button type="button" data-ai-diff="hard" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[11px] font-bold bg-white text-walnut-700 border border-parchment-300">
+        Hard
+      </button>
+      <button type="button" data-ai-diff="hardest" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[11px] font-bold bg-white text-rose-800 border border-rose-300">
+        🔥 Hardest
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Tabletop Game Stage -->
+  <main class="flex-1 flex flex-col lg:flex-row items-center justify-between lg:justify-center gap-2 sm:gap-4 px-3 py-2 min-h-0 overflow-hidden z-10">
+
+    <!-- Left / Top Player HUD Column (Player 2 + Turn Banner) -->
+    <section class="w-full lg:w-72 flex flex-col gap-2 shrink-0">
+      <!-- Player 2 (North) Tabletop Medallion Card -->
+      <div id="cardPlayer2" class="game-card rounded-2xl p-2.5 sm:p-3.5 transition-all duration-200">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <!-- 3D Ruby Agate Stone Avatar -->
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-400 via-rose-600 to-rose-900 p-0.5 shadow-md flex items-center justify-center shrink-0">
+              <div class="w-full h-full rounded-[14px] border-2 border-rose-200/60 flex items-center justify-center bg-rose-700/40">
+                <div class="w-3 h-3 rounded-full bg-rose-100 shadow-inner"></div>
+              </div>
+            </div>
+            <div class="truncate">
+              <div class="flex items-center gap-1.5">
+                <span id="p2NameLabel" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Player 2 (Sang)</span>
+                <span id="p2RoleBadge" class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300">NORTH</span>
+              </div>
+              <div class="flex items-center gap-2 text-[11px] font-semibold text-walnut-700 mt-0.5">
+                <span>In Play: <strong id="p2RemainingCount" class="text-rose-700 font-mono font-extrabold">18</strong>/<span id="p2MaxPiecesLabel" class="font-mono">18</span></span>
+                <span>•</span>
+                <span>Reserve: <strong id="p2ReserveCount" class="text-amber-700 font-mono font-extrabold">2</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Captured Counter Trophy Pill -->
+          <div class="bg-white/90 border border-parchment-300 rounded-xl px-2.5 py-1 text-right shrink-0 shadow-inner">
+            <div class="text-[9px] uppercase tracking-wider text-walnut-600 font-extrabold">Captured</div>
+            <div class="flex items-center justify-end gap-0.5">
+              <span id="p2CapturedCount" class="text-sm sm:text-base font-extrabold font-mono text-rose-600">0</span>
+              <span id="p2TargetCapLabel" class="text-xs text-walnut-600 font-mono font-bold">/18</span>
+            </div>
+          </div>
+        </div>
+        <div class="w-full h-2 bg-parchment-200 rounded-full overflow-hidden mt-2 border border-parchment-300 flex">
+          <div id="p2CaptureBar" class="h-full bg-gradient-to-r from-rose-500 to-amber-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Active Turn & Tactical Prompt Banner -->
+      <div id="turnBanner" class="game-card rounded-2xl px-3.5 py-2 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span id="turnIndicatorDot" class="w-3.5 h-3.5 rounded-full bg-teal-600 shrink-0 ring-4 ring-teal-500/20"></span>
+          <div class="truncate">
+            <div id="turnHeadline" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Player 1's Turn (Feroza)</div>
+            <div id="turnSubtext" class="text-[11px] font-medium text-walnut-600 truncate">Tap a piece to inspect legal moves</div>
+          </div>
+        </div>
+
+        <button id="btnEndChainTurn" type="button" class="hidden android-btn chain-pulse px-3 py-1.5 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-xs shrink-0 shadow-[0_3px_0_#B45309] border border-amber-600/40">
+          End Chain ✓
+        </button>
+      </div>
+    </section>
+
+    <!-- Center Handcrafted 3D Wooden Board Stage -->
+    <section id="boardContainerWrapper" class="flex-1 w-full h-full flex items-center justify-center min-h-0 min-w-0 relative overflow-hidden">
+      <div id="canvasAspectBox" class="board-3d-frame relative flex items-center justify-center">
+        <canvas id="katarCanvas" class="block rounded-2xl cursor-pointer"></canvas>
+
+        <!-- Floating Game Banner Toast -->
+        <div id="boardToast" class="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-walnut-900/95 border-2 border-amber-400 text-amber-300 text-xs font-extrabold shadow-xl opacity-0 transition-opacity duration-200 whitespace-nowrap z-10">
+          Leap Capture!
+        </div>
+      </div>
+    </section>
+
+    <!-- Right / Bottom Player HUD Column (Player 1 + Tactile Action Dock) -->
+    <section class="w-full lg:w-72 flex flex-col gap-2 shrink-0">
+      <!-- Player 1 (South) Tabletop Medallion Card -->
+      <div id="cardPlayer1" class="game-card-active-p1 rounded-2xl p-2.5 sm:p-3.5 transition-all duration-200">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <!-- 3D Feroza Turquoise Bead Avatar -->
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-300 via-teal-600 to-teal-900 p-0.5 shadow-md flex items-center justify-center shrink-0">
+              <div class="w-full h-full rounded-[14px] border-2 border-amber-300/80 flex items-center justify-center bg-teal-700/40">
+                <div class="w-3 h-3 rounded-full bg-amber-300 shadow-inner"></div>
+              </div>
+            </div>
+            <div class="truncate">
+              <div class="flex items-center gap-1.5">
+                <span id="p1NameLabel" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Player 1 (Feroza)</span>
+                <span id="p1RoleBadge" class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-300">SOUTH</span>
+              </div>
+              <div class="flex items-center gap-2 text-[11px] font-semibold text-walnut-700 mt-0.5">
+                <span>In Play: <strong id="p1RemainingCount" class="text-teal-700 font-mono font-extrabold">18</strong>/<span id="p1MaxPiecesLabel" class="font-mono">18</span></span>
+                <span>•</span>
+                <span>Reserve: <strong id="p1ReserveCount" class="text-amber-700 font-mono font-extrabold">2</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Captured Counter Trophy Pill -->
+          <div class="bg-white/90 border border-parchment-300 rounded-xl px-2.5 py-1 text-right shrink-0 shadow-inner">
+            <div class="text-[9px] uppercase tracking-wider text-walnut-600 font-extrabold">Captured</div>
+            <div class="flex items-center justify-end gap-0.5">
+              <span id="p1CapturedCount" class="text-sm sm:text-base font-extrabold font-mono text-teal-700">0</span>
+              <span id="p1TargetCapLabel" class="text-xs text-walnut-600 font-mono font-bold">/18</span>
+            </div>
+          </div>
+        </div>
+        <div class="w-full h-2 bg-parchment-200 rounded-full overflow-hidden mt-2 border border-parchment-300 flex">
+          <div id="p1CaptureBar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Tactile Mobile Game Action Dock -->
+      <div class="grid grid-cols-4 gap-2 bg-parchment-100 border-2 border-parchment-300 rounded-2xl p-1.5 shadow-md">
+        <button id="btnUndoMove" type="button" class="android-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[11px] font-bold gap-0.5" title="Undo Last Turn">
+          <svg class="w-4 h-4 text-walnut-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M3 7v6h6" />
+            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+          </svg>
+          <span>Undo</span>
+        </button>
+
+        <button id="btnHintMove" type="button" class="android-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[11px] font-bold gap-0.5" title="Highlight a Tactical Move">
+          <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M9 18h6" />
+            <path d="M10 22h4" />
+            <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" />
+          </svg>
+          <span>Hint</span>
+        </button>
+
+        <button id="btnFlipBoard" type="button" class="android-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[11px] font-bold gap-0.5" title="Flip Board Perspective">
+          <svg class="w-4 h-4 text-teal-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="17 1 21 5 17 9" />
+            <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+            <polyline points="7 23 3 19 7 15" />
+            <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+          </svg>
+          <span>Rotate</span>
+        </button>
+
+        <button id="btnResetMatch" type="button" class="android-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl bg-gradient-to-b from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white border border-rose-700 shadow-[0_2px_0_#9F1239] text-[11px] font-extrabold gap-0.5" title="New Match">
+          <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+          </svg>
+          <span>Restart</span>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: CONNECTION & MODE SELECTOR (Pass & Play + Offline WebRTC UI) -->
+  <!-- ===================================================================== -->
+  <div id="modalConnection" class="fixed inset-0 z-40 bg-walnut-900/60 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity duration-200">
+    <div class="w-full sm:max-w-lg bg-parchment-50 border-t-4 sm:border-2 border-parchment-400 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-walnut-900">
+      <div class="px-5 py-4 bg-parchment-100 border-b border-parchment-300 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+          <h2 class="font-display text-base sm:text-lg font-extrabold text-walnut-900">Game Mode &amp; Offline Multiplayer</h2>
+        </div>
+        <button id="btnCloseConnectionModal" type="button" class="android-btn p-1.5 rounded-xl bg-white border border-parchment-300 text-walnut-700 hover:text-walnut-900" aria-label="Close Modal">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-4 sm:p-5 overflow-y-auto custom-scroll space-y-4">
+        <div class="grid grid-cols-2 gap-2.5 p-1.5 bg-parchment-200 rounded-2xl border border-parchment-300">
+          <button id="tabModePassPlay" type="button" class="android-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 bg-teal-600 text-white shadow-md">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            <span>Pass &amp; Play</span>
+          </button>
+
+          <button id="tabModeWebRTC" type="button" class="android-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 text-walnut-700 hover:text-walnut-900">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+              <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+              <line x1="12" y1="20" x2="12.01" y2="20" />
+            </svg>
+            <span>Local Wireless (WebRTC)</span>
+          </button>
+        </div>
+
+        <!-- PANEL A: PASS & PLAY SETTINGS -->
+        <div id="panelPassPlay" class="space-y-4">
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
+            <div class="flex items-start gap-3">
+              <div class="p-2.5 rounded-xl bg-teal-50 text-teal-700 border border-teal-200 shrink-0">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                  <line x1="12" y1="18" x2="12.01" y2="18" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-sm font-extrabold text-walnut-900">Single-Device Pass &amp; Play or AI Sparring</h3>
+                <p class="text-xs text-walnut-600 mt-0.5 leading-relaxed">
+                  Play face-to-face on a single phone or tablet with zero internet required, or challenge the Pashtun Tactical AI.
+                </p>
+              </div>
+            </div>
+
+            <div class="pt-2.5 border-t border-parchment-200 flex items-center justify-between gap-2">
+              <div>
+                <div class="text-xs font-extrabold text-walnut-900">Player 2 Controller</div>
+                <div class="text-[11px] text-walnut-600">2-Player Human vs. Tactical AI Bot</div>
+              </div>
+              <div class="flex items-center gap-1.5 bg-parchment-100 p-1 rounded-xl border border-parchment-300">
+                <button id="btnOpponentHuman" type="button" class="android-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-teal-600 text-white shadow-sm">2P Human</button>
+                <button id="btnOpponentAI" type="button" class="android-btn px-2.5 py-1 rounded-lg text-xs font-bold text-walnut-700">Tactical AI</button>
+              </div>
+            </div>
+
+            <div class="pt-2.5 border-t border-parchment-200 flex items-center justify-between gap-2">
+              <div>
+                <div class="text-xs font-extrabold text-walnut-900">AI Difficulty Level</div>
+                <div class="text-[11px] text-walnut-600">Depth of tactical lookahead</div>
+              </div>
+              <select id="selAIDifficulty" class="selectable-input bg-parchment-100 border border-parchment-400 rounded-xl px-2.5 py-1.5 text-xs font-extrabold text-walnut-900 focus:outline-none">
+                <option value="easy">Easy (Novice)</option>
+                <option value="medium" selected>Medium (Tactical)</option>
+                <option value="hard">Hard (Sardar Commander)</option>
+                <option value="hardest">Hardest (Khan Minimax AI)</option>
+              </select>
+            </div>
+
+            <div class="pt-2.5 border-t border-parchment-200 flex items-center justify-between gap-2">
+              <div>
+                <div class="text-xs font-extrabold text-walnut-900">Auto-Rotate Board Each Turn</div>
+                <div class="text-[11px] text-walnut-600">Flips view 180° between turns in 2P mode</div>
+              </div>
+              <button id="btnToggleAutoRotate" type="button" class="android-btn px-3 py-1 rounded-xl text-xs font-extrabold bg-parchment-200 text-walnut-800 border border-parchment-400">
+                OFF
+              </button>
+            </div>
+          </div>
+
+          <button id="btnStartPassPlay" type="button" class="android-btn w-full py-3 rounded-2xl bg-gradient-to-b from-teal-500 to-teal-700 text-white font-extrabold text-sm shadow-[0_4px_0_#115E59]">
+            Resume / Start Local Match
+          </button>
+        </div>
+
+        <!-- PANEL B: OFFLINE WEBRTC PEER-TO-PEER SIGNALING UI -->
+        <div id="panelWebRTC" class="hidden space-y-3.5">
+          <div id="rtcStatusCard" class="bg-white border-2 border-parchment-300 rounded-2xl p-3 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span id="rtcModalDot" class="w-3 h-3 rounded-full bg-amber-500 shrink-0"></span>
+              <div class="truncate">
+                <div id="rtcStateTitle" class="text-xs font-extrabold text-walnut-900">Not Connected (Select Role Below)</div>
+                <div id="rtcStateDetail" class="text-[11px] text-walnut-600 truncate">Serverless P2P DataChannel over same Wi-Fi / Hotspot</div>
+              </div>
+            </div>
+            <button id="btnResetRTC" type="button" class="android-btn px-2.5 py-1 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-[11px] font-bold text-walnut-800 shrink-0">
+              Reset Link
+            </button>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5 bg-parchment-200 p-1 rounded-xl border border-parchment-300">
+            <button id="btnRoleHost" type="button" class="android-btn py-2 px-2 rounded-lg text-xs font-extrabold bg-white text-teal-800 border border-teal-500/40 shadow-sm">
+              1. Host (P1)
+            </button>
+            <button id="btnRoleGuest" type="button" class="android-btn py-2 px-2 rounded-lg text-xs font-bold text-walnut-700 hover:text-walnut-900">
+              2. Guest (P2)
+            </button>
+            <button id="btnRoleLoopback" type="button" class="android-btn py-2 px-2 rounded-lg text-xs font-bold text-walnut-700 hover:text-amber-800">
+              ⚡ Instant Test
+            </button>
+          </div>
+
+          <!-- SUB-TAB 1: HOST (PLAYER 1) FLOW -->
+          <div id="rtcFlowHost" class="space-y-3 bg-white border-2 border-parchment-300 rounded-2xl p-3.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold text-teal-800 uppercase tracking-wider">Step 1A • Generate Offer (Player 1)</span>
+              <button id="btnHostCreateOffer" type="button" class="android-btn px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-xs shadow">
+                Generate Offer Code
+              </button>
+            </div>
+            <p class="text-[11px] text-walnut-600 leading-relaxed">
+              Tap <strong>Generate Offer Code</strong>, then copy or scan the code below on Player 2's device.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-2.5 items-stretch">
+              <div class="flex-1 flex flex-col gap-1.5">
+                <textarea id="txtHostOfferOut" readonly rows="3" placeholder="Offer token will appear here..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[11px] font-mono text-teal-900 focus:outline-none resize-none"></textarea>
+                <div class="flex items-center gap-1.5">
+                  <button id="btnCopyHostOffer" type="button" class="android-btn flex-1 py-1.5 px-2.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-xs font-extrabold text-walnut-900 flex items-center justify-center gap-1.5">
+                    <span>Copy Offer</span>
+                  </button>
+                  <button id="btnShareHostOffer" type="button" class="android-btn py-1.5 px-2.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-xs font-bold text-walnut-800">
+                    Share
+                  </button>
+                </div>
+              </div>
+              <div class="w-full sm:w-28 bg-parchment-100 border border-parchment-300 rounded-xl p-2 flex flex-col items-center justify-center shrink-0">
+                <div id="qrHostOfferBox" class="w-20 h-20 flex items-center justify-center text-[10px] text-walnut-600 text-center font-mono">
+                  Signal Matrix
+                </div>
+                <span id="hostOfferChecksum" class="text-[9px] font-mono text-walnut-600 mt-1">No token</span>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-parchment-200 space-y-2">
+              <span class="text-xs font-extrabold text-amber-800 uppercase tracking-wider">Step 1B • Paste Player 2's Answer</span>
+              <textarea id="txtHostAnswerIn" rows="2" placeholder="Paste the Answer code received from Player 2 here..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[11px] font-mono text-walnut-900 focus:outline-none resize-none"></textarea>
+              <button id="btnHostAcceptAnswer" type="button" class="android-btn w-full py-2.5 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-xs shadow-[0_3px_0_#B45309]">
+                Verify Answer &amp; Launch P2P Match
+              </button>
+            </div>
+          </div>
+
+          <!-- SUB-TAB 2: GUEST (PLAYER 2) FLOW -->
+          <div id="rtcFlowGuest" class="hidden space-y-3 bg-white border-2 border-parchment-300 rounded-2xl p-3.5">
+            <div class="space-y-2">
+              <span class="text-xs font-extrabold text-rose-800 uppercase tracking-wider">Step 2A • Paste Host's Offer Code</span>
+              <textarea id="txtGuestOfferIn" rows="2" placeholder="Paste Player 1's Offer code here..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[11px] font-mono text-walnut-900 focus:outline-none resize-none"></textarea>
+              <button id="btnGuestProcessOffer" type="button" class="android-btn w-full py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs shadow">
+                Generate Return Answer Code
+              </button>
+            </div>
+
+            <div class="pt-3 border-t border-parchment-200 space-y-2">
+              <span class="text-xs font-extrabold text-amber-800 uppercase tracking-wider">Step 2B • Send Answer Back to Host</span>
+              <div class="flex flex-col sm:flex-row gap-2.5 items-stretch">
+                <div class="flex-1 flex flex-col gap-1.5">
+                  <textarea id="txtGuestAnswerOut" readonly rows="3" placeholder="Your Answer code will appear here..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[11px] font-mono text-amber-900 focus:outline-none resize-none"></textarea>
+                  <div class="flex items-center gap-1.5">
+                    <button id="btnCopyGuestAnswer" type="button" class="android-btn flex-1 py-1.5 px-2.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-xs font-extrabold text-walnut-900">
+                      Copy Answer Code
+                    </button>
+                    <button id="btnShareGuestAnswer" type="button" class="android-btn py-1.5 px-2.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-xs font-bold text-walnut-800">
+                      Share
+                    </button>
+                  </div>
+                </div>
+                <div class="w-full sm:w-28 bg-parchment-100 border border-parchment-300 rounded-xl p-2 flex flex-col items-center justify-center shrink-0">
+                  <div id="qrGuestAnswerBox" class="w-20 h-20 flex items-center justify-center text-[10px] text-walnut-600 text-center font-mono">
+                    Signal Matrix
+                  </div>
+                  <span id="guestAnswerChecksum" class="text-[9px] font-mono text-walnut-600 mt-1">No token</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-TAB 3: INSTANT LOCAL LOOPBACK SIMULATOR -->
+          <div id="rtcFlowLoopback" class="hidden space-y-3 bg-white border-2 border-parchment-300 rounded-2xl p-3.5">
+            <h4 class="text-xs font-extrabold text-amber-800 uppercase tracking-wider">Single-Device WebRTC Loopback Verification</h4>
+            <p class="text-xs text-walnut-700 leading-relaxed">
+              Test the live WebRTC <code class="text-teal-800 font-mono font-bold">RTCPeerConnection</code> Offer/Answer handshake and <code class="text-teal-800 font-mono font-bold">RTCDataChannel</code> synchronization right on this screen.
+            </p>
+            <button id="btnRunLoopbackTest" type="button" class="android-btn w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-teal-600 text-white font-extrabold text-xs shadow-md">
+              ⚡ Run Live WebRTC Offer/Answer Handshake
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: COMPREHENSIVE GRID COMBINATIONS & MATCH SETTINGS STUDIO      -->
+  <!-- ===================================================================== -->
+  <div id="modalRules" class="fixed inset-0 z-40 bg-walnut-900/60 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="w-full sm:max-w-2xl bg-parchment-50 border-t-4 sm:border-2 border-parchment-400 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-walnut-900">
+      <div class="px-5 py-3.5 bg-parchment-100 border-b border-parchment-300 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-teal-600"></span>
+          <h2 class="font-display text-base sm:text-lg font-extrabold text-walnut-900">Grid Combinations &amp; Match Settings Studio</h2>
+        </div>
+        <button id="btnCloseRulesModal" type="button" class="android-btn p-1.5 rounded-xl bg-white border border-parchment-300 text-walnut-700 hover:text-walnut-900" aria-label="Close Settings">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-4 sm:p-5 overflow-y-auto custom-scroll space-y-4 text-xs sm:text-sm text-walnut-800">
+
+        <!-- QUICK SHORTCUT BAR -->
+        <div class="grid grid-cols-3 gap-2 bg-parchment-200 p-2 rounded-2xl border border-parchment-300">
+          <button id="btnToggleChainRule" type="button" class="android-btn py-2 px-2 rounded-xl bg-teal-600 text-white text-xs font-extrabold truncate shadow-sm">
+            Multi-Jump Chain
+          </button>
+          <button id="btnTogglePlacementMode" type="button" class="android-btn py-2 px-2 rounded-xl bg-amber-500 text-walnut-900 text-xs font-extrabold truncate shadow-sm">
+            4-Open + 2 Reserve
+          </button>
+          <button id="btnTogglePieceTheme" type="button" class="android-btn py-2 px-2 rounded-xl bg-white text-walnut-900 border border-parchment-400 text-xs font-extrabold truncate shadow-sm">
+            Beads &amp; Stones
+          </button>
+        </div>
+
+        <!-- SECTION 1: ALL GRID COMBINATIONS & CUSTOM R×C BUILDER -->
+        <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3.5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-700">1. Board Grid Architecture &amp; Dimensions</h3>
+            <span id="lblActiveGridSummary" class="text-[11px] font-mono font-bold text-teal-800 bg-teal-50 border border-teal-300 px-2 py-0.5 rounded-md">36 Intersections</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="selGridPreset" class="block text-xs font-extrabold text-walnut-900 mb-1">Grid Combination Preset</label>
+              <select id="selGridPreset" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
+                <option value="6x6" selected>6×6 Katar Classic (36 Nodes • 18 Beads)</option>
+                <option value="6x7">6×7 Extended Katar (42 Nodes • 18 On-Board)</option>
+                <option value="37_sholo">37-Point Sholo Guti (5×5 + 2 Triangular Camps)</option>
+                <option value="5x5">5×5 Baro Guti / Alquerque (25 Nodes • 12 Beads)</option>
+                <option value="5x7">5×7 Long Battlefield (35 Nodes • 15 Beads)</option>
+                <option value="7x7">7×7 Grand Jirga Grid (49 Nodes • 24 Beads)</option>
+                <option value="8x8">8×8 Commander Grid (64 Nodes • 28 Beads)</option>
+                <option value="4x4">4×4 Blitz Skirmish (16 Nodes • 6 Beads)</option>
+                <option value="custom">Custom R×C Grid Dimensions (Any 4×4 to 9×9)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="selDiagonalMode" class="block text-xs font-extrabold text-walnut-900 mb-1">Diagonal Line Connectivity</label>
+              <select id="selDiagonalMode" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-teal-800 focus:outline-none">
+                <option value="full" selected>Full 8-Way Star Diagonals (All Cells X)</option>
+                <option value="alquerque">Traditional Alternating Alquerque Lattice</option>
+                <option value="major_only">Main Corner-to-Corner Diagonals Only</option>
+                <option value="orthogonal">Orthogonal Grid Only (4-Way Horizontal/Vertical)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="boxCustomDimensions" class="pt-3 border-t border-parchment-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-walnut-700 font-bold">Grid Rows:</span>
+                <strong id="valCustomRows" class="font-mono text-walnut-900">6</strong>
+              </div>
+              <input id="rngCustomRows" type="range" min="4" max="9" step="1" value="6" class="w-full accent-teal-600 cursor-pointer" />
+              <div class="flex justify-between text-[10px] text-walnut-600 font-mono mt-0.5"><span>4</span><span>6</span><span>9</span></div>
+            </div>
+
+            <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-walnut-700 font-bold">Grid Columns:</span>
+                <strong id="valCustomCols" class="font-mono text-walnut-900">6</strong>
+              </div>
+              <input id="rngCustomCols" type="range" min="4" max="9" step="1" value="6" class="w-full accent-teal-600 cursor-pointer" />
+              <div class="flex justify-between text-[10px] text-walnut-600 font-mono mt-0.5"><span>4</span><span>6</span><span>9</span></div>
+            </div>
+
+            <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-walnut-700 font-bold">Triangular Camps:</span>
+                <strong id="valTriCamps" class="font-mono text-amber-800">OFF</strong>
+              </div>
+              <button id="btnToggleTriCamps" type="button" class="android-btn w-full py-1.5 mt-0.5 rounded-lg bg-white hover:bg-parchment-50 text-xs font-extrabold text-walnut-900 border border-parchment-400 shadow-sm">
+                Add North/South Camps
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: PIECE COUNT, OPEN CENTER GEOMETRY & RESERVES -->
+        <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3.5 shadow-sm">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-teal-700">2. Piece Allocation, Open Center &amp; Reserve Rules</h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="selOpenCenterMode" class="block text-xs font-extrabold text-walnut-900 mb-1">Open Center Configuration</label>
+              <select id="selOpenCenterMode" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
+                <option value="four_open" selected>4-Node Open Center Square (2×2 Maidaan)</option>
+                <option value="two_open">2-Node Central Nexus Open</option>
+                <option value="center_row">Full Middle Rank Open (Maidaan Row)</option>
+                <option value="single_center">Single Central Point Open (Alquerque Classic)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="selReserveMode" class="block text-xs font-extrabold text-walnut-900 mb-1">Reserve Reinforcement Mode</label>
+              <select id="selReserveMode" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-teal-800 focus:outline-none">
+                <option value="auto_backrank" selected>Auto-Deploy Reserves to Back Rank</option>
+                <option value="no_reserves">Strictly On-Board Only (Zero Reserves)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-walnut-900">Pieces Per Player (Beads / Stones)</span>
+                <span id="valPiecesPerPlayer" class="text-xs font-mono font-extrabold text-amber-800">18 Pieces Each</span>
+              </div>
+              <input id="rngPiecesPerPlayer" type="range" min="4" max="36" step="1" value="18" class="w-full accent-amber-600 cursor-pointer mt-1.5" />
+            </div>
+            <button id="btnAutoFitPieces" type="button" class="android-btn px-3 py-2 rounded-xl bg-white hover:bg-parchment-50 border border-parchment-400 text-xs font-extrabold text-teal-800 shrink-0 shadow-sm">
+              Auto-Fit to Grid
+            </button>
+          </div>
+        </div>
+
+        <!-- SECTION 3: MOVEMENT, CAPTURE & TURN RULES -->
+        <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-rose-700">3. Combat, Capture &amp; Movement Rules</h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="selChainRule" class="block text-xs font-extrabold text-walnut-900 mb-1">Consecutive Jump Captures</label>
+              <select id="selChainRule" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
+                <option value="multi_optional" selected>Multi-Jump Chain (Can Stop Early)</option>
+                <option value="multi_mandatory">Multi-Jump Chain (Must Finish All Jumps)</option>
+                <option value="single_only">Single Jump Per Turn Only</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="selMandatoryCapture" class="block text-xs font-extrabold text-walnut-900 mb-1">Mandatory Capture Rule</label>
+              <select id="selMandatoryCapture" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
+                <option value="optional" selected>Optional Capture (Free Tactical Choice)</option>
+                <option value="forced">Forced Capture (Must Jump If Available)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="selStepDirection" class="block text-xs font-extrabold text-walnut-900 mb-1">Step Movement Directions</label>
+              <select id="selStepDirection" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
+                <option value="all" selected>All Connected Directions (Forward, Side, Back)</option>
+                <option value="forward_side">Forward &amp; Sideways Only (No Backward Step)</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label for="selFirstTurn" class="block text-xs font-extrabold text-walnut-900 mb-1">Opening Turn</label>
+                <select id="selFirstTurn" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-2.5 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
+                  <option value="1" selected>P1 (South)</option>
+                  <option value="2">P2 (North)</option>
+                  <option value="random">Random Toss</option>
+                </select>
+              </div>
+              <div>
+                <label for="selTurnTimer" class="block text-xs font-extrabold text-walnut-900 mb-1">Turn Clock</label>
+                <select id="selTurnTimer" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-2.5 py-2 text-xs font-extrabold text-amber-800 focus:outline-none">
+                  <option value="0" selected>Untimed</option>
+                  <option value="15">15s Blitz</option>
+                  <option value="30">30s Rapid</option>
+                  <option value="60">60s Classic</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: VISUAL THEMES, LABELS & HAPTICS -->
+        <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-walnut-700">4. Tabletop Surface, Piece Jewels &amp; Labels</h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label for="selPieceTheme" class="block text-xs font-extrabold text-walnut-900 mb-1">Piece Aesthetics</label>
+              <select id="selPieceTheme" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
+                <option value="traditional" selected>Feroza Beads vs. Sang Stones</option>
+                <option value="classic">Royal Cobalt vs. Crimson Ruby</option>
+                <option value="jade_gold">Imperial Jade vs. Sun Gold</option>
+                <option value="ivory_onyx">Carved Ivory vs. Royal Onyx</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="selBoardSurface" class="block text-xs font-extrabold text-walnut-900 mb-1">Board Surface Theme</label>
+              <select id="selBoardSurface" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
+                <option value="sandstone" selected>Royal Parchment &amp; Walnut (Bright)</option>
+                <option value="walnut">Carved Peshawar Teak Wood</option>
+                <option value="emerald">Royal Emerald Palace Felt</option>
+                <option value="obsidian">Midnight Marble Slate</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="selNodeLabels" class="block text-xs font-extrabold text-walnut-900 mb-1">Intersection Labels</label>
+              <select id="selNodeLabels" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
+                <option value="off" selected>Clean (No Labels)</option>
+                <option value="numbers">Node Numbers (1–N)</option>
+                <option value="coords">Grid Coordinates (A1–F6)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-parchment-200 flex flex-wrap items-center justify-between gap-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input id="chkShowGuides" type="checkbox" checked class="w-4 h-4 accent-teal-600 rounded" />
+              <span class="text-xs text-walnut-900 font-bold">Show Legal Move Dots &amp; Capture Reticles</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input id="chkEnableHaptics" type="checkbox" checked class="w-4 h-4 accent-teal-600 rounded" />
+              <span class="text-xs text-walnut-900 font-bold">Android Haptic Vibration</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Apply & Start New Match CTA -->
+        <div class="flex items-center gap-2.5 pt-1">
+          <button id="btnApplySettingsAndStart" type="button" class="android-btn flex-1 py-3 rounded-2xl bg-gradient-to-b from-teal-500 to-teal-700 text-white font-extrabold text-sm shadow-[0_4px_0_#115E59]">
+            Apply Grid &amp; Restart Match
+          </button>
+          <button id="btnRestoreDefaultSettings" type="button" class="android-btn px-4 py-3 rounded-2xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400">
+            Reset Defaults
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: VICTORY / GAME OVER OVERLAY                                  -->
+  <!-- ===================================================================== -->
+  <div id="modalVictory" class="fixed inset-0 z-50 bg-walnut-900/70 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-parchment-50 border-4 border-amber-500 rounded-3xl p-6 text-center shadow-2xl space-y-4 text-walnut-900">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 border-2 border-amber-600 flex items-center justify-center shadow-md">
+        <svg class="w-9 h-9 text-walnut-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+          <path d="M4 22h16" />
+          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+          <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+        </svg>
+      </div>
+      <div>
+        <div class="text-xs font-extrabold uppercase tracking-widest text-amber-700">Royal Victory • سوبہ</div>
+        <h2 id="victoryHeadline" class="font-display text-xl font-extrabold text-walnut-900 mt-1">Player 1 Wins!</h2>
+        <p id="victoryReason" class="text-xs font-semibold text-walnut-600 mt-1">Captured all opponent pieces.</p>
+      </div>
+      <div class="grid grid-cols-2 gap-2 bg-white rounded-2xl p-3 border-2 border-parchment-300 text-xs shadow-inner">
+        <div>
+          <div class="text-walnut-600 font-bold">P1 Captures</div>
+          <div id="victoryP1Score" class="text-base font-extrabold font-mono text-teal-700 mt-0.5">18 / 18</div>
+        </div>
+        <div>
+          <div class="text-walnut-600 font-bold">P2 Captures</div>
+          <div id="victoryP2Score" class="text-base font-extrabold font-mono text-rose-600 mt-0.5">11 / 18</div>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button id="btnVictoryPlayAgain" type="button" class="android-btn flex-1 py-3 rounded-2xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-sm shadow-[0_4px_0_#B45309]">
+          Play Rematch
+        </button>
+        <button id="btnVictoryChangeGrid" type="button" class="android-btn px-4 py-3 rounded-2xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400">
+          Change Grid
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- COMPLETE PARAMETRIC GAME ENGINE, CUSTOM GRID BUILDER & WEBRTC SCRIPT  -->
+  <!-- ===================================================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      const SoundEngine = {
+        ctx: null,
+        enabled: true,
+        hapticsEnabled: true,
+
+        init() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+              this.ctx = new AudioCtx();
+            }
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+          }
+        },
+
+        haptic(pattern) {
+          if (!this.hapticsEnabled) return;
+          try {
+            if (navigator.vibrate) {
+              navigator.vibrate(pattern);
+            }
+          } catch (err) {}
+        },
+
+        playTone(freq, type, duration, gainVal = 0.14, slideFreq = null) {
+          if (!this.enabled) return;
+          try {
+            this.init();
+            if (!this.ctx) return;
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, now);
+            if (slideFreq) {
+              osc.frequency.exponentialRampToValueAtTime(slideFreq, now + duration);
+            }
+            gain.gain.setValueAtTime(gainVal, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + duration);
+          } catch (err) {}
+        },
+
+        select() {
+          this.haptic(12);
+          this.playTone(520, 'sine', 0.065, 0.11, 660);
+        },
+
+        move() {
+          this.haptic(20);
+          this.playTone(280, 'triangle', 0.09, 0.16, 190);
+        },
+
+        capture(chainCount = 1) {
+          this.haptic([35, 30, 55]);
+          const base = 440 + Math.min(chainCount - 1, 5) * 90;
+          this.playTone(base, 'triangle', 0.14, 0.18, base * 1.45);
+          setTimeout(() => this.playTone(base * 1.5, 'sine', 0.16, 0.14, base * 1.85), 55);
+        },
+
+        invalid() {
+          this.haptic([25, 40, 25]);
+          this.playTone(165, 'sawtooth', 0.12, 0.09, 130);
+        },
+
+        victory() {
+          this.haptic([60, 40, 80, 40, 140]);
+          const notes = [440, 554.37, 659.25, 880];
+          notes.forEach((n, idx) => {
+            setTimeout(() => this.playTone(n, 'triangle', 0.24, 0.16), idx * 95);
+          });
+        }
+      };
+
+      let Nodes = [];
+      let Adjacency = [];
+      let Edges = [];
+      let CollinearJumps = [];
+
+      const GameState = {
+        gridPreset: '6x6',
+        rows: 6,
+        cols: 6,
+        hasTriangularCamps: false,
+        diagonalMode: 'full',
+        openCenterMode: 'four_open',
+        reserveMode: 'auto_backrank',
+        piecesPerPlayer: 18,
+        chainRule: 'multi_optional',
+        mandatoryCapture: 'optional',
+        stepDirection: 'all',
+        firstTurnSetting: '1',
+        turnTimerSeconds: 0,
+        pieceTheme: 'traditional',
+        boardSurface: 'sandstone',
+        nodeLabels: 'off',
+        showGuides: true,
+        aiDifficulty: 'medium',
+
+        board: [],
+        reserves: { 1: 2, 2: 2 },
+        capturedBy: { 1: 0, 2: 0 },
+        currentTurn: 1,
+        selectedNode: null,
+        chainJumpingNode: null,
+        chainCount: 0,
+        gameOver: false,
+        winner: null,
+        winReason: '',
+        history: [],
+        timeLeft: 0,
+        timerInterval: null,
+
+        mode: 'pass_play',
+        vsAI: true,
+        autoRotate: false,
+        boardFlipped: false,
+        localPlayerRole: null
+      };
+
+      function buildDynamicBoardGraph() {
+        Nodes = [];
+        Edges = [];
+        const R = GameState.rows;
+        const C = GameState.cols;
+        const withCamps = GameState.hasTriangularCamps;
+
+        const gridMap = new Map();
+        const key = (r, c) => `${r},${c}`;
+
+        function addNode(r, c, zone = 'grid', label = '') {
+          const id = Nodes.length;
+          Nodes.push({ id, r, c, zone, label, x: 0, y: 0 });
+          gridMap.set(key(r, c), id);
+          return id;
+        }
+
+        const midC = (C - 1) / 2;
+        let northCampIds = [];
+        if (withCamps) {
+          const n0 = addNode(-2, midC - 1.6, 'north_camp');
+          const n1 = addNode(-2, midC, 'north_camp');
+          const n2 = addNode(-2, midC + 1.6, 'north_camp');
+          const n3 = addNode(-1, midC - 0.8, 'north_camp');
+          const n4 = addNode(-1, midC, 'north_camp');
+          const n5 = addNode(-1, midC + 0.8, 'north_camp');
+          northCampIds = [n0, n1, n2, n3, n4, n5];
+        }
+
+        for (let r = 0; r < R; r++) {
+          for (let c = 0; c < C; c++) {
+            const coordLabel = `${String.fromCharCode(65 + c)}${r + 1}`;
+            addNode(r, c, 'grid', coordLabel);
+          }
+        }
+
+        let southCampIds = [];
+        if (withCamps) {
+          const s0 = addNode(R, midC - 0.8, 'south_camp');
+          const s1 = addNode(R, midC, 'south_camp');
+          const s2 = addNode(R, midC + 0.8, 'south_camp');
+          const s3 = addNode(R + 1, midC - 1.6, 'south_camp');
+          const s4 = addNode(R + 1, midC, 'south_camp');
+          const s5 = addNode(R + 1, midC + 1.6, 'south_camp');
+          southCampIds = [s0, s1, s2, s3, s4, s5];
+        }
+
+        const total = Nodes.length;
+        Adjacency = Array.from({ length: total }, () => new Set());
+        CollinearJumps = Array.from({ length: total }, () => []);
+
+        function link(u, v) {
+          if (u === undefined || v === undefined || u < 0 || v < 0 || u === v) return;
+          if (!Adjacency[u].has(v)) {
+            Adjacency[u].add(v);
+            Adjacency[v].add(u);
+            Edges.push([Math.min(u, v), Math.max(u, v)]);
+          }
+        }
+
+        for (let r = 0; r < R; r++) {
+          for (let c = 0; c < C; c++) {
+            const u = gridMap.get(key(r, c));
+            if (c + 1 < C) link(u, gridMap.get(key(r, c + 1)));
+            if (r + 1 < R) link(u, gridMap.get(key(r + 1, c)));
+          }
+        }
+
+        const dMode = GameState.diagonalMode;
+        if (dMode !== 'orthogonal') {
+          for (let r = 0; r < R - 1; r++) {
+            for (let c = 0; c < C - 1; c++) {
+              const tl = gridMap.get(key(r, c));
+              const tr = gridMap.get(key(r, c + 1));
+              const bl = gridMap.get(key(r + 1, c));
+              const br = gridMap.get(key(r + 1, c + 1));
+
+              if (dMode === 'full') {
+                link(tl, br);
+                link(tr, bl);
+              } else if (dMode === 'alquerque') {
+                if ((r + c) % 2 === 0) {
+                  link(tl, br);
+                } else {
+                  link(tr, bl);
+                }
+              } else if (dMode === 'major_only') {
+                if (r === c) link(tl, br);
+                if (r + c + 1 === C - 1 || r + c === R - 2) link(tr, bl);
+              }
+            }
+          }
+        }
+
+        if (withCamps) {
+          const topApex = gridMap.get(key(0, Math.floor(midC)));
+          const [n0, n1, n2, n3, n4, n5] = northCampIds;
+          link(n0, n1); link(n1, n2);
+          link(n3, n4); link(n4, n5);
+          link(n0, n3); link(n3, topApex);
+          link(n1, n4); link(n4, topApex);
+          link(n2, n5); link(n5, topApex);
+
+          const botApex = gridMap.get(key(R - 1, Math.floor(midC)));
+          const [s0, s1, s2, s3, s4, s5] = southCampIds;
+          link(s0, s1); link(s1, s2);
+          link(s3, s4); link(s4, s5);
+          link(botApex, s0); link(s0, s3);
+          link(botApex, s1); link(s1, s4);
+          link(botApex, s2); link(s2, s5);
+        }
+
+        for (let u = 0; u < total; u++) {
+          const nu = Nodes[u];
+          for (const mid of Adjacency[u]) {
+            const nMid = Nodes[mid];
+            const dx1 = nMid.c - nu.c;
+            const dy1 = nMid.r - nu.r;
+            const len1 = Math.hypot(dx1, dy1);
+            if (len1 === 0) continue;
+
+            for (const land of Adjacency[mid]) {
+              if (land === u) continue;
+              const nLand = Nodes[land];
+              const dx2 = nLand.c - nMid.c;
+              const dy2 = nLand.r - nMid.r;
+              const len2 = Math.hypot(dx2, dy2);
+              if (len2 === 0) continue;
+
+              const cosSim = (dx1 * dx2 + dy1 * dy2) / (len1 * len2);
+              if (cosSim > 0.965) {
+                CollinearJumps[u].push({ over: mid, to: land });
+              }
+            }
+          }
+        }
+      }
+
+      function getLegalActionsForPiece(fromId, board = GameState.board) {
+        const piece = board[fromId];
+        if (!piece) return { steps: [], jumps: [] };
+        const opponent = piece === 1 ? 2 : 1;
+        const fromNode = Nodes[fromId];
+        const steps = [];
+        const jumps = [];
+
+        for (const toId of Adjacency[fromId]) {
+          if (board[toId] !== 0) continue;
+          if (GameState.stepDirection === 'forward_side') {
+            const toNode = Nodes[toId];
+            if (piece === 1 && toNode.r > fromNode.r + 0.05) continue;
+            if (piece === 2 && toNode.r < fromNode.r - 0.05) continue;
+          }
+          steps.push({ from: fromId, to: toId, type: 'step' });
+        }
+
+        for (const cand of CollinearJumps[fromId]) {
+          if (board[cand.over] === opponent && board[cand.to] === 0) {
+            jumps.push({
+              from: fromId,
+              to: cand.to,
+              capturedId: cand.over,
+              type: 'jump'
+            });
+          }
+        }
+
+        return { steps, jumps };
+      }
+
+      function getAllLegalActionsForPlayer(player, board = GameState.board) {
+        const allSteps = [];
+        const allJumps = [];
+        for (let i = 0; i < Nodes.length; i++) {
+          if (board[i] === player) {
+            const { steps, jumps } = getLegalActionsForPiece(i, board);
+            allSteps.push(...steps);
+            allJumps.push(...jumps);
+          }
+        }
+        const effectiveSteps = (GameState.mandatoryCapture === 'forced' && allJumps.length > 0)
+          ? []
+          : allSteps;
+        return {
+          allSteps: effectiveSteps,
+          allJumps,
+          total: effectiveSteps.length + allJumps.length
+        };
+      }
+
+      function countPlayerTotalPieces(player) {
+        let onBoard = 0;
+        for (let i = 0; i < GameState.board.length; i++) {
+          if (GameState.board[i] === player) onBoard++;
+        }
+        return onBoard + (GameState.reserves[player] || 0);
+      }
+
+      function applyGridPresetConfig(preset) {
+        GameState.gridPreset = preset;
+        if (preset === '6x6') {
+          GameState.rows = 6;
+          GameState.cols = 6;
+          GameState.hasTriangularCamps = false;
+          GameState.openCenterMode = 'four_open';
+          GameState.reserveMode = 'auto_backrank';
+          GameState.piecesPerPlayer = 18;
+        } else if (preset === '6x7') {
+          GameState.rows = 7;
+          GameState.cols = 6;
+          GameState.hasTriangularCamps = false;
+          GameState.openCenterMode = 'center_row';
+          GameState.reserveMode = 'no_reserves';
+          GameState.piecesPerPlayer = 18;
+        } else if (preset === '37_sholo') {
+          GameState.rows = 5;
+          GameState.cols = 5;
+          GameState.hasTriangularCamps = true;
+          GameState.openCenterMode = 'center_row';
+          GameState.reserveMode = 'auto_backrank';
+          GameState.piecesPerPlayer = 16;
+        } else if (preset === '5x5') {
+          GameState.rows = 5;
+          GameState.cols = 5;
+          GameState.hasTriangularCamps = false;
+          GameState.openCenterMode = 'single_center';
+          GameState.reserveMode = 'no_reserves';
+          GameState.piecesPerPlayer = 12;
+        } else if (preset === '5x7') {
+          GameState.rows = 7;
+          GameState.cols = 5;
+          GameState.hasTriangularCamps = false;
+          GameState.openCenterMode = 'center_row';
+          GameState.reserveMode = 'no_reserves';
+          GameState.piecesPerPlayer = 15;
+        } else if (preset === '7x7') {
+          GameState.rows = 7;
+          GameState.cols = 7;
+          GameState.hasTriangularCamps = false;
+          GameState.openCenterMode = 'single_center';
+          GameState.reserveMode = 'no_reserves';
+          GameState.piecesPerPlayer = 24;
+        } else if (preset === '8x8') {
+          GameState.rows = 8;
+          GameState.cols = 8;
+          GameState.hasTriangularCamps = false;
+          GameState.openCenterMode = 'center_row';
+          GameState.reserveMode = 'no_reserves';
+          GameState.piecesPerPlayer = 24;
+        } else if (preset === '4x4') {
+          GameState.rows = 4;
+          GameState.cols = 4;
+          GameState.hasTriangularCamps = false;
+          GameState.openCenterMode = 'four_open';
+          GameState.reserveMode = 'no_reserves';
+          GameState.piecesPerPlayer = 6;
+        }
+        syncSettingsControlsFromState();
+      }
+
+      function computeRecommendedPieces() {
+        const total = GameState.rows * GameState.cols + (GameState.hasTriangularCamps ? 12 : 0);
+        let openNodes = 4;
+        if (GameState.openCenterMode === 'single_center') openNodes = (total % 2 === 1) ? 1 : 2;
+        else if (GameState.openCenterMode === 'two_open') openNodes = 2;
+        else if (GameState.openCenterMode === 'center_row') openNodes = GameState.cols;
+        else openNodes = 4;
+
+        const maxOnBoardPerSide = Math.max(4, Math.floor((total - openNodes) / 2));
+        if (GameState.reserveMode === 'no_reserves') {
+          return maxOnBoardPerSide;
+        }
+        return GameState.rows === 6 && GameState.cols === 6 && !GameState.hasTriangularCamps
+          ? 18
+          : maxOnBoardPerSide;
+      }
+
+      function initMatch(broadcast = false) {
+        buildDynamicBoardGraph();
+
+        const total = Nodes.length;
+        GameState.board = new Array(total).fill(0);
+        GameState.capturedBy = { 1: 0, 2: 0 };
+
+        if (GameState.firstTurnSetting === '2') {
+          GameState.currentTurn = 2;
+        } else if (GameState.firstTurnSetting === 'random') {
+          GameState.currentTurn = Math.random() < 0.5 ? 1 : 2;
+        } else {
+          GameState.currentTurn = 1;
+        }
+
+        GameState.selectedNode = null;
+        GameState.chainJumpingNode = null;
+        GameState.chainCount = 0;
+        GameState.gameOver = false;
+        GameState.winner = null;
+        GameState.winReason = '';
+        GameState.history = [];
+        VisualFX.particles = [];
+        VisualFX.movingPiece = null;
+        VisualFX.hintHighlight = null;
+
+        const midR = (GameState.rows - 1) / 2;
+        const midC = (GameState.cols - 1) / 2;
+
+        const openSet = new Set();
+        for (const n of Nodes) {
+          if (n.zone !== 'grid') continue;
+          if (GameState.openCenterMode === 'center_row') {
+            if (Math.abs(n.r - midR) <= 0.55) openSet.add(n.id);
+          } else if (GameState.openCenterMode === 'four_open') {
+            if (Math.abs(n.r - midR) <= 0.65 && Math.abs(n.c - midC) <= 0.65) openSet.add(n.id);
+          } else if (GameState.openCenterMode === 'two_open') {
+            if (Math.abs(n.r - midR) <= 0.65 && Math.abs(n.c - midC) <= 0.65) {
+              if ((n.r < midR && n.c <= midC) || (n.r > midR && n.c >= midC) || n.r === midR) {
+                openSet.add(n.id);
+              }
+            }
+          } else if (GameState.openCenterMode === 'single_center') {
+            if (Math.abs(n.r - midR) <= 0.55 && Math.abs(n.c - midC) <= 0.55) {
+              openSet.add(n.id);
+            }
+          }
+        }
+
+        if (openSet.size === 0) {
+          let bestCenterId = 0;
+          let bestDist = Infinity;
+          for (const n of Nodes) {
+            const d = Math.hypot(n.r - midR, n.c - midC);
+            if (d < bestDist) {
+              bestDist = d;
+              bestCenterId = n.id;
+            }
+          }
+          openSet.add(bestCenterId);
+        }
+
+        const northSlots = Nodes
+          .filter((n) => !openSet.has(n.id) && (n.r < midR || (n.r === midR && n.c < midC)))
+          .sort((a, b) => a.r - b.r || a.c - b.c);
+
+        const southSlots = Nodes
+          .filter((n) => !openSet.has(n.id) && (n.r > midR || (n.r === midR && n.c > midC)))
+          .sort((a, b) => b.r - a.r || b.c - a.c);
+
+        const maxBoardSlots = Math.min(northSlots.length, southSlots.length);
+        let targetPieces = GameState.piecesPerPlayer;
+        if (GameState.reserveMode === 'no_reserves' && targetPieces > maxBoardSlots) {
+          targetPieces = maxBoardSlots;
+          GameState.piecesPerPlayer = targetPieces;
+        }
+
+        const placeCount = Math.min(targetPieces, maxBoardSlots);
+        for (let i = 0; i < placeCount; i++) {
+          GameState.board[northSlots[i].id] = 2;
+          GameState.board[southSlots[i].id] = 1;
+        }
+
+        const reserveCount = Math.max(0, targetPieces - placeCount);
+        GameState.reserves = { 1: reserveCount, 2: reserveCount };
+
+        if (GameState.autoRotate && GameState.mode === 'pass_play' && !GameState.vsAI) {
+          GameState.boardFlipped = (GameState.currentTurn === 2);
+        }
+
+        document.getElementById('modalVictory').classList.add('hidden');
+        document.getElementById('modalVictory').classList.remove('flex');
+
+        resetTurnTimer();
+        syncSettingsControlsFromState();
+        resizeCanvas();
+        updateHUD();
+        requestRender();
+
+        if (broadcast && WebRTCManager.isConnected()) {
+          WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState() });
+        }
+
+        if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === 2) {
+          setTimeout(runAITurn, 520);
+        }
+      }
+
+      function tryDeployReserve(player) {
+        if (GameState.reserves[player] <= 0) return null;
+        const candidates = Nodes
+          .slice()
+          .sort((a, b) => (player === 1 ? b.r - a.r : a.r - b.r));
+
+        for (const n of candidates) {
+          if (GameState.board[n.id] === 0) {
+            GameState.board[n.id] = player;
+            GameState.reserves[player]--;
+            VisualFX.spawnPulseRing(n.id, player === 1 ? '#0D9488' : '#E11D48');
+            return n.id;
+          }
+        }
+        return null;
+      }
+
+      function resetTurnTimer() {
+        if (GameState.timerInterval) {
+          clearInterval(GameState.timerInterval);
+          GameState.timerInterval = null;
+        }
+        const badge = document.getElementById('timerBadge');
+        if (!GameState.turnTimerSeconds || GameState.turnTimerSeconds <= 0 || GameState.gameOver) {
+          badge.classList.add('hidden');
+          return;
+        }
+        GameState.timeLeft = GameState.turnTimerSeconds;
+        badge.classList.remove('hidden');
+        badge.textContent = `${GameState.timeLeft}s`;
+
+        GameState.timerInterval = setInterval(() => {
+          if (GameState.gameOver) {
+            clearInterval(GameState.timerInterval);
+            return;
+          }
+          GameState.timeLeft--;
+          badge.textContent = `${Math.max(0, GameState.timeLeft)}s`;
+          if (GameState.timeLeft <= 5) {
+            badge.className = 'text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-rose-600 text-white animate-pulse';
+          } else {
+            badge.className = 'text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-sm';
+          }
+          if (GameState.timeLeft <= 0) {
+            clearInterval(GameState.timerInterval);
+            if (GameState.chainJumpingNode !== null) {
+              endChainTurnEarly(false);
+            } else {
+              const { allSteps, allJumps } = getAllLegalActionsForPlayer(GameState.currentTurn);
+              const pool = allJumps.length > 0 ? allJumps : allSteps;
+              if (pool.length > 0) {
+                showBoardToast('Turn clock expired — auto-move played!');
+                executeAction(pool[0], false);
+              }
+            }
+          }
+        }, 1000);
+      }
+
+      function saveUndoSnapshot() {
+        GameState.history.push({
+          board: [...GameState.board],
+          reserves: { ...GameState.reserves },
+          capturedBy: { ...GameState.capturedBy },
+          currentTurn: GameState.currentTurn,
+          chainJumpingNode: GameState.chainJumpingNode,
+          chainCount: GameState.chainCount
+        });
+        if (GameState.history.length > 35) {
+          GameState.history.shift();
+        }
+      }
+
+      function executeAction(action, isRemote = false) {
+        if (GameState.gameOver) return;
+
+        const player = GameState.currentTurn;
+        const opponent = player === 1 ? 2 : 1;
+
+        if (!isRemote && GameState.chainCount === 0) {
+          saveUndoSnapshot();
+        }
+
+        const fromNode = Nodes[action.from];
+        const toNode = Nodes[action.to];
+
+        GameState.board[action.from] = 0;
+        GameState.board[action.to] = player;
+
+        VisualFX.startPieceTween(fromNode, toNode, player, action.type === 'jump');
+
+        if (action.type === 'jump') {
+          const capId = action.capturedId;
+          GameState.board[capId] = 0;
+          GameState.capturedBy[player]++;
+          GameState.chainCount++;
+
+          const capNode = Nodes[capId];
+          VisualFX.spawnCaptureBurst(capNode.x, capNode.y, opponent);
+          SoundEngine.capture(GameState.chainCount);
+
+          const label = GameState.chainCount > 1
+            ? `Chain Capture x${GameState.chainCount}!`
+            : 'Leap Capture! +1';
+          showBoardToast(label);
+
+          tryDeployReserve(player);
+
+          if (countPlayerTotalPieces(opponent) === 0) {
+            finishTurnAndCheckWin(player, isRemote, action);
+            return;
+          }
+
+          if (GameState.chainRule !== 'single_only') {
+            const followUp = getLegalActionsForPiece(action.to);
+            if (followUp.jumps.length > 0) {
+              GameState.selectedNode = action.to;
+              GameState.chainJumpingNode = action.to;
+              updateHUD();
+              requestRender();
+
+              if (!isRemote && WebRTCManager.isConnected()) {
+                WebRTCManager.send({
+                  type: 'MOVE_ACTION',
+                  action,
+                  continueChain: true,
+                  state: serializeGameState()
+                });
+              }
+
+              if (GameState.mode === 'pass_play' && GameState.vsAI && player === 2) {
+                setTimeout(runAITurn, 440);
+              }
+              return;
+            }
+          }
+        } else {
+          SoundEngine.move();
+          tryDeployReserve(player);
+        }
+
+        finishTurnAndCheckWin(player, isRemote, action);
+      }
+
+      function finishTurnAndCheckWin(playerJustMoved, isRemote = false, lastAction = null) {
+        const opponent = playerJustMoved === 1 ? 2 : 1;
+        GameState.selectedNode = null;
+        GameState.chainJumpingNode = null;
+        GameState.chainCount = 0;
+        VisualFX.hintHighlight = null;
+
+        tryDeployReserve(opponent);
+
+        const oppRemaining = countPlayerTotalPieces(opponent);
+        const oppMoves = getAllLegalActionsForPlayer(opponent);
+
+        if (oppRemaining === 0 || GameState.capturedBy[playerJustMoved] >= GameState.piecesPerPlayer) {
+          GameState.gameOver = true;
+          GameState.winner = playerJustMoved;
+          GameState.winReason = `Captured all ${GameState.piecesPerPlayer} opponent pieces!`;
+          SoundEngine.victory();
+          resetTurnTimer();
+          showVictoryModal();
+        } else if (oppMoves.total === 0) {
+          GameState.gameOver = true;
+          GameState.winner = playerJustMoved;
+          GameState.winReason = 'Opponent is completely trapped with no legal moves!';
+          SoundEngine.victory();
+          resetTurnTimer();
+          showVictoryModal();
+        } else {
+          GameState.currentTurn = opponent;
+          if (GameState.autoRotate && GameState.mode === 'pass_play' && !GameState.vsAI) {
+            GameState.boardFlipped = (GameState.currentTurn === 2);
+            resizeCanvas();
+          }
+          resetTurnTimer();
+        }
+
+        updateHUD();
+        requestRender();
+
+        if (!isRemote && WebRTCManager.isConnected()) {
+          WebRTCManager.send({
+            type: 'MOVE_ACTION',
+            action: lastAction,
+            continueChain: false,
+            state: serializeGameState()
+          });
+        }
+
+        if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === 2) {
+          setTimeout(runAITurn, 500);
+        }
+      }
+
+      function endChainTurnEarly(isRemote = false) {
+        if (GameState.chainJumpingNode === null) return;
+        if (GameState.chainRule === 'multi_mandatory' && !isRemote) {
+          showBoardToast('Mandatory Chain Rule is active: complete all jumps!');
+          SoundEngine.invalid();
+          return;
+        }
+        const player = GameState.currentTurn;
+        finishTurnAndCheckWin(player, isRemote, { type: 'end_chain' });
+      }
+
+      /* -------------------------------------------------------------------
+       * 4-TIER PASHTUN AI ENGINE: EASY, MEDIUM, HARD & HARDEST (MINIMAX)
+       * -------------------------------------------------------------------
+       * - easy:    Casual moves; occasionally overlooks non-forced jumps or
+       *            plays random safe steps.
+       * - medium:  Greedy capture & chain-jump seeker with 1-ply blunder check.
+       * - hard:    2-ply tactical lookahead evaluating chain-jump sequences,
+       *            piece protection (backing up friendly pieces), and center hubs.
+       * - hardest: Alpha-Beta Pruning Minimax lookahead (depth 3-4 with full
+       *            multi-jump chain resolution, mobility, hub dominance, and
+       *            vulnerability formation scoring).
+       * ------------------------------------------------------------------- */
+      function evaluateBoardPosition(board, reservesP1, reservesP2) {
+        let p2Count = reservesP2;
+        let p1Count = reservesP1;
+        let positionalScore = 0;
+        const midR = (GameState.rows - 1) / 2;
+        const midC = (GameState.cols - 1) / 2;
+
+        for (let i = 0; i < Nodes.length; i++) {
+          const occ = board[i];
+          if (occ === 0) continue;
+          const n = Nodes[i];
+          const deg = Adjacency[i].size; // 8-way star hubs are stronger than 4-way nodes
+          const centerProximity = Math.max(0, 4.5 - Math.hypot(n.r - midR, n.c - midC));
+          const nodeVal = deg * 0.45 + centerProximity * 0.9;
+
+          if (occ === 2) {
+            p2Count++;
+            positionalScore += nodeVal;
+          } else {
+            p1Count++;
+            positionalScore -= nodeVal;
+          }
+        }
+
+        if (p1Count === 0) return 99999;
+        if (p2Count === 0) return -99999;
+
+        const p2Moves = getAllLegalActionsForPlayer(2, board);
+        const p1Moves = getAllLegalActionsForPlayer(1, board);
+
+        if (p1Moves.total === 0) return 88888;
+        if (p2Moves.total === 0) return -88888;
+
+        // Evaluate immediate jump threats & piece vulnerability
+        const p2ThreatScore = p2Moves.allJumps.length * 16;
+        const p1ThreatScore = p1Moves.allJumps.length * 19;
+        const mobilityScore = (p2Moves.total - p1Moves.total) * 0.8;
+        const materialDiff = (p2Count - p1Count) * 45;
+
+        return materialDiff + positionalScore + (p2ThreatScore - p1ThreatScore) + mobilityScore;
+      }
+
+      // Simulates an action (including greedy continuation jumps if chain rule allows) on a cloned board
+      function simulateTurnOnBoard(board, action, player) {
+        const nextBoard = [...board];
+        nextBoard[action.from] = 0;
+        nextBoard[action.to] = player;
+
+        if (action.type === 'jump') {
+          nextBoard[action.capturedId] = 0;
+          if (GameState.chainRule !== 'single_only') {
+            let curNode = action.to;
+            let safetyGuard = 0;
+            while (safetyGuard++ < 12) {
+              const follow = getLegalActionsForPiece(curNode, nextBoard);
+              if (follow.jumps.length === 0) break;
+              const nextJ = follow.jumps[0];
+              nextBoard[curNode] = 0;
+              nextBoard[nextJ.capturedId] = 0;
+              nextBoard[nextJ.to] = player;
+              curNode = nextJ.to;
+            }
+          }
+        }
+        return nextBoard;
+      }
+
+      function minimaxAlphaBeta(board, depth, alpha, beta, maximizingPlayer, r1, r2) {
+        if (depth === 0) {
+          return evaluateBoardPosition(board, r1, r2);
+        }
+
+        const player = maximizingPlayer ? 2 : 1;
+        const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(player, board);
+        if (total === 0) {
+          return evaluateBoardPosition(board, r1, r2);
+        }
+
+        // Order moves: jumps first for faster alpha-beta pruning
+        const candidateMoves = allJumps.length > 0
+          ? [...allJumps, ...allSteps.slice(0, 10)]
+          : allSteps.slice(0, 14);
+
+        if (maximizingPlayer) {
+          let maxEval = -Infinity;
+          for (const move of candidateMoves) {
+            const childBoard = simulateTurnOnBoard(board, move, 2);
+            const ev = minimaxAlphaBeta(childBoard, depth - 1, alpha, beta, false, r1, r2);
+            if (ev > maxEval) maxEval = ev;
+            if (ev > alpha) alpha = ev;
+            if (beta <= alpha) break;
+          }
+          return maxEval;
+        } else {
+          let minEval = Infinity;
+          for (const move of candidateMoves) {
+            const childBoard = simulateTurnOnBoard(board, move, 1);
+            const ev = minimaxAlphaBeta(childBoard, depth - 1, alpha, beta, true, r1, r2);
+            if (ev < minEval) minEval = ev;
+            if (ev < beta) beta = ev;
+            if (beta <= alpha) break;
+          }
+          return minEval;
+        }
+      }
+
+      function chooseBestContinuationJump(nodeId) {
+        const { jumps } = getLegalActionsForPiece(nodeId);
+        if (jumps.length === 0) return null;
+        if (GameState.aiDifficulty === 'easy' || jumps.length === 1) {
+          return jumps[0];
+        }
+        let bestJ = jumps[0];
+        let bestVal = -Infinity;
+        for (const j of jumps) {
+          const sim = [...GameState.board];
+          sim[j.from] = 0;
+          sim[j.capturedId] = 0;
+          sim[j.to] = 2;
+          const moreJumps = getLegalActionsForPiece(j.to, sim).jumps.length;
+          const p1Replies = getAllLegalActionsForPlayer(1, sim).allJumps.length;
+          const val = moreJumps * 25 - p1Replies * 14 + Adjacency[j.to].size;
+          if (val > bestVal) {
+            bestVal = val;
+            bestJ = j;
+          }
+        }
+        return bestJ;
+      }
+
+      function runAITurn() {
+        if (GameState.gameOver || GameState.currentTurn !== 2 || !GameState.vsAI) return;
+
+        // 1. Handle active multi-jump chain continuation
+        if (GameState.chainJumpingNode !== null) {
+          const nextJump = chooseBestContinuationJump(GameState.chainJumpingNode);
+          if (nextJump) {
+            // In Hardest mode, only stop a chain early if taking the jump walks into a devastating counter-chain
+            if (GameState.aiDifficulty === 'hardest' && GameState.chainRule === 'multi_optional') {
+              const stayScore = evaluateBoardPosition(GameState.board, GameState.reserves[1], GameState.reserves[2]);
+              const jumpBoard = simulateTurnOnBoard(GameState.board, nextJump, 2);
+              const jumpScore = evaluateBoardPosition(jumpBoard, GameState.reserves[1], GameState.reserves[2]);
+              if (stayScore > jumpScore + 35) {
+                endChainTurnEarly(false);
+                return;
+              }
+            }
+            executeAction(nextJump, false);
+          } else {
+            finishTurnAndCheckWin(2, false, { type: 'end_chain' });
+          }
+          return;
+        }
+
+        const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(2);
+        if (total === 0) return;
+
+        const diff = GameState.aiDifficulty;
+
+        // TIER 1: EASY (Novice — relaxed & forgiving)
+        if (diff === 'easy') {
+          if (allJumps.length > 0 && (GameState.mandatoryCapture === 'forced' || Math.random() < 0.65)) {
+            const pick = allJumps[Math.floor(Math.random() * allJumps.length)];
+            executeAction(pick, false);
+            return;
+          }
+          if (allSteps.length > 0) {
+            const pick = allSteps[Math.floor(Math.random() * allSteps.length)];
+            executeAction(pick, false);
+            return;
+          }
+          executeAction(allJumps[0], false);
+          return;
+        }
+
+        // TIER 2: MEDIUM (Tactical — greedy captures + 1-ply safety check)
+        if (diff === 'medium') {
+          if (allJumps.length > 0) {
+            let bestJump = allJumps[0];
+            let bestScore = -9999;
+            for (const j of allJumps) {
+              const simBoard = [...GameState.board];
+              simBoard[j.from] = 0;
+              simBoard[j.capturedId] = 0;
+              simBoard[j.to] = 2;
+              const follow = getLegalActionsForPiece(j.to, simBoard);
+              const score = follow.jumps.length * 14 + Math.random() * 2;
+              if (score > bestScore) {
+                bestScore = score;
+                bestJump = j;
+              }
+            }
+            executeAction(bestJump, false);
+            return;
+          }
+
+          const midR = (GameState.rows - 1) / 2;
+          const midC = (GameState.cols - 1) / 2;
+          let bestStep = allSteps[0];
+          let bestScore = -9999;
+          for (const s of allSteps) {
+            const simBoard = [...GameState.board];
+            simBoard[s.from] = 0;
+            simBoard[s.to] = 2;
+            const p1Replies = getAllLegalActionsForPlayer(1, simBoard);
+            const dangerPenalty = p1Replies.allJumps.length * 12;
+            const centerBonus = (4 - Math.abs(midR - Nodes[s.to].r)) * 1.5 + (4 - Math.abs(midC - Nodes[s.to].c)) * 1.1;
+            const score = centerBonus - dangerPenalty + Math.random() * 2.5;
+            if (score > bestScore) {
+              bestScore = score;
+              bestStep = s;
+            }
+          }
+          executeAction(bestStep, false);
+          return;
+        }
+
+        // TIER 3 & 4: HARD (2-Ply Commander) & HARDEST (3-Ply Alpha-Beta Minimax Grandmaster)
+        const searchDepth = diff === 'hardest' ? 3 : 2;
+        const candidatePool = allJumps.length > 0
+          ? [...allJumps, ...(GameState.mandatoryCapture === 'forced' ? [] : allSteps.slice(0, 8))]
+          : allSteps;
+
+        let bestAction = candidatePool[0];
+        let bestVal = -Infinity;
+
+        for (const act of candidatePool) {
+          const nextBoard = simulateTurnOnBoard(GameState.board, act, 2);
+          const immediateCaptureBonus = act.type === 'jump' ? 28 : 0;
+          const val = immediateCaptureBonus + minimaxAlphaBeta(
+            nextBoard,
+            searchDepth - 1,
+            -Infinity,
+            Infinity,
+            false,
+            GameState.reserves[1],
+            GameState.reserves[2]
+          ) + (Math.random() * 0.4);
+
+          if (val > bestVal) {
+            bestVal = val;
+            bestAction = act;
+          }
+        }
+
+        executeAction(bestAction, false);
+      }
+
+      /* -------------------------------------------------------------------
+       * ROYAL TABLETOP CANVAS RENDERER (Warm Wood, Inlaid Brass & 3D Gems)
+       * ------------------------------------------------------------------- */
+      const canvas = document.getElementById('katarCanvas');
+      const ctx = canvas.getContext('2d');
+      let animFrameId = null;
+
+      const VisualFX = {
+        particles: [],
+        pulseRings: [],
+        movingPiece: null,
+        hintHighlight: null,
+
+        startPieceTween(fromNode, toNode, player, isJump) {
+          this.movingPiece = {
+            player,
+            fromX: fromNode.x,
+            fromY: fromNode.y,
+            toX: toNode.x,
+            toY: toNode.y,
+            toId: toNode.id,
+            isJump,
+            startTime: performance.now(),
+            duration: isJump ? 250 : 175
+          };
+          requestRender();
+        },
+
+        spawnCaptureBurst(x, y, capturedPlayer) {
+          const colors = capturedPlayer === 1
+            ? ['#0D9488', '#2DD4BF', '#D97706']
+            : ['#E11D48', '#FB7185', '#D97706'];
+          for (let i = 0; i < 18; i++) {
+            const angle = (Math.PI * 2 * i) / 18 + (Math.random() - 0.5) * 0.3;
+            const speed = 1.6 + Math.random() * 3.2;
+            this.particles.push({
+              x,
+              y,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed,
+              radius: 2.5 + Math.random() * 3,
+              color: colors[i % colors.length],
+              alpha: 1,
+              decay: 0.028 + Math.random() * 0.018
+            });
+          }
+          requestRender();
+        },
+
+        spawnPulseRing(nodeId, color) {
+          const n = Nodes[nodeId];
+          if (!n) return;
+          this.pulseRings.push({
+            x: n.x,
+            y: n.y,
+            radius: 6,
+            alpha: 0.9,
+            color
+          });
+          requestRender();
+        }
+      };
+
+      function resizeCanvas() {
+        const wrapper = document.getElementById('boardContainerWrapper');
+        const aspectBox = document.getElementById('canvasAspectBox');
+        if (!wrapper || !aspectBox || Nodes.length === 0) return;
+
+        const rect = wrapper.getBoundingClientRect();
+        const outerSize = Math.max(240, Math.floor(Math.min(rect.width - 8, rect.height - 8, 560)));
+        const size = outerSize - 16; // Account for 8px 3D walnut border padding
+        aspectBox.style.width = `${outerSize}px`;
+        aspectBox.style.height = `${outerSize}px`;
+
+        const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+        canvas.width = Math.floor(size * dpr);
+        canvas.height = Math.floor(size * dpr);
+        canvas.style.width = `${size}px`;
+        canvas.style.height = `${size}px`;
+
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        let minR = Infinity, maxR = -Infinity;
+        let minC = Infinity, maxC = -Infinity;
+        for (const n of Nodes) {
+          if (n.r < minR) minR = n.r;
+          if (n.r > maxR) maxR = n.r;
+          if (n.c < minC) minC = n.c;
+          if (n.c > maxC) maxC = n.c;
+        }
+
+        const spanR = Math.max(1, maxR - minR);
+        const spanC = Math.max(1, maxC - minC);
+        const maxSpan = Math.max(spanR, spanC);
+
+        const pad = size * 0.105;
+        const usable = size - pad * 2;
+        const step = usable / maxSpan;
+
+        const offsetX = pad + (usable - spanC * step) / 2;
+        const offsetY = pad + (usable - spanR * step) / 2;
+
+        for (const n of Nodes) {
+          const normR = GameState.boardFlipped ? (maxR - n.r) : (n.r - minR);
+          const normC = GameState.boardFlipped ? (maxC - n.c) : (n.c - minC);
+          n.x = offsetX + normC * step;
+          n.y = offsetY + normR * step;
+        }
+
+        requestRender();
+      }
+
+      function requestRender() {
+        if (animFrameId) cancelAnimationFrame(animFrameId);
+        animFrameId = requestAnimationFrame(renderBoardFrame);
+      }
+
+      function getSurfaceColors() {
+        const surf = GameState.boardSurface;
+        if (surf === 'walnut') {
+          return {
+            inner: '#E6C89C',
+            mid: '#D4AF7A',
+            outer: '#B88E56',
+            line: '#5C3418',
+            diag: 'rgba(92, 52, 24, 0.55)',
+            nodeFill: '#5C3418',
+            nodeRim: '#FBF5EA',
+            labelColor: '#422512'
+          };
+        }
+        if (surf === 'emerald') {
+          return {
+            inner: '#0F766E',
+            mid: '#115E59',
+            outer: '#064E3B',
+            line: 'rgba(253, 230, 138, 0.7)',
+            diag: 'rgba(253, 230, 138, 0.4)',
+            nodeFill: '#FDE68A',
+            nodeRim: '#064E3B',
+            labelColor: '#FEF3C7'
+          };
+        }
+        if (surf === 'obsidian') {
+          return {
+            inner: '#1E293B',
+            mid: '#0F172A',
+            outer: '#090D16',
+            line: 'rgba(226, 232, 240, 0.55)',
+            diag: 'rgba(148, 163, 184, 0.32)',
+            nodeFill: '#94A3B8',
+            nodeRim: '#0F172A',
+            labelColor: '#CBD5E1'
+          };
+        }
+        // Default: 'sandstone' (Royal Parchment & Inlaid Rosewood — Bright, Crisp Tabletop)
+        return {
+          inner: '#FFFDF7',
+          mid: '#F6E8CE',
+          outer: '#E8D2AC',
+          line: '#6E4223',
+          diag: 'rgba(110, 66, 35, 0.48)',
+          nodeFill: '#6E4223',
+          nodeRim: '#FFFDF7',
+          labelColor: '#5C371E'
+        };
+      }
+
+      function renderBoardFrame(now) {
+        animFrameId = null;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+        const size = canvas.width / dpr;
+        if (size <= 0 || Nodes.length === 0) return;
+
+        let needsMoreFrames = false;
+        const palette = getSurfaceColors();
+
+        // 1. Handcrafted Tabletop Playing Surface
+        const bgGrad = ctx.createRadialGradient(size * 0.5, size * 0.5, size * 0.05, size * 0.5, size * 0.5, size * 0.75);
+        bgGrad.addColorStop(0, palette.inner);
+        bgGrad.addColorStop(0.68, palette.mid);
+        bgGrad.addColorStop(1, palette.outer);
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, size, size);
+
+        // Ornamental Double-Line Border Inlay + Corner Brass Studs
+        const framePad = size * 0.032;
+        ctx.strokeStyle = palette.line;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(framePad, framePad, size - framePad * 2, size - framePad * 2);
+
+        ctx.strokeStyle = 'rgba(217, 119, 6, 0.45)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(framePad + 4, framePad + 4, size - (framePad + 4) * 2, size - (framePad + 4) * 2);
+
+        // Corner Brass Rivets
+        const corners = [
+          [framePad, framePad],
+          [size - framePad, framePad],
+          [framePad, size - framePad],
+          [size - framePad, size - framePad]
+        ];
+        for (const [cx, cy] of corners) {
+          ctx.beginPath();
+          ctx.arc(cx, cy, 4.5, 0, Math.PI * 2);
+          ctx.fillStyle = '#D97706';
+          ctx.fill();
+          ctx.strokeStyle = '#FFFBEB';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
+
+        // Center Maidaan Ornamental Diamond Motif
+        const centerX = size * 0.5;
+        const centerY = size * 0.5;
+        const diamondR = size * 0.13;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - diamondR);
+        ctx.lineTo(centerX + diamondR, centerY);
+        ctx.lineTo(centerX, centerY + diamondR);
+        ctx.lineTo(centerX - diamondR, centerY);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(217, 119, 6, 0.09)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(217, 119, 6, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+
+        // 2. Engraved Katar Grid Lines
+        ctx.save();
+        ctx.lineCap = 'round';
+        for (const [u, v] of Edges) {
+          const nu = Nodes[u];
+          const nv = Nodes[v];
+          const isDiag = Math.abs(nu.r - nv.r) > 0.1 && Math.abs(nu.c - nv.c) > 0.1;
+          ctx.beginPath();
+          ctx.moveTo(nu.x, nu.y);
+          ctx.lineTo(nv.x, nv.y);
+          ctx.strokeStyle = isDiag ? palette.diag : palette.line;
+          ctx.lineWidth = isDiag ? 1.8 : 2.6;
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // 3. Active Legal Moves for Selected Piece
+        let activeMoves = { steps: [], jumps: [] };
+        if (GameState.selectedNode !== null && !GameState.gameOver) {
+          const raw = getLegalActionsForPiece(GameState.selectedNode);
+          if (GameState.chainJumpingNode !== null) {
+            activeMoves.jumps = raw.jumps;
+          } else {
+            const playerMoves = getAllLegalActionsForPlayer(GameState.currentTurn);
+            const mustJump = (GameState.mandatoryCapture === 'forced' && playerMoves.allJumps.length > 0);
+            activeMoves.steps = mustJump ? [] : raw.steps;
+            activeMoves.jumps = raw.jumps;
+          }
+        }
+
+        if (VisualFX.hintHighlight) {
+          const hFrom = Nodes[VisualFX.hintHighlight.from];
+          const hTo = Nodes[VisualFX.hintHighlight.to];
+          if (hFrom && hTo) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(hFrom.x, hFrom.y);
+            ctx.lineTo(hTo.x, hTo.y);
+            ctx.strokeStyle = '#D97706';
+            ctx.lineWidth = 4.5;
+            ctx.setLineDash([6, 4]);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        const maxDim = Math.max(GameState.rows + (GameState.hasTriangularCamps ? 4 : 0), GameState.cols);
+        const densityScale = Math.min(1.15, Math.max(0.58, 6 / maxDim));
+
+        if (GameState.showGuides && GameState.selectedNode !== null) {
+          const selNode = Nodes[GameState.selectedNode];
+          for (const step of activeMoves.steps) {
+            const target = Nodes[step.to];
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(selNode.x, selNode.y);
+            ctx.lineTo(target.x, target.y);
+            ctx.strokeStyle = 'rgba(13, 148, 136, 0.75)';
+            ctx.lineWidth = 3.5;
+            ctx.stroke();
+            ctx.restore();
+          }
+          for (const jump of activeMoves.jumps) {
+            const target = Nodes[jump.to];
+            const capNode = Nodes[jump.capturedId];
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(selNode.x, selNode.y);
+            ctx.lineTo(target.x, target.y);
+            ctx.strokeStyle = 'rgba(217, 119, 6, 0.95)';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([5, 3]);
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.arc(capNode.x, capNode.y, size * 0.044 * densityScale, 0, Math.PI * 2);
+            ctx.strokeStyle = '#E11D48';
+            ctx.lineWidth = 2.8;
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        // 4. Intersection Nodes & Optional Coordinates
+        const nodeRadius = Math.max(3.8, size * 0.0155 * densityScale);
+        const midR = (GameState.rows - 1) / 2;
+        const midC = (GameState.cols - 1) / 2;
+
+        for (let i = 0; i < Nodes.length; i++) {
+          const n = Nodes[i];
+          const isCenter = Math.abs(n.r - midR) <= 0.65 && Math.abs(n.c - midC) <= 0.65;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, isCenter ? nodeRadius * 1.3 : nodeRadius, 0, Math.PI * 2);
+          ctx.fillStyle = isCenter ? '#D97706' : palette.nodeFill;
+          ctx.fill();
+          ctx.strokeStyle = palette.nodeRim;
+          ctx.lineWidth = 1.6;
+          ctx.stroke();
+
+          if (GameState.nodeLabels !== 'off' && GameState.board[i] === 0) {
+            const txt = GameState.nodeLabels === 'numbers' ? String(i + 1) : (n.label || String(i + 1));
+            ctx.fillStyle = palette.labelColor;
+            ctx.font = `700 ${Math.max(9, Math.floor(size * 0.022 * densityScale))}px "JetBrains Mono", monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(txt, n.x, n.y - nodeRadius * 1.6);
+          }
+        }
+
+        // 5. Legal Destination Target Rings
+        if (GameState.showGuides) {
+          const targetRadius = size * 0.033 * densityScale;
+          for (const step of activeMoves.steps) {
+            const target = Nodes[step.to];
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(target.x, target.y, targetRadius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(13, 148, 136, 0.22)';
+            ctx.fill();
+            ctx.strokeStyle = '#0D9488';
+            ctx.lineWidth = 2.4;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(target.x, target.y, targetRadius * 0.42, 0, Math.PI * 2);
+            ctx.fillStyle = '#0D9488';
+            ctx.fill();
+            ctx.restore();
+          }
+
+          for (const jump of activeMoves.jumps) {
+            const target = Nodes[jump.to];
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(target.x, target.y, targetRadius * 1.18, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.28)';
+            ctx.fill();
+            ctx.strokeStyle = '#D97706';
+            ctx.lineWidth = 2.8;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(target.x, target.y, targetRadius * 0.46, 0, Math.PI * 2);
+            ctx.fillStyle = '#D97706';
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+
+        // 6. Draw 3D Tactile Gemstone Pieces
+        const pieceRadius = size * 0.052 * densityScale;
+        const movingDestId = VisualFX.movingPiece ? VisualFX.movingPiece.toId : -1;
+
+        for (let i = 0; i < Nodes.length; i++) {
+          const occupant = GameState.board[i];
+          if (!occupant || i === movingDestId) continue;
+          const n = Nodes[i];
+          const isSelected = (GameState.selectedNode === i);
+          drawGamePiece(n.x, n.y, pieceRadius, occupant, isSelected, 1);
+        }
+
+        // 7. Tweening Piece Animation
+        if (VisualFX.movingPiece) {
+          const mp = VisualFX.movingPiece;
+          const elapsed = now - mp.startTime;
+          const t = Math.min(1, elapsed / mp.duration);
+          const ease = 1 - Math.pow(1 - t, 3);
+          const curX = mp.fromX + (mp.toX - mp.fromX) * ease;
+          let curY = mp.fromY + (mp.toY - mp.fromY) * ease;
+          let scale = 1;
+          if (mp.isJump) {
+            const arcLift = Math.sin(t * Math.PI) * (size * 0.045);
+            curY -= arcLift;
+            scale = 1 + Math.sin(t * Math.PI) * 0.18;
+          }
+          drawGamePiece(curX, curY, pieceRadius * scale, mp.player, true, scale);
+
+          if (t < 1) {
+            needsMoreFrames = true;
+          } else {
+            VisualFX.movingPiece = null;
+            needsMoreFrames = true;
+          }
+        }
+
+        // 8. Pulse Rings & Capture Particles
+        for (let i = VisualFX.pulseRings.length - 1; i >= 0; i--) {
+          const pr = VisualFX.pulseRings[i];
+          pr.radius += 1.4;
+          pr.alpha -= 0.035;
+          if (pr.alpha <= 0) {
+            VisualFX.pulseRings.splice(i, 1);
+            continue;
+          }
+          needsMoreFrames = true;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(pr.x, pr.y, pr.radius, 0, Math.PI * 2);
+          ctx.strokeStyle = pr.color;
+          ctx.globalAlpha = Math.max(0, pr.alpha);
+          ctx.lineWidth = 2.8;
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        for (let i = VisualFX.particles.length - 1; i >= 0; i--) {
+          const p = VisualFX.particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vx *= 0.95;
+          p.vy *= 0.95;
+          p.alpha -= p.decay;
+          if (p.alpha <= 0) {
+            VisualFX.particles.splice(i, 1);
+            continue;
+          }
+          needsMoreFrames = true;
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, p.alpha);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.fill();
+          ctx.restore();
+        }
+
+        if (needsMoreFrames) {
+          requestRender();
+        }
+      }
+
+      function drawGamePiece(x, y, radius, player, isSelected, scale = 1) {
+        ctx.save();
+
+        // Selection Halo Ring
+        if (isSelected) {
+          ctx.beginPath();
+          ctx.arc(x, y, radius * 1.34, 0, Math.PI * 2);
+          ctx.fillStyle = GameState.chainJumpingNode !== null
+            ? 'rgba(245, 158, 11, 0.34)'
+            : 'rgba(13, 148, 136, 0.26)';
+          ctx.fill();
+          ctx.strokeStyle = '#D97706';
+          ctx.lineWidth = 2.6;
+          ctx.stroke();
+        }
+
+        // Realistic 3D Tabletop Cast Shadow
+        ctx.shadowColor = 'rgba(43, 23, 10, 0.48)';
+        ctx.shadowBlur = 7 * scale;
+        ctx.shadowOffsetY = 3.5 * scale;
+
+        const theme = GameState.pieceTheme;
+        const grad = ctx.createRadialGradient(
+          x - radius * 0.32,
+          y - radius * 0.35,
+          radius * 0.08,
+          x,
+          y,
+          radius
+        );
+
+        if (player === 1) {
+          let rim = '#B45309';
+          let innerRing = 'rgba(254, 243, 199, 0.78)';
+          let dot = '#FEF3C7';
+          if (theme === 'classic') {
+            grad.addColorStop(0, '#93C5FD');
+            grad.addColorStop(0.5, '#2563EB');
+            grad.addColorStop(1, '#1E3A8A');
+            rim = '#1E40AF';
+            dot = '#EFF6FF';
+          } else if (theme === 'jade_gold') {
+            grad.addColorStop(0, '#6EE7B7');
+            grad.addColorStop(0.5, '#059669');
+            grad.addColorStop(1, '#064E3B');
+            rim = '#065F46';
+            dot = '#ECFDF5';
+          } else if (theme === 'ivory_onyx') {
+            grad.addColorStop(0, '#FFFFFF');
+            grad.addColorStop(0.65, '#F5E8C7');
+            grad.addColorStop(1, '#C8AD7F');
+            rim = '#8C6239';
+            innerRing = 'rgba(140, 98, 57, 0.55)';
+            dot = '#8C6239';
+          } else {
+            // Feroza Turquoise Gemstone Bead
+            grad.addColorStop(0, '#5EEAD4');
+            grad.addColorStop(0.52, '#0D9488');
+            grad.addColorStop(1, '#115E59');
+          }
+
+          ctx.beginPath();
+          ctx.arc(x, y, radius, 0, Math.PI * 2);
+          ctx.fillStyle = grad;
+          ctx.fill();
+
+          ctx.shadowColor = 'transparent';
+          ctx.lineWidth = 2.2;
+          ctx.strokeStyle = rim;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(x, y, radius * 0.58, 0, Math.PI * 2);
+          ctx.strokeStyle = innerRing;
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
+
+          // Glossy Specular Highlight
+          ctx.beginPath();
+          ctx.arc(x - radius * 0.28, y - radius * 0.28, radius * 0.2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(x, y, radius * 0.2, 0, Math.PI * 2);
+          ctx.fillStyle = dot;
+          ctx.fill();
+        } else {
+          let rim = '#881337';
+          let innerRing = 'rgba(255, 228, 230, 0.72)';
+          let dot = '#FFE4E6';
+          if (theme === 'classic') {
+            grad.addColorStop(0, '#FCA5A5');
+            grad.addColorStop(0.52, '#DC2626');
+            grad.addColorStop(1, '#7F1D1D');
+          } else if (theme === 'jade_gold') {
+            grad.addColorStop(0, '#FDE68A');
+            grad.addColorStop(0.52, '#D97706');
+            grad.addColorStop(1, '#78350F');
+            rim = '#92400E';
+            dot = '#FFFBEB';
+          } else if (theme === 'ivory_onyx') {
+            grad.addColorStop(0, '#64748B');
+            grad.addColorStop(0.52, '#1E293B');
+            grad.addColorStop(1, '#090D16');
+            rim = '#D97706';
+            dot = '#FDE68A';
+          } else {
+            // Sang-e-Suleimani Crimson Agate Stone
+            grad.addColorStop(0, '#FDA4AF');
+            grad.addColorStop(0.48, '#E11D48');
+            grad.addColorStop(0.88, '#9F1239');
+            grad.addColorStop(1, '#4C0519');
+          }
+
+          ctx.beginPath();
+          ctx.arc(x, y, radius, 0, Math.PI * 2);
+          ctx.fillStyle = grad;
+          ctx.fill();
+
+          ctx.shadowColor = 'transparent';
+          ctx.lineWidth = 2.2;
+          ctx.strokeStyle = rim;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(x, y, radius * 0.6, 0, Math.PI * 2);
+          ctx.strokeStyle = innerRing;
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
+
+          // Glossy Specular Highlight
+          ctx.beginPath();
+          ctx.arc(x - radius * 0.28, y - radius * 0.28, radius * 0.2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.42)';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(x, y, radius * 0.2, 0, Math.PI * 2);
+          ctx.fillStyle = dot;
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      function handleBoardTap(clientX, clientY) {
+        if (GameState.gameOver) return;
+
+        if (GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === 2) {
+          showBoardToast("Wait for Tactical AI's move...");
+          return;
+        }
+
+        if (GameState.mode === 'webrtc' && WebRTCManager.isConnected() && GameState.localPlayerRole) {
+          if (GameState.currentTurn !== GameState.localPlayerRole) {
+            SoundEngine.invalid();
+            showBoardToast(`Waiting for Player ${GameState.currentTurn}'s move...`);
+            return;
+          }
+        }
+
+        const rect = canvas.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+
+        const maxDim = Math.max(GameState.rows + (GameState.hasTriangularCamps ? 4 : 0), GameState.cols);
+        const hitRadius = Math.max(20, (rect.width / maxDim) * 0.52);
+        let closestId = -1;
+        let closestDist = Infinity;
+
+        for (let i = 0; i < Nodes.length; i++) {
+          const n = Nodes[i];
+          const dist = Math.hypot(n.x - x, n.y - y);
+          if (dist < hitRadius && dist < closestDist) {
+            closestDist = dist;
+            closestId = i;
+          }
+        }
+
+        if (closestId === -1) return;
+
+        const tappedOccupant = GameState.board[closestId];
+
+        if (GameState.chainJumpingNode !== null) {
+          const { jumps } = getLegalActionsForPiece(GameState.chainJumpingNode);
+          const chosenJump = jumps.find((j) => j.to === closestId);
+          if (chosenJump) {
+            executeAction(chosenJump, false);
+          } else {
+            SoundEngine.invalid();
+            showBoardToast(
+              GameState.chainRule === 'multi_mandatory'
+                ? 'Mandatory Chain: tap a highlighted gold jump target!'
+                : 'Select a gold jump target or tap End Chain ✓'
+            );
+          }
+          return;
+        }
+
+        const playerMoves = getAllLegalActionsForPlayer(GameState.currentTurn);
+        const mustJump = (GameState.mandatoryCapture === 'forced' && playerMoves.allJumps.length > 0);
+
+        if (GameState.selectedNode !== null) {
+          const { steps, jumps } = getLegalActionsForPiece(GameState.selectedNode);
+          const chosenJump = jumps.find((j) => j.to === closestId);
+          if (chosenJump) {
+            executeAction(chosenJump, false);
+            return;
+          }
+          const chosenStep = steps.find((s) => s.to === closestId);
+          if (chosenStep) {
+            if (mustJump) {
+              SoundEngine.invalid();
+              showBoardToast('Forced Capture Rule is ON: you must make a jump capture!');
+              return;
+            }
+            executeAction(chosenStep, false);
+            return;
+          }
+        }
+
+        if (tappedOccupant === GameState.currentTurn) {
+          if (mustJump) {
+            const { jumps } = getLegalActionsForPiece(closestId);
+            if (jumps.length === 0) {
+              SoundEngine.invalid();
+              showBoardToast('Forced Capture Rule: select a piece that can jump!');
+              return;
+            }
+          }
+          GameState.selectedNode = closestId;
+          VisualFX.hintHighlight = null;
+          SoundEngine.select();
+          updateHUD();
+          requestRender();
+        } else if (GameState.selectedNode !== null) {
+          SoundEngine.invalid();
+          GameState.selectedNode = null;
+          updateHUD();
+          requestRender();
+        }
+      }
+
+      canvas.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        handleBoardTap(e.clientX, e.clientY);
+      });
+
+      canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+      document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+
+      let toastTimer = null;
+      function showBoardToast(message) {
+        const el = document.getElementById('boardToast');
+        if (!el) return;
+        el.textContent = message;
+        el.classList.remove('opacity-0');
+        el.classList.add('opacity-100');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          el.classList.remove('opacity-100');
+          el.classList.add('opacity-0');
+        }, 1900);
+      }
+
+      function syncSettingsControlsFromState() {
+        document.getElementById('selGridPreset').value = GameState.gridPreset;
+        document.getElementById('selDiagonalMode').value = GameState.diagonalMode;
+        document.getElementById('rngCustomRows').value = String(GameState.rows);
+        document.getElementById('valCustomRows').textContent = String(GameState.rows);
+        document.getElementById('rngCustomCols').value = String(GameState.cols);
+        document.getElementById('valCustomCols').textContent = String(GameState.cols);
+
+        const campVal = document.getElementById('valTriCamps');
+        const campBtn = document.getElementById('btnToggleTriCamps');
+        campVal.textContent = GameState.hasTriangularCamps ? 'ON (+12 Nodes)' : 'OFF';
+        campBtn.textContent = GameState.hasTriangularCamps ? 'Remove Triangular Camps' : 'Add North/South Camps';
+
+        const totalNodes = GameState.rows * GameState.cols + (GameState.hasTriangularCamps ? 12 : 0);
+        document.getElementById('lblActiveGridSummary').textContent = `${totalNodes} Intersections (${GameState.rows}×${GameState.cols}${GameState.hasTriangularCamps ? '+Camps' : ''})`;
+
+        document.getElementById('selOpenCenterMode').value = GameState.openCenterMode;
+        document.getElementById('selReserveMode').value = GameState.reserveMode;
+        document.getElementById('rngPiecesPerPlayer').value = String(GameState.piecesPerPlayer);
+        document.getElementById('valPiecesPerPlayer').textContent = `${GameState.piecesPerPlayer} Pieces Each`;
+
+        document.getElementById('selChainRule').value = GameState.chainRule;
+        document.getElementById('selMandatoryCapture').value = GameState.mandatoryCapture;
+        document.getElementById('selStepDirection').value = GameState.stepDirection;
+        document.getElementById('selFirstTurn').value = GameState.firstTurnSetting;
+        document.getElementById('selTurnTimer').value = String(GameState.turnTimerSeconds);
+
+        document.getElementById('selPieceTheme').value = GameState.pieceTheme;
+        document.getElementById('selBoardSurface').value = GameState.boardSurface;
+        document.getElementById('selNodeLabels').value = GameState.nodeLabels;
+        document.getElementById('chkShowGuides').checked = GameState.showGuides;
+        document.getElementById('chkEnableHaptics').checked = SoundEngine.hapticsEnabled;
+        document.getElementById('selAIDifficulty').value = GameState.aiDifficulty;
+
+        // Sync Main-Screen Opponent Mode Buttons & 4 Difficulty Chips
+        const btnMainAI = document.getElementById('btnMainModeAI');
+        const btnMain2P = document.getElementById('btnMainMode2P');
+        const diffGroup = document.getElementById('mainAIDiffGroup');
+        if (btnMainAI && btnMain2P) {
+          if (GameState.vsAI && GameState.mode === 'pass_play') {
+            btnMainAI.className = 'android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1';
+            btnMain2P.className = 'android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1';
+            if (diffGroup) diffGroup.classList.remove('opacity-40', 'pointer-events-none');
+          } else {
+            btnMain2P.className = 'android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1';
+            btnMainAI.className = 'android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1';
+            if (diffGroup) diffGroup.classList.add('opacity-40', 'pointer-events-none');
+          }
+        }
+
+        const btnModalHuman = document.getElementById('btnOpponentHuman');
+        const btnModalAI = document.getElementById('btnOpponentAI');
+        if (btnModalHuman && btnModalAI) {
+          if (GameState.vsAI) {
+            btnModalAI.className = 'android-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-teal-600 text-white shadow-sm';
+            btnModalHuman.className = 'android-btn px-2.5 py-1 rounded-lg text-xs font-bold text-walnut-700';
+          } else {
+            btnModalHuman.className = 'android-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-teal-600 text-white shadow-sm';
+            btnModalAI.className = 'android-btn px-2.5 py-1 rounded-lg text-xs font-bold text-walnut-700';
+          }
+        }
+
+        document.querySelectorAll('.ai-diff-chip').forEach((chip) => {
+          const d = chip.getAttribute('data-ai-diff');
+          if (d === GameState.aiDifficulty) {
+            chip.className = d === 'hardest'
+              ? 'ai-diff-chip android-btn px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-rose-600 text-white shadow-sm'
+              : 'ai-diff-chip android-btn px-2.5 py-0.5 rounded-md text-[11px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
+          } else {
+            chip.className = d === 'hardest'
+              ? 'ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[11px] font-bold bg-white text-rose-800 border border-rose-300'
+              : 'ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[11px] font-bold bg-white text-walnut-700 border border-parchment-300';
+          }
+        });
+
+        const btnChain = document.getElementById('btnToggleChainRule');
+        if (btnChain) {
+          btnChain.textContent = GameState.chainRule === 'single_only' ? 'Single Jump Only' : 'Multi-Jump Chain';
+        }
+        const btnPlace = document.getElementById('btnTogglePlacementMode');
+        if (btnPlace) {
+          btnPlace.textContent = GameState.openCenterMode === 'two_open' ? '2-Open + 1 Reserve' : '4-Open + 2 Reserve';
+        }
+        const btnTheme = document.getElementById('btnTogglePieceTheme');
+        if (btnTheme) {
+          btnTheme.textContent = GameState.pieceTheme === 'traditional' ? 'Beads & Stones' : 'Custom Theme';
+        }
+
+        document.querySelectorAll('.quick-grid-chip').forEach((btn) => {
+          const p = btn.getAttribute('data-grid-preset');
+          if (p === GameState.gridPreset) {
+            btn.className = 'quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold shrink-0 bg-teal-600 text-white shadow-sm';
+          } else {
+            btn.className = 'quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 bg-white text-walnut-800 border border-parchment-300';
+          }
+        });
+      }
+
+      function getAILabel() {
+        const map = { easy: 'Easy AI', medium: 'Medium AI', hard: 'Hard AI', hardest: 'Khan AI (Hardest)' };
+        return map[GameState.aiDifficulty] || 'Tactical AI';
+      }
+
+      function getThemePlayerNames() {
+        const aiTag = getAILabel();
+        if (GameState.pieceTheme === 'classic') return ['Player 1 (Cobalt)', GameState.vsAI ? `${aiTag} (Ruby)` : 'Player 2 (Ruby)'];
+        if (GameState.pieceTheme === 'jade_gold') return ['Player 1 (Jade)', GameState.vsAI ? `${aiTag} (Gold)` : 'Player 2 (Gold)'];
+        if (GameState.pieceTheme === 'ivory_onyx') return ['Player 1 (Ivory)', GameState.vsAI ? `${aiTag} (Onyx)` : 'Player 2 (Onyx)'];
+        return ['Player 1 (Feroza)', GameState.vsAI ? `${aiTag} (Sang)` : 'Player 2 (Sang)'];
+      }
+
+      function updateHUD() {
+        const p1Total = countPlayerTotalPieces(1);
+        const p2Total = countPlayerTotalPieces(2);
+        const maxP = GameState.piecesPerPlayer;
+
+        document.getElementById('p1RemainingCount').textContent = String(p1Total);
+        document.getElementById('p2RemainingCount').textContent = String(p2Total);
+        document.getElementById('p1MaxPiecesLabel').textContent = String(maxP);
+        document.getElementById('p2MaxPiecesLabel').textContent = String(maxP);
+        document.getElementById('p1ReserveCount').textContent = String(GameState.reserves[1]);
+        document.getElementById('p2ReserveCount').textContent = String(GameState.reserves[2]);
+
+        document.getElementById('p1CapturedCount').textContent = String(GameState.capturedBy[1]);
+        document.getElementById('p2CapturedCount').textContent = String(GameState.capturedBy[2]);
+        document.getElementById('p1TargetCapLabel').textContent = `/${maxP}`;
+        document.getElementById('p2TargetCapLabel').textContent = `/${maxP}`;
+
+        const p1Pct = Math.min(100, Math.round((GameState.capturedBy[1] / Math.max(1, maxP)) * 100));
+        const p2Pct = Math.min(100, Math.round((GameState.capturedBy[2] / Math.max(1, maxP)) * 100));
+        document.getElementById('p1CaptureBar').style.width = `${p1Pct}%`;
+        document.getElementById('p2CaptureBar').style.width = `${p2Pct}%`;
+
+        const subEl = document.getElementById('modeSubtitle');
+        const modeTxt = WebRTCManager.isConnected()
+          ? `WebRTC P2P (P${GameState.localPlayerRole || 1})`
+          : (GameState.vsAI ? `vs AI (${GameState.aiDifficulty.toUpperCase()})` : 'Pass & Play');
+        subEl.textContent = `${modeTxt} • ${GameState.rows}×${GameState.cols}${GameState.hasTriangularCamps ? '+Camps' : ''} (${Nodes.length} Nodes • ${maxP} Beads)`;
+
+        const c1 = document.getElementById('cardPlayer1');
+        const c2 = document.getElementById('cardPlayer2');
+        if (GameState.currentTurn === 1) {
+          c1.className = 'game-card-active-p1 rounded-2xl p-2.5 sm:p-3.5 transition-all duration-200';
+          c2.className = 'game-card rounded-2xl p-2.5 sm:p-3.5 transition-all duration-200 opacity-85';
+        } else {
+          c2.className = 'game-card-active-p2 rounded-2xl p-2.5 sm:p-3.5 transition-all duration-200';
+          c1.className = 'game-card rounded-2xl p-2.5 sm:p-3.5 transition-all duration-200 opacity-85';
+        }
+
+        const [p1Title, p2Title] = getThemePlayerNames();
+        document.getElementById('p1NameLabel').textContent = p1Title;
+        document.getElementById('p2NameLabel').textContent = p2Title;
+
+        const dot = document.getElementById('turnIndicatorDot');
+        const headline = document.getElementById('turnHeadline');
+        const subtext = document.getElementById('turnSubtext');
+        const btnEndChain = document.getElementById('btnEndChainTurn');
+
+        if (GameState.currentTurn === 1) {
+          dot.className = 'w-3.5 h-3.5 rounded-full bg-teal-600 shrink-0 ring-4 ring-teal-500/20';
+          headline.textContent = `${p1Title}'s Turn`;
+        } else {
+          dot.className = 'w-3.5 h-3.5 rounded-full bg-rose-600 shrink-0 ring-4 ring-rose-500/20';
+          headline.textContent = `${p2Title}'s Turn`;
+        }
+
+        if (GameState.chainJumpingNode !== null) {
+          if (GameState.chainRule === 'multi_mandatory') {
+            subtext.textContent = 'Mandatory Chain Jump! Tap the next gold target';
+            btnEndChain.classList.add('hidden');
+          } else {
+            subtext.textContent = 'Chain Jump available! Leap again or tap End Chain ✓';
+            btnEndChain.classList.remove('hidden');
+          }
+        } else {
+          btnEndChain.classList.add('hidden');
+          if (GameState.mode === 'webrtc' && WebRTCManager.isConnected() && GameState.localPlayerRole) {
+            subtext.textContent = GameState.currentTurn === GameState.localPlayerRole
+              ? 'Your turn! Select a piece to move or jump'
+              : 'Waiting for remote peer over WebRTC DataChannel...';
+          } else if (GameState.selectedNode !== null) {
+            subtext.textContent = 'Tap a highlighted destination node';
+          } else {
+            subtext.textContent = 'Tap one of your pieces to inspect legal moves';
+          }
+        }
+
+        document.getElementById('btnUndoMove').disabled = (
+          GameState.mode === 'webrtc' || GameState.history.length === 0 || GameState.gameOver
+        );
+      }
+
+      function showVictoryModal() {
+        const modal = document.getElementById('modalVictory');
+        const [p1Title, p2Title] = getThemePlayerNames();
+        document.getElementById('victoryHeadline').textContent = GameState.winner === 1
+          ? `${p1Title} Wins!`
+          : `${p2Title} Wins!`;
+        document.getElementById('victoryReason').textContent = GameState.winReason;
+        document.getElementById('victoryP1Score').textContent = `${GameState.capturedBy[1]} / ${GameState.piecesPerPlayer}`;
+        document.getElementById('victoryP2Score').textContent = `${GameState.capturedBy[2]} / ${GameState.piecesPerPlayer}`;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function serializeGameState() {
+        return {
+          gridPreset: GameState.gridPreset,
+          rows: GameState.rows,
+          cols: GameState.cols,
+          hasTriangularCamps: GameState.hasTriangularCamps,
+          diagonalMode: GameState.diagonalMode,
+          openCenterMode: GameState.openCenterMode,
+          reserveMode: GameState.reserveMode,
+          piecesPerPlayer: GameState.piecesPerPlayer,
+          chainRule: GameState.chainRule,
+          mandatoryCapture: GameState.mandatoryCapture,
+          stepDirection: GameState.stepDirection,
+          turnTimerSeconds: GameState.turnTimerSeconds,
+          board: GameState.board,
+          reserves: GameState.reserves,
+          capturedBy: GameState.capturedBy,
+          currentTurn: GameState.currentTurn,
+          selectedNode: GameState.selectedNode,
+          chainJumpingNode: GameState.chainJumpingNode,
+          chainCount: GameState.chainCount,
+          gameOver: GameState.gameOver,
+          winner: GameState.winner,
+          winReason: GameState.winReason
+        };
+      }
+
+      function applyRemoteGameState(remote) {
+        if (!remote) return;
+        const topologyChanged = (
+          remote.rows !== GameState.rows ||
+          remote.cols !== GameState.cols ||
+          remote.hasTriangularCamps !== GameState.hasTriangularCamps ||
+          remote.diagonalMode !== GameState.diagonalMode
+        );
+        GameState.gridPreset = remote.gridPreset || GameState.gridPreset;
+        GameState.rows = remote.rows || GameState.rows;
+        GameState.cols = remote.cols || GameState.cols;
+        GameState.hasTriangularCamps = Boolean(remote.hasTriangularCamps);
+        GameState.diagonalMode = remote.diagonalMode || GameState.diagonalMode;
+        GameState.openCenterMode = remote.openCenterMode || GameState.openCenterMode;
+        GameState.reserveMode = remote.reserveMode || GameState.reserveMode;
+        GameState.piecesPerPlayer = remote.piecesPerPlayer || GameState.piecesPerPlayer;
+        GameState.chainRule = remote.chainRule || GameState.chainRule;
+        GameState.mandatoryCapture = remote.mandatoryCapture || GameState.mandatoryCapture;
+        GameState.stepDirection = remote.stepDirection || GameState.stepDirection;
+        GameState.turnTimerSeconds = remote.turnTimerSeconds || 0;
+
+        if (topologyChanged) {
+          buildDynamicBoardGraph();
+          resizeCanvas();
+        }
+
+        GameState.board = [...remote.board];
+        GameState.reserves = { ...remote.reserves };
+        GameState.capturedBy = { ...remote.capturedBy };
+        GameState.currentTurn = remote.currentTurn;
+        GameState.selectedNode = remote.selectedNode;
+        GameState.chainJumpingNode = remote.chainJumpingNode;
+        GameState.chainCount = remote.chainCount || 0;
+        GameState.gameOver = Boolean(remote.gameOver);
+        GameState.winner = remote.winner;
+        GameState.winReason = remote.winReason || '';
+
+        syncSettingsControlsFromState();
+        resetTurnTimer();
+
+        if (GameState.gameOver) {
+          showVictoryModal();
+        } else {
+          document.getElementById('modalVictory').classList.add('hidden');
+          document.getElementById('modalVictory').classList.remove('flex');
+        }
+        updateHUD();
+        requestRender();
+      }
+
+      const WebRTCManager = {
+        pc: null,
+        dc: null,
+        loopbackPeer: null,
+        iceTimer: null,
+
+        isConnected() {
+          return Boolean(this.dc && this.dc.readyState === 'open');
+        },
+
+        cleanup() {
+          if (this.iceTimer) {
+            clearTimeout(this.iceTimer);
+            this.iceTimer = null;
+          }
+          try {
+            if (this.dc) {
+              this.dc.onopen = null;
+              this.dc.onclose = null;
+              this.dc.onerror = null;
+              this.dc.onmessage = null;
+              this.dc.close();
+            }
+          } catch (e) {}
+          try {
+            if (this.pc) {
+              this.pc.onicecandidate = null;
+              this.pc.oniceconnectionstatechange = null;
+              this.pc.onconnectionstatechange = null;
+              this.pc.ondatachannel = null;
+              this.pc.close();
+            }
+          } catch (e) {}
+          try {
+            if (this.loopbackPeer) {
+              this.loopbackPeer.close();
+            }
+          } catch (e) {}
+
+          this.dc = null;
+          this.pc = null;
+          this.loopbackPeer = null;
+        },
+
+        encodeSignalToken(desc) {
+          const payload = JSON.stringify({ t: desc.type, s: desc.sdp });
+          return btoa(unescape(encodeURIComponent(payload)));
+        },
+
+        decodeSignalToken(tokenStr) {
+          const cleaned = (tokenStr || '').trim();
+          if (!cleaned) throw new Error('Signaling code is empty.');
+          let decoded;
+          try {
+            decoded = decodeURIComponent(escape(atob(cleaned)));
+          } catch (err) {
+            throw new Error('Invalid Base64 signaling string. Please copy the entire code.');
+          }
+          let parsed;
+          try {
+            parsed = JSON.parse(decoded);
+          } catch (err) {
+            throw new Error('Corrupted signaling JSON payload.');
+          }
+          if (!parsed || !parsed.t || !parsed.s) {
+            throw new Error('Signaling token is missing SDP type or description.');
+          }
+          return { type: parsed.t, sdp: parsed.s };
+        },
+
+        renderSignalMatrixSVG(tokenStr, containerId, checksumId) {
+          const box = document.getElementById(containerId);
+          const chk = document.getElementById(checksumId);
+          if (!box) return;
+          if (!tokenStr) {
+            box.innerHTML = 'Signal Matrix';
+            if (chk) chk.textContent = 'No token';
+            return;
+          }
+
+          let hash = 2166136261;
+          for (let i = 0; i < tokenStr.length; i++) {
+            hash ^= tokenStr.charCodeAt(i);
+            hash = Math.imul(hash, 16777619);
+          }
+          const hexHash = (hash >>> 0).toString(16).toUpperCase().padStart(8, '0');
+          if (chk) chk.textContent = `ID: ${hexHash.slice(0, 6)}`;
+
+          const grid = 9;
+          let svgCells = '';
+          for (let r = 0; r < grid; r++) {
+            for (let c = 0; c < grid; c++) {
+              const isCorner = (r < 2 && c < 2) || (r < 2 && c >= grid - 2) || (r >= grid - 2 && c < 2);
+              const charIdx = (r * grid + c) % tokenStr.length;
+              const bit = (tokenStr.charCodeAt(charIdx) + r * 7 + c * 13) % 2 === 0;
+              if (isCorner || bit) {
+                const fill = isCorner ? '#D97706' : '#0D9488';
+                svgCells += `<rect x="${c * 8 + 4}" y="${r * 8 + 4}" width="6.5" height="6.5" rx="1.2" fill="${fill}" />`;
+              }
+            }
+          }
+          box.innerHTML = `<svg viewBox="0 0 80 80" class="w-full h-full">${svgCells}</svg>`;
+        },
+
+        updateConnectionUI(state, title, detail) {
+          const dotTop = document.getElementById('connStatusDot');
+          const labelTop = document.getElementById('connStatusLabel');
+          const dotModal = document.getElementById('rtcModalDot');
+          const titleEl = document.getElementById('rtcStateTitle');
+          const detailEl = document.getElementById('rtcStateDetail');
+
+          if (titleEl) titleEl.textContent = title;
+          if (detailEl) detailEl.textContent = detail;
+
+          if (state === 'connected') {
+            dotTop.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
+            dotModal.className = 'w-3 h-3 rounded-full bg-emerald-500 shrink-0';
+            labelTop.textContent = `P2P (P${GameState.localPlayerRole || 1})`;
+          } else if (state === 'connecting') {
+            dotTop.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping';
+            dotModal.className = 'w-3 h-3 rounded-full bg-amber-500 shrink-0';
+            labelTop.textContent = 'Negotiating...';
+          } else if (state === 'error') {
+            dotTop.className = 'w-2.5 h-2.5 rounded-full bg-rose-600';
+            dotModal.className = 'w-3 h-3 rounded-full bg-rose-600 shrink-0';
+            labelTop.textContent = 'P2P Error';
+          } else {
+            dotTop.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200';
+            dotModal.className = 'w-3 h-3 rounded-full bg-amber-500 shrink-0';
+            labelTop.textContent = 'Mode / P2P';
+          }
+          updateHUD();
+        },
+
+        createPeerConnection() {
+          this.cleanup();
+          if (typeof RTCPeerConnection === 'undefined') {
+            throw new Error('WebRTC RTCPeerConnection is not supported in this browser.');
+          }
+          const pc = new RTCPeerConnection({ iceServers: [] });
+          this.pc = pc;
+
+          pc.oniceconnectionstatechange = () => {
+            const st = pc.iceConnectionState;
+            if (st === 'disconnected' || st === 'failed' || st === 'closed') {
+              this.updateConnectionUI('error', `WebRTC Link ${st.toUpperCase()}`, 'Peer connection dropped.');
+              showBoardToast('WebRTC connection closed');
+            }
+          };
+
+          pc.onconnectionstatechange = () => {
+            if (pc.connectionState === 'failed') {
+              this.updateConnectionUI('error', 'WebRTC Handshake Failed', 'Ensure both devices share the same Wi-Fi or Hotspot.');
+            }
+          };
+
+          return pc;
+        },
+
+        setupDataChannel(channel) {
+          this.dc = channel;
+
+          channel.onopen = () => {
+            GameState.mode = 'webrtc';
+            GameState.vsAI = false;
+            GameState.boardFlipped = (GameState.localPlayerRole === 2);
+            resizeCanvas();
+
+            this.updateConnectionUI(
+              'connected',
+              `Connected as Player ${GameState.localPlayerRole || 1}!`,
+              'Live WebRTC DataChannel active — moves & custom grids sync instantly.'
+            );
+            SoundEngine.victory();
+            showBoardToast(`WebRTC Connected! You are Player ${GameState.localPlayerRole || 1}`);
+            updateHUD();
+
+            if (GameState.localPlayerRole === 1) {
+              this.send({ type: 'SYNC_STATE', state: serializeGameState() });
+            }
+          };
+
+          channel.onclose = () => {
+            this.updateConnectionUI('idle', 'DataChannel Closed', 'Peer disconnected.');
+            showBoardToast('Peer DataChannel closed');
+          };
+
+          channel.onerror = (err) => {
+            const msg = (err && err.message) ? err.message : 'DataChannel transmission error';
+            this.updateConnectionUI('error', 'DataChannel Error', msg);
+          };
+
+          channel.onmessage = (event) => {
+            try {
+              const packet = JSON.parse(event.data);
+              if (!packet || !packet.type) return;
+
+              if (packet.type === 'MOVE_ACTION' && packet.action) {
+                if (packet.action.type === 'end_chain') {
+                  endChainTurnEarly(true);
+                } else {
+                  executeAction(packet.action, true);
+                }
+              } else if (packet.type === 'SYNC_STATE' && packet.state) {
+                applyRemoteGameState(packet.state);
+                showBoardToast('Synced grid & match state from peer');
+              } else if (packet.type === 'RESET_MATCH') {
+                initMatch(false);
+                showBoardToast('Remote player restarted the match');
+              }
+            } catch (err) {}
+          };
+        },
+
+        waitForIceGathering(pc, onReady) {
+          let finalized = false;
+          const finish = () => {
+            if (finalized) return;
+            finalized = true;
+            if (this.iceTimer) {
+              clearTimeout(this.iceTimer);
+              this.iceTimer = null;
+            }
+            if (pc.localDescription) {
+              onReady(pc.localDescription);
+            }
+          };
+
+          if (pc.iceGatheringState === 'complete') {
+            finish();
+            return;
+          }
+          pc.onicecandidate = (evt) => {
+            if (!evt.candidate) finish();
+          };
+          this.iceTimer = setTimeout(finish, 1200);
+        },
+
+        async generateHostOffer() {
+          try {
+            const pc = this.createPeerConnection();
+            GameState.localPlayerRole = 1;
+            const channel = pc.createDataChannel('katar-sync', { ordered: true });
+            this.setupDataChannel(channel);
+
+            this.updateConnectionUI('connecting', 'Gathering Local ICE Candidates...', 'Creating Host Offer token...');
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+
+            this.waitForIceGathering(pc, (localDesc) => {
+              const token = this.encodeSignalToken(localDesc);
+              document.getElementById('txtHostOfferOut').value = token;
+              this.renderSignalMatrixSVG(token, 'qrHostOfferBox', 'hostOfferChecksum');
+              this.updateConnectionUI('connecting', 'Offer Ready • Send to Player 2', 'Waiting for Player 2 Answer code in Step 1B...');
+              showBoardToast('Host Offer Code Generated!');
+            });
+          } catch (err) {
+            this.updateConnectionUI('error', 'Failed to Generate Offer', err.message || 'Unknown WebRTC error');
+            showBoardToast(err.message || 'Offer generation failed');
+          }
+        },
+
+        async processGuestOfferAndCreateAnswer(offerTokenStr) {
+          try {
+            const remoteDesc = this.decodeSignalToken(offerTokenStr);
+            if (remoteDesc.type !== 'offer') {
+              throw new Error('Provided token is not a valid Host Offer.');
+            }
+            const pc = this.createPeerConnection();
+            GameState.localPlayerRole = 2;
+
+            pc.ondatachannel = (evt) => {
+              if (evt.channel) this.setupDataChannel(evt.channel);
+            };
+
+            this.updateConnectionUI('connecting', 'Processing Host Offer...', 'Generating return Answer token...');
+            await pc.setRemoteDescription(new RTCSessionDescription(remoteDesc));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+
+            this.waitForIceGathering(pc, (localDesc) => {
+              const token = this.encodeSignalToken(localDesc);
+              document.getElementById('txtGuestAnswerOut').value = token;
+              this.renderSignalMatrixSVG(token, 'qrGuestAnswerBox', 'guestAnswerChecksum');
+              this.updateConnectionUI('connecting', 'Answer Ready • Send Back to Host', 'Once Host pastes this Answer, connection opens automatically!');
+              showBoardToast('Return Answer Code Generated!');
+            });
+          } catch (err) {
+            this.updateConnectionUI('error', 'Invalid Host Offer Code', err.message || 'Could not process Offer.');
+            showBoardToast(err.message || 'Invalid Offer code');
+          }
+        },
+
+        async acceptGuestAnswerOnHost(answerTokenStr) {
+          try {
+            if (!this.pc) throw new Error('Generate a Host Offer in Step 1A first.');
+            const remoteDesc = this.decodeSignalToken(answerTokenStr);
+            if (remoteDesc.type !== 'answer') {
+              throw new Error('Provided token is not a valid Guest Answer.');
+            }
+            this.updateConnectionUI('connecting', 'Verifying Answer...', 'Opening P2P DataChannel...');
+            await this.pc.setRemoteDescription(new RTCSessionDescription(remoteDesc));
+          } catch (err) {
+            this.updateConnectionUI('error', 'Answer Handshake Error', err.message || 'Failed to accept Answer');
+            showBoardToast(err.message || 'Failed to accept Answer');
+          }
+        },
+
+        async runLoopbackSimulation() {
+          try {
+            const hostPC = this.createPeerConnection();
+            const guestPC = new RTCPeerConnection({ iceServers: [] });
+            this.loopbackPeer = guestPC;
+            GameState.localPlayerRole = null;
+
+            const hostDC = hostPC.createDataChannel('katar-sync', { ordered: true });
+            this.setupDataChannel(hostDC);
+
+            guestPC.ondatachannel = (evt) => {
+              evt.channel.onmessage = () => {};
+            };
+
+            hostPC.onicecandidate = (e) => {
+              if (e.candidate) guestPC.addIceCandidate(e.candidate).catch(() => {});
+            };
+            guestPC.onicecandidate = (e) => {
+              if (e.candidate) hostPC.addIceCandidate(e.candidate).catch(() => {});
+            };
+
+            const offer = await hostPC.createOffer();
+            await hostPC.setLocalDescription(offer);
+            const offerToken = this.encodeSignalToken(hostPC.localDescription);
+            document.getElementById('txtHostOfferOut').value = offerToken;
+            this.renderSignalMatrixSVG(offerToken, 'qrHostOfferBox', 'hostOfferChecksum');
+
+            await guestPC.setRemoteDescription(hostPC.localDescription);
+            const answer = await guestPC.createAnswer();
+            await guestPC.setLocalDescription(answer);
+            const answerToken = this.encodeSignalToken(guestPC.localDescription);
+            document.getElementById('txtGuestAnswerOut').value = answerToken;
+            document.getElementById('txtHostAnswerIn').value = answerToken;
+            this.renderSignalMatrixSVG(answerToken, 'qrGuestAnswerBox', 'guestAnswerChecksum');
+
+            await hostPC.setRemoteDescription(guestPC.localDescription);
+          } catch (err) {
+            this.updateConnectionUI('error', 'Loopback Error', err.message || 'Loopback failed');
+          }
+        },
+
+        send(payloadObj) {
+          if (!this.isConnected()) return;
+          try {
+            this.dc.send(JSON.stringify(payloadObj));
+          } catch (err) {}
+        }
+      };
+
+      function copyTextToClipboard(text, label) {
+        if (!text || !text.trim()) {
+          showBoardToast(`Generate a ${label} code first!`);
+          return;
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            SoundEngine.select();
+            showBoardToast(`${label} copied to clipboard!`);
+          }).catch(() => fallbackCopy(text, label));
+        } else {
+          fallbackCopy(text, label);
+        }
+      }
+
+      function fallbackCopy(text, label) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          SoundEngine.select();
+          showBoardToast(`${label} copied to clipboard!`);
+        } catch (err) {
+          showBoardToast('Select the code box and copy manually');
+        }
+      }
+
+      function shareSignalToken(text, title) {
+        if (!text || !text.trim()) {
+          showBoardToast('Generate the signaling code first!');
+          return;
+        }
+        if (navigator.share) {
+          navigator.share({ title, text }).catch(() => {});
+        } else {
+          copyTextToClipboard(text, title);
+        }
+      }
+
+      document.querySelectorAll('.quick-grid-chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          const preset = chip.getAttribute('data-grid-preset');
+          SoundEngine.select();
+          if (preset === 'custom') {
+            document.getElementById('modalRules').classList.remove('hidden');
+            document.getElementById('modalRules').classList.add('flex');
+            return;
+          }
+          applyGridPresetConfig(preset);
+          initMatch(true);
+          showBoardToast(`Switched to ${chip.textContent.trim()}`);
+        });
+      });
+
+      document.getElementById('btnOpenConnectionModal').addEventListener('click', () => {
+        SoundEngine.select();
+        document.getElementById('modalConnection').classList.remove('hidden');
+        document.getElementById('modalConnection').classList.add('flex');
+      });
+
+      document.getElementById('btnCloseConnectionModal').addEventListener('click', () => {
+        SoundEngine.select();
+        document.getElementById('modalConnection').classList.add('hidden');
+        document.getElementById('modalConnection').classList.remove('flex');
+      });
+
+      document.getElementById('btnOpenRulesModal').addEventListener('click', () => {
+        SoundEngine.select();
+        syncSettingsControlsFromState();
+        document.getElementById('modalRules').classList.remove('hidden');
+        document.getElementById('modalRules').classList.add('flex');
+      });
+
+      document.getElementById('btnCloseRulesModal').addEventListener('click', () => {
+        SoundEngine.select();
+        document.getElementById('modalRules').classList.add('hidden');
+        document.getElementById('modalRules').classList.remove('flex');
+      });
+
+      document.getElementById('btnToggleAudio').addEventListener('click', () => {
+        SoundEngine.enabled = !SoundEngine.enabled;
+        document.getElementById('iconAudioOn').classList.toggle('hidden', !SoundEngine.enabled);
+        document.getElementById('iconAudioOff').classList.toggle('hidden', SoundEngine.enabled);
+        if (SoundEngine.enabled) SoundEngine.select();
+        showBoardToast(SoundEngine.enabled ? 'Web Audio Synth: ON' : 'Web Audio Synth: Muted');
+      });
+
+      document.getElementById('btnToggleChainRule').addEventListener('click', () => {
+        GameState.chainRule = GameState.chainRule === 'single_only' ? 'multi_optional' : 'single_only';
+        SoundEngine.select();
+        syncSettingsControlsFromState();
+      });
+
+      document.getElementById('btnTogglePlacementMode').addEventListener('click', () => {
+        GameState.openCenterMode = GameState.openCenterMode === 'four_open' ? 'two_open' : 'four_open';
+        SoundEngine.select();
+        initMatch(true);
+      });
+
+      document.getElementById('btnTogglePieceTheme').addEventListener('click', () => {
+        const order = ['traditional', 'classic', 'jade_gold', 'ivory_onyx'];
+        const nextIdx = (order.indexOf(GameState.pieceTheme) + 1) % order.length;
+        GameState.pieceTheme = order[nextIdx];
+        SoundEngine.select();
+        syncSettingsControlsFromState();
+        updateHUD();
+        requestRender();
+      });
+
+      document.getElementById('selGridPreset').addEventListener('change', (e) => {
+        applyGridPresetConfig(e.target.value);
+      });
+
+      document.getElementById('selDiagonalMode').addEventListener('change', (e) => {
+        GameState.diagonalMode = e.target.value;
+      });
+
+      document.getElementById('rngCustomRows').addEventListener('input', (e) => {
+        GameState.rows = parseInt(e.target.value, 10) || 6;
+        GameState.gridPreset = 'custom';
+        GameState.piecesPerPlayer = computeRecommendedPieces();
+        syncSettingsControlsFromState();
+      });
+
+      document.getElementById('rngCustomCols').addEventListener('input', (e) => {
+        GameState.cols = parseInt(e.target.value, 10) || 6;
+        GameState.gridPreset = 'custom';
+        GameState.piecesPerPlayer = computeRecommendedPieces();
+        syncSettingsControlsFromState();
+      });
+
+      document.getElementById('btnToggleTriCamps').addEventListener('click', () => {
+        GameState.hasTriangularCamps = !GameState.hasTriangularCamps;
+        GameState.gridPreset = 'custom';
+        GameState.piecesPerPlayer = computeRecommendedPieces();
+        syncSettingsControlsFromState();
+      });
+
+      document.getElementById('selOpenCenterMode').addEventListener('change', (e) => {
+        GameState.openCenterMode = e.target.value;
+        syncSettingsControlsFromState();
+      });
+
+      document.getElementById('selReserveMode').addEventListener('change', (e) => {
+        GameState.reserveMode = e.target.value;
+        if (GameState.reserveMode === 'no_reserves') {
+          GameState.piecesPerPlayer = computeRecommendedPieces();
+        }
+        syncSettingsControlsFromState();
+      });
+
+      document.getElementById('rngPiecesPerPlayer').addEventListener('input', (e) => {
+        GameState.piecesPerPlayer = parseInt(e.target.value, 10) || 18;
+        document.getElementById('valPiecesPerPlayer').textContent = `${GameState.piecesPerPlayer} Pieces Each`;
+      });
+
+      document.getElementById('btnAutoFitPieces').addEventListener('click', () => {
+        GameState.piecesPerPlayer = computeRecommendedPieces();
+        SoundEngine.select();
+        syncSettingsControlsFromState();
+        showBoardToast(`Auto-fitted to ${GameState.piecesPerPlayer} pieces per player`);
+      });
+
+      document.getElementById('selChainRule').addEventListener('change', (e) => {
+        GameState.chainRule = e.target.value;
+      });
+
+      document.getElementById('selMandatoryCapture').addEventListener('change', (e) => {
+        GameState.mandatoryCapture = e.target.value;
+      });
+
+      document.getElementById('selStepDirection').addEventListener('change', (e) => {
+        GameState.stepDirection = e.target.value;
+      });
+
+      document.getElementById('selFirstTurn').addEventListener('change', (e) => {
+        GameState.firstTurnSetting = e.target.value;
+      });
+
+      document.getElementById('selTurnTimer').addEventListener('change', (e) => {
+        GameState.turnTimerSeconds = parseInt(e.target.value, 10) || 0;
+      });
+
+      document.getElementById('selPieceTheme').addEventListener('change', (e) => {
+        GameState.pieceTheme = e.target.value;
+        updateHUD();
+        requestRender();
+      });
+
+      document.getElementById('selBoardSurface').addEventListener('change', (e) => {
+        GameState.boardSurface = e.target.value;
+        requestRender();
+      });
+
+      document.getElementById('selNodeLabels').addEventListener('change', (e) => {
+        GameState.nodeLabels = e.target.value;
+        requestRender();
+      });
+
+      document.getElementById('chkShowGuides').addEventListener('change', (e) => {
+        GameState.showGuides = e.target.checked;
+        requestRender();
+      });
+
+      document.getElementById('chkEnableHaptics').addEventListener('change', (e) => {
+        SoundEngine.hapticsEnabled = e.target.checked;
+      });
+
+      document.getElementById('btnApplySettingsAndStart').addEventListener('click', () => {
+        SoundEngine.select();
+        document.getElementById('modalRules').classList.add('hidden');
+        document.getElementById('modalRules').classList.remove('flex');
+        initMatch(true);
+        showBoardToast(`Match started: ${Nodes.length} intersections (${GameState.piecesPerPlayer}v${GameState.piecesPerPlayer})`);
+      });
+
+      document.getElementById('btnRestoreDefaultSettings').addEventListener('click', () => {
+        SoundEngine.select();
+        GameState.diagonalMode = 'full';
+        GameState.chainRule = 'multi_optional';
+        GameState.mandatoryCapture = 'optional';
+        GameState.stepDirection = 'all';
+        GameState.firstTurnSetting = '1';
+        GameState.turnTimerSeconds = 0;
+        GameState.pieceTheme = 'traditional';
+        GameState.boardSurface = 'sandstone';
+        GameState.nodeLabels = 'off';
+        GameState.showGuides = true;
+        applyGridPresetConfig('6x6');
+        initMatch(true);
+        showBoardToast('Restored classic 6×6 Katar defaults');
+      });
+
+      document.getElementById('btnEndChainTurn').addEventListener('click', () => {
+        SoundEngine.select();
+        endChainTurnEarly(false);
+      });
+
+      document.getElementById('btnUndoMove').addEventListener('click', () => {
+        if (GameState.mode === 'webrtc' || GameState.history.length === 0 || GameState.gameOver) return;
+        const snap = GameState.history.pop();
+        if (!snap) return;
+        GameState.board = [...snap.board];
+        GameState.reserves = { ...snap.reserves };
+        GameState.capturedBy = { ...snap.capturedBy };
+        GameState.currentTurn = snap.currentTurn;
+        GameState.selectedNode = null;
+        GameState.chainJumpingNode = snap.chainJumpingNode;
+        GameState.chainCount = snap.chainCount;
+        SoundEngine.select();
+        resetTurnTimer();
+        showBoardToast('Undid last move');
+        updateHUD();
+        requestRender();
+      });
+
+      document.getElementById('btnHintMove').addEventListener('click', () => {
+        if (GameState.gameOver) return;
+        const { allSteps, allJumps } = getAllLegalActionsForPlayer(GameState.currentTurn);
+        const pick = allJumps.length > 0 ? allJumps[0] : (allSteps.length > 0 ? allSteps[0] : null);
+        if (!pick) {
+          showBoardToast('No legal moves available!');
+          return;
+        }
+        GameState.selectedNode = pick.from;
+        VisualFX.hintHighlight = { from: pick.from, to: pick.to };
+        SoundEngine.select();
+        showBoardToast(pick.type === 'jump' ? 'Hint: Leap-and-capture available!' : 'Hint: Suggested move highlighted');
+        updateHUD();
+        requestRender();
+      });
+
+      document.getElementById('btnFlipBoard').addEventListener('click', () => {
+        GameState.boardFlipped = !GameState.boardFlipped;
+        SoundEngine.select();
+        resizeCanvas();
+        showBoardToast(GameState.boardFlipped ? 'Perspective: North at Bottom' : 'Perspective: South at Bottom');
+      });
+
+      document.getElementById('btnResetMatch').addEventListener('click', () => {
+        SoundEngine.select();
+        initMatch(true);
+        showBoardToast('New Katar match started!');
+      });
+
+      document.getElementById('btnVictoryPlayAgain').addEventListener('click', () => {
+        SoundEngine.select();
+        initMatch(true);
+      });
+
+      document.getElementById('btnVictoryChangeGrid').addEventListener('click', () => {
+        SoundEngine.select();
+        document.getElementById('modalVictory').classList.add('hidden');
+        document.getElementById('modalVictory').classList.remove('flex');
+        document.getElementById('modalRules').classList.remove('hidden');
+        document.getElementById('modalRules').classList.add('flex');
+      });
+
+      const tabPassPlay = document.getElementById('tabModePassPlay');
+      const tabWebRTC = document.getElementById('tabModeWebRTC');
+      const panelPassPlay = document.getElementById('panelPassPlay');
+      const panelWebRTC = document.getElementById('panelWebRTC');
+
+      tabPassPlay.addEventListener('click', () => {
+        SoundEngine.select();
+        tabPassPlay.className = 'android-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 bg-teal-600 text-white shadow-md';
+        tabWebRTC.className = 'android-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 text-walnut-700 hover:text-walnut-900';
+        panelPassPlay.classList.remove('hidden');
+        panelWebRTC.classList.add('hidden');
+      });
+
+      tabWebRTC.addEventListener('click', () => {
+        SoundEngine.select();
+        tabWebRTC.className = 'android-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 bg-teal-600 text-white shadow-md';
+        tabPassPlay.className = 'android-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 text-walnut-700 hover:text-walnut-900';
+        panelWebRTC.classList.remove('hidden');
+        panelPassPlay.classList.add('hidden');
+      });
+
+      const btnOppHuman = document.getElementById('btnOpponentHuman');
+      const btnOppAI = document.getElementById('btnOpponentAI');
+      btnOppHuman.addEventListener('click', () => {
+        GameState.vsAI = false;
+        syncSettingsControlsFromState();
+        WebRTCManager.updateConnectionUI('idle', 'Pass & Play Ready', '2-Player Local Mode');
+      });
+
+      btnOppAI.addEventListener('click', () => {
+        GameState.vsAI = true;
+        syncSettingsControlsFromState();
+        WebRTCManager.updateConnectionUI('idle', 'Tactical AI Ready', 'Single-Player vs AI Mode');
+        if (GameState.currentTurn === 2 && !GameState.gameOver) {
+          setTimeout(runAITurn, 400);
+        }
+      });
+
+      document.getElementById('selAIDifficulty').addEventListener('change', (e) => {
+        GameState.aiDifficulty = e.target.value;
+        syncSettingsControlsFromState();
+        updateHUD();
+        showBoardToast(`AI Difficulty: ${getAILabel()}`);
+      });
+
+      document.getElementById('btnMainModeAI').addEventListener('click', () => {
+        WebRTCManager.cleanup();
+        GameState.mode = 'pass_play';
+        GameState.vsAI = true;
+        SoundEngine.select();
+        syncSettingsControlsFromState();
+        updateHUD();
+        showBoardToast(`Solo Mode: Playing vs ${getAILabel()}`);
+        if (GameState.currentTurn === 2 && !GameState.gameOver) {
+          setTimeout(runAITurn, 380);
+        }
+      });
+
+      document.getElementById('btnMainMode2P').addEventListener('click', () => {
+        WebRTCManager.cleanup();
+        GameState.mode = 'pass_play';
+        GameState.vsAI = false;
+        SoundEngine.select();
+        syncSettingsControlsFromState();
+        updateHUD();
+        showBoardToast('2-Player Local Pass & Play Mode');
+      });
+
+      document.querySelectorAll('.ai-diff-chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          const diff = chip.getAttribute('data-ai-diff');
+          GameState.aiDifficulty = diff;
+          GameState.vsAI = true;
+          SoundEngine.select();
+          syncSettingsControlsFromState();
+          updateHUD();
+          showBoardToast(`AI Difficulty set to ${getAILabel()}`);
+          if (GameState.currentTurn === 2 && !GameState.gameOver) {
+            setTimeout(runAITurn, 380);
+          }
+        });
+      });
+
+      const btnAutoRot = document.getElementById('btnToggleAutoRotate');
+      btnAutoRot.addEventListener('click', () => {
+        GameState.autoRotate = !GameState.autoRotate;
+        btnAutoRot.textContent = GameState.autoRotate ? 'ON' : 'OFF';
+        btnAutoRot.className = GameState.autoRotate
+          ? 'android-btn px-3 py-1 rounded-xl text-xs font-extrabold bg-teal-600 text-white'
+          : 'android-btn px-3 py-1 rounded-xl text-xs font-extrabold bg-parchment-200 text-walnut-800 border border-parchment-400';
+      });
+
+      document.getElementById('btnStartPassPlay').addEventListener('click', () => {
+        WebRTCManager.cleanup();
+        GameState.mode = 'pass_play';
+        GameState.localPlayerRole = null;
+        WebRTCManager.updateConnectionUI('idle', 'Pass & Play Active', 'Local single-device match');
+        document.getElementById('modalConnection').classList.add('hidden');
+        document.getElementById('modalConnection').classList.remove('flex');
+        SoundEngine.select();
+        updateHUD();
+      });
+
+      const btnRoleHost = document.getElementById('btnRoleHost');
+      const btnRoleGuest = document.getElementById('btnRoleGuest');
+      const btnRoleLoopback = document.getElementById('btnRoleLoopback');
+      const flowHost = document.getElementById('rtcFlowHost');
+      const flowGuest = document.getElementById('rtcFlowGuest');
+      const flowLoopback = document.getElementById('rtcFlowLoopback');
+
+      function switchRtcRoleTab(role) {
+        SoundEngine.select();
+        flowHost.classList.toggle('hidden', role !== 'host');
+        flowGuest.classList.toggle('hidden', role !== 'guest');
+        flowLoopback.classList.toggle('hidden', role !== 'loopback');
+
+        btnRoleHost.className = role === 'host'
+          ? 'android-btn py-2 px-2 rounded-lg text-xs font-extrabold bg-white text-teal-800 border border-teal-500/40 shadow-sm'
+          : 'android-btn py-2 px-2 rounded-lg text-xs font-bold text-walnut-700 hover:text-walnut-900';
+        btnRoleGuest.className = role === 'guest'
+          ? 'android-btn py-2 px-2 rounded-lg text-xs font-extrabold bg-white text-rose-800 border border-rose-500/40 shadow-sm'
+          : 'android-btn py-2 px-2 rounded-lg text-xs font-bold text-walnut-700 hover:text-walnut-900';
+        btnRoleLoopback.className = role === 'loopback'
+          ? 'android-btn py-2 px-2 rounded-lg text-xs font-extrabold bg-white text-amber-800 border border-amber-500/40 shadow-sm'
+          : 'android-btn py-2 px-2 rounded-lg text-xs font-bold text-walnut-700 hover:text-amber-800';
+      }
+
+      btnRoleHost.addEventListener('click', () => switchRtcRoleTab('host'));
+      btnRoleGuest.addEventListener('click', () => switchRtcRoleTab('guest'));
+      btnRoleLoopback.addEventListener('click', () => switchRtcRoleTab('loopback'));
+
+      document.getElementById('btnResetRTC').addEventListener('click', () => {
+        WebRTCManager.cleanup();
+        GameState.mode = 'pass_play';
+        GameState.localPlayerRole = null;
+        document.getElementById('txtHostOfferOut').value = '';
+        document.getElementById('txtHostAnswerIn').value = '';
+        document.getElementById('txtGuestOfferIn').value = '';
+        document.getElementById('txtGuestAnswerOut').value = '';
+        WebRTCManager.renderSignalMatrixSVG('', 'qrHostOfferBox', 'hostOfferChecksum');
+        WebRTCManager.renderSignalMatrixSVG('', 'qrGuestAnswerBox', 'guestAnswerChecksum');
+        WebRTCManager.updateConnectionUI('idle', 'WebRTC Reset', 'Select Host (Player 1) or Guest (Player 2) below');
+        SoundEngine.select();
+      });
+
+      document.getElementById('btnHostCreateOffer').addEventListener('click', () => {
+        SoundEngine.select();
+        WebRTCManager.generateHostOffer();
+      });
+
+      document.getElementById('btnCopyHostOffer').addEventListener('click', () => {
+        copyTextToClipboard(document.getElementById('txtHostOfferOut').value, 'Offer');
+      });
+
+      document.getElementById('btnShareHostOffer').addEventListener('click', () => {
+        shareSignalToken(document.getElementById('txtHostOfferOut').value, 'Katar WebRTC Offer Code');
+      });
+
+      document.getElementById('btnHostAcceptAnswer').addEventListener('click', () => {
+        SoundEngine.select();
+        WebRTCManager.acceptGuestAnswerOnHost(document.getElementById('txtHostAnswerIn').value);
+      });
+
+      document.getElementById('btnGuestProcessOffer').addEventListener('click', () => {
+        SoundEngine.select();
+        WebRTCManager.processGuestOfferAndCreateAnswer(document.getElementById('txtGuestOfferIn').value);
+      });
+
+      document.getElementById('btnCopyGuestAnswer').addEventListener('click', () => {
+        copyTextToClipboard(document.getElementById('txtGuestAnswerOut').value, 'Answer');
+      });
+
+      document.getElementById('btnShareGuestAnswer').addEventListener('click', () => {
+        shareSignalToken(document.getElementById('txtGuestAnswerOut').value, 'Katar WebRTC Answer Code');
+      });
+
+      document.getElementById('btnRunLoopbackTest').addEventListener('click', () => {
+        SoundEngine.select();
+        WebRTCManager.runLoopbackSimulation();
+      });
+
+      window.addEventListener('resize', resizeCanvas);
+      window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 120));
+
+      window.addEventListener('load', () => {
+        applyGridPresetConfig('6x6');
+        initMatch(false);
+        resizeCanvas();
+      });
+    })();
+  </script>
+</body>
+</html>
