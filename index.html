@@ -8,6 +8,24 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>Katar (قطار) &amp; Navakankari — By Yasin Ullah (Dedicated to Muhib Ullah)</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="pako.min.js"></script>
+  <script src="qrcode.min.js"></script>
+  <script src="jsqr.min.js"></script>
+  <script>
+    if (typeof pako === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"><\/script>');
+    }
+  </script>
+  <script>
+    if (typeof QRCode === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>');
+    }
+  </script>
+  <script>
+    if (typeof jsQR === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"><\/script>');
+    }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Inter:wght@500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet" />
@@ -431,8 +449,32 @@
       color: #FECDD3;
     }
     .imm-top.is-dimmed,
-    .imm-dock.is-dimmed {
-      opacity: 0.22;
+    .imm-dock.is-dimmed,
+    #immersiveHud.is-dimmed .imm-top,
+    #immersiveHud.is-dimmed .imm-dock {
+      opacity: 0.06;
+      pointer-events: none;
+    }
+    #immersiveHud.zen-mode .imm-top,
+    #immersiveHud.zen-mode .imm-dock {
+      display: none !important;
+    }
+    @keyframes scanLaser {
+      0%, 100% { transform: translateY(-80px); opacity: 0.35; }
+      50% { transform: translateY(80px); opacity: 1; }
+    }
+    .scanner-laser {
+      animation: scanLaser 2s ease-in-out infinite;
+    }
+    @media (max-width: 1023px) {
+      .mobile-compact-panel {
+        padding: 4px 8px !important;
+      }
+      .mobile-compact-panel .avatar-box {
+        width: 26px !important;
+        height: 26px !important;
+        border-radius: 8px !important;
+      }
     }
     @media (min-width: 720px) {
       .imm-turn {
@@ -495,11 +537,11 @@
 
     <!-- Top Right Tactile Game Buttons -->
     <div class="flex items-center gap-1.5 shrink-0">
-      <button id="btnPlayImmersive" type="button" class="android-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-teal-500 to-teal-700 text-white border border-teal-800 shadow-[0_3px_0_#115E59]" aria-label="Play in fullscreen immersive mode" title="Play in fullscreen immersive mode">
-        <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="currentColor">
+      <button id="btnPlayImmersive" type="button" class="android-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white border border-teal-800 shadow-[0_3px_0_#115E59] active:translate-y-0.5 active:shadow-none" aria-label="Play in fullscreen immersive mode" title="Play Fullscreen (Distraction-Free)">
+        <svg class="w-4 h-4 text-amber-300" viewBox="0 0 24 24" fill="currentColor">
           <path d="M8 5.5v13a1 1 0 0 0 1.52.86l10.2-6.5a1 1 0 0 0 0-1.72L9.52 4.64A1 1 0 0 0 8 5.5z" />
         </svg>
-        <span>Play</span>
+        <span class="font-black tracking-wide">Play Fullscreen</span>
       </button>
 
       <button id="btnOpenRulesModal" type="button" class="android-btn flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 border border-amber-600/40 shadow-[0_3px_0_#B45309]" aria-label="Grid &amp; Match Settings" title="Customize Grid, Bead Count &amp; Rules">
@@ -617,25 +659,23 @@
   </div>
 
   <!-- Main Tabletop Game Stage -->
-  <main id="gameMain" class="flex-1 flex flex-col lg:flex-row items-center justify-between lg:justify-center gap-1.5 sm:gap-4 px-2.5 py-1.5 min-h-0 min-w-0 overflow-hidden z-10">
+  <main id="gameMain" class="flex-1 flex flex-col lg:flex-row items-center justify-between lg:justify-center gap-1 sm:gap-4 px-1.5 sm:px-4 py-1 min-h-0 min-w-0 overflow-hidden z-10">
 
-    <!-- Left / Top Player HUD Column (Player 2 + Turn Banner) -->
-    <section id="sidePanelP2" class="w-full lg:w-72 flex flex-col gap-1.5 shrink-0">
-      <!-- Player 2 (North) Tabletop Medallion Card -->
-      <div id="cardPlayer2" class="game-card rounded-2xl p-2 sm:p-3 transition-all duration-200">
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2 min-w-0">
-            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-rose-400 via-rose-600 to-rose-900 p-0.5 shadow-md flex items-center justify-center shrink-0">
-              <div class="w-full h-full rounded-[14px] border-2 border-rose-200/60 flex items-center justify-center bg-rose-700/40">
-                <div class="w-2.5 h-2.5 rounded-full bg-rose-100 shadow-inner"></div>
+    <section id="sidePanelP2" class="w-full lg:w-72 flex flex-col gap-1 sm:gap-1.5 shrink-0">
+      <div id="cardPlayer2" class="game-card rounded-xl sm:rounded-2xl p-1.5 sm:p-3 transition-all duration-200">
+        <div class="flex items-center justify-between gap-1.5 sm:gap-2">
+          <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <div class="w-7 h-7 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-rose-400 via-rose-600 to-rose-900 p-0.5 shadow-md flex items-center justify-center shrink-0">
+              <div class="w-full h-full rounded-[10px] sm:rounded-[14px] border-2 border-rose-200/60 flex items-center justify-center bg-rose-700/40">
+                <div class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-rose-100 shadow-inner"></div>
               </div>
             </div>
             <div class="truncate">
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1 sm:gap-1.5">
                 <span id="p2NameLabel" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Medium AI (Sang)</span>
-                <span id="p2RoleBadge" class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300">NORTH</span>
+                <span id="p2RoleBadge" class="text-[9px] sm:text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300">NORTH</span>
               </div>
-              <div class="flex items-center gap-2 text-[11px] font-semibold text-walnut-700 mt-0.5">
+              <div class="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-walnut-700">
                 <span>Active: <strong id="p2RemainingCount" class="text-rose-700 font-mono font-extrabold">18</strong>/<span id="p2MaxPiecesLabel" class="font-mono">18</span></span>
                 <span>•</span>
                 <span id="p2HandLabelWrap">In Hand: <strong id="p2ReserveCount" class="text-amber-700 font-mono font-extrabold">2</strong></span>
@@ -643,64 +683,58 @@
             </div>
           </div>
 
-          <div class="bg-white/90 border border-parchment-300 rounded-xl px-2.5 py-1 text-right shrink-0 shadow-inner">
-            <div class="text-[9px] uppercase tracking-wider text-walnut-600 font-extrabold">Eaten</div>
+          <div class="bg-white/90 border border-parchment-300 rounded-lg sm:rounded-xl px-2 sm:px-2.5 py-0.5 sm:py-1 text-right shrink-0 shadow-inner">
+            <div class="text-[8px] sm:text-[9px] uppercase tracking-wider text-walnut-600 font-extrabold">Eaten</div>
             <div class="flex items-center justify-end gap-0.5">
-              <span id="p2CapturedCount" class="text-sm sm:text-base font-extrabold font-mono text-rose-600">0</span>
-              <span id="p2TargetCapLabel" class="text-xs text-walnut-600 font-mono font-bold">/18</span>
+              <span id="p2CapturedCount" class="text-xs sm:text-base font-extrabold font-mono text-rose-600">0</span>
+              <span id="p2TargetCapLabel" class="text-[10px] sm:text-xs text-walnut-600 font-mono font-bold">/18</span>
             </div>
           </div>
         </div>
-        <div class="w-full h-1.5 bg-parchment-200 rounded-full overflow-hidden mt-1.5 border border-parchment-300 flex">
+        <div class="w-full h-1 sm:h-1.5 bg-parchment-200 rounded-full overflow-hidden mt-1 sm:mt-1.5 border border-parchment-300 flex">
           <div id="p2CaptureBar" class="h-full bg-gradient-to-r from-rose-500 to-amber-500 transition-all duration-300" style="width: 0%"></div>
         </div>
       </div>
 
-      <!-- Active Turn & Tactical Prompt Banner -->
-      <div id="turnBanner" class="game-card rounded-2xl px-3 py-1.5 sm:py-2 flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2 min-w-0">
-          <span id="turnIndicatorDot" class="w-3.5 h-3.5 rounded-full bg-teal-600 shrink-0 ring-4 ring-teal-500/20"></span>
+      <div id="turnBanner" class="game-card rounded-xl sm:rounded-2xl px-2.5 sm:px-3 py-1 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2">
+        <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <span id="turnIndicatorDot" class="w-3 sm:w-3.5 h-3 sm:h-3.5 rounded-full bg-teal-600 shrink-0 ring-2 sm:ring-4 ring-teal-500/20"></span>
           <div class="truncate">
             <div id="turnHeadline" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Player 1's Turn (Feroza)</div>
-            <div id="turnSubtext" class="text-[11px] font-medium text-walnut-600 truncate">Tap a piece to inspect legal moves</div>
+            <div id="turnSubtext" class="text-[10px] sm:text-[11px] font-medium text-walnut-600 truncate">Tap a piece to inspect legal moves</div>
           </div>
         </div>
 
-        <button id="btnEndChainTurn" type="button" class="hidden android-btn chain-pulse px-3 py-1 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-xs shrink-0 shadow-[0_3px_0_#B45309] border border-amber-600/40">
+        <button id="btnEndChainTurn" type="button" class="hidden android-btn chain-pulse px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-[11px] sm:text-xs shrink-0 shadow-[0_3px_0_#B45309] border border-amber-600/40">
           End Chain ✓
         </button>
       </div>
     </section>
 
-    <!-- Center Handcrafted 3D Wooden Board Stage -->
     <section id="boardContainerWrapper" class="flex-1 w-full h-full flex items-center justify-center min-h-0 min-w-0 relative overflow-hidden">
       <div id="canvasAspectBox" class="board-3d-frame relative flex items-center justify-center">
         <canvas id="katarCanvas" class="block rounded-2xl cursor-pointer"></canvas>
-
-        <!-- Floating Game Banner Toast -->
         <div id="boardToast" class="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-walnut-900/95 border-2 border-amber-400 text-amber-300 text-xs font-extrabold shadow-xl opacity-0 transition-opacity duration-200 whitespace-nowrap z-10">
           Leap Capture!
         </div>
       </div>
     </section>
 
-    <!-- Right / Bottom Player HUD Column (Player 1 + Tactile Action Dock + Dedication) -->
-    <section id="sidePanelP1" class="w-full lg:w-72 flex flex-col gap-1.5 shrink-0">
-      <!-- Player 1 (South) Tabletop Medallion Card -->
-      <div id="cardPlayer1" class="game-card-active-p1 rounded-2xl p-2 sm:p-3 transition-all duration-200">
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2 min-w-0">
-            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-teal-300 via-teal-600 to-teal-900 p-0.5 shadow-md flex items-center justify-center shrink-0">
-              <div class="w-full h-full rounded-[14px] border-2 border-amber-300/80 flex items-center justify-center bg-teal-700/40">
-                <div class="w-2.5 h-2.5 rounded-full bg-amber-300 shadow-inner"></div>
+    <section id="sidePanelP1" class="w-full lg:w-72 flex flex-col gap-1 sm:gap-1.5 shrink-0">
+      <div id="cardPlayer1" class="game-card-active-p1 rounded-xl sm:rounded-2xl p-1.5 sm:p-3 transition-all duration-200">
+        <div class="flex items-center justify-between gap-1.5 sm:gap-2">
+          <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <div class="w-7 h-7 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-teal-300 via-teal-600 to-teal-900 p-0.5 shadow-md flex items-center justify-center shrink-0">
+              <div class="w-full h-full rounded-[10px] sm:rounded-[14px] border-2 border-amber-300/80 flex items-center justify-center bg-teal-700/40">
+                <div class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-amber-300 shadow-inner"></div>
               </div>
             </div>
             <div class="truncate">
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1 sm:gap-1.5">
                 <span id="p1NameLabel" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Player 1 (Feroza)</span>
-                <span id="p1RoleBadge" class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-300">SOUTH</span>
+                <span id="p1RoleBadge" class="text-[9px] sm:text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-300">SOUTH</span>
               </div>
-              <div class="flex items-center gap-2 text-[11px] font-semibold text-walnut-700 mt-0.5">
+              <div class="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-walnut-700">
                 <span>Active: <strong id="p1RemainingCount" class="text-teal-700 font-mono font-extrabold">18</strong>/<span id="p1MaxPiecesLabel" class="font-mono">18</span></span>
                 <span>•</span>
                 <span id="p1HandLabelWrap">In Hand: <strong id="p1ReserveCount" class="text-amber-700 font-mono font-extrabold">2</strong></span>
@@ -708,31 +742,30 @@
             </div>
           </div>
 
-          <div class="bg-white/90 border border-parchment-300 rounded-xl px-2.5 py-1 text-right shrink-0 shadow-inner">
-            <div class="text-[9px] uppercase tracking-wider text-walnut-600 font-extrabold">Eaten</div>
+          <div class="bg-white/90 border border-parchment-300 rounded-lg sm:rounded-xl px-2 sm:px-2.5 py-0.5 sm:py-1 text-right shrink-0 shadow-inner">
+            <div class="text-[8px] sm:text-[9px] uppercase tracking-wider text-walnut-600 font-extrabold">Eaten</div>
             <div class="flex items-center justify-end gap-0.5">
-              <span id="p1CapturedCount" class="text-sm sm:text-base font-extrabold font-mono text-teal-700">0</span>
-              <span id="p1TargetCapLabel" class="text-xs text-walnut-600 font-mono font-bold">/18</span>
+              <span id="p1CapturedCount" class="text-xs sm:text-base font-extrabold font-mono text-teal-700">0</span>
+              <span id="p1TargetCapLabel" class="text-[10px] sm:text-xs text-walnut-600 font-mono font-bold">/18</span>
             </div>
           </div>
         </div>
-        <div class="w-full h-1.5 bg-parchment-200 rounded-full overflow-hidden mt-1.5 border border-parchment-300 flex">
+        <div class="w-full h-1 sm:h-1.5 bg-parchment-200 rounded-full overflow-hidden mt-1 sm:mt-1.5 border border-parchment-300 flex">
           <div id="p1CaptureBar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-300" style="width: 0%"></div>
         </div>
       </div>
 
-      <!-- Tactile Mobile Game Action Dock -->
-      <div class="grid grid-cols-4 gap-1.5 bg-parchment-100 border-2 border-parchment-300 rounded-2xl p-1.5 shadow-md">
-        <button id="btnUndoMove" type="button" class="android-btn flex flex-col items-center justify-center py-1 px-2 rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[11px] font-bold gap-0.5" title="Undo Last Turn">
-          <svg class="w-4 h-4 text-walnut-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <div class="grid grid-cols-4 gap-1 sm:gap-1.5 bg-parchment-100 border border-parchment-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-sm">
+        <button id="btnUndoMove" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1 px-1 rounded-lg sm:rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[10px] sm:text-[11px] font-bold gap-1 sm:gap-0.5" title="Undo Last Turn">
+          <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-walnut-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M3 7v6h6" />
             <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
           </svg>
           <span>Undo</span>
         </button>
 
-        <button id="btnHintMove" type="button" class="android-btn flex flex-col items-center justify-center py-1 px-2 rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[11px] font-bold gap-0.5" title="Highlight a Tactical Move">
-          <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <button id="btnHintMove" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1 px-1 rounded-lg sm:rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[10px] sm:text-[11px] font-bold gap-1 sm:gap-0.5" title="Highlight a Tactical Move">
+          <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M9 18h6" />
             <path d="M10 22h4" />
             <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" />
@@ -740,8 +773,8 @@
           <span>Hint</span>
         </button>
 
-        <button id="btnFlipBoard" type="button" class="android-btn flex flex-col items-center justify-center py-1 px-2 rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[11px] font-bold gap-0.5" title="Flip Board Perspective">
-          <svg class="w-4 h-4 text-teal-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <button id="btnFlipBoard" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1 px-1 rounded-lg sm:rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[10px] sm:text-[11px] font-bold gap-1 sm:gap-0.5" title="Flip Board Perspective">
+          <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <polyline points="17 1 21 5 17 9" />
             <path d="M3 11V9a4 4 0 0 1 4-4h14" />
             <polyline points="7 23 3 19 7 15" />
@@ -750,16 +783,15 @@
           <span>Rotate</span>
         </button>
 
-        <button id="btnResetMatch" type="button" class="android-btn flex flex-col items-center justify-center py-1 px-2 rounded-xl bg-gradient-to-b from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white border border-rose-700 shadow-[0_2px_0_#9F1239] text-[11px] font-extrabold gap-0.5" title="New Match">
-          <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <button id="btnResetMatch" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1 px-1 rounded-lg sm:rounded-xl bg-gradient-to-b from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white border border-rose-700 shadow-[0_2px_0_#9F1239] text-[10px] sm:text-[11px] font-extrabold gap-1 sm:gap-0.5" title="New Match">
+          <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
           </svg>
           <span>Restart</span>
         </button>
       </div>
 
-      <!-- Author & Dedication Tribute Banner -->
-      <div class="text-center text-[10px] font-bold text-walnut-700 bg-parchment-100/90 border border-parchment-300 rounded-xl py-1 px-2 shadow-sm">
+      <div class="hidden lg:block text-center text-[10px] font-bold text-walnut-700 bg-parchment-100/90 border border-parchment-300 rounded-xl py-1 px-2 shadow-sm">
         Crafted by <strong class="text-walnut-900">Yasin Ullah</strong> • Dedicated to my little brother <strong class="text-teal-800">Muhib Ullah</strong> ❤️
       </div>
     </section>
@@ -833,6 +865,13 @@
         </svg>
         <span>Restart</span>
       </button>
+      <button type="button" data-imm-action="zen" class="imm-act" aria-label="Toggle Zen mode" title="Hide/Show HUD">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+        <span>Zen</span>
+      </button>
     </div>
   </div>
 
@@ -873,11 +912,10 @@
               <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
               <line x1="12" y1="20" x2="12.01" y2="20" />
             </svg>
-            <span>Local Wireless (WebRTC)</span>
+            <span>📱 2-Phone QR Link</span>
           </button>
         </div>
 
-        <!-- PANEL A: PASS & PLAY SETTINGS -->
         <div id="panelPassPlay" class="space-y-4">
           <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
             <div class="flex items-start gap-3">
@@ -935,23 +973,13 @@
           </button>
         </div>
 
-        <!-- PANEL B: OFFLINE WEBRTC PEER-TO-PEER SIGNALING UI -->
         <div id="panelWebRTC" class="hidden space-y-3.5">
-          <!-- Step-by-Step Guide Box -->
-          <div class="bg-amber-50 border border-amber-300 rounded-2xl p-3 text-[11px] text-walnut-800 space-y-1">
-            <div class="font-extrabold text-amber-900">📱 How 2 Players Connect Offline on 2 Phones:</div>
-            <p>1. Turn on <strong>Mobile Hotspot</strong> on Phone 1 (mobile data/internet is NOT needed) and connect Phone 2 to that Wi-Fi hotspot.</p>
-            <p>2. <strong>Phone 1 (Host)</strong> taps <em>Generate Offer Code</em> and sends the code to Phone 2 (via WhatsApp, SMS, Bluetooth, or Nearby Share).</p>
-            <p>3. <strong>Phone 2 (Guest)</strong> pastes that Offer in <em>2. Guest (P2)</em>, taps <em>Generate Return Answer Code</em>, and sends the Answer back to Phone 1.</p>
-            <p>4. <strong>Phone 1</strong> pastes the Answer in Step 1B and taps <em>Verify Answer &amp; Launch P2P Match</em>!</p>
-          </div>
-
-          <div id="rtcStatusCard" class="bg-white border-2 border-parchment-300 rounded-2xl p-3 flex items-center justify-between gap-2">
+          <div id="rtcStatusCard" class="bg-white border-2 border-parchment-300 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm">
             <div class="flex items-center gap-2.5 min-w-0">
-              <span id="rtcModalDot" class="w-3 h-3 rounded-full bg-amber-500 shrink-0"></span>
+              <span id="rtcModalDot" class="w-3.5 h-3.5 rounded-full bg-amber-500 shrink-0"></span>
               <div class="truncate">
-                <div id="rtcStateTitle" class="text-xs font-extrabold text-walnut-900">Not Connected (Select Role Below)</div>
-                <div id="rtcStateDetail" class="text-[11px] text-walnut-600 truncate">Serverless P2P DataChannel over same Wi-Fi / Hotspot</div>
+                <div id="rtcStateTitle" class="text-xs font-extrabold text-walnut-900">Not Connected (Ready to Link)</div>
+                <div id="rtcStateDetail" class="text-[11px] text-walnut-600 truncate">Connect Phone 2 to Phone 1's Wi-Fi hotspot to play offline</div>
               </div>
             </div>
             <button id="btnResetRTC" type="button" class="android-btn px-2.5 py-1 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-[11px] font-bold text-walnut-800 shrink-0">
@@ -959,104 +987,231 @@
             </button>
           </div>
 
-          <div class="grid grid-cols-3 gap-1.5 bg-parchment-200 p-1 rounded-xl border border-parchment-300">
-            <button id="btnRoleHost" type="button" class="android-btn py-2 px-2 rounded-lg text-xs font-extrabold bg-white text-teal-800 border border-teal-500/40 shadow-sm">
-              1. Host (P1)
-            </button>
-            <button id="btnRoleGuest" type="button" class="android-btn py-2 px-2 rounded-lg text-xs font-bold text-walnut-700 hover:text-walnut-900">
-              2. Guest (P2)
-            </button>
-            <button id="btnRoleLoopback" type="button" class="android-btn py-2 px-2 rounded-lg text-xs font-bold text-walnut-700 hover:text-amber-800">
-              ⚡ Instant Test
-            </button>
+          <div id="rtcChoiceView" class="space-y-3">
+            <div class="bg-amber-50 border border-amber-300 rounded-2xl p-3 text-[11px] text-walnut-800 space-y-1">
+              <div class="font-extrabold text-amber-900 flex items-center gap-1.5">
+                <span>📱</span>
+                <span>Play on 2 Phones Offline (No Internet Needed):</span>
+              </div>
+              <p>Turn on <strong>Mobile Hotspot</strong> on Phone 1 (data can be OFF) and connect Phone 2 to that Wi-Fi hotspot. Then connect by scanning QR code below:</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="bg-white border-2 border-teal-500/50 hover:border-teal-600 rounded-2xl p-4 flex flex-col justify-between gap-3 shadow-sm transition-all">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-xl bg-teal-100 text-teal-800 font-extrabold text-sm flex items-center justify-center">1</span>
+                    <h3 class="font-extrabold text-sm text-teal-900">Host Game (Player 1)</h3>
+                  </div>
+                  <p class="text-xs text-walnut-600 leading-relaxed">
+                    Tap to create room and show a QR Code on this screen for Player 2 to scan.
+                  </p>
+                </div>
+                <button id="btnStartHostQR" type="button" class="android-btn w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-black shadow-md flex items-center justify-center gap-2">
+                  <span>👑 Host Match &amp; Show QR</span>
+                </button>
+              </div>
+
+              <div class="bg-white border-2 border-amber-500/50 hover:border-amber-600 rounded-2xl p-4 flex flex-col justify-between gap-3 shadow-sm transition-all">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-xl bg-amber-100 text-amber-900 font-extrabold text-sm flex items-center justify-center">2</span>
+                    <h3 class="font-extrabold text-sm text-walnut-900">Join Game (Player 2)</h3>
+                  </div>
+                  <p class="text-xs text-walnut-600 leading-relaxed">
+                    Open your camera and scan Player 1's screen to connect instantly.
+                  </p>
+                </div>
+                <button id="btnStartGuestScan" type="button" class="android-btn w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-walnut-900 text-xs font-black shadow-md flex items-center justify-center gap-2">
+                  <span>📷 Scan QR to Join</span>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <!-- SUB-TAB 1: HOST (PLAYER 1) FLOW -->
-          <div id="rtcFlowHost" class="space-y-3 bg-white border-2 border-parchment-300 rounded-2xl p-3.5">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-extrabold text-teal-800 uppercase tracking-wider">Step 1A • Generate Offer (Player 1)</span>
-              <button id="btnHostCreateOffer" type="button" class="android-btn px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-xs shadow">
-                Generate Offer Code
+          <div id="rtcHostQrView" class="hidden bg-white border-2 border-teal-500/60 rounded-2xl p-4 space-y-3.5 shadow-sm text-center">
+            <div class="space-y-1">
+              <span class="inline-block px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 text-[10px] font-extrabold tracking-wider uppercase">
+                Step 1 of 2 • Host Screen
+              </span>
+              <h3 class="font-extrabold text-sm text-walnut-900">Let Player 2 Scan This QR Code</h3>
+              <p class="text-xs text-walnut-600">On Phone 2, tap <em>Join Game (Scan QR)</em> and aim camera here:</p>
+            </div>
+
+            <div class="flex flex-col items-center justify-center py-1">
+              <div id="qrHostOfferBox" class="p-3 bg-white border-2 border-parchment-300 rounded-2xl shadow-inner min-w-[230px] min-h-[230px] flex items-center justify-center"></div>
+              <span id="hostOfferChecksum" class="text-[10px] font-mono text-walnut-500 mt-1">Generating token...</span>
+            </div>
+
+            <div class="space-y-2 pt-2 border-t border-parchment-200">
+              <button id="btnHostScanGuestReturn" type="button" class="android-btn w-full py-3 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 text-xs font-black shadow-[0_3px_0_#B45309] flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+                <span>📷 Step 2: Scan Player 2's Return Code</span>
+              </button>
+              <button id="btnHostBackToChoice" type="button" class="android-btn w-full py-2 rounded-xl bg-parchment-100 hover:bg-parchment-200 text-walnut-800 text-xs font-bold border border-parchment-300">
+                ← Back to Mode Selector
               </button>
             </div>
-            <p class="text-[11px] text-walnut-600 leading-relaxed">
-              Tap <strong>Generate Offer Code</strong>, then copy or share the code below with Player 2's device.
-            </p>
+          </div>
 
-            <div class="flex flex-col sm:flex-row gap-2.5 items-stretch">
-              <div class="flex-1 flex flex-col gap-1.5">
-                <textarea id="txtHostOfferOut" readonly rows="3" placeholder="Offer token will appear here..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[11px] font-mono text-teal-900 focus:outline-none resize-none"></textarea>
+          <div id="rtcGuestQrView" class="hidden bg-white border-2 border-amber-500/60 rounded-2xl p-4 space-y-3.5 shadow-sm text-center">
+            <div class="space-y-1">
+              <span class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold tracking-wider uppercase">
+                Step 2 of 2 • Guest Return Code
+              </span>
+              <h3 class="font-extrabold text-sm text-walnut-900">✅ Host Code Scanned!</h3>
+              <p class="text-xs text-walnut-600">Now let Player 1 scan this return code to connect:</p>
+            </div>
+
+            <div class="flex flex-col items-center justify-center py-1">
+              <div id="qrGuestAnswerBox" class="p-3 bg-white border-2 border-parchment-300 rounded-2xl shadow-inner min-w-[230px] min-h-[230px] flex items-center justify-center"></div>
+              <span id="guestAnswerChecksum" class="text-[10px] font-mono text-walnut-500 mt-1">Generating token...</span>
+            </div>
+
+            <div class="space-y-2 pt-2 border-t border-parchment-200">
+              <div class="flex items-center justify-center gap-2 py-1 px-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] font-bold text-amber-900">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span>
+                <span>Waiting for Player 1 to scan... Match starts automatically!</span>
+              </div>
+              <button id="btnGuestBackToChoice" type="button" class="android-btn w-full py-2 rounded-xl bg-parchment-100 hover:bg-parchment-200 text-walnut-800 text-xs font-bold border border-parchment-300">
+                ← Back to Mode Selector
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-parchment-300">
+            <button id="btnToggleManualRtc" type="button" class="android-btn w-full py-2 px-3 rounded-xl bg-parchment-100 hover:bg-parchment-200 text-walnut-700 text-xs font-bold border border-parchment-300 flex items-center justify-between">
+              <span>📋 Manual Text Codes &amp; Loopback Test</span>
+              <span id="manualRtcChevron">▼</span>
+            </button>
+
+            <div id="rtcManualAccordion" class="hidden mt-3 space-y-3">
+              <div class="grid grid-cols-3 gap-1.5 bg-parchment-200 p-1 rounded-xl border border-parchment-300">
+                <button id="btnRoleHost" type="button" class="android-btn py-2 px-2 rounded-lg text-xs font-extrabold bg-white text-teal-800 border border-teal-500/40 shadow-sm">
+                  1. Host (P1)
+                </button>
+                <button id="btnRoleGuest" type="button" class="android-btn py-2 px-2 rounded-lg text-xs font-bold text-walnut-700 hover:text-walnut-900">
+                  2. Guest (P2)
+                </button>
+                <button id="btnRoleLoopback" type="button" class="android-btn py-2 px-2 rounded-lg text-xs font-bold text-walnut-700 hover:text-amber-800">
+                  ⚡ Instant Test
+                </button>
+              </div>
+
+              <div id="rtcFlowHost" class="space-y-3 bg-white border border-parchment-300 rounded-2xl p-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-extrabold text-teal-800 uppercase tracking-wider">Step 1A • Offer Code</span>
+                  <button id="btnHostCreateOffer" type="button" class="android-btn px-3 py-1 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-xs shadow">
+                    Generate
+                  </button>
+                </div>
+                <textarea id="txtHostOfferOut" readonly rows="2" placeholder="Offer token will appear here..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[10px] font-mono text-teal-900 focus:outline-none resize-none"></textarea>
                 <div class="flex items-center gap-1.5">
-                  <button id="btnCopyHostOffer" type="button" class="android-btn flex-1 py-1.5 px-2.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-xs font-extrabold text-walnut-900 flex items-center justify-center gap-1.5">
+                  <button id="btnCopyHostOffer" type="button" class="android-btn flex-1 py-1.5 px-2 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-xs font-extrabold text-walnut-900 flex items-center justify-center gap-1.5">
                     <span>Copy Offer</span>
                   </button>
-                  <button id="btnShareHostOffer" type="button" class="android-btn py-1.5 px-2.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-xs font-bold text-walnut-800">
+                  <button id="btnShareHostOffer" type="button" class="android-btn py-1.5 px-2 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-xs font-bold text-walnut-800">
                     Share
                   </button>
                 </div>
-              </div>
-              <div class="w-full sm:w-28 bg-parchment-100 border border-parchment-300 rounded-xl p-2 flex flex-col items-center justify-center shrink-0">
-                <div id="qrHostOfferBox" class="w-20 h-20 flex items-center justify-center text-[10px] text-walnut-600 text-center font-mono">
-                  Signal Matrix
+                <div class="pt-2 border-t border-parchment-200 space-y-2">
+                  <span class="text-xs font-extrabold text-amber-800 uppercase tracking-wider">Step 1B • Paste Player 2's Answer</span>
+                  <textarea id="txtHostAnswerIn" rows="2" placeholder="Paste the Answer code received from Player 2 here..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[10px] font-mono text-walnut-900 focus:outline-none resize-none"></textarea>
+                  <button id="btnHostAcceptAnswer" type="button" class="android-btn w-full py-2 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-xs shadow-[0_2px_0_#B45309]">
+                    Verify Answer &amp; Launch
+                  </button>
                 </div>
-                <span id="hostOfferChecksum" class="text-[9px] font-mono text-walnut-600 mt-1">No token</span>
               </div>
-            </div>
 
-            <div class="pt-3 border-t border-parchment-200 space-y-2">
-              <span class="text-xs font-extrabold text-amber-800 uppercase tracking-wider">Step 1B • Paste Player 2's Answer</span>
-              <textarea id="txtHostAnswerIn" rows="2" placeholder="Paste the Answer code received from Player 2 here..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[11px] font-mono text-walnut-900 focus:outline-none resize-none"></textarea>
-              <button id="btnHostAcceptAnswer" type="button" class="android-btn w-full py-2.5 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-xs shadow-[0_3px_0_#B45309]">
-                Verify Answer &amp; Launch P2P Match
-              </button>
-            </div>
-          </div>
-
-          <!-- SUB-TAB 2: GUEST (PLAYER 2) FLOW -->
-          <div id="rtcFlowGuest" class="hidden space-y-3 bg-white border-2 border-parchment-300 rounded-2xl p-3.5">
-            <div class="space-y-2">
-              <span class="text-xs font-extrabold text-rose-800 uppercase tracking-wider">Step 2A • Paste Host's Offer Code</span>
-              <textarea id="txtGuestOfferIn" rows="2" placeholder="Paste Player 1's Offer code here..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[11px] font-mono text-walnut-900 focus:outline-none resize-none"></textarea>
-              <button id="btnGuestProcessOffer" type="button" class="android-btn w-full py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs shadow">
-                Generate Return Answer Code
-              </button>
-            </div>
-
-            <div class="pt-3 border-t border-parchment-200 space-y-2">
-              <span class="text-xs font-extrabold text-amber-800 uppercase tracking-wider">Step 2B • Send Answer Back to Host</span>
-              <div class="flex flex-col sm:flex-row gap-2.5 items-stretch">
-                <div class="flex-1 flex flex-col gap-1.5">
-                  <textarea id="txtGuestAnswerOut" readonly rows="3" placeholder="Your Answer code will appear here..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[11px] font-mono text-amber-900 focus:outline-none resize-none"></textarea>
+              <div id="rtcFlowGuest" class="hidden space-y-3 bg-white border border-parchment-300 rounded-2xl p-3">
+                <div class="space-y-2">
+                  <span class="text-xs font-extrabold text-rose-800 uppercase tracking-wider">Step 2A • Paste Host's Offer</span>
+                  <textarea id="txtGuestOfferIn" rows="2" placeholder="Paste Player 1's Offer code here..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[10px] font-mono text-walnut-900 focus:outline-none resize-none"></textarea>
+                  <button id="btnGuestProcessOffer" type="button" class="android-btn w-full py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs shadow">
+                    Generate Answer Code
+                  </button>
+                </div>
+                <div class="pt-2 border-t border-parchment-200 space-y-2">
+                  <span class="text-xs font-extrabold text-amber-800 uppercase tracking-wider">Step 2B • Send Answer to Host</span>
+                  <textarea id="txtGuestAnswerOut" readonly rows="2" placeholder="Your Answer code will appear here..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[10px] font-mono text-amber-900 focus:outline-none resize-none"></textarea>
                   <div class="flex items-center gap-1.5">
-                    <button id="btnCopyGuestAnswer" type="button" class="android-btn flex-1 py-1.5 px-2.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-xs font-extrabold text-walnut-900">
-                      Copy Answer Code
+                    <button id="btnCopyGuestAnswer" type="button" class="android-btn flex-1 py-1.5 px-2 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-xs font-extrabold text-walnut-900">
+                      Copy Answer
                     </button>
-                    <button id="btnShareGuestAnswer" type="button" class="android-btn py-1.5 px-2.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-xs font-bold text-walnut-800">
+                    <button id="btnShareGuestAnswer" type="button" class="android-btn py-1.5 px-2 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-xs font-bold text-walnut-800">
                       Share
                     </button>
                   </div>
                 </div>
-                <div class="w-full sm:w-28 bg-parchment-100 border border-parchment-300 rounded-xl p-2 flex flex-col items-center justify-center shrink-0">
-                  <div id="qrGuestAnswerBox" class="w-20 h-20 flex items-center justify-center text-[10px] text-walnut-600 text-center font-mono">
-                    Signal Matrix
-                  </div>
-                  <span id="guestAnswerChecksum" class="text-[9px] font-mono text-walnut-600 mt-1">No token</span>
-                </div>
+              </div>
+
+              <div id="rtcFlowLoopback" class="hidden space-y-3 bg-white border border-parchment-300 rounded-2xl p-3">
+                <h4 class="text-xs font-extrabold text-amber-800 uppercase tracking-wider">Single-Device Loopback Verification</h4>
+                <p class="text-xs text-walnut-700 leading-relaxed">
+                  Test the WebRTC Offer/Answer handshake and DataChannel right on this screen.
+                </p>
+                <button id="btnRunLoopbackTest" type="button" class="android-btn w-full py-2 rounded-xl bg-gradient-to-r from-amber-500 to-teal-600 text-white font-extrabold text-xs shadow-md">
+                  ⚡ Run Loopback Handshake
+                </button>
               </div>
             </div>
           </div>
-
-          <!-- SUB-TAB 3: INSTANT LOCAL LOOPBACK SIMULATOR -->
-          <div id="rtcFlowLoopback" class="hidden space-y-3 bg-white border-2 border-parchment-300 rounded-2xl p-3.5">
-            <h4 class="text-xs font-extrabold text-amber-800 uppercase tracking-wider">Single-Device WebRTC Loopback Verification</h4>
-            <p class="text-xs text-walnut-700 leading-relaxed">
-              Test the live WebRTC <code class="text-teal-800 font-mono font-bold">RTCPeerConnection</code> Offer/Answer handshake and <code class="text-teal-800 font-mono font-bold">RTCDataChannel</code> synchronization right on this screen.
-            </p>
-            <button id="btnRunLoopbackTest" type="button" class="android-btn w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-teal-600 text-white font-extrabold text-xs shadow-md">
-              ⚡ Run Live WebRTC Offer/Answer Handshake
-            </button>
-          </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="scannerModal" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md hidden flex-col items-center justify-between p-4 select-none">
+    <div class="w-full max-w-sm flex items-center justify-between pt-2">
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-teal-400 animate-pulse"></span>
+        <h3 id="scannerTitle" class="text-white font-extrabold text-sm sm:text-base">Scan Katar QR Code</h3>
+      </div>
+      <button id="btnCloseScanner" type="button" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white" aria-label="Close Scanner">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="relative w-full max-w-[280px] sm:max-w-[320px] aspect-square rounded-3xl overflow-hidden border-2 border-amber-400 shadow-[0_0_35px_rgba(245,158,11,0.35)] flex items-center justify-center bg-black my-auto">
+      <video id="scannerVideo" playsinline autoplay muted class="w-full h-full object-cover"></video>
+      <canvas id="scannerCanvas" class="hidden"></canvas>
+
+      <div class="pointer-events-none absolute inset-5 border-2 border-dashed border-teal-300/50 rounded-2xl flex items-center justify-center">
+        <div class="absolute inset-0">
+          <div class="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-amber-400 rounded-tl-lg"></div>
+          <div class="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-amber-400 rounded-tr-lg"></div>
+          <div class="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-amber-400 rounded-bl-lg"></div>
+          <div class="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-amber-400 rounded-br-lg"></div>
+        </div>
+        <div class="scanner-laser w-full h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_10px_#F59E0B]"></div>
+      </div>
+    </div>
+
+    <div class="w-full max-w-sm flex flex-col items-center gap-3 pb-4">
+      <p id="scannerStatus" class="text-xs text-parchment-200 text-center font-medium px-4">
+        Aim your camera at the QR Code on the other phone
+      </p>
+      <div class="flex items-center gap-2">
+        <button id="btnSwitchCamera" type="button" class="android-btn hidden px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 flex items-center gap-1.5">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 1.95.7 3.737 1.867 5.133L3 21l5.867-2.867A7.95 7.95 0 0 0 12 18c4.418 0 8-3.582 8-8z"/>
+          </svg>
+          <span>Flip Camera</span>
+        </button>
+        <label id="btnSnapPhotoWrap" class="android-btn px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-walnut-900 text-xs font-extrabold cursor-pointer shadow flex items-center gap-1.5">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19 4h-3.17L14.4 2H9.6L8.17 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+          </svg>
+          <span>Snap Photo / Pick Image</span>
+          <input type="file" id="scannerFileInput" accept="image/*" capture="environment" class="hidden">
+        </label>
       </div>
     </div>
   </div>
@@ -2866,10 +3021,11 @@
 
         const rect = wrapper.getBoundingClientRect();
         const isImmersive = document.body.classList.contains('immersive-mode');
-        const maxBoardSize = isImmersive ? 2000 : 560;
-        const gutter = isImmersive ? 10 : 8;
-        const outerSize = Math.max(240, Math.floor(Math.min(rect.width - gutter, rect.height - gutter, maxBoardSize)));
-        const size = outerSize - 16;
+        const maxBoardSize = isImmersive ? 2400 : 720;
+        const gutter = isImmersive ? 6 : 8;
+        const outerSize = Math.max(220, Math.floor(Math.min(rect.width - gutter, rect.height - gutter, maxBoardSize)));
+        const framePad = isImmersive ? 10 : 14;
+        const size = outerSize - framePad;
         aspectBox.style.width = `${outerSize}px`;
         aspectBox.style.height = `${outerSize}px`;
 
@@ -2894,7 +3050,7 @@
         const spanC = Math.max(1, maxC - minC);
         const maxSpan = Math.max(spanR, spanC);
 
-        const pad = size * 0.105;
+        const pad = size * (isImmersive ? 0.055 : 0.085);
         const usable = size - pad * 2;
         const step = usable / maxSpan;
 
@@ -3465,7 +3621,7 @@
         const maxDim = GameState.gameFamily === 'morris'
           ? 6
           : Math.max(GameState.rows + (GameState.hasTriangularCamps ? 4 : 0), GameState.cols);
-        const hitRadius = Math.max(20, (rect.width / maxDim) * 0.52);
+        const hitRadius = Math.max(24, (rect.width / maxDim) * 0.55);
         let closestId = -1;
         let closestDist = Infinity;
 
@@ -4035,27 +4191,49 @@
         },
 
         encodeSignalToken(desc) {
-          const payload = JSON.stringify({ t: desc.type, s: desc.sdp });
-          return btoa(unescape(encodeURIComponent(payload)));
+          const json = JSON.stringify({ t: desc.type, s: desc.sdp });
+          if (typeof pako !== 'undefined' && pako.deflate) {
+            try {
+              const deflated = pako.deflate(json);
+              let binary = '';
+              for (let i = 0; i < deflated.length; i++) {
+                binary += String.fromCharCode(deflated[i]);
+              }
+              return 'pk:' + btoa(binary);
+            } catch (e) {}
+          }
+          return btoa(unescape(encodeURIComponent(json)));
         },
 
         decodeSignalToken(tokenStr) {
           const cleaned = (tokenStr || '').trim();
           if (!cleaned) throw new Error('Signaling code is empty.');
+          if (cleaned.startsWith('pk:')) {
+            if (typeof pako === 'undefined' || !pako.inflate) {
+              throw new Error('Decompression library missing.');
+            }
+            const b64 = cleaned.slice(3);
+            const bin = atob(b64);
+            const u8 = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) {
+              u8[i] = bin.charCodeAt(i);
+            }
+            const jsonStr = pako.inflate(u8, { to: 'string' });
+            const parsed = JSON.parse(jsonStr);
+            if (!parsed || !parsed.t || !parsed.s) {
+              throw new Error('Token missing required SDP fields.');
+            }
+            return { type: parsed.t, sdp: parsed.s };
+          }
           let decoded;
           try {
             decoded = decodeURIComponent(escape(atob(cleaned)));
           } catch (err) {
-            throw new Error('Invalid Base64 signaling string. Please copy the entire code.');
+            throw new Error('Invalid signaling code. Please rescan or re-copy.');
           }
-          let parsed;
-          try {
-            parsed = JSON.parse(decoded);
-          } catch (err) {
-            throw new Error('Corrupted signaling JSON payload.');
-          }
+          const parsed = JSON.parse(decoded);
           if (!parsed || !parsed.t || !parsed.s) {
-            throw new Error('Signaling token is missing SDP type or description.');
+            throw new Error('Token missing required SDP fields.');
           }
           return { type: parsed.t, sdp: parsed.s };
         },
@@ -4064,8 +4242,9 @@
           const box = document.getElementById(containerId);
           const chk = document.getElementById(checksumId);
           if (!box) return;
+          box.innerHTML = '';
           if (!tokenStr) {
-            box.innerHTML = 'Signal Matrix';
+            box.innerHTML = '<span class="text-xs text-walnut-500 font-bold">No QR Code</span>';
             if (chk) chk.textContent = 'No token';
             return;
           }
@@ -4076,7 +4255,21 @@
             hash = Math.imul(hash, 16777619);
           }
           const hexHash = (hash >>> 0).toString(16).toUpperCase().padStart(8, '0');
-          if (chk) chk.textContent = `ID: ${hexHash.slice(0, 6)}`;
+          if (chk) chk.textContent = `Token ID: ${hexHash.slice(0, 6)}`;
+
+          if (typeof QRCode !== 'undefined') {
+            try {
+              new QRCode(box, {
+                text: tokenStr,
+                width: 220,
+                height: 220,
+                colorDark: '#2B170A',
+                colorLight: '#FFFFFF',
+                correctLevel: QRCode.CorrectLevel.L
+              });
+              return;
+            } catch (e) {}
+          }
 
           const grid = 9;
           let svgCells = '';
@@ -4094,6 +4287,33 @@
           box.innerHTML = `<svg viewBox="0 0 80 80" class="w-full h-full">${svgCells}</svg>`;
         },
 
+        showChoiceView() {
+          const choice = document.getElementById('rtcChoiceView');
+          const host = document.getElementById('rtcHostQrView');
+          const guest = document.getElementById('rtcGuestQrView');
+          if (choice) choice.classList.remove('hidden');
+          if (host) host.classList.add('hidden');
+          if (guest) guest.classList.add('hidden');
+        },
+
+        showHostQrView() {
+          const choice = document.getElementById('rtcChoiceView');
+          const host = document.getElementById('rtcHostQrView');
+          const guest = document.getElementById('rtcGuestQrView');
+          if (choice) choice.classList.add('hidden');
+          if (host) host.classList.remove('hidden');
+          if (guest) guest.classList.add('hidden');
+        },
+
+        showGuestQrView() {
+          const choice = document.getElementById('rtcChoiceView');
+          const host = document.getElementById('rtcHostQrView');
+          const guest = document.getElementById('rtcGuestQrView');
+          if (choice) choice.classList.add('hidden');
+          if (host) host.classList.add('hidden');
+          if (guest) guest.classList.remove('hidden');
+        },
+
         updateConnectionUI(state, title, detail) {
           const dotTop = document.getElementById('connStatusDot');
           const labelTop = document.getElementById('connStatusLabel');
@@ -4106,19 +4326,19 @@
 
           if (state === 'connected') {
             dotTop.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
-            dotModal.className = 'w-3 h-3 rounded-full bg-emerald-500 shrink-0';
+            dotModal.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 shrink-0';
             labelTop.textContent = `P2P (P${GameState.localPlayerRole || 1})`;
           } else if (state === 'connecting') {
             dotTop.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping';
-            dotModal.className = 'w-3 h-3 rounded-full bg-amber-500 shrink-0';
+            dotModal.className = 'w-3.5 h-3.5 rounded-full bg-amber-500 shrink-0';
             labelTop.textContent = 'Negotiating...';
           } else if (state === 'error') {
             dotTop.className = 'w-2.5 h-2.5 rounded-full bg-rose-600';
-            dotModal.className = 'w-3 h-3 rounded-full bg-rose-600 shrink-0';
+            dotModal.className = 'w-3.5 h-3.5 rounded-full bg-rose-600 shrink-0';
             labelTop.textContent = 'P2P Error';
           } else {
             dotTop.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200';
-            dotModal.className = 'w-3 h-3 rounded-full bg-amber-500 shrink-0';
+            dotModal.className = 'w-3.5 h-3.5 rounded-full bg-amber-500 shrink-0';
             labelTop.textContent = 'Mode / P2P';
           }
           updateHUD();
@@ -4167,6 +4387,12 @@
             showBoardToast(`WebRTC Connected! You are Player ${GameState.localPlayerRole || 1}`);
             syncSettingsControlsFromState();
             updateHUD();
+
+            const modalConn = document.getElementById('modalConnection');
+            if (modalConn) {
+              modalConn.classList.add('hidden');
+              modalConn.classList.remove('flex');
+            }
 
             if (GameState.localPlayerRole === 1) {
               this.send({ type: 'SYNC_STATE', state: serializeGameState() });
@@ -4236,16 +4462,18 @@
             const channel = pc.createDataChannel('katar-sync', { ordered: true });
             this.setupDataChannel(channel);
 
-            this.updateConnectionUI('connecting', 'Gathering Local ICE Candidates...', 'Creating Host Offer token...');
+            this.updateConnectionUI('connecting', 'Generating Offer QR Code...', 'Creating room token...');
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
 
             this.waitForIceGathering(pc, (localDesc) => {
               const token = this.encodeSignalToken(localDesc);
-              document.getElementById('txtHostOfferOut').value = token;
+              const txt = document.getElementById('txtHostOfferOut');
+              if (txt) txt.value = token;
               this.renderSignalMatrixSVG(token, 'qrHostOfferBox', 'hostOfferChecksum');
-              this.updateConnectionUI('connecting', 'Offer Ready • Send to Player 2', 'Waiting for Player 2 Answer code in Step 1B...');
-              showBoardToast('Host Offer Code Generated!');
+              this.showHostQrView();
+              this.updateConnectionUI('connecting', 'Offer QR Ready • Let Player 2 Scan', 'Waiting for Player 2 to scan your screen...');
+              showBoardToast('Host Offer QR Code Ready!');
             });
           } catch (err) {
             this.updateConnectionUI('error', 'Failed to Generate Offer', err.message || 'Unknown WebRTC error');
@@ -4266,17 +4494,19 @@
               if (evt.channel) this.setupDataChannel(evt.channel);
             };
 
-            this.updateConnectionUI('connecting', 'Processing Host Offer...', 'Generating return Answer token...');
+            this.updateConnectionUI('connecting', 'Processing Host Offer...', 'Generating return Answer code...');
             await pc.setRemoteDescription(new RTCSessionDescription(remoteDesc));
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
 
             this.waitForIceGathering(pc, (localDesc) => {
               const token = this.encodeSignalToken(localDesc);
-              document.getElementById('txtGuestAnswerOut').value = token;
+              const txt = document.getElementById('txtGuestAnswerOut');
+              if (txt) txt.value = token;
               this.renderSignalMatrixSVG(token, 'qrGuestAnswerBox', 'guestAnswerChecksum');
-              this.updateConnectionUI('connecting', 'Answer Ready • Send Back to Host', 'Once Host pastes this Answer, connection opens automatically!');
-              showBoardToast('Return Answer Code Generated!');
+              this.showGuestQrView();
+              this.updateConnectionUI('connecting', 'Return QR Ready • Let Host Scan', 'Waiting for Host to scan your screen...');
+              showBoardToast('Return QR Code Ready! Let Host scan.');
             });
           } catch (err) {
             this.updateConnectionUI('error', 'Invalid Host Offer Code', err.message || 'Could not process Offer.');
@@ -4286,13 +4516,14 @@
 
         async acceptGuestAnswerOnHost(answerTokenStr) {
           try {
-            if (!this.pc) throw new Error('Generate a Host Offer in Step 1A first.');
+            if (!this.pc) throw new Error('Generate a Host Offer first.');
             const remoteDesc = this.decodeSignalToken(answerTokenStr);
             if (remoteDesc.type !== 'answer') {
               throw new Error('Provided token is not a valid Guest Answer.');
             }
             this.updateConnectionUI('connecting', 'Verifying Answer...', 'Opening P2P DataChannel...');
             await this.pc.setRemoteDescription(new RTCSessionDescription(remoteDesc));
+            showBoardToast('Answer accepted! Connecting peer...');
           } catch (err) {
             this.updateConnectionUI('error', 'Answer Handshake Error', err.message || 'Failed to accept Answer');
             showBoardToast(err.message || 'Failed to accept Answer');
@@ -4323,15 +4554,18 @@
             const offer = await hostPC.createOffer();
             await hostPC.setLocalDescription(offer);
             const offerToken = this.encodeSignalToken(hostPC.localDescription);
-            document.getElementById('txtHostOfferOut').value = offerToken;
+            const txtHostOut = document.getElementById('txtHostOfferOut');
+            if (txtHostOut) txtHostOut.value = offerToken;
             this.renderSignalMatrixSVG(offerToken, 'qrHostOfferBox', 'hostOfferChecksum');
 
             await guestPC.setRemoteDescription(hostPC.localDescription);
             const answer = await guestPC.createAnswer();
             await guestPC.setLocalDescription(answer);
             const answerToken = this.encodeSignalToken(guestPC.localDescription);
-            document.getElementById('txtGuestAnswerOut').value = answerToken;
-            document.getElementById('txtHostAnswerIn').value = answerToken;
+            const txtGuestOut = document.getElementById('txtGuestAnswerOut');
+            const txtHostIn = document.getElementById('txtHostAnswerIn');
+            if (txtGuestOut) txtGuestOut.value = answerToken;
+            if (txtHostIn) txtHostIn.value = answerToken;
             this.renderSignalMatrixSVG(answerToken, 'qrGuestAnswerBox', 'guestAnswerChecksum');
 
             await hostPC.setRemoteDescription(guestPC.localDescription);
@@ -4347,6 +4581,164 @@
           } catch (err) {}
         }
       };
+
+      let scannerStream = null;
+      let scannerAnimId = null;
+      let scannerCallback = null;
+      let currentCameraFacing = 'environment';
+
+      async function openQrScanner(callback, titleText) {
+        scannerCallback = callback;
+        const modal = document.getElementById('scannerModal');
+        const titleEl = document.getElementById('scannerTitle');
+        const statusEl = document.getElementById('scannerStatus');
+        if (titleEl && titleText) titleEl.textContent = titleText;
+        if (statusEl) statusEl.textContent = 'Point camera at the QR code on the other phone';
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        const video = document.getElementById('scannerVideo');
+        const canvas = document.getElementById('scannerCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        try {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Camera access not supported in this browser.');
+          }
+
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: currentCameraFacing } },
+            audio: false
+          });
+          scannerStream = stream;
+          video.srcObject = stream;
+          await video.play();
+
+          const btnSwitch = document.getElementById('btnSwitchCamera');
+          if (btnSwitch) {
+            const devices = await navigator.mediaDevices.enumerateDevices().catch(() => []);
+            const videoInputs = devices.filter((d) => d.kind === 'videoinput');
+            btnSwitch.classList.toggle('hidden', videoInputs.length <= 1);
+          }
+
+          let hasBarcodeDetector = ('BarcodeDetector' in window);
+          let barcodeDetector = null;
+          if (hasBarcodeDetector) {
+            try {
+              barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+            } catch (e) {
+              hasBarcodeDetector = false;
+            }
+          }
+
+          let isScanning = true;
+          const scanLoop = async () => {
+            if (!isScanning || !scannerStream) return;
+            if (video.readyState >= video.HAVE_ENOUGH_DATA) {
+              let detectedText = null;
+              if (hasBarcodeDetector && barcodeDetector) {
+                try {
+                  const codes = await barcodeDetector.detect(video);
+                  if (codes && codes.length > 0) {
+                    detectedText = codes[0].rawValue;
+                  }
+                } catch (e) {}
+              }
+              if (!detectedText && typeof jsQR !== 'undefined') {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const res = jsQR(imgData.data, imgData.width, imgData.height, {
+                  inversionAttempts: 'dontInvert'
+                });
+                if (res && res.data) {
+                  detectedText = res.data;
+                }
+              }
+              if (detectedText) {
+                isScanning = false;
+                closeQrScanner();
+                SoundEngine.select();
+                if (scannerCallback) scannerCallback(detectedText);
+                return;
+              }
+            }
+            scannerAnimId = requestAnimationFrame(scanLoop);
+          };
+          scannerAnimId = requestAnimationFrame(scanLoop);
+        } catch (err) {
+          if (statusEl) {
+            statusEl.textContent = 'Camera stream unavailable. Tap "Snap Photo / Pick Image" below to scan:';
+          }
+        }
+      }
+
+      function closeQrScanner() {
+        if (scannerAnimId) {
+          cancelAnimationFrame(scannerAnimId);
+          scannerAnimId = null;
+        }
+        if (scannerStream) {
+          try {
+            scannerStream.getTracks().forEach((t) => t.stop());
+          } catch (e) {}
+          scannerStream = null;
+        }
+        const video = document.getElementById('scannerVideo');
+        if (video) video.srcObject = null;
+        const modal = document.getElementById('scannerModal');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        }
+      }
+
+      async function switchScannerCamera() {
+        currentCameraFacing = currentCameraFacing === 'environment' ? 'user' : 'environment';
+        closeQrScanner();
+        if (scannerCallback) {
+          openQrScanner(scannerCallback, document.getElementById('scannerTitle').textContent);
+        }
+      }
+
+      function handleScannerFileInput(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = async () => {
+            let detected = null;
+            if ('BarcodeDetector' in window) {
+              try {
+                const det = new BarcodeDetector({ formats: ['qr_code'] });
+                const results = await det.detect(img);
+                if (results && results.length > 0) detected = results[0].rawValue;
+              } catch (e) {}
+            }
+            if (!detected && typeof jsQR !== 'undefined') {
+              const c = document.createElement('canvas');
+              c.width = img.naturalWidth || img.width;
+              c.height = img.naturalHeight || img.height;
+              const cx = c.getContext('2d');
+              cx.drawImage(img, 0, 0);
+              const data = cx.getImageData(0, 0, c.width, c.height);
+              const qr = jsQR(data.data, data.width, data.height);
+              if (qr && qr.data) detected = qr.data;
+            }
+            if (detected) {
+              closeQrScanner();
+              SoundEngine.select();
+              if (scannerCallback) scannerCallback(detected);
+            } else {
+              showBoardToast('No QR code detected in that photo. Try again or paste code manually.');
+            }
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      }
 
       function copyTextToClipboard(text, label) {
         if (!text || !text.trim()) {
@@ -4857,8 +5249,58 @@
         document.getElementById('txtGuestAnswerOut').value = '';
         WebRTCManager.renderSignalMatrixSVG('', 'qrHostOfferBox', 'hostOfferChecksum');
         WebRTCManager.renderSignalMatrixSVG('', 'qrGuestAnswerBox', 'guestAnswerChecksum');
+        WebRTCManager.showChoiceView();
         WebRTCManager.updateConnectionUI('idle', 'WebRTC Reset', 'Select Host (Player 1) or Guest (Player 2) below');
         SoundEngine.select();
+      });
+
+      document.getElementById('btnStartHostQR').addEventListener('click', () => {
+        SoundEngine.select();
+        WebRTCManager.generateHostOffer();
+      });
+
+      document.getElementById('btnStartGuestScan').addEventListener('click', () => {
+        SoundEngine.select();
+        openQrScanner((token) => {
+          WebRTCManager.processGuestOfferAndCreateAnswer(token);
+        }, "Scan Host's QR Code");
+      });
+
+      document.getElementById('btnHostScanGuestReturn').addEventListener('click', () => {
+        SoundEngine.select();
+        openQrScanner((token) => {
+          WebRTCManager.acceptGuestAnswerOnHost(token);
+        }, "Scan Player 2's Return Code");
+      });
+
+      document.getElementById('btnHostBackToChoice').addEventListener('click', () => {
+        SoundEngine.select();
+        WebRTCManager.showChoiceView();
+      });
+
+      document.getElementById('btnGuestBackToChoice').addEventListener('click', () => {
+        SoundEngine.select();
+        WebRTCManager.showChoiceView();
+      });
+
+      document.getElementById('btnToggleManualRtc').addEventListener('click', () => {
+        const acc = document.getElementById('rtcManualAccordion');
+        const chev = document.getElementById('manualRtcChevron');
+        acc.classList.toggle('hidden');
+        chev.textContent = acc.classList.contains('hidden') ? '▼' : '▲';
+      });
+
+      document.getElementById('btnCloseScanner').addEventListener('click', closeQrScanner);
+
+      const btnSwitchCam = document.getElementById('btnSwitchCamera');
+      if (btnSwitchCam) {
+        btnSwitchCam.addEventListener('click', switchScannerCamera);
+      }
+
+      document.getElementById('scannerFileInput').addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          handleScannerFileInput(e.target.files[0]);
+        }
       });
 
       document.getElementById('btnHostCreateOffer').addEventListener('click', () => {
@@ -4897,9 +5339,6 @@
         WebRTCManager.runLoopbackSimulation();
       });
 
-      // =========================================================
-      // Immersive fullscreen play mode (distraction-free board)
-      // =========================================================
       const Immersive = {
         active: false,
         nativeFullscreen: false,
@@ -4912,6 +5351,7 @@
 
           const hud = document.getElementById('immersiveHud');
           hud.classList.remove('hidden');
+          hud.classList.remove('zen-mode');
           hud.setAttribute('aria-hidden', 'false');
           updateImmersiveHUD();
           this.wake();
@@ -4934,7 +5374,7 @@
             }
           }
 
-          [40, 160, 420].forEach((ms) => setTimeout(resizeCanvas, ms));
+          [30, 120, 300].forEach((ms) => setTimeout(resizeCanvas, ms));
         },
 
         exit() {
@@ -4947,6 +5387,7 @@
           const hud = document.getElementById('immersiveHud');
           hud.classList.add('hidden');
           hud.classList.remove('is-dimmed');
+          hud.classList.remove('zen-mode');
           hud.setAttribute('aria-hidden', 'true');
 
           const metaTheme = document.querySelector('meta[name="theme-color"]');
@@ -4964,7 +5405,7 @@
             }
           }
 
-          [40, 180].forEach((ms) => setTimeout(resizeCanvas, ms));
+          [30, 120, 300].forEach((ms) => setTimeout(resizeCanvas, ms));
         },
 
         toggle() {
@@ -4972,7 +5413,15 @@
           else this.enter();
         },
 
-        // Briefly reveal the floating HUD after any interaction, then fade it back.
+        toggleZen() {
+          const hud = document.getElementById('immersiveHud');
+          if (!hud) return;
+          hud.classList.toggle('zen-mode');
+          if (hud.classList.contains('zen-mode')) {
+            showBoardToast('Zen Mode (Tap anywhere to restore)');
+          }
+        },
+
         wake() {
           const hud = document.getElementById('immersiveHud');
           if (!hud || !this.active) return;
@@ -4980,7 +5429,7 @@
           clearTimeout(this.idleTimer);
           this.idleTimer = setTimeout(() => {
             if (this.active) hud.classList.add('is-dimmed');
-          }, 4000);
+          }, 2500);
         }
       };
 
@@ -5009,17 +5458,31 @@
         restart: 'btnResetMatch'
       };
       document.querySelectorAll('[data-imm-action]').forEach((btn) => {
-        const targetId = immActionMap[btn.getAttribute('data-imm-action')];
-        if (!targetId) return;
-        btn.addEventListener('click', () => {
+        const act = btn.getAttribute('data-imm-action');
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (act === 'zen') {
+            Immersive.toggleZen();
+            return;
+          }
+          const targetId = immActionMap[act];
+          if (!targetId) return;
           const target = document.getElementById(targetId);
           if (target && !target.disabled) target.click();
         });
       });
 
-      document.addEventListener('pointerdown', () => {
-        if (Immersive.active) Immersive.wake();
-      }, { passive: true });
+      ['pointerdown', 'pointermove', 'touchstart'].forEach((evt) => {
+        document.addEventListener(evt, () => {
+          if (Immersive.active) {
+            const hud = document.getElementById('immersiveHud');
+            if (hud && hud.classList.contains('zen-mode')) {
+              hud.classList.remove('zen-mode');
+            }
+            Immersive.wake();
+          }
+        }, { passive: true });
+      });
 
       document.addEventListener('keydown', (event) => {
         if (!Immersive.active) return;
