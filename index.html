@@ -2472,7 +2472,7 @@
 
           tryDeployReserve(player);
 
-          if (countPlayerTotalPieces(opponent) === 0) {
+          if (countPlayerTotalPieces(opponent) <= 1) {
             finishTurnAndCheckWin(player, isRemote, action);
             return;
           }
@@ -2549,11 +2549,13 @@
             resetTurnTimer();
           }
         } else {
-          // Leap & Capture Katar win conditions
-          if (oppRemaining === 0 || GameState.capturedBy[playerJustMoved] >= GameState.piecesPerPlayer) {
+          const winTarget = Math.max(1, GameState.piecesPerPlayer - 1);
+          if (oppRemaining <= 1 || GameState.capturedBy[playerJustMoved] >= winTarget) {
             GameState.gameOver = true;
             GameState.winner = playerJustMoved;
-            GameState.winReason = `Captured all ${GameState.piecesPerPlayer} opponent beads!`;
+            GameState.winReason = oppRemaining <= 1
+              ? (oppRemaining === 1 ? 'Opponent reduced to only 1 bead left!' : 'Captured all opponent beads!')
+              : `Captured ${GameState.capturedBy[playerJustMoved]} opponent beads!`;
             SoundEngine.victory();
             resetTurnTimer();
             showVictoryModal();
@@ -2730,8 +2732,9 @@
           }
         }
 
-        if (p1Count === 0) return 99999;
-        if (p2Count === 0) return -99999;
+        const loseThreshold = GameState.gameFamily === 'morris' ? 2 : 1;
+        if (p1Count <= loseThreshold) return 99999;
+        if (p2Count <= loseThreshold) return -99999;
 
         const p2Moves = getAllLegalActionsForPlayer(2, board);
         const p1Moves = getAllLegalActionsForPlayer(1, board);
@@ -3918,7 +3921,7 @@
         if (!hud) return;
         const [p1Title, p2Title] = getThemePlayerNames();
         const maxP = GameState.piecesPerPlayer;
-        const winCapTarget = GameState.gameFamily === 'morris' ? Math.max(1, maxP - 2) : maxP;
+        const winCapTarget = GameState.gameFamily === 'morris' ? Math.max(1, maxP - 2) : Math.max(1, maxP - 1);
 
         document.getElementById('immP1Name').textContent = p1Title;
         document.getElementById('immP2Name').textContent = p2Title;
@@ -3946,7 +3949,7 @@
         const p1Total = countPlayerTotalPieces(1);
         const p2Total = countPlayerTotalPieces(2);
         const maxP = GameState.piecesPerPlayer;
-        const winCapTarget = GameState.gameFamily === 'morris' ? Math.max(1, maxP - 2) : maxP;
+        const winCapTarget = GameState.gameFamily === 'morris' ? Math.max(1, maxP - 2) : Math.max(1, maxP - 1);
 
         document.getElementById('p1RemainingCount').textContent = String(p1Total);
         document.getElementById('p2RemainingCount').textContent = String(p2Total);
@@ -4043,7 +4046,7 @@
         const [p1Title, p2Title] = getThemePlayerNames();
         const winCapTarget = GameState.gameFamily === 'morris'
           ? Math.max(1, GameState.piecesPerPlayer - 2)
-          : GameState.piecesPerPlayer;
+          : Math.max(1, GameState.piecesPerPlayer - 1);
 
         document.getElementById('victoryHeadline').textContent = GameState.winner === 1
           ? `${p1Title} Wins!`
