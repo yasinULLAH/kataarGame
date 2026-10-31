@@ -14,3 +14,6 @@ Option 2 — On Two Phones Without Internet (📱 Instant QR Code Link):
 5. On Phone 1, tap "📷 Scan Player 2's Return Code" and point Phone 1's camera at Phone 2's screen.
 
 Both phones link directly and launch into the live game, syncing every move, leap capture, and custom grid in real time without any internet!
+
+Option 3 — 📲 Install as an Offline App (PWA):
+Tap the "Install App" button in the top navigation bar or inside "Mode / P2P" to add Katar Game directly to your Android, iOS, tablet, or desktop home screen. The game installs with its own royal icon and service worker, launching instantly 100% offline with zero browser address bars!

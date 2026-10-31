@@ -6,6 +6,11 @@
   <meta name="theme-color" content="#F5EBDC" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Katar Game" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
   <title>Katar (قطار) &amp; Navakankari — By Yasin Ullah (Dedicated to Muhib Ullah)</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="pako.min.js"></script>
@@ -529,7 +534,8 @@
           <span class="hidden md:inline-flex items-center gap-1 text-[10px] font-bold text-teal-900 bg-teal-100/80 border border-teal-300 px-2 py-0.5 rounded-full">
             By Yasin Ullah • For Little Brother Muhib Ullah ❤️
           </span>
-          <span id="timerBadge" class="hidden text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-sm">30s</span>
+          <span id="timerBadge" class="hidden text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-sm" title="Turn Timer">30s</span>
+          <span id="matchTimerBadge" class="hidden text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-teal-700 text-white shadow-sm" title="Overall Match Clock">⏱️ 5:00</span>
         </div>
         <p id="modeSubtitle" class="text-[10px] sm:text-[11px] font-semibold text-walnut-600 truncate">By Yasin Ullah (For Muhib Ullah) • 6×6 Katar</p>
       </div>
@@ -537,6 +543,16 @@
 
     <!-- Top Right Tactile Game Buttons -->
     <div class="flex items-center gap-1.5 shrink-0">
+      <button id="btnInstallPwa" type="button" class="android-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-black bg-gradient-to-b from-indigo-500 to-indigo-700 hover:from-indigo-400 hover:to-indigo-600 text-white border border-indigo-900 shadow-[0_3px_0_#312E81] active:translate-y-0.5" aria-label="Install App" title="Install Katar App to Home Screen (Play 100% Offline)">
+        <svg class="w-3.5 h-3.5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        <span class="hidden sm:inline">Install App</span>
+        <span class="sm:hidden">Install</span>
+      </button>
+
       <button id="btnPlayImmersive" type="button" class="android-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white border border-teal-800 shadow-[0_3px_0_#115E59] active:translate-y-0.5 active:shadow-none" aria-label="Play in fullscreen immersive mode" title="Play Fullscreen (Distraction-Free)">
         <svg class="w-4 h-4 text-amber-300" viewBox="0 0 24 24" fill="currentColor">
           <path d="M8 5.5v13a1 1 0 0 0 1.52.86l10.2-6.5a1 1 0 0 0 0-1.72L9.52 4.64A1 1 0 0 0 8 5.5z" />
@@ -829,6 +845,7 @@
           <span id="immTurnDot" class="imm-dot imm-dot-p1"></span>
           <span id="immTurnText">Player 1's Turn</span>
           <span id="immTimer" class="imm-timer hidden">30s</span>
+          <span id="immMatchTimer" class="imm-timer hidden" style="background: rgba(13, 148, 136, 0.4); border-color: rgba(20, 184, 166, 0.5);">⏱️ 5:00</span>
           <button id="immEndChain" type="button" class="imm-turn-btn hidden">End Chain ✓</button>
         </div>
       </div>
@@ -966,6 +983,25 @@
                 OFF
               </button>
             </div>
+          </div>
+
+          <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-sm">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="p-2 rounded-xl bg-indigo-600 text-white shrink-0 shadow-sm">
+                <svg class="w-5 h-5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </div>
+              <div class="truncate">
+                <h4 class="text-xs font-extrabold text-indigo-950">Install PWA on Phone</h4>
+                <p class="text-[11px] text-indigo-700 truncate">Play 100% offline anytime from your home screen</p>
+              </div>
+            </div>
+            <button id="btnModalInstallPwa" type="button" class="android-btn px-3 py-1.5 rounded-xl text-xs font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shrink-0">
+              Install App
+            </button>
           </div>
 
           <button id="btnStartPassPlay" type="button" class="android-btn w-full py-3 rounded-2xl bg-gradient-to-b from-teal-500 to-teal-700 text-white font-extrabold text-sm shadow-[0_4px_0_#115E59]">
@@ -1393,7 +1429,7 @@
               </select>
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div>
                 <label for="selFirstTurn" class="block text-xs font-extrabold text-walnut-900 mb-1">Opening Turn</label>
                 <select id="selFirstTurn" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-2.5 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
@@ -1403,14 +1439,35 @@
                 </select>
               </div>
               <div>
-                <label for="selTurnTimer" class="block text-xs font-extrabold text-walnut-900 mb-1">Turn Clock</label>
+                <label for="selTurnTimer" class="block text-xs font-extrabold text-walnut-900 mb-1">Turn Clock (Per Bari)</label>
                 <select id="selTurnTimer" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-2.5 py-2 text-xs font-extrabold text-amber-800 focus:outline-none">
                   <option value="0" selected>Untimed</option>
+                  <option value="10">10s Fast Blitz</option>
                   <option value="15">15s Blitz</option>
+                  <option value="20">20s Fast</option>
                   <option value="30">30s Rapid</option>
+                  <option value="45">45s Measured</option>
                   <option value="60">60s Classic</option>
+                  <option value="90">90s Deep Strategy</option>
                 </select>
               </div>
+              <div>
+                <label for="selMatchTimer" class="block text-xs font-extrabold text-walnut-900 mb-1">Overall Game Max Time</label>
+                <select id="selMatchTimer" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-2.5 py-2 text-xs font-extrabold text-teal-800 focus:outline-none">
+                  <option value="0" selected>Untimed (No Max Time)</option>
+                  <option value="60">1 Min (Lightning Match)</option>
+                  <option value="120">2 Mins (Speed Match)</option>
+                  <option value="180">3 Mins (Bullet Match)</option>
+                  <option value="300">5 Mins (Standard Match)</option>
+                  <option value="480">8 Mins (Rapid Match)</option>
+                  <option value="600">10 Mins (Classical Match)</option>
+                  <option value="900">15 Mins (Tournament Match)</option>
+                </select>
+              </div>
+            </div>
+            <div class="bg-amber-50 border border-amber-300 rounded-xl p-2.5 text-[11px] font-bold text-amber-900 flex items-center gap-2">
+              <span class="text-base shrink-0">⏱️</span>
+              <span><strong>Max Time Rule:</strong> If the overall game clock expires before all beads are captured, the player with more beads left immediately wins!</span>
             </div>
           </div>
         </div>
@@ -1633,6 +1690,9 @@
         stepDirection: 'all',
         firstTurnSetting: '1',
         turnTimerSeconds: 0,
+        matchTimerSeconds: 0,
+        matchTimeLeft: 0,
+        matchTimerInterval: null,
         pieceTheme: 'traditional',
         boardSurface: 'sandstone',
         nodeLabels: 'off',
@@ -2236,6 +2296,7 @@
         document.getElementById('modalVictory').classList.remove('flex');
 
         resetTurnTimer();
+        resetMatchTimer();
         syncSettingsControlsFromState();
         resizeCanvas();
         updateHUD();
@@ -2289,30 +2350,37 @@
         }
         const badge = document.getElementById('timerBadge');
         if (!GameState.turnTimerSeconds || GameState.turnTimerSeconds <= 0 || GameState.gameOver) {
-          badge.classList.add('hidden');
+          if (badge) badge.classList.add('hidden');
           syncImmersiveTimer();
           return;
         }
         GameState.timeLeft = GameState.turnTimerSeconds;
-        badge.classList.remove('hidden');
-        badge.textContent = `${GameState.timeLeft}s`;
+        if (badge) {
+          badge.classList.remove('hidden');
+          badge.textContent = `${GameState.timeLeft}s`;
+          badge.className = 'text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-sm';
+        }
         syncImmersiveTimer();
 
         GameState.timerInterval = setInterval(() => {
           if (GameState.gameOver) {
             clearInterval(GameState.timerInterval);
+            GameState.timerInterval = null;
             return;
           }
           GameState.timeLeft--;
-          badge.textContent = `${Math.max(0, GameState.timeLeft)}s`;
-          if (GameState.timeLeft <= 5) {
-            badge.className = 'text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-rose-600 text-white animate-pulse';
-          } else {
-            badge.className = 'text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-sm';
+          if (badge) {
+            badge.textContent = `${Math.max(0, GameState.timeLeft)}s`;
+            if (GameState.timeLeft <= 5) {
+              badge.className = 'text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-rose-600 text-white animate-pulse';
+            } else {
+              badge.className = 'text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-sm';
+            }
           }
           syncImmersiveTimer();
           if (GameState.timeLeft <= 0) {
             clearInterval(GameState.timerInterval);
+            GameState.timerInterval = null;
             if (GameState.chainJumpingNode !== null) {
               endChainTurnEarly(false);
             } else {
@@ -2321,10 +2389,107 @@
               if (pool.length > 0) {
                 showBoardToast('Turn clock expired — auto-move played!');
                 executeAction(pool[0], false);
+              } else {
+                finishTurnAndCheckWin(GameState.currentTurn === 1 ? 2 : 1, false, null);
               }
             }
           }
         }, 1000);
+      }
+
+      function resetMatchTimer() {
+        if (GameState.matchTimerInterval) {
+          clearInterval(GameState.matchTimerInterval);
+          GameState.matchTimerInterval = null;
+        }
+        const badge = document.getElementById('matchTimerBadge');
+        const immBadge = document.getElementById('immMatchTimer');
+        if (!GameState.matchTimerSeconds || GameState.matchTimerSeconds <= 0 || GameState.gameOver) {
+          if (badge) badge.classList.add('hidden');
+          if (immBadge) immBadge.classList.add('hidden');
+          syncImmersiveTimer();
+          return;
+        }
+        GameState.matchTimeLeft = GameState.matchTimerSeconds;
+        updateMatchTimerDisplay();
+
+        GameState.matchTimerInterval = setInterval(() => {
+          if (GameState.gameOver) {
+            clearInterval(GameState.matchTimerInterval);
+            GameState.matchTimerInterval = null;
+            return;
+          }
+          GameState.matchTimeLeft--;
+          updateMatchTimerDisplay();
+          if (GameState.matchTimeLeft <= 0) {
+            clearInterval(GameState.matchTimerInterval);
+            GameState.matchTimerInterval = null;
+            triggerMatchTimeExpiry();
+          }
+        }, 1000);
+      }
+
+      function updateMatchTimerDisplay() {
+        const badge = document.getElementById('matchTimerBadge');
+        if (!badge) return;
+        const seconds = Math.max(0, GameState.matchTimeLeft);
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        const text = `⏱️ ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+        badge.classList.remove('hidden');
+        badge.textContent = text;
+        if (seconds <= 20) {
+          badge.className = 'text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-rose-600 text-white animate-pulse shadow-sm';
+        } else {
+          badge.className = 'text-[11px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-teal-700 text-white shadow-sm';
+        }
+        syncImmersiveTimer();
+      }
+
+      function triggerMatchTimeExpiry() {
+        if (GameState.gameOver) return;
+        GameState.gameOver = true;
+        stopAllTimers();
+
+        const p1Total = countPlayerTotalPieces(1);
+        const p2Total = countPlayerTotalPieces(2);
+        const [p1Title, p2Title] = getThemePlayerNames();
+
+        if (p1Total > p2Total) {
+          GameState.winner = 1;
+          GameState.winReason = `Match time expired! ${p1Title} wins with ${p1Total} beads vs ${p2Total} beads!`;
+        } else if (p2Total > p1Total) {
+          GameState.winner = 2;
+          GameState.winReason = `Match time expired! ${p2Title} wins with ${p2Total} beads vs ${p1Total} beads!`;
+        } else {
+          if (GameState.capturedBy[1] > GameState.capturedBy[2]) {
+            GameState.winner = 1;
+            GameState.winReason = `Match time expired! Both tied at ${p1Total} beads — ${p1Title} wins on captures (${GameState.capturedBy[1]} vs ${GameState.capturedBy[2]})!`;
+          } else if (GameState.capturedBy[2] > GameState.capturedBy[1]) {
+            GameState.winner = 2;
+            GameState.winReason = `Match time expired! Both tied at ${p2Total} beads — ${p2Title} wins on captures (${GameState.capturedBy[2]} vs ${GameState.capturedBy[1]})!`;
+          } else {
+            GameState.winner = 0;
+            GameState.winReason = `Match time expired! Stalemate Draw — both tied at ${p1Total} beads!`;
+          }
+        }
+
+        SoundEngine.victory();
+        showVictoryModal();
+        updateHUD();
+        requestRender();
+      }
+
+      function stopAllTimers() {
+        if (GameState.timerInterval) {
+          clearInterval(GameState.timerInterval);
+          GameState.timerInterval = null;
+        }
+        if (GameState.matchTimerInterval) {
+          clearInterval(GameState.matchTimerInterval);
+          GameState.matchTimerInterval = null;
+        }
       }
 
       function saveUndoSnapshot() {
@@ -2531,14 +2696,14 @@
             GameState.winner = playerJustMoved;
             GameState.winReason = `Captured ${GameState.capturedBy[playerJustMoved]} beads — opponent reduced to ${oppRemaining} beads and cannot form a line of 3!`;
             SoundEngine.victory();
-            resetTurnTimer();
+            stopAllTimers();
             showVictoryModal();
           } else if (GameState.reserves[opponent] === 0 && oppMoves.total === 0) {
             GameState.gameOver = true;
             GameState.winner = playerJustMoved;
             GameState.winReason = 'Opponent is completely blocked with no legal moves!';
             SoundEngine.victory();
-            resetTurnTimer();
+            stopAllTimers();
             showVictoryModal();
           } else {
             GameState.currentTurn = opponent;
@@ -2557,14 +2722,14 @@
               ? (oppRemaining === 1 ? 'Opponent reduced to only 1 bead left!' : 'Captured all opponent beads!')
               : `Captured ${GameState.capturedBy[playerJustMoved]} opponent beads!`;
             SoundEngine.victory();
-            resetTurnTimer();
+            stopAllTimers();
             showVictoryModal();
           } else if (oppMoves.total === 0) {
             GameState.gameOver = true;
             GameState.winner = playerJustMoved;
             GameState.winReason = 'Opponent is completely trapped with no legal moves!';
             SoundEngine.victory();
-            resetTurnTimer();
+            stopAllTimers();
             showVictoryModal();
           } else {
             GameState.currentTurn = opponent;
@@ -3806,7 +3971,9 @@
         document.getElementById('selMandatoryCapture').value = GameState.mandatoryCapture;
         document.getElementById('selStepDirection').value = GameState.stepDirection;
         document.getElementById('selFirstTurn').value = GameState.firstTurnSetting;
-        document.getElementById('selTurnTimer').value = String(GameState.turnTimerSeconds);
+        document.getElementById('selTurnTimer').value = String(GameState.turnTimerSeconds || 0);
+        const selMT = document.getElementById('selMatchTimer');
+        if (selMT) selMT.value = String(GameState.matchTimerSeconds || 0);
 
         document.getElementById('selPieceTheme').value = GameState.pieceTheme;
         document.getElementById('selBoardSurface').value = GameState.boardSurface;
@@ -3907,12 +4074,23 @@
       function syncImmersiveTimer() {
         const badge = document.getElementById('timerBadge');
         const immTimer = document.getElementById('immTimer');
-        if (!badge || !immTimer) return;
-        const hidden = badge.classList.contains('hidden');
-        immTimer.classList.toggle('hidden', hidden);
-        if (!hidden) {
-          immTimer.textContent = badge.textContent;
-          immTimer.classList.toggle('urgent', badge.classList.contains('bg-rose-600'));
+        if (badge && immTimer) {
+          const hidden = badge.classList.contains('hidden');
+          immTimer.classList.toggle('hidden', hidden);
+          if (!hidden) {
+            immTimer.textContent = badge.textContent;
+            immTimer.classList.toggle('urgent', badge.classList.contains('bg-rose-600'));
+          }
+        }
+        const mBadge = document.getElementById('matchTimerBadge');
+        const immMTimer = document.getElementById('immMatchTimer');
+        if (mBadge && immMTimer) {
+          const mHidden = mBadge.classList.contains('hidden');
+          immMTimer.classList.toggle('hidden', mHidden);
+          if (!mHidden) {
+            immMTimer.textContent = mBadge.textContent;
+            immMTimer.classList.toggle('urgent', mBadge.classList.contains('bg-rose-600'));
+          }
         }
       }
 
@@ -4050,7 +4228,7 @@
 
         document.getElementById('victoryHeadline').textContent = GameState.winner === 1
           ? `${p1Title} Wins!`
-          : `${p2Title} Wins!`;
+          : (GameState.winner === 2 ? `${p2Title} Wins!` : 'Match Drawn!');
         document.getElementById('victoryReason').textContent = GameState.winReason;
         document.getElementById('victoryP1Score').textContent = `${GameState.capturedBy[1]} / ${winCapTarget}`;
         document.getElementById('victoryP2Score').textContent = `${GameState.capturedBy[2]} / ${winCapTarget}`;
@@ -4075,6 +4253,8 @@
           mandatoryCapture: GameState.mandatoryCapture,
           stepDirection: GameState.stepDirection,
           turnTimerSeconds: GameState.turnTimerSeconds,
+          matchTimerSeconds: GameState.matchTimerSeconds,
+          matchTimeLeft: GameState.matchTimeLeft,
           board: GameState.board,
           reserves: GameState.reserves,
           capturedBy: GameState.capturedBy,
@@ -4114,6 +4294,10 @@
         GameState.mandatoryCapture = remote.mandatoryCapture || GameState.mandatoryCapture;
         GameState.stepDirection = remote.stepDirection || GameState.stepDirection;
         GameState.turnTimerSeconds = remote.turnTimerSeconds || 0;
+        GameState.matchTimerSeconds = remote.matchTimerSeconds || 0;
+        if (remote.matchTimeLeft !== undefined) {
+          GameState.matchTimeLeft = remote.matchTimeLeft;
+        }
 
         if (topologyChanged) {
           buildDynamicBoardGraph();
@@ -4135,6 +4319,7 @@
 
         syncSettingsControlsFromState();
         resetTurnTimer();
+        resetMatchTimer();
 
         if (GameState.gameOver) {
           showVictoryModal();
@@ -4982,6 +5167,10 @@
         GameState.turnTimerSeconds = parseInt(e.target.value, 10) || 0;
       });
 
+      document.getElementById('selMatchTimer').addEventListener('change', (e) => {
+        GameState.matchTimerSeconds = parseInt(e.target.value, 10) || 0;
+      });
+
       document.getElementById('selPieceTheme').addEventListener('change', (e) => {
         GameState.pieceTheme = e.target.value;
         updateHUD();
@@ -5024,6 +5213,7 @@
         GameState.stepDirection = 'all';
         GameState.firstTurnSetting = '1';
         GameState.turnTimerSeconds = 0;
+        GameState.matchTimerSeconds = 0;
         GameState.pieceTheme = 'traditional';
         GameState.boardSurface = 'sandstone';
         GameState.nodeLabels = 'off';
@@ -5495,6 +5685,82 @@
 
       window.addEventListener('resize', resizeCanvas);
       window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 120));
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(() => {});
+        });
+      }
+
+      let deferredInstallPrompt = null;
+      const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+      function updatePwaInstallUI(installed = false) {
+        const btnTop = document.getElementById('btnInstallPwa');
+        const btnModal = document.getElementById('btnModalInstallPwa');
+        const isInstalled = installed || isStandaloneMode;
+        if (isInstalled) {
+          if (btnTop) btnTop.classList.add('hidden');
+          if (btnModal) {
+            btnModal.textContent = 'Installed ✓';
+            btnModal.disabled = true;
+            btnModal.className = 'android-btn px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-700 text-white opacity-80';
+          }
+        }
+      }
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        updatePwaInstallUI(false);
+      });
+
+      window.addEventListener('appinstalled', () => {
+        deferredInstallPrompt = null;
+        updatePwaInstallUI(true);
+        showBoardToast('Katar App installed! Launch it anytime from your home screen.');
+      });
+
+      function triggerPwaInstall() {
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+          showBoardToast('App is already installed and running standalone!');
+          return;
+        }
+        if (deferredInstallPrompt) {
+          deferredInstallPrompt.prompt();
+          deferredInstallPrompt.userChoice.then((choice) => {
+            if (choice.outcome === 'accepted') {
+              showBoardToast('Installing Katar App to your home screen...');
+            }
+            deferredInstallPrompt = null;
+          });
+        } else {
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+          if (isIOS) {
+            showBoardToast('To Install on iOS: Tap Share in Safari, then tap "Add to Home Screen" 📲');
+          } else {
+            showBoardToast('To Install: Open browser menu (⋮) and tap "Install app" or "Add to Home screen" 📲');
+          }
+        }
+      }
+
+      const btnTopPwa = document.getElementById('btnInstallPwa');
+      if (btnTopPwa) {
+        btnTopPwa.addEventListener('click', () => {
+          SoundEngine.select();
+          triggerPwaInstall();
+        });
+      }
+
+      const btnModalPwa = document.getElementById('btnModalInstallPwa');
+      if (btnModalPwa) {
+        btnModalPwa.addEventListener('click', () => {
+          SoundEngine.select();
+          triggerPwaInstall();
+        });
+      }
+
+      updatePwaInstallUI(false);
 
       window.addEventListener('load', () => {
         applyGridPresetConfig('6x6');
