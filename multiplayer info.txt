@@ -1,0 +1,14 @@
+How Two Players Can Play Offline Together
+Option 1 — On One Phone/Tablet (👥 2P Local Pass & Play): Tap 👥 2P Local on the top bar and place the phone between you and Muhib Ullah. You take turns moving on the same screen (you can also turn on Auto-Rotate Board inside Mode / P2P so the board flips 180° after every turn).
+
+Option 2 — On Two Phones Without Internet (Mode / P2P → Local Wireless WebRTC):
+
+Turn on Mobile Hotspot on Phone 1 (mobile data/internet does not need to be on) and connect Phone 2 to Phone 1's Wi-Fi hotspot.
+
+Open the game on both phones, tap Mode / P2P, and select Local Wireless (WebRTC).
+
+On Phone 1 (1. Host P1), tap Generate Offer Code, tap Copy Offer, and send that text code to Phone 2 (via SMS, WhatsApp, Bluetooth, or Quick Share).
+
+On Phone 2 (2. Guest P2), paste the Offer code into Step 2A, tap Generate Return Answer Code, and send that Answer code back to Phone 1.
+
+On Phone 1, paste the Answer code into Step 1B and tap Verify Answer & Launch P2P Match—both phones will link directly and sync every move and capture live.
