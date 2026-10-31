@@ -654,13 +654,21 @@
 
     <!-- Right Quick Rule Controls: 1 Bead per Bari vs Multi-Eat & Bead Count Stepper -->
     <div class="flex items-center gap-1.5 shrink-0 pl-2 border-l border-parchment-300">
-      <!-- Capture Style Toggle (1 Bead / Bari vs Multi-Eat Chain) -->
       <div id="mainCaptureRuleGroup" class="flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
         <button id="btnQuickMultiEat" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm" title="Allow eating multiple beads in a single turn (chain jumps)">
           ⚡ Multi-Eat
         </button>
         <button id="btnQuickSingleEat" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60" title="Eat strictly 1 bead per bari (turn)">
           1️⃣ 1 Bead/Bari
+        </button>
+      </div>
+
+      <div id="mainMorrisRuleGroup" class="hidden flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
+        <button id="btnQuickMorrisKillAny" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm" title="Local Area Rule: Can kill and remove ANY opponent bead even in a 3-in-a-row line">
+          🎯 Kill Any Bead (Area Rule)
+        </button>
+        <button id="btnQuickMorrisProtectMills" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60" title="Classic Rule: Protect opponent beads that form a 3-in-a-row line">
+          🛡️ Protect 3-in-Row
         </button>
       </div>
 
@@ -1429,6 +1437,14 @@
               </select>
             </div>
 
+            <div>
+              <label for="selMorrisRemovalRule" class="block text-xs font-extrabold text-walnut-900 mb-1">Navakankari 3-in-a-Row Kill Rule</label>
+              <select id="selMorrisRemovalRule" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
+                <option value="any" selected>Local Area Rule: Can Kill &amp; Eat ANY Bead (Break 3-in-a-Row)</option>
+                <option value="protect_mills">Classic Morris Rule: Protect Beads in a 3-in-a-Row Mill</option>
+              </select>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div>
                 <label for="selFirstTurn" class="block text-xs font-extrabold text-walnut-900 mb-1">Opening Turn</label>
@@ -1681,6 +1697,9 @@
         cols: 6,
         hasTriangularCamps: false,
         morrisDiagonals: false,
+        morrisMillRemovalRule: 'any',
+        morrisFlyingRule: 'enabled',
+        lastMove: null,
         diagonalMode: 'full',
         openCenterMode: 'four_open',
         reserveMode: 'auto_backrank',
@@ -1964,7 +1983,6 @@
         return getMillsContainingNode(nodeId, p, board).length > 0;
       }
 
-      // Return list of opponent node IDs that can be legally removed when a Mill is formed
       function getRemovableOpponentNodes(opponent, board = GameState.board) {
         const nonMill = [];
         const allOpp = [];
@@ -1976,25 +1994,32 @@
             }
           }
         }
-        // Standard Navakankari / Nine Men's Morris rule:
-        // Prefer pieces not currently in a mill; if all opponent pieces are in mills, any can be removed.
+        if (GameState.morrisMillRemovalRule === 'any') {
+          return allOpp;
+        }
         return nonMill.length > 0 ? nonMill : allOpp;
       }
 
-      /* -------------------------------------------------------------------
-       * 3. LEGAL MOVES FOR BOTH GAME FAMILIES
-       * ------------------------------------------------------------------- */
       function getLegalActionsForPiece(fromId, board = GameState.board) {
         const piece = board[fromId];
         if (!piece) return { steps: [], jumps: [] };
 
         if (GameState.gameFamily === 'morris') {
-          // In Navakankari movement phase, pieces slide 1 step along connected edges
-          // (or can "fly" to any empty node if player has exactly 3 pieces left and reserves === 0)
+          const pieceCount = countPlayerTotalPieces(piece, board);
+          const unplaced = (GameState.reserves && GameState.reserves[piece]) || 0;
+          const canFly = (pieceCount === 3 && unplaced === 0 && GameState.morrisFlyingRule !== 'disabled');
           const steps = [];
-          for (const toId of Adjacency[fromId]) {
-            if (board[toId] === 0) {
-              steps.push({ from: fromId, to: toId, type: 'step' });
+          if (canFly) {
+            for (let i = 0; i < Nodes.length; i++) {
+              if (board[i] === 0) {
+                steps.push({ from: fromId, to: i, type: 'step' });
+              }
+            }
+          } else {
+            for (const toId of Adjacency[fromId]) {
+              if (board[toId] === 0) {
+                steps.push({ from: fromId, to: toId, type: 'step' });
+              }
             }
           }
           return { steps, jumps: [] };
@@ -2213,6 +2238,7 @@
         GameState.chainCount = 0;
         GameState.morrisPendingRemove = false;
         GameState.lastFormedMill = null;
+        GameState.lastMove = null;
         GameState.gameOver = false;
         GameState.winner = null;
         GameState.winReason = '';
@@ -2501,7 +2527,8 @@
           chainJumpingNode: GameState.chainJumpingNode,
           chainCount: GameState.chainCount,
           morrisPendingRemove: GameState.morrisPendingRemove,
-          lastFormedMill: GameState.lastFormedMill ? [...GameState.lastFormedMill] : null
+          lastFormedMill: GameState.lastFormedMill ? [...GameState.lastFormedMill] : null,
+          lastMove: GameState.lastMove ? { ...GameState.lastMove } : null
         });
         if (GameState.history.length > 35) {
           GameState.history.shift();
@@ -2539,6 +2566,7 @@
           if (action.type === 'drop') {
             const toNode = Nodes[action.to];
             GameState.board[action.to] = player;
+            GameState.lastMove = { from: null, to: action.to, player, type: 'drop' };
             GameState.reserves[player] = Math.max(0, GameState.reserves[player] - 1);
             VisualFX.spawnPulseRing(action.to, player === 1 ? '#0D9488' : '#E11D48');
             SoundEngine.move();
@@ -2548,7 +2576,9 @@
               GameState.morrisPendingRemove = true;
               GameState.lastFormedMill = mills[0];
               SoundEngine.millFormed();
-              showBoardToast('KATAR (Line of 3)! Tap an opponent bead to remove it!');
+              showBoardToast(GameState.morrisMillRemovalRule === 'any'
+                ? 'KATAR (Line of 3)! Tap ANY opponent bead to remove it (Area Rule)!'
+                : 'KATAR (Line of 3)! Tap an opponent bead to remove it!');
               updateHUD();
               requestRender();
 
@@ -2577,6 +2607,7 @@
             const toNode = Nodes[action.to];
             GameState.board[action.from] = 0;
             GameState.board[action.to] = player;
+            GameState.lastMove = { from: action.from, to: action.to, player, type: 'step' };
             GameState.selectedNode = null;
             VisualFX.startPieceTween(fromNode, toNode, player, false);
             SoundEngine.move();
@@ -2586,7 +2617,9 @@
               GameState.morrisPendingRemove = true;
               GameState.lastFormedMill = mills[0];
               SoundEngine.millFormed();
-              showBoardToast('KATAR (Line of 3)! Tap an opponent bead to remove it!');
+              showBoardToast(GameState.morrisMillRemovalRule === 'any'
+                ? 'KATAR (Line of 3)! Tap ANY opponent bead to remove it (Area Rule)!'
+                : 'KATAR (Line of 3)! Tap an opponent bead to remove it!');
               updateHUD();
               requestRender();
 
@@ -2617,6 +2650,7 @@
 
         GameState.board[action.from] = 0;
         GameState.board[action.to] = player;
+        GameState.lastMove = { from: action.from, to: action.to, player, type: action.type };
 
         VisualFX.startPieceTween(fromNode, toNode, player, action.type === 'jump');
 
@@ -2796,7 +2830,8 @@
               if (line.includes(cid)) {
                 const p1InLine = line.filter((id) => GameState.board[id] === 1).length;
                 const emptyInLine = line.filter((id) => GameState.board[id] === 0).length;
-                if (p1InLine === 2 && emptyInLine === 1) threatCount += 20;
+                if (p1InLine === 3) threatCount += 65;
+                else if (p1InLine === 2 && emptyInLine === 1) threatCount += 20;
               }
             }
             if (threatCount > bestScore) {
@@ -3366,18 +3401,21 @@
         }
         ctx.restore();
 
-        // Highlight Recently Formed 3-in-a-Row Mill Line in Navakankari Mode
         if (GameState.gameFamily === 'morris' && GameState.lastFormedMill) {
           const [m0, m1, m2] = GameState.lastFormedMill;
           const n0 = Nodes[m0];
+          const n1 = Nodes[m1];
           const n2 = Nodes[m2];
-          if (n0 && n2) {
+          if (n0 && n1 && n2) {
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(n0.x, n0.y);
+            ctx.lineTo(n1.x, n1.y);
             ctx.lineTo(n2.x, n2.y);
             ctx.strokeStyle = '#F59E0B';
             ctx.lineWidth = 6;
+            ctx.shadowColor = 'rgba(245, 158, 11, 0.85)';
+            ctx.shadowBlur = 10;
             ctx.stroke();
             ctx.restore();
           }
@@ -3526,21 +3564,94 @@
           }
         }
 
-        // 6. Draw 3D Tactile Gemstone Pieces
         const pieceRadius = size * 0.052 * densityScale;
         const movingDestId = VisualFX.movingPiece ? VisualFX.movingPiece.toId : -1;
         const removableSet = (GameState.gameFamily === 'morris' && GameState.morrisPendingRemove)
           ? new Set(getRemovableOpponentNodes(GameState.currentTurn === 1 ? 2 : 1))
           : null;
 
+        if (GameState.lastMove) {
+          const lm = GameState.lastMove;
+          const fromNode = (lm.from !== null && lm.from !== undefined && lm.from >= 0) ? Nodes[lm.from] : null;
+          const toNode = (lm.to !== null && lm.to !== undefined && lm.to >= 0) ? Nodes[lm.to] : null;
+
+          if (fromNode) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(fromNode.x, fromNode.y, pieceRadius * 0.9, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(217, 119, 6, 0.75)';
+            ctx.lineWidth = 2.4;
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(fromNode.x, fromNode.y, 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#D97706';
+            ctx.fill();
+            ctx.restore();
+          }
+
+          if (fromNode && toNode) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(fromNode.x, fromNode.y);
+            ctx.lineTo(toNode.x, toNode.y);
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.72)';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([6, 5]);
+            ctx.stroke();
+
+            const arrowT = 0.65;
+            const ax = fromNode.x + (toNode.x - fromNode.x) * arrowT;
+            const ay = fromNode.y + (toNode.y - fromNode.y) * arrowT;
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.arc(ax, ay, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#F59E0B';
+            ctx.shadowColor = '#F59E0B';
+            ctx.shadowBlur = 6;
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+
+        const pulseCycle = Math.sin(now * 0.005) * 0.5 + 0.5;
+        const turnColor = GameState.currentTurn === 1 ? '13, 148, 136' : '225, 29, 72';
+
         for (let i = 0; i < Nodes.length; i++) {
           const occupant = GameState.board[i];
           if (!occupant || i === movingDestId) continue;
           const n = Nodes[i];
           const isSelected = (GameState.selectedNode === i);
+          const isTurnPlayer = (occupant === GameState.currentTurn && !GameState.gameOver && !GameState.morrisPendingRemove);
+
+          if (isTurnPlayer) {
+            const auraAlpha = 0.22 + 0.45 * pulseCycle;
+            const auraRad = pieceRadius * (1.18 + 0.16 * pulseCycle);
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, auraRad, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(${turnColor}, ${auraAlpha})`;
+            ctx.lineWidth = 2.4;
+            ctx.stroke();
+            ctx.restore();
+            needsMoreFrames = true;
+          }
+
           drawGamePiece(n.x, n.y, pieceRadius, occupant, isSelected, 1);
 
-          // If in Navakankari Mill-Removal state, highlight removable enemy beads with a red target ring
+          if (GameState.lastMove && GameState.lastMove.to === i) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, pieceRadius * 1.28, 0, Math.PI * 2);
+            ctx.strokeStyle = '#F59E0B';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = 'rgba(245, 158, 11, 0.85)';
+            ctx.shadowBlur = 8;
+            ctx.stroke();
+            ctx.restore();
+          }
+
           if (removableSet && removableSet.has(i)) {
             ctx.save();
             ctx.beginPath();
@@ -3817,7 +3928,9 @@
               executeAction({ type: 'remove_opponent', capturedId: closestId }, false);
             } else {
               SoundEngine.invalid();
-              showBoardToast('Tap a highlighted opponent bead (not inside a protected line of 3)!');
+              showBoardToast(GameState.morrisMillRemovalRule === 'any'
+                ? 'Tap any highlighted opponent bead to remove it!'
+                : 'That bead is protected inside a line of 3! Tap another bead or switch rule to "Kill Any Bead"');
             }
             return;
           }
@@ -3981,6 +4094,21 @@
         document.getElementById('chkShowGuides').checked = GameState.showGuides;
         document.getElementById('chkEnableHaptics').checked = SoundEngine.hapticsEnabled;
         document.getElementById('selAIDifficulty').value = GameState.aiDifficulty;
+
+        const selMorrisRule = document.getElementById('selMorrisRemovalRule');
+        if (selMorrisRule) selMorrisRule.value = GameState.morrisMillRemovalRule;
+
+        const btnKillAny = document.getElementById('btnQuickMorrisKillAny');
+        const btnProtectMills = document.getElementById('btnQuickMorrisProtectMills');
+        if (btnKillAny && btnProtectMills) {
+          if (GameState.morrisMillRemovalRule === 'protect_mills') {
+            btnProtectMills.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
+            btnKillAny.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
+          } else {
+            btnKillAny.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm';
+            btnProtectMills.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
+          }
+        }
 
         // Sync Quick Multi-Eat vs 1 Bead/Bari Buttons on Main Screen
         const btnMultiEat = document.getElementById('btnQuickMultiEat');
@@ -4148,12 +4276,24 @@
 
         const subEl = document.getElementById('modeSubtitle');
         const eatModeTxt = GameState.gameFamily === 'morris'
-          ? '3-in-a-Row Mill'
+          ? (GameState.morrisMillRemovalRule === 'protect_mills' ? '3-in-a-Row (Protected)' : '3-in-a-Row (Kill Any)')
           : (GameState.chainRule === 'single_only' ? '1 Bead/Bari' : 'Multi-Eat');
         const boardTxt = GameState.gameFamily === 'morris'
           ? `Navakankari (${maxP} Beads)`
           : `${GameState.rows}×${GameState.cols} (${Nodes.length} Nodes • ${maxP} Beads)`;
         subEl.textContent = `By Yasin Ullah (For Muhib Ullah) • ${boardTxt} • ${eatModeTxt}`;
+
+        const morrisGroup = document.getElementById('mainMorrisRuleGroup');
+        const captureGroup = document.getElementById('mainCaptureRuleGroup');
+        if (morrisGroup && captureGroup) {
+          if (GameState.gameFamily === 'morris') {
+            morrisGroup.classList.remove('hidden');
+            captureGroup.classList.add('hidden');
+          } else {
+            morrisGroup.classList.add('hidden');
+            captureGroup.classList.remove('hidden');
+          }
+        }
 
         const c1 = document.getElementById('cardPlayer1');
         const c2 = document.getElementById('cardPlayer2');
@@ -4184,10 +4324,17 @@
 
         if (GameState.gameFamily === 'morris') {
           btnEndChain.classList.add('hidden');
+          const isFlying = GameState.morrisFlyingRule === 'enabled' &&
+            GameState.reserves[GameState.currentTurn] === 0 &&
+            countPlayerTotalPieces(GameState.currentTurn) === 3;
           if (GameState.morrisPendingRemove) {
-            subtext.textContent = 'KATAR (Line of 3)! Tap an opponent bead to remove it!';
+            subtext.textContent = GameState.morrisMillRemovalRule === 'any'
+              ? 'KATAR (Line of 3)! Tap ANY opponent bead to remove it (Area Rule)!'
+              : 'KATAR (Line of 3)! Tap an opponent bead to remove it!';
           } else if (GameState.reserves[GameState.currentTurn] > 0) {
             subtext.textContent = `Placement Phase: Tap any empty point to place a bead (${GameState.reserves[GameState.currentTurn]} in hand)`;
+          } else if (isFlying) {
+            subtext.textContent = '🕊️ Flying Phase Active (3 Beads Left)! Hop your bead to ANY vacant point on the board!';
           } else {
             subtext.textContent = 'Move Phase: Slide a bead along a line to form a row of 3!';
           }
@@ -4264,6 +4411,9 @@
           chainCount: GameState.chainCount,
           morrisPendingRemove: GameState.morrisPendingRemove,
           lastFormedMill: GameState.lastFormedMill,
+          morrisMillRemovalRule: GameState.morrisMillRemovalRule,
+          morrisFlyingRule: GameState.morrisFlyingRule,
+          lastMove: GameState.lastMove,
           gameOver: GameState.gameOver,
           winner: GameState.winner,
           winReason: GameState.winReason
@@ -4313,6 +4463,9 @@
         GameState.chainCount = remote.chainCount || 0;
         GameState.morrisPendingRemove = Boolean(remote.morrisPendingRemove);
         GameState.lastFormedMill = remote.lastFormedMill || null;
+        GameState.morrisMillRemovalRule = remote.morrisMillRemovalRule || 'any';
+        GameState.morrisFlyingRule = remote.morrisFlyingRule || 'enabled';
+        GameState.lastMove = remote.lastMove || null;
         GameState.gameOver = Boolean(remote.gameOver);
         GameState.winner = remote.winner;
         GameState.winReason = remote.winReason || '';
@@ -5011,6 +5164,28 @@
         showBoardToast('Capture Mode: Strictly 1 Bead Eaten per Bari (Turn)');
       });
 
+      const btnKillAny = document.getElementById('btnQuickMorrisKillAny');
+      if (btnKillAny) {
+        btnKillAny.addEventListener('click', () => {
+          GameState.morrisMillRemovalRule = 'any';
+          SoundEngine.select();
+          syncSettingsControlsFromState();
+          updateHUD();
+          showBoardToast('Area Rule: You can kill ANY opponent bead (including 3-in-a-row)!');
+        });
+      }
+
+      const btnProtectMills = document.getElementById('btnQuickMorrisProtectMills');
+      if (btnProtectMills) {
+        btnProtectMills.addEventListener('click', () => {
+          GameState.morrisMillRemovalRule = 'protect_mills';
+          SoundEngine.select();
+          syncSettingsControlsFromState();
+          updateHUD();
+          showBoardToast('Classic Rule: Beads in a 3-in-a-row line are protected!');
+        });
+      }
+
       // Main-Screen Bead Count Stepper (- / +)
       document.getElementById('btnBeadsMinus').addEventListener('click', () => {
         const minB = GameState.gameFamily === 'morris' ? 3 : 4;
@@ -5151,6 +5326,15 @@
         syncSettingsControlsFromState();
       });
 
+      const selMorrisRule = document.getElementById('selMorrisRemovalRule');
+      if (selMorrisRule) {
+        selMorrisRule.addEventListener('change', (e) => {
+          GameState.morrisMillRemovalRule = e.target.value;
+          syncSettingsControlsFromState();
+          updateHUD();
+        });
+      }
+
       document.getElementById('selMandatoryCapture').addEventListener('change', (e) => {
         GameState.mandatoryCapture = e.target.value;
       });
@@ -5209,6 +5393,7 @@
         SoundEngine.select();
         GameState.diagonalMode = 'full';
         GameState.chainRule = 'multi_optional';
+        GameState.morrisMillRemovalRule = 'any';
         GameState.mandatoryCapture = 'optional';
         GameState.stepDirection = 'all';
         GameState.firstTurnSetting = '1';
@@ -5241,6 +5426,7 @@
         GameState.chainCount = snap.chainCount;
         GameState.morrisPendingRemove = Boolean(snap.morrisPendingRemove);
         GameState.lastFormedMill = snap.lastFormedMill || null;
+        GameState.lastMove = snap.lastMove || null;
         SoundEngine.select();
         resetTurnTimer();
         showBoardToast('Undid last move');
