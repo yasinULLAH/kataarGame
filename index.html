@@ -245,6 +245,7 @@
       z-index: 35;
       pointer-events: none;
     }
+    .hidden,
     #immersiveHud .hidden {
       display: none !important;
     }
@@ -719,9 +720,7 @@
     </button>
   </nav>
 
-  <!-- Main-Screen Opponent, AI Level, Capture Rule (1/Bari vs Multi) & Bead Count Bar -->
   <div id="modeBar" class="shrink-0 min-w-0 bg-parchment-50/95 border-b border-parchment-300 px-2.5 py-1 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar z-10">
-    <!-- Opponent Mode & AI Difficulty -->
     <div class="flex items-center gap-1 shrink-0">
       <button id="btnMainModeAI" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1">
         <span>🤖 Solo vs AI</span>
@@ -746,7 +745,6 @@
       </div>
     </div>
 
-    <!-- Right Quick Rule Controls: 1 Bead per Bari vs Multi-Eat & Bead Count Stepper -->
     <div class="flex items-center gap-1.5 shrink-0 pl-2 border-l border-parchment-300">
       <div id="mainCaptureRuleGroup" class="flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
         <button id="btnQuickMultiEat" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm" title="Allow eating multiple beads in a single turn (chain jumps)">
@@ -757,9 +755,33 @@
         </button>
       </div>
 
+      <div id="mainForcedCaptureGroup" class="flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
+        <button id="btnQuickToggleForced" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm" title="Toggle Mandatory (Forced) Capture vs Optional Free Capture">
+          ⚔️ Free Capture
+        </button>
+      </div>
+
+      <div id="mainLeapGridExtrasGroup" class="flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
+        <button id="btnQuickDiagonalCycle" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-teal-900 border border-parchment-300 shadow-sm" title="Cycle Board Diagonal Connectivity (8-Way Star / Alquerque / Major / Orthogonal)">
+          ✳️ 8-Way Lines
+        </button>
+        <button id="btnQuickStepDirToggle" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm" title="Toggle Step Movement Directions (All Connected Directions vs Forward & Sideways Only)">
+          ↔️ All Dirs
+        </button>
+        <button id="btnQuickReserveToggle" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-amber-900 border border-parchment-300 shadow-sm" title="Toggle Reserve Reinforcement vs Strictly On-Board Only">
+          🎒 Reserves ON
+        </button>
+      </div>
+
+      <div id="mainDamaRuleGroup" class="hidden flex items-center gap-1 bg-amber-100/90 p-0.5 rounded-lg border border-amber-300">
+        <button id="btnQuickDamaKingMode" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm" title="Toggle Crowned King Movement Range (Long-Range Flying Kings vs 1-Step Kings)">
+          👑 Flying Kings
+        </button>
+      </div>
+
       <div id="mainMorrisRuleGroup" class="hidden flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
         <button id="btnQuickMorrisKillAny" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm" title="Local Area Rule: Can kill and remove ANY opponent bead even in a 3-in-a-row line">
-          🎯 Kill Any Bead (Area Rule)
+          🎯 Kill Any Bead
         </button>
         <button id="btnQuickMorrisProtectMills" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60" title="Classic Rule: Protect opponent beads that form a 3-in-a-row line">
           🛡️ Protect 3-in-Row
@@ -767,23 +789,51 @@
         <button id="btnQuickMorrisLineRule" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-700 text-white shadow-sm" title="Toggle whether last 3 beads must follow board lines strictly (Default) or can fly">
           📏 Strict Lines Only
         </button>
+        <button id="btnQuickMorrisDiagToggle" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm" title="Toggle 4 Corner Diagonal Lines (9-Men vs 12-Men Katar Mill)">
+          📐 No Diagonals
+        </button>
       </div>
 
       <div id="mainTigerGoatGroup" class="hidden flex items-center gap-1 bg-amber-100/90 p-0.5 rounded-lg border border-amber-300">
         <button id="btnSwapTigerGoatRole" type="button" class="android-btn px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm" title="Swap which side you play against AI (Play as Goats vs Play as Tigers)">
-          🐐 Playing as Goats (Tap to Play Tigers 🐯)
+          🐐 Playing as Goats (Tap for Tigers 🐯)
+        </button>
+        <div class="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-md border border-amber-300" title="How many Goats the Tigers must eat to win">
+          <span class="text-[10px] font-extrabold text-rose-800">🐯 Eat Win:</span>
+          <button id="btnTigerWinMinus" type="button" class="android-btn w-4 h-4 rounded bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs flex items-center justify-center">−</button>
+          <span id="lblTigerWinTarget" class="text-[11px] font-mono font-extrabold text-rose-700 min-w-[14px] text-center">5</span>
+          <button id="btnTigerWinPlus" type="button" class="android-btn w-4 h-4 rounded bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs flex items-center justify-center">+</button>
+        </div>
+      </div>
+
+      <div id="mainFanoronaGroup" class="hidden flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
+        <button id="btnQuickFanoronaBoardSize" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm" title="Switch between 5×5 (12v12) and 5×9 Grand (22v22) Fanorona">
+          📐 5×5 Grid (Tap for 5×9)
         </button>
       </div>
 
-      <!-- Direct Bead Count Selector -->
-      <div class="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-lg border border-parchment-300 shadow-sm">
-        <span class="text-[10px] font-extrabold text-walnut-700">Beads:</span>
+      <div id="mainSeegaGroup" class="hidden flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
+        <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300" title="2-Drop Phase + Orthogonal Custodian Sandwich Capture (Center Node Immune)">
+          🛡️ 2-Drop &amp; Sandwich (Center Safe)
+        </span>
+      </div>
+
+      <div id="mainGomokuGroup" class="hidden flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
+        <button id="btnQuickGomokuSize" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm" title="Cycle Gomoku Grid Size (9×9 / 7×7 / 6×6)">
+          ⚫ 9×9 Grid (81 Pts)
+        </button>
+        <button id="btnQuickFirstTurnToggle" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm" title="Cycle Who Plays First (P1 / P2 / Random)">
+          1️⃣ P1 Opens
+        </button>
+      </div>
+
+      <div id="mainBeadStepperGroup" class="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-lg border border-parchment-300 shadow-sm">
+        <span id="lblBeadStepperTitle" class="text-[10px] font-extrabold text-walnut-700">Beads:</span>
         <button id="btnBeadsMinus" type="button" class="android-btn w-5 h-5 rounded bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs flex items-center justify-center">−</button>
         <span id="lblQuickBeadCount" class="text-[11px] font-mono font-extrabold text-amber-800 min-w-[20px] text-center">18</span>
         <button id="btnBeadsPlus" type="button" class="android-btn w-5 h-5 rounded bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs flex items-center justify-center">+</button>
       </div>
 
-      <!-- Mid-Game Lock & Stashed Match Resume Controls -->
       <button id="btnToggleGameLock" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[10px] font-extrabold bg-white text-walnut-800 border border-parchment-300 shadow-sm" title="Lock board settings during an active match to prevent accidental game switches">
         🔓 Unlocked
       </button>
@@ -2085,8 +2135,9 @@
         boardSurface: 'sandstone',
         nodeLabels: 'off',
         showGuides: true,
+        damaKingMode: 'flying',
         aiDifficulty: 'medium',
-        aiPlayerRole: 2,                // 2 by default; in tiger_goat mode user can swap to play Tigers (P2) while AI plays Goats (P1)
+        aiPlayerRole: 2,
 
         board: [],
         kings: [],                      // Boolean array for Dama King promotion
@@ -2919,8 +2970,7 @@
           }
         }
 
-        // Flying King Long-Line Moves & Jumps in Dama mode
-        if (GameState.gameFamily === 'dama' && isKing) {
+        if (GameState.gameFamily === 'dama' && isKing && GameState.damaKingMode !== 'short') {
           for (const neighborId of Adjacency[fromId]) {
             if (board[neighborId] !== 0) continue;
             let prev = fromId;
@@ -3151,6 +3201,7 @@
           GameState.hasTriangularCamps = false;
           GameState.openCenterMode = 'single_center';
           GameState.reserveMode = 'no_reserves';
+          GameState.mandatoryCapture = 'forced';
           GameState.piecesPerPlayer = 12;
         } else if (preset === 'fanorona_5x9') {
           GameState.gameFamily = 'fanorona';
@@ -3160,6 +3211,7 @@
           GameState.hasTriangularCamps = false;
           GameState.openCenterMode = 'single_center';
           GameState.reserveMode = 'no_reserves';
+          GameState.mandatoryCapture = 'forced';
           GameState.piecesPerPlayer = 22;
         } else if (preset === 'seega_5x5') {
           GameState.gameFamily = 'seega';
@@ -6054,6 +6106,166 @@
         }, 2100);
       }
 
+      function updateContextualModeBar() {
+        const fam = GameState.gameFamily;
+        const preset = GameState.gridPreset;
+        const isFixedLeapTopology = (preset === 'lau_kata_kati' || preset === 'pretwa');
+
+        const capGroup = document.getElementById('mainCaptureRuleGroup');
+        const forcedGroup = document.getElementById('mainForcedCaptureGroup');
+        const leapExtras = document.getElementById('mainLeapGridExtrasGroup');
+        const damaGroup = document.getElementById('mainDamaRuleGroup');
+        const morrisGroup = document.getElementById('mainMorrisRuleGroup');
+        const tgGroup = document.getElementById('mainTigerGoatGroup');
+        const fanGroup = document.getElementById('mainFanoronaGroup');
+        const seegaGroup = document.getElementById('mainSeegaGroup');
+        const gomokuGroup = document.getElementById('mainGomokuGroup');
+        const beadGroup = document.getElementById('mainBeadStepperGroup');
+
+        if (capGroup) capGroup.classList.toggle('hidden', fam === 'morris' || fam === 'gomoku');
+        if (forcedGroup) forcedGroup.classList.toggle('hidden', !(fam === 'leap' || fam === 'fanorona' || fam === 'dama'));
+        if (leapExtras) leapExtras.classList.toggle('hidden', !(fam === 'leap' && !isFixedLeapTopology));
+        if (damaGroup) damaGroup.classList.toggle('hidden', fam !== 'dama');
+        if (morrisGroup) morrisGroup.classList.toggle('hidden', fam !== 'morris');
+        if (tgGroup) tgGroup.classList.toggle('hidden', fam !== 'tiger_goat');
+        if (fanGroup) fanGroup.classList.toggle('hidden', fam !== 'fanorona');
+        if (seegaGroup) seegaGroup.classList.toggle('hidden', fam !== 'seega');
+        if (gomokuGroup) gomokuGroup.classList.toggle('hidden', fam !== 'gomoku');
+
+        const hideBeadStepper = (
+          fam === 'gomoku' ||
+          fam === 'fanorona' ||
+          fam === 'seega' ||
+          preset === 'three_morris' ||
+          preset === 'six_morris' ||
+          isFixedLeapTopology
+        );
+        if (beadGroup) beadGroup.classList.toggle('hidden', hideBeadStepper);
+
+        const lblBeadTitle = document.getElementById('lblBeadStepperTitle');
+        if (lblBeadTitle) {
+          lblBeadTitle.textContent = fam === 'tiger_goat' ? '🐐 Goats:' : 'Beads:';
+        }
+
+        const btnMultiEat = document.getElementById('btnQuickMultiEat');
+        const btnSingleEat = document.getElementById('btnQuickSingleEat');
+        if (btnMultiEat && btnSingleEat) {
+          if (fam === 'tiger_goat') {
+            btnMultiEat.textContent = '⚡ Tiger Multi-Eat';
+            btnSingleEat.textContent = '1️⃣ 1 Goat/Bari';
+          } else if (fam === 'fanorona') {
+            btnMultiEat.textContent = '⚡ Multi-Chain';
+            btnSingleEat.textContent = '1️⃣ 1 Line/Bari';
+          } else if (fam === 'seega') {
+            btnMultiEat.textContent = '⚡ Chain Sandwich';
+            btnSingleEat.textContent = '1️⃣ 1 Capture/Bari';
+          } else {
+            btnMultiEat.textContent = '⚡ Multi-Eat';
+            btnSingleEat.textContent = '1️⃣ 1 Bead/Bari';
+          }
+          if (GameState.chainRule === 'single_only') {
+            btnSingleEat.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
+            btnMultiEat.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
+          } else {
+            btnMultiEat.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm';
+            btnSingleEat.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
+          }
+        }
+
+        const btnForced = document.getElementById('btnQuickToggleForced');
+        if (btnForced) {
+          const isForced = GameState.mandatoryCapture === 'forced';
+          btnForced.textContent = isForced ? '🎯 Forced Capture' : '⚔️ Free Capture';
+          btnForced.className = isForced
+            ? 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-600 text-white shadow-sm'
+            : 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
+        }
+
+        const btnDiag = document.getElementById('btnQuickDiagonalCycle');
+        if (btnDiag) {
+          const dMap = {
+            full: '✳️ 8-Way Star',
+            alquerque: '💠 Alquerque',
+            major_only: '📏 Main Diags',
+            orthogonal: '➕ 4-Way Ortho'
+          };
+          btnDiag.textContent = dMap[GameState.diagonalMode] || '✳️ 8-Way Star';
+        }
+
+        const btnStepDir = document.getElementById('btnQuickStepDirToggle');
+        if (btnStepDir) {
+          const isFwd = GameState.stepDirection === 'forward_side';
+          btnStepDir.textContent = isFwd ? '⬆️ Fwd/Side Only' : '↔️ All Dirs';
+          btnStepDir.className = isFwd
+            ? 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm'
+            : 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
+        }
+
+        const btnRes = document.getElementById('btnQuickReserveToggle');
+        if (btnRes) {
+          const hasRes = GameState.reserveMode === 'auto_backrank';
+          btnRes.textContent = hasRes ? '🎒 Reserves ON' : '🚫 On-Board Only';
+          btnRes.className = hasRes
+            ? 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm'
+            : 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
+        }
+
+        const btnDamaKing = document.getElementById('btnQuickDamaKingMode');
+        if (btnDamaKing) {
+          const isFlyingK = GameState.damaKingMode !== 'short';
+          btnDamaKing.textContent = isFlyingK ? '👑 Flying Kings' : '👑 1-Step Kings';
+          btnDamaKing.className = isFlyingK
+            ? 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm'
+            : 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-amber-400 shadow-sm';
+        }
+
+        const btnLineRule = document.getElementById('btnQuickMorrisLineRule');
+        const btnMorrisDiag = document.getElementById('btnQuickMorrisDiagToggle');
+        const isSmallMorris = (preset === 'three_morris' || preset === 'six_morris');
+        if (btnLineRule) {
+          btnLineRule.classList.toggle('hidden', isSmallMorris);
+          if (GameState.morrisFlyingRule === 'enabled') {
+            btnLineRule.textContent = '🕊️ 3-Bead Fly ON';
+            btnLineRule.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
+          } else {
+            btnLineRule.textContent = '📏 Strict Lines Only';
+            btnLineRule.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-700 text-white shadow-sm';
+          }
+        }
+        if (btnMorrisDiag) {
+          btnMorrisDiag.classList.toggle('hidden', isSmallMorris);
+          if (GameState.morrisDiagonals) {
+            btnMorrisDiag.textContent = '✳️ Corner Diags ON';
+            btnMorrisDiag.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm';
+          } else {
+            btnMorrisDiag.textContent = '📐 No Diagonals';
+            btnMorrisDiag.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
+          }
+        }
+
+        const lblTigerWin = document.getElementById('lblTigerWinTarget');
+        if (lblTigerWin) {
+          lblTigerWin.textContent = String(GameState.tigerCaptureTarget || 5);
+        }
+
+        const btnFanSize = document.getElementById('btnQuickFanoronaBoardSize');
+        if (btnFanSize) {
+          btnFanSize.textContent = preset === 'fanorona_5x9'
+            ? '📐 5×9 Grand (Tap for 5×5)'
+            : '📐 5×5 Grid (Tap for 5×9)';
+        }
+
+        const btnGomokuSz = document.getElementById('btnQuickGomokuSize');
+        if (btnGomokuSz) {
+          btnGomokuSz.textContent = `⚫ ${GameState.rows}×${GameState.cols} Grid (${GameState.rows * GameState.cols} Pts)`;
+        }
+        const btnFirstT = document.getElementById('btnQuickFirstTurnToggle');
+        if (btnFirstT) {
+          const ftMap = { '1': '1️⃣ P1 Opens', '2': '2️⃣ P2 Opens', 'random': '🎲 Random Open' };
+          btnFirstT.textContent = ftMap[GameState.firstTurnSetting] || '1️⃣ P1 Opens';
+        }
+      }
+
       function syncSettingsControlsFromState() {
         document.getElementById('selGridPreset').value = GameState.gridPreset;
         document.getElementById('selDiagonalMode').value = GameState.diagonalMode;
@@ -6206,6 +6418,8 @@
             btn.className = 'quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 bg-white text-walnut-800 border border-parchment-300';
           }
         });
+
+        updateContextualModeBar();
       }
 
       function getAILabel() {
@@ -6339,24 +6553,7 @@
         const boardTxt = presetNames[GameState.gridPreset] || `${GameState.rows}×${GameState.cols} (${Nodes.length} Nodes)`;
         subEl.textContent = `By Yasin Ullah (For Muhib Ullah) • ${boardTxt}`;
 
-        const morrisGroup = document.getElementById('mainMorrisRuleGroup');
-        const captureGroup = document.getElementById('mainCaptureRuleGroup');
-        const tgGroup = document.getElementById('mainTigerGoatGroup');
-        if (morrisGroup && captureGroup) {
-          if (GameState.gameFamily === 'morris') {
-            morrisGroup.classList.remove('hidden');
-            captureGroup.classList.add('hidden');
-            if (tgGroup) tgGroup.classList.add('hidden');
-          } else if (GameState.gameFamily === 'tiger_goat') {
-            morrisGroup.classList.add('hidden');
-            captureGroup.classList.remove('hidden');
-            if (tgGroup) tgGroup.classList.remove('hidden');
-          } else {
-            morrisGroup.classList.add('hidden');
-            captureGroup.classList.remove('hidden');
-            if (tgGroup) tgGroup.classList.add('hidden');
-          }
-        }
+        updateContextualModeBar();
 
         const c1 = document.getElementById('cardPlayer1');
         const c2 = document.getElementById('cardPlayer2');
@@ -7665,30 +7862,201 @@
         });
       }
 
-      // Main-Screen Bead Count Stepper (- / +) with Mid-Game Protection
       document.getElementById('btnBeadsMinus').addEventListener('click', () => {
-        const minB = GameState.gameFamily === 'morris' ? 3 : 4;
+        const minB = GameState.gameFamily === 'morris' ? 3 : (GameState.gameFamily === 'tiger_goat' ? 8 : 4);
         if (GameState.piecesPerPlayer > minB) {
           SoundEngine.select();
-          guardMidGameAction(`Change Bead Count to ${GameState.piecesPerPlayer - 1}`, () => {
+          guardMidGameAction(`Change Count to ${GameState.piecesPerPlayer - 1}`, () => {
             GameState.piecesPerPlayer--;
             initMatch(true);
-            showBoardToast(`Playing with ${GameState.piecesPerPlayer} Beads per player`);
+            showBoardToast(
+              GameState.gameFamily === 'tiger_goat'
+                ? `Playing with ${GameState.piecesPerPlayer} Goats`
+                : `Playing with ${GameState.piecesPerPlayer} Beads per player`
+            );
           });
         }
       });
 
       document.getElementById('btnBeadsPlus').addEventListener('click', () => {
-        const maxB = GameState.gameFamily === 'morris' ? 12 : 36;
+        const maxB = GameState.gameFamily === 'morris' ? 12 : (GameState.gameFamily === 'tiger_goat' ? 25 : 36);
         if (GameState.piecesPerPlayer < maxB) {
           SoundEngine.select();
-          guardMidGameAction(`Change Bead Count to ${GameState.piecesPerPlayer + 1}`, () => {
+          guardMidGameAction(`Change Count to ${GameState.piecesPerPlayer + 1}`, () => {
             GameState.piecesPerPlayer++;
             initMatch(true);
-            showBoardToast(`Playing with ${GameState.piecesPerPlayer} Beads per player`);
+            showBoardToast(
+              GameState.gameFamily === 'tiger_goat'
+                ? `Playing with ${GameState.piecesPerPlayer} Goats`
+                : `Playing with ${GameState.piecesPerPlayer} Beads per player`
+            );
           });
         }
       });
+
+      const btnQuickForced = document.getElementById('btnQuickToggleForced');
+      if (btnQuickForced) {
+        btnQuickForced.addEventListener('click', () => {
+          GameState.mandatoryCapture = GameState.mandatoryCapture === 'forced' ? 'optional' : 'forced';
+          SoundEngine.select();
+          syncSettingsControlsFromState();
+          updateHUD();
+          requestRender();
+          showBoardToast(
+            GameState.mandatoryCapture === 'forced'
+              ? '🎯 Forced Capture ON: You must jump/capture when available!'
+              : '⚔️ Free Capture ON: Captures are optional!'
+          );
+        });
+      }
+
+      const btnQuickDiag = document.getElementById('btnQuickDiagonalCycle');
+      if (btnQuickDiag) {
+        btnQuickDiag.addEventListener('click', () => {
+          const order = ['full', 'alquerque', 'major_only', 'orthogonal'];
+          const nextMode = order[(order.indexOf(GameState.diagonalMode) + 1) % order.length];
+          SoundEngine.select();
+          guardMidGameAction(`Change Board Lines to ${nextMode.toUpperCase()}`, () => {
+            GameState.diagonalMode = nextMode;
+            initMatch(true);
+            showBoardToast(`Board Lines: ${btnQuickDiag.textContent}`);
+          });
+        });
+      }
+
+      const btnQuickStepDir = document.getElementById('btnQuickStepDirToggle');
+      if (btnQuickStepDir) {
+        btnQuickStepDir.addEventListener('click', () => {
+          GameState.stepDirection = GameState.stepDirection === 'forward_side' ? 'all' : 'forward_side';
+          SoundEngine.select();
+          syncSettingsControlsFromState();
+          updateHUD();
+          requestRender();
+          showBoardToast(
+            GameState.stepDirection === 'forward_side'
+              ? '⬆️ Step Direction: Forward & Sideways Only (No Backward Step)'
+              : '↔️ Step Direction: All Connected Directions Allowed'
+          );
+        });
+      }
+
+      const btnQuickRes = document.getElementById('btnQuickReserveToggle');
+      if (btnQuickRes) {
+        btnQuickRes.addEventListener('click', () => {
+          SoundEngine.select();
+          const nextRes = GameState.reserveMode === 'auto_backrank' ? 'no_reserves' : 'auto_backrank';
+          guardMidGameAction(`Switch Reserve Mode`, () => {
+            GameState.reserveMode = nextRes;
+            GameState.piecesPerPlayer = computeRecommendedPieces();
+            initMatch(true);
+            showBoardToast(
+              nextRes === 'auto_backrank'
+                ? '🎒 Reserves ON: Extra beads deploy as space opens!'
+                : '🚫 Strictly On-Board Only (Zero Reserves)'
+            );
+          });
+        });
+      }
+
+      const btnDamaKing = document.getElementById('btnQuickDamaKingMode');
+      if (btnDamaKing) {
+        btnDamaKing.addEventListener('click', () => {
+          GameState.damaKingMode = GameState.damaKingMode === 'short' ? 'flying' : 'short';
+          SoundEngine.select();
+          syncSettingsControlsFromState();
+          requestRender();
+          showBoardToast(
+            GameState.damaKingMode === 'flying'
+              ? '👑 Flying Kings ON: Kings slide & jump across long lines!'
+              : '👑 1-Step Kings ON: Kings move 1 step in any direction!'
+          );
+        });
+      }
+
+      const btnMorrisDiag = document.getElementById('btnQuickMorrisDiagToggle');
+      if (btnMorrisDiag) {
+        btnMorrisDiag.addEventListener('click', () => {
+          SoundEngine.select();
+          const nextPreset = GameState.morrisDiagonals ? 'navakankari_9' : 'navakankari_12';
+          guardMidGameAction(`Toggle Corner Diagonals`, () => {
+            applyGridPresetConfig(nextPreset);
+            initMatch(true);
+            showBoardToast(
+              GameState.morrisDiagonals
+                ? '✳️ 12-Men Katar Mill (Corner Diagonals ON)'
+                : '📐 9-Men Navakankari (Corner Diagonals OFF)'
+            );
+          });
+        });
+      }
+
+      const btnTigerMinus = document.getElementById('btnTigerWinMinus');
+      const btnTigerPlus = document.getElementById('btnTigerWinPlus');
+      if (btnTigerMinus) {
+        btnTigerMinus.addEventListener('click', () => {
+          if (GameState.tigerCaptureTarget > 3) {
+            GameState.tigerCaptureTarget--;
+            SoundEngine.select();
+            syncSettingsControlsFromState();
+            updateHUD();
+            showBoardToast(`🐯 Tigers now win by eating ${GameState.tigerCaptureTarget} Goats`);
+          }
+        });
+      }
+      if (btnTigerPlus) {
+        btnTigerPlus.addEventListener('click', () => {
+          if (GameState.tigerCaptureTarget < 12) {
+            GameState.tigerCaptureTarget++;
+            SoundEngine.select();
+            syncSettingsControlsFromState();
+            updateHUD();
+            showBoardToast(`🐯 Tigers now win by eating ${GameState.tigerCaptureTarget} Goats`);
+          }
+        });
+      }
+
+      const btnFanSize = document.getElementById('btnQuickFanoronaBoardSize');
+      if (btnFanSize) {
+        btnFanSize.addEventListener('click', () => {
+          SoundEngine.select();
+          const nextFan = GameState.gridPreset === 'fanorona_5x9' ? 'fanorona_5x5' : 'fanorona_5x9';
+          guardMidGameAction(`Switch Fanorona Board Size`, () => {
+            applyGridPresetConfig(nextFan);
+            initMatch(true);
+            showBoardToast(nextFan === 'fanorona_5x9' ? '⚔️ Fanorona 5×9 Grand (22v22)' : '⚔️ Fanorona 5×5 (12v12)');
+          });
+        });
+      }
+
+      const btnGomokuSz = document.getElementById('btnQuickGomokuSize');
+      if (btnGomokuSz) {
+        btnGomokuSz.addEventListener('click', () => {
+          const sizes = [9, 7, 6];
+          const nextSz = sizes[(sizes.indexOf(GameState.rows) + 1) % sizes.length];
+          SoundEngine.select();
+          guardMidGameAction(`Change Gomoku Grid to ${nextSz}×${nextSz}`, () => {
+            GameState.rows = nextSz;
+            GameState.cols = nextSz;
+            GameState.piecesPerPlayer = Math.floor((nextSz * nextSz) / 2);
+            initMatch(true);
+            showBoardToast(`⚫ Gomoku ${nextSz}×${nextSz} Grid (${nextSz * nextSz} intersections)`);
+          });
+        });
+      }
+
+      const btnFirstTurnQuick = document.getElementById('btnQuickFirstTurnToggle');
+      if (btnFirstTurnQuick) {
+        btnFirstTurnQuick.addEventListener('click', () => {
+          const order = ['1', '2', 'random'];
+          GameState.firstTurnSetting = order[(order.indexOf(GameState.firstTurnSetting) + 1) % order.length];
+          SoundEngine.select();
+          syncSettingsControlsFromState();
+          if (GameState.history.length === 0 && GameState.moveLog.length === 0) {
+            initMatch(true);
+          }
+          showBoardToast(`Opening Turn: ${btnFirstTurnQuick.textContent}`);
+        });
+      }
 
       document.getElementById('btnOpenConnectionModal').addEventListener('click', () => {
         SoundEngine.select();
@@ -8739,7 +9107,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v3').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v4').catch(() => {});
         });
       }
 
