@@ -1333,9 +1333,11 @@
                     Shows an Easy-Scan Compact QR &amp; auto-listens with camera so you don't even have to tap a 2nd button!
                   </p>
                 </div>
-                <button id="btnStartHostQR" type="button" class="android-btn w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-black shadow-md flex items-center justify-center gap-2">
-                  <span>👑 Host Match &amp; Show QR</span>
-                </button>
+                <div class="space-y-1.5">
+                  <button id="btnStartHostQR" type="button" class="android-btn w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-black shadow-md flex items-center justify-center gap-2">
+                    <span>👑 Host Match (QR + PC Code)</span>
+                  </button>
+                </div>
               </div>
 
               <div class="bg-white border-2 border-amber-500/50 hover:border-amber-600 rounded-2xl p-4 flex flex-col justify-between gap-3 shadow-sm transition-all">
@@ -1345,12 +1347,17 @@
                     <h3 class="font-extrabold text-sm text-walnut-900">Join Game (Player 2)</h3>
                   </div>
                   <p class="text-xs text-walnut-600 leading-relaxed">
-                    Aim camera at Phone 1's QR code — then point screens together for 1 second to finish!
+                    Scan QR with phone camera, or on PC paste the Host's code in 1 click (or press <kbd class="px-1 py-0.5 bg-parchment-200 rounded text-[10px] font-mono">Ctrl+V</kbd>)!
                   </p>
                 </div>
-                <button id="btnStartGuestScan" type="button" class="android-btn w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-walnut-900 text-xs font-black shadow-md flex items-center justify-center gap-2">
-                  <span>📷 Scan QR to Join</span>
-                </button>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <button id="btnStartGuestScan" type="button" class="android-btn py-2.5 px-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-walnut-900 text-xs font-black shadow-md flex items-center justify-center gap-1">
+                    <span>📷 Scan QR</span>
+                  </button>
+                  <button id="btnPcPasteHostOffer" type="button" class="android-btn py-2.5 px-2 rounded-xl bg-walnut-800 hover:bg-walnut-700 text-amber-200 text-xs font-black shadow-md flex items-center justify-center gap-1" title="For PC without camera: Paste Host Offer Code from clipboard">
+                    <span>💻 Paste Code</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1385,12 +1392,23 @@
             </div>
 
             <div class="space-y-2 pt-2 border-t border-parchment-200">
-              <button id="btnHostScanGuestReturn" type="button" class="android-btn w-full py-3 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 text-xs font-black shadow-[0_3px_0_#B45309] flex items-center justify-center gap-2">
+              <div class="grid grid-cols-2 gap-2">
+                <button id="btnQuickCopyHostCode" type="button" class="android-btn py-2.5 px-2 rounded-xl bg-teal-700 hover:bg-teal-600 text-white text-xs font-black shadow flex items-center justify-center gap-1.5">
+                  <span>📋 1. Copy Host Code (PC)</span>
+                </button>
+                <button id="btnQuickPasteGuestReturn" type="button" class="android-btn py-2.5 px-2 rounded-xl bg-walnut-800 hover:bg-walnut-700 text-amber-200 text-xs font-black shadow flex items-center justify-center gap-1.5">
+                  <span>📥 2. Paste P2 Return (PC)</span>
+                </button>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <input id="inpQuickHostPasteAnswer" type="text" placeholder="Or press Ctrl+V / paste Player 2's return code here..." class="selectable-input flex-1 bg-parchment-100 border border-parchment-400 rounded-xl px-2.5 py-2 text-[11px] font-mono text-walnut-900 focus:outline-none" />
+              </div>
+              <button id="btnHostScanGuestReturn" type="button" class="android-btn w-full py-2.5 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 text-xs font-black shadow-[0_3px_0_#B45309] flex items-center justify-center gap-2">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                   <circle cx="12" cy="13" r="4"/>
                 </svg>
-                <span>📷 Step 2: Scan Player 2's Return Code</span>
+                <span>📷 Or Scan Player 2's Return QR with Camera</span>
               </button>
               <button id="btnHostBackToChoice" type="button" class="android-btn w-full py-2 rounded-xl bg-parchment-100 hover:bg-parchment-200 text-walnut-800 text-xs font-bold border border-parchment-300">
                 ← Back to Mode Selector
@@ -1403,8 +1421,8 @@
               <span class="inline-block px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold tracking-wider uppercase">
                 Step 2 of 2 • Guest Return Code
               </span>
-              <h3 class="font-extrabold text-sm text-walnut-900">✅ Host Code Scanned!</h3>
-              <p class="text-xs text-walnut-600">Now let Player 1 scan this return code to connect:</p>
+              <h3 class="font-extrabold text-sm text-walnut-900">✅ Host Code Accepted!</h3>
+              <p class="text-xs text-walnut-600">Let Player 1 scan this QR, or copy the Return Code below to send to Player 1's PC:</p>
             </div>
 
             <div class="flex flex-col items-center justify-center py-1">
@@ -1413,9 +1431,17 @@
             </div>
 
             <div class="space-y-2 pt-2 border-t border-parchment-200">
+              <div class="grid grid-cols-2 gap-2">
+                <button id="btnQuickCopyGuestReturn" type="button" class="android-btn py-2.5 px-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-black shadow flex items-center justify-center gap-1.5">
+                  <span>📋 Copy Return Code (PC)</span>
+                </button>
+                <button id="btnQuickShareGuestReturn" type="button" class="android-btn py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-walnut-900 text-xs font-black shadow flex items-center justify-center gap-1.5">
+                  <span>📤 Share to Host</span>
+                </button>
+              </div>
               <div class="flex items-center justify-center gap-2 py-1 px-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] font-bold text-amber-900">
                 <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span>
-                <span>Waiting for Player 1 to scan... Match starts automatically!</span>
+                <span>Waiting for Player 1 to scan or paste... Match starts automatically!</span>
               </div>
               <button id="btnGuestBackToChoice" type="button" class="android-btn w-full py-2 rounded-xl bg-parchment-100 hover:bg-parchment-200 text-walnut-800 text-xs font-bold border border-parchment-300">
                 ← Back to Mode Selector
@@ -9104,6 +9130,101 @@
         }, "Scan Host's QR Code");
       });
 
+      async function readClipboardOrPrompt(promptTitle) {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          try {
+            const clip = (await navigator.clipboard.readText() || '').trim();
+            if (clip) return clip;
+          } catch (e) {}
+        }
+        const manual = window.prompt(promptTitle, '');
+        return (manual || '').trim();
+      }
+
+      const btnPcPasteOffer = document.getElementById('btnPcPasteHostOffer');
+      if (btnPcPasteOffer) {
+        btnPcPasteOffer.addEventListener('click', async () => {
+          SoundEngine.select();
+          const token = await readClipboardOrPrompt("Paste Player 1's Host Offer Code (pk:...):");
+          if (!token) return;
+          document.getElementById('txtGuestOfferIn').value = token;
+          await WebRTCManager.processGuestOfferAndCreateAnswer(token);
+          setTimeout(() => {
+            const ans = document.getElementById('txtGuestAnswerOut').value;
+            if (ans) copyTextToClipboard(ans, 'Return Code');
+          }, 1350);
+        });
+      }
+
+      const btnQuickCopyHost = document.getElementById('btnQuickCopyHostCode');
+      if (btnQuickCopyHost) {
+        btnQuickCopyHost.addEventListener('click', () => {
+          copyTextToClipboard(document.getElementById('txtHostOfferOut').value, 'Host Offer Code');
+        });
+      }
+
+      const btnQuickPasteReturn = document.getElementById('btnQuickPasteGuestReturn');
+      if (btnQuickPasteReturn) {
+        btnQuickPasteReturn.addEventListener('click', async () => {
+          SoundEngine.select();
+          const inp = document.getElementById('inpQuickHostPasteAnswer');
+          let token = inp && inp.value.trim() ? inp.value.trim() : '';
+          if (!token) {
+            token = await readClipboardOrPrompt("Paste Player 2's Return Code (pk:...):");
+          }
+          if (!token) return;
+          if (inp) inp.value = token;
+          document.getElementById('txtHostAnswerIn').value = token;
+          WebRTCManager.acceptGuestAnswerOnHost(token);
+        });
+      }
+
+      const inpQuickHostAns = document.getElementById('inpQuickHostPasteAnswer');
+      if (inpQuickHostAns) {
+        inpQuickHostAns.addEventListener('input', (e) => {
+          const val = (e.target.value || '').trim();
+          if (val.startsWith('pk:') && val.length > 30) {
+            document.getElementById('txtHostAnswerIn').value = val;
+            WebRTCManager.acceptGuestAnswerOnHost(val);
+          }
+        });
+      }
+
+      const btnQuickCopyGuest = document.getElementById('btnQuickCopyGuestReturn');
+      if (btnQuickCopyGuest) {
+        btnQuickCopyGuest.addEventListener('click', () => {
+          copyTextToClipboard(document.getElementById('txtGuestAnswerOut').value, 'Return Answer Code');
+        });
+      }
+
+      const btnQuickShareGuest = document.getElementById('btnQuickShareGuestReturn');
+      if (btnQuickShareGuest) {
+        btnQuickShareGuest.addEventListener('click', () => {
+          shareSignalToken(document.getElementById('txtGuestAnswerOut').value, 'Katar Player 2 Return Code');
+        });
+      }
+
+      window.addEventListener('paste', (e) => {
+        const modalConn = document.getElementById('modalConnection');
+        if (!modalConn || modalConn.classList.contains('hidden')) return;
+        const pasted = (e.clipboardData && e.clipboardData.getData('text') || '').trim();
+        if (!pasted.startsWith('pk:')) return;
+        try {
+          const decoded = WebRTCManager.decodeSignalToken(pasted);
+          if (decoded.type === 'offer' && GameState.localPlayerRole !== 1) {
+            document.getElementById('txtGuestOfferIn').value = pasted;
+            WebRTCManager.processGuestOfferAndCreateAnswer(pasted);
+            setTimeout(() => {
+              const ans = document.getElementById('txtGuestAnswerOut').value;
+              if (ans) copyTextToClipboard(ans, 'Return Code');
+            }, 1350);
+          } else if (decoded.type === 'answer' && GameState.localPlayerRole === 1) {
+            document.getElementById('txtHostAnswerIn').value = pasted;
+            WebRTCManager.acceptGuestAnswerOnHost(pasted);
+          }
+        } catch (err) {}
+      });
+
       document.getElementById('btnHostScanGuestReturn').addEventListener('click', () => {
         SoundEngine.select();
         openQrScanner((token) => {
@@ -9798,7 +9919,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v10').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v11').catch(() => {});
         });
       }
 
