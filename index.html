@@ -946,6 +946,9 @@
               <button id="btnGracePlayerReturned" type="button" class="android-btn px-3 py-1.5 rounded-xl bg-gradient-to-b from-emerald-400 to-emerald-600 text-walnut-900 text-xs font-black shadow">
                 👋 I'm Back (Resume)
               </button>
+              <button id="btnGraceLeaveMatch" type="button" class="android-btn px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-rose-500 to-rose-700 text-white text-xs font-black border border-rose-300 shadow" title="Leave and end this match immediately">
+                🏳️ Leave Match
+              </button>
             </div>
           </div>
           <div class="w-full h-1.5 bg-black/50 rounded-full overflow-hidden mt-2 border border-white/10">
@@ -4412,77 +4415,18 @@
         }
       }
 
-      function saveLiveMatchSnapshot(isAway = false, absentPlayer = null, isPageUnload = false) {
+      function saveLiveMatchSnapshot() {
         try {
-          if (GameState.gameOver) {
-            SafeStorage.removeItem('katar_live_match_v3');
-            return;
-          }
-          if (GameState.history.length === 0 && GameState.moveLog.length === 0) return;
-          const payload = {
-            savedAt: Date.now(),
-            unloadAt: isPageUnload ? Date.now() : null,
-            isAway,
-            absentPlayer: absentPlayer || GameState.currentTurn,
-            disconnectGraceSeconds: GameState.disconnectGraceSeconds || 60,
-            mode: GameState.mode,
-            vsAI: GameState.vsAI,
-            localPlayerRole: GameState.localPlayerRole,
-            pairedPeerId: WebRTCManager.activePeerId || null,
-            state: serializeGameState()
-          };
-          SafeStorage.setItem('katar_live_match_v3', JSON.stringify(payload));
+          SafeStorage.removeItem('katar_live_match_v3');
         } catch (err) {}
       }
 
       function checkAndRestoreSavedMatchOnLoad() {
-        updateStashedMatchButtonUI();
         try {
-          const raw = SafeStorage.getItem('katar_live_match_v3');
-          if (!raw) return false;
-          const saved = JSON.parse(raw);
-          if (!saved || !saved.state || saved.state.gameOver) {
-            SafeStorage.removeItem('katar_live_match_v3');
-            return false;
-          }
-          const now = Date.now();
-          const refTime = saved.unloadAt || saved.savedAt || now;
-          const elapsedMs = Math.max(0, now - refTime);
-          const elapsedSecs = Math.floor(elapsedMs / 1000);
-          const graceLimit = saved.disconnectGraceSeconds || 60;
-
-          if (saved.vsAI !== undefined) GameState.vsAI = Boolean(saved.vsAI);
-          applyRemoteGameState(saved.state);
-
-          // SMART RELOAD DETECTION: If the page was refreshed/reloaded (< 6 seconds gap),
-          // restore seamlessly without penalizing the player!
-          if (elapsedMs < 6000) {
-            cancelGraceTimer(false);
-            showBoardToast('🔄 Page reloaded — your live match was automatically restored!');
-            if (saved.pairedPeerId) {
-              setTimeout(() => WebRTCManager.tryAutoReconnectToPeer(saved.pairedPeerId), 400);
-            }
-            return true;
-          }
-
-          if (saved.isAway) {
-            const absentP = saved.absentPlayer || GameState.currentTurn || 1;
-            if (elapsedSecs >= graceLimit) {
-              triggerAbandonmentForfeitWin(absentP, graceLimit);
-              return true;
-            } else {
-              const remaining = Math.max(3, graceLimit - elapsedSecs);
-              startMidGameGraceTimer(absentP, remaining, `closed/left for ${elapsedSecs}s`, false);
-              if (saved.pairedPeerId) {
-                setTimeout(() => WebRTCManager.tryAutoReconnectToPeer(saved.pairedPeerId), 400);
-              }
-              return true;
-            }
-          }
-          return true;
-        } catch (err) {
-          return false;
-        }
+          SafeStorage.removeItem('katar_live_match_v3');
+        } catch (err) {}
+        updateStashedMatchButtonUI();
+        return false;
       }
 
       function recordSessionOutcome(winner) {
@@ -9356,7 +9300,19 @@
         });
       }
 
-      // Automatic Detection when Player Leaves Tab / Closes / Minimizes App Mid-Game
+      const btnGraceLeave = document.getElementById('btnGraceLeaveMatch');
+      if (btnGraceLeave) {
+        btnGraceLeave.addEventListener('click', () => {
+          SoundEngine.select();
+          SafeStorage.removeItem('katar_live_match_v3');
+          SafeStorage.removeItem('katar_stashed_match_v1');
+          updateStashedMatchButtonUI();
+          cancelGraceTimer(false);
+          initMatch(true);
+          showBoardToast('🏳️ Left previous match — started a fresh board!');
+        });
+      }
+
       document.addEventListener('visibilitychange', () => {
         const hasMoves = (GameState.history.length > 0 || GameState.moveLog.length > 0);
         if (GameState.gameOver || !hasMoves) return;
@@ -9369,20 +9325,16 @@
       });
 
       const handlePageUnloadMidGame = () => {
+        SafeStorage.removeItem('katar_live_match_v3');
         const hasMoves = (GameState.history.length > 0 || GameState.moveLog.length > 0);
-        if (!GameState.gameOver && hasMoves) {
-          const whoLeft = (GameState.mode === 'webrtc' && GameState.localPlayerRole)
-            ? GameState.localPlayerRole
-            : (GameState.vsAI ? (GameState.aiPlayerRole === 2 ? 1 : 2) : GameState.currentTurn);
-          saveLiveMatchSnapshot(true, whoLeft, true);
-          if (WebRTCManager.isConnected()) {
-            WebRTCManager.send({
-              type: 'PLAYER_LEFT_MIDGAME',
-              absentPlayer: whoLeft,
-              graceSeconds: GameState.disconnectGraceSeconds || 60,
-              reason: 'reloaded or closed browser mid-game'
-            });
-          }
+        if (!GameState.gameOver && hasMoves && WebRTCManager.isConnected()) {
+          const whoLeft = GameState.localPlayerRole || GameState.currentTurn;
+          WebRTCManager.send({
+            type: 'PLAYER_LEFT_MIDGAME',
+            absentPlayer: whoLeft,
+            graceSeconds: GameState.disconnectGraceSeconds || 60,
+            reason: 'left or reloaded mid-game'
+          });
         }
       };
       window.addEventListener('pagehide', handlePageUnloadMidGame);
@@ -9594,7 +9546,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?5').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?6').catch(() => {});
         });
       }
 
