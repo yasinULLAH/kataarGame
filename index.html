@@ -3772,6 +3772,15 @@
           GameState.boardFlipped = (GameState.currentTurn === 2);
         }
 
+        if (GameState.mode === 'webrtc' && !WebRTCManager.isConnected()) {
+          WebRTCManager.cleanup();
+          GameState.mode = 'pass_play';
+          GameState.vsAI = true;
+          GameState.localPlayerRole = null;
+          GameState.boardFlipped = false;
+          WebRTCManager.updateConnectionUI('idle', 'Pass & Play Ready', 'Local single-device match');
+        }
+
         document.getElementById('modalVictory').classList.add('hidden');
         document.getElementById('modalVictory').classList.remove('flex');
 
@@ -4029,8 +4038,11 @@
         }
         GameState.graceAbsentPlayer = null;
         GameState.graceTimeLeft = 0;
+        WebRTCManager.lastPeerPongAt = Date.now();
         const banner = document.getElementById('graceTimerBanner');
         if (banner) banner.classList.add('hidden');
+        const btnRec = document.getElementById('btnGraceQuickReconnect');
+        if (btnRec) btnRec.classList.add('hidden');
         saveLiveMatchSnapshot(false);
 
         if (wasActive && broadcast && WebRTCManager.isConnected()) {
@@ -4935,6 +4947,7 @@
 
       function finishTurnAndCheckWin(playerJustMoved, isRemote = false, lastAction = null) {
         const opponent = playerJustMoved === 1 ? 2 : 1;
+        hideFanoronaChoiceBar();
         GameState.selectedNode = null;
         GameState.chainJumpingNode = null;
         GameState.chainCount = 0;
@@ -7998,8 +8011,15 @@
           };
 
           channel.onclose = () => {
+            this.stopHeartbeat();
             this.updateConnectionUI('idle', 'DataChannel Closed', 'Peer disconnected.');
             showBoardToast('Peer DataChannel closed');
+            if (!GameState.gameOver && GameState.mode === 'webrtc' && !GameState.graceTimerInterval) {
+              const remoteRole = GameState.localPlayerRole === 1 ? 2 : 1;
+              const btnRec = document.getElementById('btnGraceQuickReconnect');
+              if (btnRec) btnRec.classList.remove('hidden');
+              startMidGameGraceTimer(remoteRole, GameState.disconnectGraceSeconds || 60, 'disconnected from P2P', false);
+            }
           };
 
           channel.onerror = (err) => {
@@ -8034,6 +8054,14 @@
               } else if (packet.type === 'PLAYER_RETURNED') {
                 cancelGraceTimer(false);
                 showBoardToast('Opponent returned! Match resumed.');
+              } else if (packet.type === 'PEER_FORFEIT_LEAVE') {
+                const whoLeft = packet.absentPlayer || (GameState.localPlayerRole === 1 ? 2 : 1);
+                this.cleanup();
+                GameState.mode = 'pass_play';
+                GameState.vsAI = true;
+                GameState.localPlayerRole = null;
+                this.updateConnectionUI('idle', 'Opponent Left Match', 'Switched to local mode');
+                triggerAbandonmentForfeitWin(whoLeft, 0);
               } else if (packet.type === 'HEARTBEAT_PING') {
                 this.lastPeerPongAt = Date.now();
                 this.send({ type: 'HEARTBEAT_PONG', ts: Date.now() });
@@ -8918,7 +8946,10 @@
 
       document.getElementById('btnUndoMove').addEventListener('click', () => {
         if (GameState.mode === 'webrtc' || GameState.history.length === 0 || GameState.gameOver) return;
-        const snap = GameState.history.pop();
+        let snap = GameState.history.pop();
+        if (GameState.mode === 'pass_play' && GameState.vsAI && snap && snap.currentTurn === GameState.aiPlayerRole && GameState.history.length > 0) {
+          snap = GameState.history.pop();
+        }
         if (!snap) return;
         GameState.board = [...snap.board];
         GameState.kings = snap.kings ? [...snap.kings] : new Array(Nodes.length).fill(false);
@@ -8940,6 +8971,9 @@
         showBoardToast('Undid last move');
         updateHUD();
         requestRender();
+        if (GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
+          setTimeout(runAITurn, 420);
+        }
       });
 
       document.getElementById('btnHintMove').addEventListener('click', () => {
@@ -9030,7 +9064,7 @@
         GameState.vsAI = true;
         syncSettingsControlsFromState();
         WebRTCManager.updateConnectionUI('idle', 'Tactical AI Ready', 'Single-Player vs AI Mode');
-        if (GameState.currentTurn === 2 && !GameState.gameOver) {
+        if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
           setTimeout(runAITurn, 400);
         }
       });
@@ -9046,11 +9080,12 @@
         WebRTCManager.cleanup();
         GameState.mode = 'pass_play';
         GameState.vsAI = true;
+        GameState.localPlayerRole = null;
         SoundEngine.select();
         syncSettingsControlsFromState();
         updateHUD();
         showBoardToast(`Solo Mode: Playing vs ${getAILabel()}`);
-        if (GameState.currentTurn === 2 && !GameState.gameOver) {
+        if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
           setTimeout(runAITurn, 380);
         }
       });
@@ -9059,6 +9094,7 @@
         WebRTCManager.cleanup();
         GameState.mode = 'pass_play';
         GameState.vsAI = false;
+        GameState.localPlayerRole = null;
         SoundEngine.select();
         syncSettingsControlsFromState();
         updateHUD();
@@ -9074,7 +9110,7 @@
           syncSettingsControlsFromState();
           updateHUD();
           showBoardToast(`AI Difficulty set to ${getAILabel()}`);
-          if (GameState.currentTurn === 2 && !GameState.gameOver) {
+          if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
             setTimeout(runAITurn, 380);
           }
         });
@@ -9713,7 +9749,15 @@
       if (btnGraceResume) {
         btnGraceResume.addEventListener('click', () => {
           SoundEngine.select();
+          if (GameState.mode === 'webrtc' && !WebRTCManager.isConnected()) {
+            WebRTCManager.cleanup();
+            GameState.mode = 'pass_play';
+            GameState.vsAI = false;
+            GameState.localPlayerRole = null;
+            WebRTCManager.updateConnectionUI('idle', 'Pass & Play Active', 'Peer offline — resumed locally');
+          }
           cancelGraceTimer(true);
+          updateHUD();
           showBoardToast('👋 Player returned in time! Match resumed.');
           if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
             setTimeout(runAITurn, 420);
@@ -9728,20 +9772,39 @@
           SafeStorage.removeItem('katar_live_match_v3');
           SafeStorage.removeItem('katar_stashed_match_v1');
           updateStashedMatchButtonUI();
+          if (GameState.mode === 'webrtc') {
+            if (WebRTCManager.isConnected()) {
+              WebRTCManager.send({
+                type: 'PEER_FORFEIT_LEAVE',
+                absentPlayer: GameState.localPlayerRole || 1
+              });
+            }
+            WebRTCManager.cleanup();
+            GameState.mode = 'pass_play';
+            GameState.vsAI = true;
+            GameState.localPlayerRole = null;
+            GameState.boardFlipped = false;
+            WebRTCManager.updateConnectionUI('idle', 'Pass & Play Ready', 'Left P2P match');
+          }
           cancelGraceTimer(false);
-          initMatch(true);
-          showBoardToast('🏳️ Left previous match — started a fresh board!');
+          initMatch(false);
+          showBoardToast('🏳️ Left match — started a fresh local game!');
         });
       }
 
       document.addEventListener('visibilitychange', () => {
         const hasMoves = (GameState.history.length > 0 || GameState.moveLog.length > 0);
         if (GameState.gameOver || !hasMoves) return;
+        const myRole = (GameState.mode === 'webrtc' && GameState.localPlayerRole)
+          ? GameState.localPlayerRole
+          : (GameState.vsAI ? (GameState.aiPlayerRole === 2 ? 1 : 2) : GameState.currentTurn);
         if (document.visibilityState === 'hidden') {
-          const whoLeft = (GameState.mode === 'webrtc' && GameState.localPlayerRole)
-            ? GameState.localPlayerRole
-            : (GameState.vsAI ? (GameState.aiPlayerRole === 2 ? 1 : 2) : GameState.currentTurn);
-          startMidGameGraceTimer(whoLeft, GameState.disconnectGraceSeconds || 60, 'minimized/left tab mid-game', true);
+          startMidGameGraceTimer(myRole, GameState.disconnectGraceSeconds || 60, 'minimized/left tab mid-game', true);
+        } else if (document.visibilityState === 'visible') {
+          if (GameState.graceTimerInterval && (GameState.mode !== 'webrtc' || GameState.graceAbsentPlayer === myRole)) {
+            cancelGraceTimer(true);
+            showBoardToast('👋 Welcome back! Match resumed.');
+          }
         }
       });
 
