@@ -457,6 +457,15 @@
     .scanner-laser {
       animation: scanLaser 2s ease-in-out infinite;
     }
+    @media (max-width: 639px) {
+      .imm-act {
+        width: 40px;
+        height: 38px;
+      }
+      .imm-act span {
+        display: none !important;
+      }
+    }
     @media (max-width: 1023px) {
       .mobile-compact-panel {
         padding: 4px 8px !important;
@@ -587,48 +596,46 @@
       </div>
     </div>
 
-    <!-- Top Right Tactile Game Buttons -->
-    <div class="flex items-center gap-1.5 shrink-0">
-      <button id="btnInstallPwa" type="button" class="android-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-black bg-gradient-to-b from-indigo-500 to-indigo-700 hover:from-indigo-400 hover:to-indigo-600 text-white border border-indigo-900 shadow-[0_3px_0_#312E81] active:translate-y-0.5" aria-label="Install App" title="Install Katar App to Home Screen (Play 100% Offline)">
-        <svg class="w-3.5 h-3.5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+    <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+      <button id="btnInstallPwa" type="button" class="android-btn flex items-center justify-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-black bg-gradient-to-b from-indigo-500 to-indigo-700 hover:from-indigo-400 hover:to-indigo-600 text-white border border-indigo-900 shadow-[0_3px_0_#312E81] active:translate-y-0.5" aria-label="Install App" title="Install Katar App to Home Screen (Play 100% Offline)">
+        <svg class="w-4 h-4 sm:w-3.5 sm:h-3.5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="7 10 12 15 17 10" />
           <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
         <span class="hidden sm:inline">Install App</span>
-        <span class="sm:hidden">Install</span>
       </button>
 
-      <button id="btnTriggerAwayGrace" type="button" class="android-btn flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-rose-500 to-rose-700 hover:from-rose-400 hover:to-rose-600 text-white border border-rose-900 shadow-[0_3px_0_#881337]" aria-label="Player Left / Reconnect Timer" title="Start Mid-Game Player Leave / Reconnect Countdown">
-        <svg class="w-3.5 h-3.5 text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <button id="btnTriggerAwayGrace" type="button" class="android-btn flex items-center justify-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-rose-500 to-rose-700 hover:from-rose-400 hover:to-rose-600 text-white border border-rose-900 shadow-[0_3px_0_#881337]" aria-label="Player Left / Reconnect Timer" title="Start Mid-Game Player Leave / Reconnect Countdown">
+        <svg class="w-4 h-4 sm:w-3.5 sm:h-3.5 text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <circle cx="12" cy="12" r="9" />
           <polyline points="12 7 12 12 15 15" />
         </svg>
         <span class="hidden md:inline">Away Timer</span>
       </button>
 
-      <button id="btnOpenProfileModal" type="button" class="android-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-100 to-amber-200 hover:from-white hover:to-amber-100 text-walnut-900 border border-amber-400 shadow-[0_3px_0_#B45309]" aria-label="Player Profile &amp; Backup" title="Player Profile, Career Stats &amp; Backup/Restore">
+      <button id="btnOpenProfileModal" type="button" class="android-btn flex items-center justify-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-100 to-amber-200 hover:from-white hover:to-amber-100 text-walnut-900 border border-amber-400 shadow-[0_3px_0_#B45309]" aria-label="Player Profile &amp; Backup" title="Player Profile, Career Stats &amp; Backup/Restore">
         <span id="hdrProfileAvatar" class="text-sm leading-none">👑</span>
         <span id="hdrProfileName" class="hidden sm:inline max-w-[90px] truncate">Profile</span>
       </button>
 
-      <button id="btnOpenEncyclopedia" type="button" class="android-btn flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-parchment-100 to-parchment-300 hover:from-white hover:to-parchment-200 text-walnut-900 border border-parchment-400 shadow-[0_3px_0_#B8976C]" aria-label="Game Rules &amp; Guide" title="Encyclopedia, Rules &amp; Match Log">
-        <svg class="w-3.5 h-3.5 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <button id="btnOpenEncyclopedia" type="button" class="android-btn flex items-center justify-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-parchment-100 to-parchment-300 hover:from-white hover:to-parchment-200 text-walnut-900 border border-parchment-400 shadow-[0_3px_0_#B8976C]" aria-label="Game Rules &amp; Guide" title="Encyclopedia, Rules &amp; Match Log">
+        <svg class="w-4 h-4 sm:w-3.5 sm:h-3.5 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
           <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
         </svg>
         <span class="hidden lg:inline">Guide &amp; Log</span>
       </button>
 
-      <button id="btnPlayImmersive" type="button" class="android-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white border border-teal-800 shadow-[0_3px_0_#115E59] active:translate-y-0.5 active:shadow-none" aria-label="Play in fullscreen immersive mode" title="Play Fullscreen (Distraction-Free)">
+      <button id="btnPlayImmersive" type="button" class="android-btn flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-black bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white border border-teal-800 shadow-[0_3px_0_#115E59] active:translate-y-0.5 active:shadow-none" aria-label="Play in fullscreen immersive mode" title="Play Fullscreen (Distraction-Free)">
         <svg class="w-4 h-4 text-amber-300" viewBox="0 0 24 24" fill="currentColor">
           <path d="M8 5.5v13a1 1 0 0 0 1.52.86l10.2-6.5a1 1 0 0 0 0-1.72L9.52 4.64A1 1 0 0 0 8 5.5z" />
         </svg>
-        <span class="font-black tracking-wide">Play Fullscreen</span>
+        <span class="hidden sm:inline font-black tracking-wide">Play Fullscreen</span>
       </button>
 
-      <button id="btnOpenRulesModal" type="button" class="android-btn flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 border border-amber-600/40 shadow-[0_3px_0_#B45309]" aria-label="Grid &amp; Match Settings" title="Customize Grid, Bead Count &amp; Rules">
-        <svg class="w-3.5 h-3.5 text-walnut-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <button id="btnOpenRulesModal" type="button" class="android-btn flex items-center justify-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 border border-amber-600/40 shadow-[0_3px_0_#B45309]" aria-label="Grid &amp; Match Settings" title="Customize Grid, Bead Count &amp; Rules">
+        <svg class="w-4 h-4 sm:w-3.5 sm:h-3.5 text-walnut-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <rect x="3" y="3" width="7" height="7" rx="1.5" />
           <rect x="14" y="3" width="7" height="7" rx="1.5" />
           <rect x="14" y="14" width="7" height="7" rx="1.5" />
@@ -637,8 +644,13 @@
         <span class="hidden sm:inline">Grid &amp; Settings</span>
       </button>
 
-      <button id="btnOpenConnectionModal" type="button" class="android-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-white to-parchment-200 hover:from-white hover:to-parchment-100 text-walnut-800 border border-parchment-400 shadow-[0_3px_0_#C4A67C]" title="Multiplayer &amp; Offline Guide">
+      <button id="btnOpenConnectionModal" type="button" class="android-btn flex items-center justify-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-white to-parchment-200 hover:from-white hover:to-parchment-100 text-walnut-800 border border-parchment-400 shadow-[0_3px_0_#C4A67C]" title="Multiplayer &amp; Offline P2P">
         <span id="connStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200"></span>
+        <svg class="w-3.5 h-3.5 text-walnut-800 sm:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+          <line x1="12" y1="20" x2="12.01" y2="20" />
+        </svg>
         <span id="connStatusLabel" class="hidden sm:inline">Mode / P2P</span>
       </button>
 
@@ -727,25 +739,25 @@
 
   <div id="modeBar" class="shrink-0 min-w-0 bg-parchment-50/95 border-b border-parchment-300 px-2.5 py-1 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar z-10">
     <div class="flex items-center gap-1 shrink-0">
-      <button id="btnMainModeAI" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1">
-        <span>🤖 Solo vs AI</span>
+      <button id="btnMainModeAI" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1" title="Solo vs AI">
+        <span>🤖</span><span class="hidden sm:inline">Solo vs AI</span>
       </button>
-      <button id="btnMainMode2P" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1">
-        <span>👥 2P Local</span>
+      <button id="btnMainMode2P" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1" title="2-Player Local Pass &amp; Play">
+        <span>👥</span><span class="hidden sm:inline">2P Local</span>
       </button>
 
       <div id="mainAIDiffGroup" class="flex items-center gap-1 ml-1 pl-1.5 border-l border-parchment-300 shrink-0">
-        <button type="button" data-ai-diff="easy" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-700 border border-parchment-300">
-          Easy
+        <button type="button" data-ai-diff="easy" class="ai-diff-chip android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-700 border border-parchment-300" title="Easy AI">
+          <span class="sm:hidden">🌱</span><span class="hidden sm:inline">Easy</span>
         </button>
-        <button type="button" data-ai-diff="medium" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm">
-          Medium
+        <button type="button" data-ai-diff="medium" class="ai-diff-chip android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm" title="Medium AI">
+          <span class="sm:hidden">⚔️</span><span class="hidden sm:inline">Medium</span>
         </button>
-        <button type="button" data-ai-diff="hard" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-700 border border-parchment-300">
-          Hard
+        <button type="button" data-ai-diff="hard" class="ai-diff-chip android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-700 border border-parchment-300" title="Hard AI">
+          <span class="sm:hidden">🛡️</span><span class="hidden sm:inline">Hard</span>
         </button>
-        <button type="button" data-ai-diff="hardest" class="ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-rose-800 border border-rose-300">
-          🔥 Hardest
+        <button type="button" data-ai-diff="hardest" class="ai-diff-chip android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-rose-800 border border-rose-300" title="Hardest AI">
+          <span>🔥</span><span class="hidden sm:inline">Hardest</span>
         </button>
       </div>
     </div>
@@ -937,17 +949,17 @@
               <span id="graceBannerCountdown" class="font-mono text-sm sm:text-base font-black px-2.5 py-1 rounded-xl bg-rose-600 text-white border border-rose-300 shadow">
                 60s
               </span>
-              <button id="btnGraceQuickReconnect" type="button" class="hidden android-btn px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 text-[11px] font-black shadow" title="Re-link to peer after Hotspot or Wi-Fi drop">
-                ⚡ Reconnect Peer
+              <button id="btnGraceQuickReconnect" type="button" class="hidden android-btn px-2 sm:px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 text-[11px] font-black shadow" title="Re-link to peer after Hotspot or Wi-Fi drop">
+                <span>⚡</span><span class="hidden sm:inline"> Reconnect</span>
               </button>
               <button id="btnGraceSwitchAbsent" type="button" class="android-btn px-2 py-1 rounded-xl bg-white/15 hover:bg-white/25 text-[10px] font-bold text-amber-200 border border-white/20" title="Switch which player is marked away">
-                ⇄ Player
+                <span>⇄</span><span class="hidden sm:inline"> Player</span>
               </button>
-              <button id="btnGracePlayerReturned" type="button" class="android-btn px-3 py-1.5 rounded-xl bg-gradient-to-b from-emerald-400 to-emerald-600 text-walnut-900 text-xs font-black shadow">
-                👋 I'm Back (Resume)
+              <button id="btnGracePlayerReturned" type="button" class="android-btn px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-b from-emerald-400 to-emerald-600 text-walnut-900 text-xs font-black shadow" title="Resume Match">
+                <span>👋</span><span class="hidden sm:inline"> I'm Back</span>
               </button>
-              <button id="btnGraceLeaveMatch" type="button" class="android-btn px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-rose-500 to-rose-700 text-white text-xs font-black border border-rose-300 shadow" title="Leave and end this match immediately">
-                🏳️ Leave Match
+              <button id="btnGraceLeaveMatch" type="button" class="android-btn px-2 sm:px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-rose-500 to-rose-700 text-white text-xs font-black border border-rose-300 shadow" title="Leave and end this match immediately">
+                <span>🏳️</span><span class="hidden sm:inline"> Leave</span>
               </button>
             </div>
           </div>
@@ -994,38 +1006,38 @@
       </div>
 
       <div class="grid grid-cols-4 gap-1 sm:gap-1.5 bg-parchment-100 border border-parchment-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-sm">
-        <button id="btnUndoMove" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1 px-1 rounded-lg sm:rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[10px] sm:text-[11px] font-bold gap-1 sm:gap-0.5" title="Undo Last Turn">
-          <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-walnut-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <button id="btnUndoMove" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1.5 sm:py-1 px-1 rounded-lg sm:rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[10px] sm:text-[11px] font-bold gap-1 sm:gap-0.5" aria-label="Undo Last Turn" title="Undo Last Turn">
+          <svg class="w-4 h-4 text-walnut-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M3 7v6h6" />
             <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
           </svg>
-          <span>Undo</span>
+          <span class="hidden sm:inline">Undo</span>
         </button>
 
-        <button id="btnHintMove" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1 px-1 rounded-lg sm:rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[10px] sm:text-[11px] font-bold gap-1 sm:gap-0.5" title="Highlight a Tactical Move">
-          <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <button id="btnHintMove" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1.5 sm:py-1 px-1 rounded-lg sm:rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[10px] sm:text-[11px] font-bold gap-1 sm:gap-0.5" aria-label="Highlight a Tactical Move" title="Highlight a Tactical Move">
+          <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M9 18h6" />
             <path d="M10 22h4" />
             <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" />
           </svg>
-          <span>Hint</span>
+          <span class="hidden sm:inline">Hint</span>
         </button>
 
-        <button id="btnFlipBoard" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1 px-1 rounded-lg sm:rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[10px] sm:text-[11px] font-bold gap-1 sm:gap-0.5" title="Flip Board Perspective">
-          <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <button id="btnFlipBoard" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1.5 sm:py-1 px-1 rounded-lg sm:rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[10px] sm:text-[11px] font-bold gap-1 sm:gap-0.5" aria-label="Flip Board Perspective" title="Flip Board Perspective">
+          <svg class="w-4 h-4 text-teal-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <polyline points="17 1 21 5 17 9" />
             <path d="M3 11V9a4 4 0 0 1 4-4h14" />
             <polyline points="7 23 3 19 7 15" />
             <path d="M21 13v2a4 4 0 0 1-4 4H3" />
           </svg>
-          <span>Rotate</span>
+          <span class="hidden sm:inline">Rotate</span>
         </button>
 
-        <button id="btnResetMatch" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1 px-1 rounded-lg sm:rounded-xl bg-gradient-to-b from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white border border-rose-700 shadow-[0_2px_0_#9F1239] text-[10px] sm:text-[11px] font-extrabold gap-1 sm:gap-0.5" title="New Match">
-          <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <button id="btnResetMatch" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1.5 sm:py-1 px-1 rounded-lg sm:rounded-xl bg-gradient-to-b from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white border border-rose-700 shadow-[0_2px_0_#9F1239] text-[10px] sm:text-[11px] font-extrabold gap-1 sm:gap-0.5" aria-label="New Match" title="New Match">
+          <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
           </svg>
-          <span>Restart</span>
+          <span class="hidden sm:inline">Restart</span>
         </button>
       </div>
 
@@ -4394,6 +4406,11 @@
         } catch (err) {}
       }
 
+      function setResponsiveBtnIconText(btn, iconHtml, textLabel) {
+        if (!btn) return;
+        btn.innerHTML = `<span>${iconHtml}</span><span class="hidden sm:inline"> ${textLabel}</span>`;
+      }
+
       function updateStashedMatchButtonUI() {
         const btn = document.getElementById('btnResumeStashedMatch');
         if (!btn) return;
@@ -4406,7 +4423,7 @@
           const snap = JSON.parse(raw);
           if (snap && snap.state && !snap.state.gameOver) {
             btn.classList.remove('hidden');
-            btn.textContent = `📂 Resume (${snap.preset.toUpperCase()})`;
+            setResponsiveBtnIconText(btn, '📂', `Resume (${snap.preset.toUpperCase()})`);
           } else {
             btn.classList.add('hidden');
           }
@@ -6575,79 +6592,89 @@
 
         const lblBeadTitle = document.getElementById('lblBeadStepperTitle');
         if (lblBeadTitle) {
-          lblBeadTitle.textContent = fam === 'tiger_goat' ? '🐐 Goats:' : 'Beads:';
+          lblBeadTitle.innerHTML = fam === 'tiger_goat'
+            ? '<span>🐐</span><span class="hidden sm:inline"> Goats:</span>'
+            : '<span>📿</span><span class="hidden sm:inline"> Beads:</span>';
         }
 
         const btnMultiEat = document.getElementById('btnQuickMultiEat');
         const btnSingleEat = document.getElementById('btnQuickSingleEat');
         if (btnMultiEat && btnSingleEat) {
           if (fam === 'tiger_goat') {
-            btnMultiEat.textContent = '⚡ Tiger Multi-Eat';
-            btnSingleEat.textContent = '1️⃣ 1 Goat/Bari';
+            setResponsiveBtnIconText(btnMultiEat, '⚡', 'Tiger Multi-Eat');
+            setResponsiveBtnIconText(btnSingleEat, '1️⃣', '1 Goat/Bari');
           } else if (fam === 'fanorona') {
-            btnMultiEat.textContent = '⚡ Multi-Chain';
-            btnSingleEat.textContent = '1️⃣ 1 Line/Bari';
+            setResponsiveBtnIconText(btnMultiEat, '⚡', 'Multi-Chain');
+            setResponsiveBtnIconText(btnSingleEat, '1️⃣', '1 Line/Bari');
           } else if (fam === 'seega') {
-            btnMultiEat.textContent = '⚡ Chain Sandwich';
-            btnSingleEat.textContent = '1️⃣ 1 Capture/Bari';
+            setResponsiveBtnIconText(btnMultiEat, '⚡', 'Chain Sandwich');
+            setResponsiveBtnIconText(btnSingleEat, '1️⃣', '1 Capture/Bari');
           } else {
-            btnMultiEat.textContent = '⚡ Multi-Eat';
-            btnSingleEat.textContent = '1️⃣ 1 Bead/Bari';
+            setResponsiveBtnIconText(btnMultiEat, '⚡', 'Multi-Eat');
+            setResponsiveBtnIconText(btnSingleEat, '1️⃣', '1 Bead/Bari');
           }
           if (GameState.chainRule === 'single_only') {
-            btnSingleEat.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
-            btnMultiEat.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
+            btnSingleEat.className = 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
+            btnMultiEat.className = 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
           } else {
-            btnMultiEat.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm';
-            btnSingleEat.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
+            btnMultiEat.className = 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm';
+            btnSingleEat.className = 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
           }
         }
 
         const btnForced = document.getElementById('btnQuickToggleForced');
         if (btnForced) {
           const isForced = GameState.mandatoryCapture === 'forced';
-          btnForced.textContent = isForced ? '🎯 Forced Capture' : '⚔️ Free Capture';
+          setResponsiveBtnIconText(btnForced, isForced ? '🎯' : '⚔️', isForced ? 'Forced Capture' : 'Free Capture');
           btnForced.className = isForced
-            ? 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-600 text-white shadow-sm'
-            : 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
+            ? 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-600 text-white shadow-sm'
+            : 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
         }
 
         const btnDiag = document.getElementById('btnQuickDiagonalCycle');
         if (btnDiag) {
           const dMap = {
-            full: '✳️ 8-Way Star',
-            alquerque: '💠 Alquerque',
-            major_only: '📏 Main Diags',
-            orthogonal: '➕ 4-Way Ortho'
+            full: ['✳️', '8-Way Star'],
+            alquerque: ['💠', 'Alquerque'],
+            major_only: ['📏', 'Main Diags'],
+            orthogonal: ['➕', '4-Way Ortho']
           };
-          btnDiag.textContent = dMap[GameState.diagonalMode] || '✳️ 8-Way Star';
+          const [dIcon, dTxt] = dMap[GameState.diagonalMode] || ['✳️', '8-Way Star'];
+          setResponsiveBtnIconText(btnDiag, dIcon, dTxt);
         }
 
         const btnStepDir = document.getElementById('btnQuickStepDirToggle');
         if (btnStepDir) {
           const isFwd = GameState.stepDirection === 'forward_side';
-          btnStepDir.textContent = isFwd ? '⬆️ Fwd/Side Only' : '↔️ All Dirs';
+          setResponsiveBtnIconText(btnStepDir, isFwd ? '⬆️' : '↔️', isFwd ? 'Fwd/Side Only' : 'All Dirs');
           btnStepDir.className = isFwd
-            ? 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm'
-            : 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
+            ? 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm'
+            : 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
         }
 
         const btnRes = document.getElementById('btnQuickReserveToggle');
         if (btnRes) {
           const hasRes = GameState.reserveMode === 'auto_backrank';
-          btnRes.textContent = hasRes ? '🎒 Reserves ON' : '🚫 On-Board Only';
+          setResponsiveBtnIconText(btnRes, hasRes ? '🎒' : '🚫', hasRes ? 'Reserves ON' : 'On-Board Only');
           btnRes.className = hasRes
-            ? 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm'
-            : 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
+            ? 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm'
+            : 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
         }
 
         const btnDamaKing = document.getElementById('btnQuickDamaKingMode');
         if (btnDamaKing) {
           const isFlyingK = GameState.damaKingMode !== 'short';
-          btnDamaKing.textContent = isFlyingK ? '👑 Flying Kings' : '👑 1-Step Kings';
+          setResponsiveBtnIconText(btnDamaKing, isFlyingK ? '👑✈️' : '👑1️⃣', isFlyingK ? 'Flying Kings' : '1-Step Kings');
           btnDamaKing.className = isFlyingK
-            ? 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm'
-            : 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-amber-400 shadow-sm';
+            ? 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm'
+            : 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-amber-400 shadow-sm';
+        }
+
+        const btnKillAny = document.getElementById('btnQuickMorrisKillAny');
+        const btnProtectMills = document.getElementById('btnQuickMorrisProtectMills');
+        if (btnKillAny && btnProtectMills) {
+          setResponsiveBtnIconText(btnKillAny, '🎯', 'Kill Any Bead');
+          setResponsiveBtnIconText(btnProtectMills, '🛡️', 'Protect 3-in-Row');
         }
 
         const btnLineRule = document.getElementById('btnQuickMorrisLineRule');
@@ -6656,21 +6683,30 @@
         if (btnLineRule) {
           btnLineRule.classList.toggle('hidden', isSmallMorris);
           if (GameState.morrisFlyingRule === 'enabled') {
-            btnLineRule.textContent = '🕊️ 3-Bead Fly ON';
-            btnLineRule.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
+            setResponsiveBtnIconText(btnLineRule, '🕊️', '3-Bead Fly ON');
+            btnLineRule.className = 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
           } else {
-            btnLineRule.textContent = '📏 Strict Lines Only';
-            btnLineRule.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-700 text-white shadow-sm';
+            setResponsiveBtnIconText(btnLineRule, '📏', 'Strict Lines Only');
+            btnLineRule.className = 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-700 text-white shadow-sm';
           }
         }
         if (btnMorrisDiag) {
           btnMorrisDiag.classList.toggle('hidden', isSmallMorris);
           if (GameState.morrisDiagonals) {
-            btnMorrisDiag.textContent = '✳️ Corner Diags ON';
-            btnMorrisDiag.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm';
+            setResponsiveBtnIconText(btnMorrisDiag, '✳️', 'Corner Diags ON');
+            btnMorrisDiag.className = 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm';
           } else {
-            btnMorrisDiag.textContent = '📐 No Diagonals';
-            btnMorrisDiag.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
+            setResponsiveBtnIconText(btnMorrisDiag, '📐', 'No Diagonals');
+            btnMorrisDiag.className = 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
+          }
+        }
+
+        const btnSwapTG = document.getElementById('btnSwapTigerGoatRole');
+        if (btnSwapTG) {
+          if (GameState.aiPlayerRole === 1) {
+            setResponsiveBtnIconText(btnSwapTG, '🐯⇄🐐', 'Playing as Tigers');
+          } else {
+            setResponsiveBtnIconText(btnSwapTG, '🐐⇄🐯', 'Playing as Goats');
           }
         }
 
@@ -6681,19 +6717,23 @@
 
         const btnFanSize = document.getElementById('btnQuickFanoronaBoardSize');
         if (btnFanSize) {
-          btnFanSize.textContent = preset === 'fanorona_5x9'
-            ? '📐 5×9 Grand (Tap for 5×5)'
-            : '📐 5×5 Grid (Tap for 5×9)';
+          setResponsiveBtnIconText(btnFanSize, preset === 'fanorona_5x9' ? '5×9' : '5×5', preset === 'fanorona_5x9' ? 'Grand (Tap for 5×5)' : 'Grid (Tap for 5×9)');
         }
 
         const btnGomokuSz = document.getElementById('btnQuickGomokuSize');
         if (btnGomokuSz) {
-          btnGomokuSz.textContent = `⚫ ${GameState.rows}×${GameState.cols} Grid (${GameState.rows * GameState.cols} Pts)`;
+          setResponsiveBtnIconText(btnGomokuSz, `${GameState.rows}×${GameState.cols}`, `Grid (${GameState.rows * GameState.cols} Pts)`);
         }
         const btnFirstT = document.getElementById('btnQuickFirstTurnToggle');
         if (btnFirstT) {
-          const ftMap = { '1': '1️⃣ P1 Opens', '2': '2️⃣ P2 Opens', 'random': '🎲 Random Open' };
-          btnFirstT.textContent = ftMap[GameState.firstTurnSetting] || '1️⃣ P1 Opens';
+          const ftMap = { '1': ['1️⃣', 'P1 Opens'], '2': ['2️⃣', 'P2 Opens'], 'random': ['🎲', 'Random Open'] };
+          const [fIcon, fTxt] = ftMap[GameState.firstTurnSetting] || ['1️⃣', 'P1 Opens'];
+          setResponsiveBtnIconText(btnFirstT, fIcon, fTxt);
+        }
+
+        const btnLock = document.getElementById('btnToggleGameLock');
+        if (btnLock) {
+          setResponsiveBtnIconText(btnLock, GameState.lockSettingsMidGame ? '🔒' : '🔓', GameState.lockSettingsMidGame ? 'Locked' : 'Unlocked');
         }
       }
 
@@ -6752,26 +6792,6 @@
           } else {
             btnKillAny.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm';
             btnProtectMills.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
-          }
-        }
-
-        const btnLineRule = document.getElementById('btnQuickMorrisLineRule');
-        if (btnLineRule) {
-          if (GameState.morrisFlyingRule === 'enabled') {
-            btnLineRule.textContent = '🕊️ 3-Bead Fly ON';
-            btnLineRule.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
-          } else {
-            btnLineRule.textContent = '📏 Strict Lines Only';
-            btnLineRule.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-700 text-white shadow-sm';
-          }
-        }
-
-        const btnSwapTG = document.getElementById('btnSwapTigerGoatRole');
-        if (btnSwapTG) {
-          if (GameState.aiPlayerRole === 1) {
-            btnSwapTG.textContent = '🐯 Playing as Tigers (Tap to Play Goats 🐐)';
-          } else {
-            btnSwapTG.textContent = '🐐 Playing as Goats (Tap to Play Tigers 🐯)';
           }
         }
 
@@ -9381,12 +9401,12 @@
           GameState.lockSettingsMidGame = !GameState.lockSettingsMidGame;
           SoundEngine.select();
           if (GameState.lockSettingsMidGame) {
-            btnToggleLock.textContent = '🔒 Locked';
-            btnToggleLock.className = 'android-btn px-2 py-0.5 rounded-lg text-[10px] font-extrabold bg-rose-600 text-white border border-rose-800 shadow-sm';
+            setResponsiveBtnIconText(btnToggleLock, '🔒', 'Locked');
+            btnToggleLock.className = 'android-btn px-1.5 sm:px-2 py-0.5 rounded-lg text-[10px] font-extrabold bg-rose-600 text-white border border-rose-800 shadow-sm';
             showBoardToast('🔒 Game Locked: Accidental game switches are now blocked during play!');
           } else {
-            btnToggleLock.textContent = '🔓 Unlocked';
-            btnToggleLock.className = 'android-btn px-2 py-0.5 rounded-lg text-[10px] font-extrabold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
+            setResponsiveBtnIconText(btnToggleLock, '🔓', 'Unlocked');
+            btnToggleLock.className = 'android-btn px-1.5 sm:px-2 py-0.5 rounded-lg text-[10px] font-extrabold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
             showBoardToast('🔓 Game Unlocked');
           }
         });
@@ -9546,7 +9566,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?6').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v7').catch(() => {});
         });
       }
 
