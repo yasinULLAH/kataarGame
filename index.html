@@ -800,6 +800,9 @@
         <button id="btnQuickMorrisDropOrder" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm" title="Toggle Bead Laying Order: Alternate 1-by-1 vs Lay All 9 Beads First Then Opponent Lays All 9">
           🔄 1-by-1 Lay
         </button>
+        <button id="btnQuickMorrisFirstTurn" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm" title="Choose who lays their beads first (Player 1 / Player 2 or AI / Random)">
+          1️⃣ P1 First
+        </button>
         <button id="btnQuickMorrisDropMill" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm" title="Toggle whether forming a full 3-in-a-row Katar is allowed during initial bead placement">
           ⭐ Katar on Land: ON
         </button>
@@ -2902,7 +2905,7 @@
             }
           }
         }
-        if (GameState.morrisMillRemovalRule === 'any') {
+        if (GameState.morrisDropOrder !== 'all_at_once' && GameState.morrisMillRemovalRule === 'any') {
           return allOpp;
         }
         return nonMill.length > 0 ? nonMill : allOpp;
@@ -6773,6 +6776,12 @@
             ? 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-600 text-white shadow-sm'
             : 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm';
         }
+        const btnMorrisFirst = document.getElementById('btnQuickMorrisFirstTurn');
+        if (btnMorrisFirst) {
+          const ftMap = { '1': ['1️⃣', 'P1 First'], '2': ['2️⃣', 'P2/AI First'], 'random': ['🎲', 'Random First'] };
+          const [fIcon, fTxt] = ftMap[GameState.firstTurnSetting] || ['1️⃣', 'P1 First'];
+          setResponsiveBtnIconText(btnMorrisFirst, fIcon, fTxt);
+        }
         if (btnDropMill) {
           const forbidMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
           setResponsiveBtnIconText(btnDropMill, forbidMill ? '🚫' : '⭐', forbidMill ? 'No Katar on Land' : 'Katar on Land: ON');
@@ -6884,17 +6893,16 @@
         const selDropOrd = document.getElementById('selMorrisDropOrder');
         if (selDropOrd) selDropOrd.value = GameState.morrisDropOrder || 'alternating';
 
+        if (GameState.morrisDropOrder === 'all_at_once') {
+          GameState.morrisDropMillRule = 'forbid_mill';
+          GameState.morrisMillRemovalRule = 'protect_mills';
+        }
+
         const selDropMill = document.getElementById('selMorrisDropMillRule');
         if (selDropMill) {
-          if (GameState.morrisDropOrder === 'all_at_once') {
-            GameState.morrisDropMillRule = 'forbid_mill';
-          }
           selDropMill.value = GameState.morrisDropMillRule || 'allow_mill';
           selDropMill.disabled = (GameState.morrisDropOrder === 'all_at_once');
         }
-
-        const selGrace = document.getElementById('selDisconnectGrace');
-        if (selGrace) selGrace.value = String(GameState.disconnectGraceSeconds || 60);
 
         document.getElementById('selPieceTheme').value = GameState.pieceTheme;
         document.getElementById('selBoardSurface').value = GameState.boardSurface;
@@ -6904,20 +6912,25 @@
         document.getElementById('selAIDifficulty').value = GameState.aiDifficulty;
 
         const selMorrisRule = document.getElementById('selMorrisRemovalRule');
-        if (selMorrisRule) selMorrisRule.value = GameState.morrisMillRemovalRule;
+        if (selMorrisRule) {
+          selMorrisRule.value = GameState.morrisMillRemovalRule;
+          selMorrisRule.disabled = (GameState.morrisDropOrder === 'all_at_once');
+        }
 
         const btnKillAny = document.getElementById('btnQuickMorrisKillAny');
         const btnProtectMills = document.getElementById('btnQuickMorrisProtectMills');
         if (btnKillAny && btnProtectMills) {
-          if (GameState.morrisMillRemovalRule === 'protect_mills') {
+          const isAllAtOnce = GameState.morrisDropOrder === 'all_at_once';
+          if (GameState.morrisMillRemovalRule === 'protect_mills' || isAllAtOnce) {
             btnProtectMills.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
-            btnKillAny.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
+            btnKillAny.className = isAllAtOnce
+              ? 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-500 opacity-50 cursor-not-allowed'
+              : 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
           } else {
             btnKillAny.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm';
             btnProtectMills.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
           }
         }
-
         // Sync Quick Multi-Eat vs 1 Bead/Bari Buttons on Main Screen
         const btnMultiEat = document.getElementById('btnQuickMultiEat');
         const btnSingleEat = document.getElementById('btnQuickSingleEat');
@@ -8426,6 +8439,11 @@
       const btnKillAny = document.getElementById('btnQuickMorrisKillAny');
       if (btnKillAny) {
         btnKillAny.addEventListener('click', () => {
+          if (GameState.morrisDropOrder === 'all_at_once') {
+            SoundEngine.invalid();
+            showBoardToast('🛡️ Protect 3-in-Row is enforced in "Lay All Beads First" mode!');
+            return;
+          }
           GameState.morrisMillRemovalRule = 'any';
           SoundEngine.select();
           syncSettingsControlsFromState();
@@ -9332,14 +9350,33 @@
             GameState.morrisDropOrder = nextOrder;
             if (nextOrder === 'all_at_once') {
               GameState.morrisDropMillRule = 'forbid_mill';
+              GameState.morrisMillRemovalRule = 'protect_mills';
             } else {
               GameState.morrisDropMillRule = 'allow_mill';
             }
             initMatch(true);
             showBoardToast(
               nextOrder === 'all_at_once'
-                ? `📦 Lay All ${GameState.piecesPerPlayer} Beads First (3-in-a-Row Katar disabled on landing)`
+                ? `📦 Lay All ${GameState.piecesPerPlayer} First • No Katar on Land • 🛡️ Protect 3-in-Row Enforced`
                 : '🔄 1-by-1 Alternating Bead Placement (3-in-a-Row Katar allowed on landing)'
+            );
+          });
+        });
+      }
+
+      const btnQuickMorrisFirst = document.getElementById('btnQuickMorrisFirstTurn');
+      if (btnQuickMorrisFirst) {
+        btnQuickMorrisFirst.addEventListener('click', () => {
+          const order = ['1', '2', 'random'];
+          const nextFirst = order[(order.indexOf(GameState.firstTurnSetting) + 1) % order.length];
+          SoundEngine.select();
+          guardMidGameAction('Switch Who Lays Beads First', () => {
+            GameState.firstTurnSetting = nextFirst;
+            initMatch(true);
+            showBoardToast(
+              nextFirst === '2'
+                ? '2️⃣ Player 2 / AI lays beads first!'
+                : (nextFirst === 'random' ? '🎲 Random toss decides who lays first!' : '1️⃣ Player 1 lays beads first!')
             );
           });
         });
@@ -9371,6 +9408,7 @@
           GameState.morrisDropOrder = e.target.value;
           if (GameState.morrisDropOrder === 'all_at_once') {
             GameState.morrisDropMillRule = 'forbid_mill';
+            GameState.morrisMillRemovalRule = 'protect_mills';
           }
           syncSettingsControlsFromState();
           updateHUD();
@@ -9760,7 +9798,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v8').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v9').catch(() => {});
         });
       }
 
