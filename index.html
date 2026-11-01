@@ -16,6 +16,7 @@
   <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.3/dist/mqtt.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Inter:wght@500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet" />
@@ -1377,7 +1378,6 @@
                 <span id="hostOfferChecksum" class="text-[10px] font-mono text-walnut-500 mt-1">Generating compact QR...</span>
               </div>
 
-              <!-- Hands-Free Inline Auto-Scanner on Host Screen -->
               <div id="hostInlineCamWrap" class="flex flex-col items-center gap-1.5 bg-walnut-900 text-parchment-100 p-2.5 rounded-2xl border-2 border-amber-400 w-44">
                 <div class="text-[10px] font-extrabold text-amber-300 uppercase tracking-wider flex items-center gap-1">
                   <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
@@ -1385,9 +1385,17 @@
                 </div>
                 <div class="relative w-32 h-32 rounded-xl overflow-hidden bg-black border border-amber-400/60 flex items-center justify-center">
                   <video id="hostInlineVideo" playsinline autoplay muted class="w-full h-full object-cover"></video>
-                  <div id="hostInlineCamPlaceholder" class="text-[10px] text-parchment-300 px-2 text-center">Tap below or use full scanner when Phone 2 is ready</div>
+                  <div id="hostInlineCamPlaceholder" class="text-[10px] text-parchment-300 px-2 text-center">Camera paused — tap Flip/Start or Full Scanner</div>
                 </div>
-                <span id="hostInlineCamStatus" class="text-[9.5px] text-amber-200 font-semibold leading-tight">Auto-listening for P2 Return QR</span>
+                <div class="flex items-center gap-1 w-full">
+                  <button id="btnFlipHostInlineCam" type="button" class="android-btn flex-1 py-1 px-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-[10px] font-extrabold text-amber-200 border border-white/20">
+                    🔄 Flip Cam
+                  </button>
+                  <button id="btnToggleHostInlineCam" type="button" class="android-btn py-1 px-2 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-[10px] font-extrabold text-white">
+                    ⏹ Stop
+                  </button>
+                </div>
+                <span id="hostInlineCamStatus" class="text-[9.5px] text-amber-200 font-semibold leading-tight">Back Cam Active</span>
               </div>
             </div>
 
@@ -1565,7 +1573,7 @@
         Aim your camera at the QR Code on the other phone
       </p>
       <div class="flex items-center gap-2">
-        <button id="btnSwitchCamera" type="button" class="android-btn hidden px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 flex items-center gap-1.5">
+        <button id="btnSwitchCamera" type="button" class="android-btn px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 flex items-center gap-1.5">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 1.95.7 3.737 1.867 5.133L3 21l5.867-2.867A7.95 7.95 0 0 0 12 18c4.418 0 8-3.582 8-8z"/>
           </svg>
@@ -7439,6 +7447,7 @@
         lastPeerPongAt: 0,
         hostInlineStream: null,
         hostInlineAnimId: null,
+        hostInlineFacing: 'environment',
         localBus: null,
         deviceId: '',
         deviceName: 'My Phone',
@@ -7623,6 +7632,12 @@
           }
           const v = document.getElementById('hostInlineVideo');
           if (v) v.srcObject = null;
+          const ph = document.getElementById('hostInlineCamPlaceholder');
+          if (ph) ph.classList.remove('hidden');
+          const st = document.getElementById('hostInlineCamStatus');
+          if (st) st.textContent = 'Camera stopped';
+          const btnTog = document.getElementById('btnToggleHostInlineCam');
+          if (btnTog) btnTog.textContent = '▶ Start';
         },
 
         async startHostInlineCamera() {
@@ -7630,18 +7645,21 @@
           const video = document.getElementById('hostInlineVideo');
           const ph = document.getElementById('hostInlineCamPlaceholder');
           const st = document.getElementById('hostInlineCamStatus');
+          const btnTog = document.getElementById('btnToggleHostInlineCam');
           if (!video || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
 
           try {
             const stream = await navigator.mediaDevices.getUserMedia({
-              video: { facingMode: { ideal: 'user' }, width: { ideal: 320 }, height: { ideal: 320 } },
+              video: { facingMode: { ideal: this.hostInlineFacing || 'environment' }, width: { ideal: 320 }, height: { ideal: 320 } },
               audio: false
             });
             this.hostInlineStream = stream;
             video.srcObject = stream;
             await video.play();
             if (ph) ph.classList.add('hidden');
-            if (st) st.textContent = '📷 Live! Hold Phone 2 Return QR in front of screen';
+            if (btnTog) btnTog.textContent = '⏹ Stop';
+            const camLabel = (this.hostInlineFacing === 'user') ? 'Front Cam' : 'Back Cam';
+            if (st) st.textContent = `📷 ${camLabel} Live! Scan P2 Return QR`;
 
             const offCanvas = document.createElement('canvas');
             const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
@@ -7901,7 +7919,10 @@
           if (typeof RTCPeerConnection === 'undefined') {
             throw new Error('WebRTC RTCPeerConnection is not supported in this browser.');
           }
-          const pc = new RTCPeerConnection({ iceServers: [] });
+          const iceServers = navigator.onLine
+            ? [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }]
+            : [];
+          const pc = new RTCPeerConnection({ iceServers });
           this.pc = pc;
 
           pc.oniceconnectionstatechange = () => {
@@ -8221,12 +8242,14 @@
       let currentCameraFacing = 'environment';
 
       async function openQrScanner(callback, titleText) {
+        WebRTCManager.stopHostInlineCamera();
+        closeQrScanner();
         scannerCallback = callback;
         const modal = document.getElementById('scannerModal');
         const titleEl = document.getElementById('scannerTitle');
         const statusEl = document.getElementById('scannerStatus');
         if (titleEl && titleText) titleEl.textContent = titleText;
-        if (statusEl) statusEl.textContent = 'Point camera at the QR code on the other phone';
+        if (statusEl) statusEl.textContent = `Point ${currentCameraFacing === 'user' ? 'Front' : 'Back'} Camera at the QR code on the other phone`;
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -8240,6 +8263,8 @@
             throw new Error('Camera access not supported in this browser.');
           }
 
+          await new Promise((r) => setTimeout(r, 80));
+
           const stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: { ideal: currentCameraFacing } },
             audio: false
@@ -8250,9 +8275,7 @@
 
           const btnSwitch = document.getElementById('btnSwitchCamera');
           if (btnSwitch) {
-            const devices = await navigator.mediaDevices.enumerateDevices().catch(() => []);
-            const videoInputs = devices.filter((d) => d.kind === 'videoinput');
-            btnSwitch.classList.toggle('hidden', videoInputs.length <= 1);
+            btnSwitch.classList.remove('hidden');
           }
 
           let hasBarcodeDetector = ('BarcodeDetector' in window);
@@ -8693,6 +8716,8 @@
 
       document.getElementById('btnCloseConnectionModal').addEventListener('click', () => {
         SoundEngine.select();
+        WebRTCManager.stopHostInlineCamera();
+        closeQrScanner();
         document.getElementById('modalConnection').classList.add('hidden');
         document.getElementById('modalConnection').classList.remove('flex');
       });
@@ -8978,6 +9003,7 @@
 
       tabPassPlay.addEventListener('click', () => {
         SoundEngine.select();
+        WebRTCManager.stopHostInlineCamera();
         tabPassPlay.className = 'android-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 bg-teal-600 text-white shadow-md';
         tabWebRTC.className = 'android-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 text-walnut-700 hover:text-walnut-900';
         panelPassPlay.classList.remove('hidden');
@@ -9227,10 +9253,32 @@
 
       document.getElementById('btnHostScanGuestReturn').addEventListener('click', () => {
         SoundEngine.select();
+        WebRTCManager.stopHostInlineCamera();
         openQrScanner((token) => {
           WebRTCManager.acceptGuestAnswerOnHost(token);
         }, "Scan Player 2's Return Code");
       });
+
+      const btnFlipInline = document.getElementById('btnFlipHostInlineCam');
+      if (btnFlipInline) {
+        btnFlipInline.addEventListener('click', () => {
+          SoundEngine.select();
+          WebRTCManager.hostInlineFacing = WebRTCManager.hostInlineFacing === 'environment' ? 'user' : 'environment';
+          WebRTCManager.startHostInlineCamera();
+        });
+      }
+
+      const btnToggleInline = document.getElementById('btnToggleHostInlineCam');
+      if (btnToggleInline) {
+        btnToggleInline.addEventListener('click', () => {
+          SoundEngine.select();
+          if (WebRTCManager.hostInlineStream) {
+            WebRTCManager.stopHostInlineCamera();
+          } else {
+            WebRTCManager.startHostInlineCamera();
+          }
+        });
+      }
 
       document.getElementById('btnHostBackToChoice').addEventListener('click', () => {
         SoundEngine.select();
@@ -9919,7 +9967,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v11').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v12').catch(() => {});
         });
       }
 
@@ -10147,6 +10195,246 @@
         });
       }
 
+      const WifiLobby = {
+        peers: new Map(),
+        client: null,
+        topic: '',
+        pendingInvite: null,
+        myPlatform: /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? '📱 Mobile' : '💻 PC',
+
+        injectUI() {
+          const statusCard = document.getElementById('rtcStatusCard');
+          if (statusCard && !document.getElementById('wifiLobbyCard')) {
+            statusCard.insertAdjacentHTML('afterend', `
+              <div id="wifiLobbyCard" class="bg-teal-50/90 border-2 border-teal-500 rounded-2xl p-3 space-y-2 shadow-sm">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-extrabold text-teal-900 flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span>Connected Players (Same Wi-Fi / PIN)</span>
+                  </span>
+                  <span id="wifiRoomBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white text-teal-800 border border-teal-300">Connecting...</span>
+                </div>
+                <div id="wifiPeerList" class="space-y-1.5 max-h-40 overflow-y-auto custom-scroll text-[11px] text-walnut-500 italic text-center py-1">
+                  Searching for active players on your Wi-Fi...
+                </div>
+              </div>
+            `);
+          }
+
+          if (!document.getElementById('wifiInvitePopup')) {
+            document.body.insertAdjacentHTML('beforeend', `
+              <div id="wifiInvitePopup" class="hidden fixed top-14 left-1/2 -translate-x-1/2 z-50 w-[92vw] max-w-md bg-walnut-900 border-2 border-amber-400 rounded-2xl p-3 shadow-2xl text-white">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <div id="invAvatar" class="w-10 h-10 rounded-xl bg-amber-500 text-walnut-900 flex items-center justify-center text-lg shrink-0">👑</div>
+                    <div class="truncate">
+                      <div class="text-[10px] font-extrabold uppercase text-amber-300">⚔️ Incoming Match Request</div>
+                      <div id="invTitle" class="text-xs sm:text-sm font-black truncate">Player wants to play!</div>
+                      <div id="invGame" class="text-[11px] text-parchment-200 truncate">6×6 Katar</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <button id="btnWifiAccept" type="button" class="android-btn px-3 py-1.5 rounded-xl bg-emerald-500 text-walnut-900 font-black text-xs shadow">✅ Accept</button>
+                    <button id="btnWifiDecline" type="button" class="android-btn px-2.5 py-1.5 rounded-xl bg-rose-600 text-white font-bold text-xs">✕</button>
+                  </div>
+                </div>
+              </div>
+            `);
+
+            document.getElementById('btnWifiAccept').addEventListener('click', () => this.acceptInvite());
+            document.getElementById('btnWifiDecline').addEventListener('click', () => {
+              this.pendingInvite = null;
+              document.getElementById('wifiInvitePopup').classList.add('hidden');
+            });
+          }
+        },
+
+        getMe() {
+          const name = ProfileManager.hasProfile() ? ProfileManager.data.name : WebRTCManager.deviceName;
+          const avatar = ProfileManager.hasProfile() ? ProfileManager.data.avatar : '👑';
+          return { id: WebRTCManager.deviceId, name, avatar, platform: this.myPlatform };
+        },
+
+        async connectRoom(forcePinOnly = false) {
+          this.injectUI();
+          if (typeof mqtt === 'undefined') return;
+          if (this.client) {
+            try { this.client.end(true); } catch (e) {}
+          }
+
+          let netKey = WebRTCManager.activePin || '7860';
+          if (!forcePinOnly) {
+            try {
+              const ctrl = new AbortController();
+              const tid = setTimeout(() => ctrl.abort(), 2200);
+              const r = await fetch('https://api.ipify.org?format=json', { signal: ctrl.signal });
+              clearTimeout(tid);
+              const d = await r.json();
+              if (d && d.ip) netKey = 'ip_' + d.ip.replace(/[^a-zA-Z0-9]/g, '_');
+            } catch (e) {}
+          }
+
+          this.topic = 'katar_lobby_v2/' + netKey;
+          const badge = document.getElementById('wifiRoomBadge');
+          if (badge) badge.textContent = 'Connecting...';
+
+          const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+            keepalive: 30,
+            reconnectPeriod: 3000
+          });
+          this.client = client;
+
+          client.on('connect', () => {
+            client.subscribe(this.topic);
+            if (badge) {
+              badge.textContent = netKey.startsWith('ip_') ? '🟢 Same Wi-Fi Auto' : `🟢 Room PIN: ${netKey}`;
+            }
+            this.sendPacket({ type: 'HELLO' });
+          });
+
+          client.on('message', (_, buf) => {
+            try {
+              const msg = JSON.parse(buf.toString());
+              if (!msg || msg.from === WebRTCManager.deviceId) return;
+              this.peers.set(msg.from, {
+                id: msg.from,
+                name: msg.name || 'Player',
+                avatar: msg.avatar || '👑',
+                platform: msg.platform || '📱',
+                ts: Date.now()
+              });
+              this.renderList();
+
+              if (msg.to === WebRTCManager.deviceId && msg.type === 'INVITE' && msg.token) {
+                this.pendingInvite = msg;
+                SoundEngine.millFormed();
+                document.getElementById('invAvatar').textContent = msg.avatar || '👑';
+                document.getElementById('invTitle').textContent = `${msg.name} (${msg.platform}) sent a request!`;
+                document.getElementById('invGame').textContent = msg.game || 'Tap Accept to start match';
+                document.getElementById('wifiInvitePopup').classList.remove('hidden');
+              } else if (msg.to === WebRTCManager.deviceId && msg.type === 'ACCEPT' && msg.token) {
+                showBoardToast(`✅ ${msg.name} accepted! Starting match...`);
+                WebRTCManager.acceptGuestAnswerOnHost(msg.token);
+              }
+            } catch (e) {}
+          });
+        },
+
+        sendPacket(data) {
+          if (!this.client || !this.client.connected) return;
+          const me = this.getMe();
+          this.client.publish(this.topic, JSON.stringify({
+            ...data,
+            from: me.id,
+            name: me.name,
+            avatar: me.avatar,
+            platform: me.platform
+          }));
+        },
+
+        async sendChallenge(targetId, targetName) {
+          SoundEngine.select();
+          showBoardToast(`⚔️ Sending match request to ${targetName}...`);
+          const txtOut = document.getElementById('txtHostOfferOut');
+          if (txtOut) txtOut.value = '';
+          await WebRTCManager.generateHostOffer(true);
+
+          let tries = 0;
+          const poll = setInterval(() => {
+            tries++;
+            const token = txtOut ? txtOut.value.trim() : '';
+            if (token) {
+              clearInterval(poll);
+              const sel = document.getElementById('selGridPreset');
+              const gameName = sel && sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '6×6 Katar';
+              this.sendPacket({ to: targetId, type: 'INVITE', token, game: gameName });
+              showBoardToast(`📨 Request sent to ${targetName}! Waiting for them to tap Accept...`);
+            } else if (tries > 25) {
+              clearInterval(poll);
+            }
+          }, 100);
+        },
+
+        async acceptInvite() {
+          if (!this.pendingInvite) return;
+          const inv = this.pendingInvite;
+          this.pendingInvite = null;
+          document.getElementById('wifiInvitePopup').classList.add('hidden');
+          SoundEngine.select();
+          showBoardToast(`⚡ Connecting to ${inv.name}...`);
+
+          const txtOut = document.getElementById('txtGuestAnswerOut');
+          if (txtOut) txtOut.value = '';
+          await WebRTCManager.processGuestOfferAndCreateAnswer(inv.token, true);
+
+          let tries = 0;
+          const poll = setInterval(() => {
+            tries++;
+            const answerToken = txtOut ? txtOut.value.trim() : '';
+            if (answerToken) {
+              clearInterval(poll);
+              this.sendPacket({ to: inv.from, type: 'ACCEPT', token: answerToken });
+            } else if (tries > 25) {
+              clearInterval(poll);
+            }
+          }, 100);
+        },
+
+        renderList() {
+          const box = document.getElementById('wifiPeerList');
+          if (!box) return;
+          if (this.peers.size === 0) {
+            box.innerHTML = 'No other players open on this Wi-Fi yet...';
+            return;
+          }
+          box.innerHTML = Array.from(this.peers.values()).map((p) => `
+            <div class="flex items-center justify-between bg-white border border-teal-300 rounded-xl px-2.5 py-1.5 not-italic shadow-sm">
+              <div class="flex items-center gap-2 truncate">
+                <span class="w-7 h-7 rounded-lg bg-amber-100 border border-amber-300 flex items-center justify-center text-sm shrink-0">${p.avatar}</span>
+                <div class="text-left truncate">
+                  <div class="text-xs font-extrabold text-walnut-900 truncate">${p.name}</div>
+                  <div class="text-[10px] font-mono text-teal-700">${p.platform} • Online</div>
+                </div>
+              </div>
+              <button type="button" data-id="${p.id}" data-name="${p.name}" class="btn-wifi-req android-btn px-2.5 py-1 rounded-lg bg-gradient-to-b from-teal-500 to-teal-700 text-white text-[11px] font-black shadow shrink-0">
+                ⚔️ Send Request
+              </button>
+            </div>
+          `).join('');
+
+          box.querySelectorAll('.btn-wifi-req').forEach((btn) => {
+            btn.onclick = () => {
+              const targetId = btn.getAttribute('data-id');
+              const targetName = btn.getAttribute('data-name');
+              btn.textContent = '⏳ Sent...';
+              btn.disabled = true;
+              this.sendChallenge(targetId, targetName);
+            };
+          });
+        },
+
+        init() {
+          this.connectRoom(false);
+          setInterval(() => {
+            this.sendPacket({ type: 'HELLO' });
+            const now = Date.now();
+            for (const [k, v] of this.peers) {
+              if (now - v.ts > 9000) this.peers.delete(k);
+            }
+            this.renderList();
+          }, 3000);
+
+          const btnPin = document.getElementById('btnQuickPinConnect');
+          if (btnPin) {
+            btnPin.addEventListener('click', () => {
+              this.peers.clear();
+              this.renderList();
+              this.connectRoom(true);
+            });
+          }
+        }
+      };
+
       window.addEventListener('load', () => {
         const hasExistingProfile = ProfileManager.load();
         WebRTCManager.initDeviceIdentity();
@@ -10157,6 +10445,7 @@
         initMatch(false);
         checkAndRestoreSavedMatchOnLoad();
         resizeCanvas();
+        WifiLobby.init();
         if (!hasExistingProfile) {
           ProfileManager.openModal(true);
         }
