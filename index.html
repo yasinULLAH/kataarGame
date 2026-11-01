@@ -245,7 +245,7 @@
       z-index: 35;
       pointer-events: none;
     }
-    .hidden,
+    #immersiveHud.hidden,
     #immersiveHud .hidden {
       display: none !important;
     }
@@ -748,16 +748,16 @@
 
       <div id="mainAIDiffGroup" class="flex items-center gap-1 ml-1 pl-1.5 border-l border-parchment-300 shrink-0">
         <button type="button" data-ai-diff="easy" class="ai-diff-chip android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-700 border border-parchment-300" title="Easy AI">
-          <span class="sm:hidden">🌱</span><span class="hidden sm:inline">Easy</span>
+          <span>🌱</span><span class="hidden sm:inline"> Easy</span>
         </button>
         <button type="button" data-ai-diff="medium" class="ai-diff-chip android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm" title="Medium AI">
-          <span class="sm:hidden">⚔️</span><span class="hidden sm:inline">Medium</span>
+          <span>⚔️</span><span class="hidden sm:inline"> Medium</span>
         </button>
         <button type="button" data-ai-diff="hard" class="ai-diff-chip android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-700 border border-parchment-300" title="Hard AI">
-          <span class="sm:hidden">🛡️</span><span class="hidden sm:inline">Hard</span>
+          <span>🛡️</span><span class="hidden sm:inline"> Hard</span>
         </button>
         <button type="button" data-ai-diff="hardest" class="ai-diff-chip android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-rose-800 border border-rose-300" title="Hardest AI">
-          <span>🔥</span><span class="hidden sm:inline">Hardest</span>
+          <span>🔥</span><span class="hidden sm:inline"> Hardest</span>
         </button>
       </div>
     </div>
@@ -9798,7 +9798,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v9').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v10').catch(() => {});
         });
       }
 
