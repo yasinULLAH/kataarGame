@@ -607,6 +607,11 @@
         <span class="hidden md:inline">Away Timer</span>
       </button>
 
+      <button id="btnOpenProfileModal" type="button" class="android-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-100 to-amber-200 hover:from-white hover:to-amber-100 text-walnut-900 border border-amber-400 shadow-[0_3px_0_#B45309]" aria-label="Player Profile &amp; Backup" title="Player Profile, Career Stats &amp; Backup/Restore">
+        <span id="hdrProfileAvatar" class="text-sm leading-none">👑</span>
+        <span id="hdrProfileName" class="hidden sm:inline max-w-[90px] truncate">Profile</span>
+      </button>
+
       <button id="btnOpenEncyclopedia" type="button" class="android-btn flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-extrabold bg-gradient-to-b from-parchment-100 to-parchment-300 hover:from-white hover:to-parchment-200 text-walnut-900 border border-parchment-400 shadow-[0_3px_0_#B8976C]" aria-label="Game Rules &amp; Guide" title="Encyclopedia, Rules &amp; Match Log">
         <svg class="w-3.5 h-3.5 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
@@ -2001,6 +2006,155 @@
         <button id="btnGuardCancelKeepPlaying" type="button" class="android-btn w-full py-2.5 px-4 rounded-2xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400">
           ↩️ Cancel — Keep Playing Current Match
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalProfile" class="fixed inset-0 z-50 bg-walnut-900/75 backdrop-blur-md hidden items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="w-full sm:max-w-xl bg-parchment-50 border-t-4 sm:border-2 border-amber-500 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-walnut-900">
+      <div class="px-5 py-3.5 bg-parchment-100 border-b border-parchment-300 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span id="profileModalBadgeIcon" class="w-8 h-8 rounded-xl bg-amber-500 text-walnut-900 flex items-center justify-center text-base shadow-sm">👑</span>
+          <div>
+            <h2 id="profileModalTitle" class="font-display text-base sm:text-lg font-extrabold text-walnut-900 leading-tight">Create Your Player Profile</h2>
+            <p id="profileModalSubtitle" class="text-[11px] font-semibold text-walnut-600">Set up your identity before entering the battlefield</p>
+          </div>
+        </div>
+        <button id="btnCloseProfileModal" type="button" class="android-btn p-1.5 rounded-xl bg-white border border-parchment-300 text-walnut-700 hover:text-walnut-900" aria-label="Close Profile">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-4 sm:p-5 overflow-y-auto custom-scroll space-y-4 text-xs">
+        <div class="grid grid-cols-2 gap-2 p-1 bg-parchment-200 rounded-2xl border border-parchment-300">
+          <button id="tabProfileIdentity" type="button" class="android-btn py-2 px-3 rounded-xl text-xs font-extrabold bg-teal-600 text-white shadow-sm flex items-center justify-center gap-1.5">
+            <span>👤 Profile &amp; Stats</span>
+          </button>
+          <button id="tabProfileBackup" type="button" class="android-btn py-2 px-3 rounded-xl text-xs font-bold text-walnut-800 hover:text-walnut-900 flex items-center justify-center gap-1.5">
+            <span>💾 Backup &amp; Restore</span>
+          </button>
+        </div>
+
+        <div id="panelProfileIdentity" class="space-y-4">
+          <div id="firstTimeWelcomeBanner" class="bg-gradient-to-r from-amber-100 via-parchment-100 to-teal-50 border-2 border-amber-400 rounded-2xl p-3 flex items-center justify-between gap-2">
+            <div>
+              <div class="font-extrabold text-walnut-900 text-xs">🌟 Welcome to Katar &amp; Navakankari!</div>
+              <div class="text-[11px] text-walnut-700 mt-0.5">Please create your player profile below to begin playing, or switch to the <strong>Backup &amp; Restore</strong> tab to restore an existing profile.</div>
+            </div>
+          </div>
+
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
+            <div>
+              <label class="block text-xs font-extrabold text-walnut-900 mb-1.5">1. Choose Your Royal Emblem</label>
+              <div id="profileAvatarGrid" class="grid grid-cols-8 gap-1.5">
+                <button type="button" data-avatar="👑" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-amber-500 text-walnut-900 border-2 border-amber-700 shadow-sm">👑</button>
+                <button type="button" data-avatar="🦅" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🦅</button>
+                <button type="button" data-avatar="🦁" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🦁</button>
+                <button type="button" data-avatar="⚔️" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">⚔️</button>
+                <button type="button" data-avatar="💎" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">💎</button>
+                <button type="button" data-avatar="🐯" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🐯</button>
+                <button type="button" data-avatar="🛡️" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🛡️</button>
+                <button type="button" data-avatar="🌙" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🌙</button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label for="inpProfileName" class="block text-xs font-extrabold text-walnut-900 mb-1">2. Your Player Name <span class="text-rose-600">*</span></label>
+                <input id="inpProfileName" type="text" maxlength="20" placeholder="Enter your name..." class="selectable-input w-full bg-parchment-100 border-2 border-parchment-400 focus:border-teal-600 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none" />
+              </div>
+
+              <div>
+                <label for="selProfileTitle" class="block text-xs font-extrabold text-walnut-900 mb-1">3. Honorific Title</label>
+                <select id="selProfileTitle" class="selectable-input w-full bg-parchment-100 border-2 border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-teal-900 focus:outline-none">
+                  <option value="Sardar">Sardar (Commander)</option>
+                  <option value="Khan">Khan (Grandmaster)</option>
+                  <option value="Malik">Malik (Strategist)</option>
+                  <option value="Ghazi">Ghazi (Champion)</option>
+                  <option value="Ustad">Ustad (Master)</option>
+                  <option value="Warrior">Maidaan Warrior</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="pt-1">
+              <label for="inpProfileP2Name" class="block text-xs font-extrabold text-walnut-900 mb-1">4. Local Player 2 Name (For 2P Pass &amp; Play)</label>
+              <input id="inpProfileP2Name" type="text" maxlength="20" placeholder="Player 2 / Brother / Friend" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-bold text-walnut-800 focus:outline-none" />
+            </div>
+
+            <button id="btnSaveProfileStart" type="button" class="android-btn w-full py-3 rounded-2xl bg-gradient-to-b from-teal-500 to-teal-700 text-white font-extrabold text-sm shadow-[0_4px_0_#115E59]">
+              ✅ Save Profile &amp; Enter Game
+            </button>
+          </div>
+
+          <div id="profileCareerStatsCard" class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <span class="font-extrabold text-walnut-900 uppercase tracking-wider text-[11px]">🏅 Lifetime Career Record</span>
+              <span id="lblProfileCreatedDate" class="text-[10px] font-mono text-walnut-500">Member</span>
+            </div>
+            <div class="grid grid-cols-4 gap-2 text-center bg-parchment-100 rounded-xl p-2.5 border border-parchment-300">
+              <div>
+                <div class="text-[10px] font-bold text-walnut-600">Matches</div>
+                <div id="careerTotalMatches" class="font-mono text-sm font-black text-walnut-900">0</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-bold text-teal-800">Wins</div>
+                <div id="careerWins" class="font-mono text-sm font-black text-teal-700">0</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-bold text-amber-800">Best Streak</div>
+                <div id="careerBestStreak" class="font-mono text-sm font-black text-amber-700">0🔥</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-bold text-rose-800">Beads Eaten</div>
+                <div id="careerBeadsEaten" class="font-mono text-sm font-black text-rose-600">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="panelProfileBackup" class="hidden space-y-4">
+          <div class="bg-white border-2 border-teal-500/50 rounded-2xl p-4 space-y-3 shadow-sm">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <h3 class="text-xs font-extrabold uppercase tracking-wider text-teal-800">📤 Export / Backup Your Data</h3>
+                <p class="text-[11px] text-walnut-600 mt-0.5">Save your Profile, Career Stats, Custom Rules, Trusted Devices, and Stashed Matches to a file or backup code.</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button id="btnDownloadBackupFile" type="button" class="android-btn py-2.5 px-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-xs shadow flex items-center justify-center gap-1.5">
+                <span>⬇️ Download Backup (.json)</span>
+              </button>
+              <button id="btnCopyBackupCode" type="button" class="android-btn py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-walnut-900 font-extrabold text-xs shadow flex items-center justify-center gap-1.5">
+                <span>📋 Copy Backup Code</span>
+              </button>
+            </div>
+            <textarea id="txtBackupExportCode" readonly rows="2" placeholder="Tap 'Copy Backup Code' to generate a portable recovery code..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[10px] font-mono text-teal-900 focus:outline-none resize-none"></textarea>
+          </div>
+
+          <div class="bg-white border-2 border-amber-500/50 rounded-2xl p-4 space-y-3 shadow-sm">
+            <div>
+              <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-800">📥 Restore Data from Backup</h3>
+              <p class="text-[11px] text-walnut-600 mt-0.5">Upload a previously saved <code>.json</code> backup file or paste your backup code below to restore everything.</p>
+            </div>
+
+            <label class="android-btn w-full py-2.5 px-3 rounded-xl bg-gradient-to-b from-parchment-100 to-parchment-200 hover:from-white hover:to-parchment-100 text-walnut-900 font-extrabold text-xs border border-parchment-400 shadow-sm cursor-pointer flex items-center justify-center gap-2">
+              <span>📂 Select Backup File (.json) to Restore</span>
+              <input id="inpRestoreBackupFile" type="file" accept=".json,application/json" class="hidden" />
+            </label>
+
+            <div class="space-y-1.5 pt-2 border-t border-parchment-200">
+              <label for="txtBackupImportCode" class="block text-[11px] font-extrabold text-walnut-800">Or Paste Backup Code / JSON:</label>
+              <textarea id="txtBackupImportCode" rows="2" placeholder="Paste your KATAR-BK:... code or JSON content here..." class="selectable-input w-full rounded-xl bg-parchment-100 border border-parchment-400 p-2 text-[10px] font-mono text-walnut-900 focus:outline-none resize-none"></textarea>
+              <button id="btnRestoreFromCode" type="button" class="android-btn w-full py-2.5 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-xs shadow-[0_3px_0_#B45309]">
+                🔄 Restore Profile &amp; Data Now
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -3836,15 +3990,342 @@
       const _memStore = {};
       const SafeStorage = {
         getItem(k) {
-          try { return SafeStorage.getItem(k); } catch (e) { return _memStore[k] !== undefined ? _memStore[k] : null; }
+          try {
+            const v = window.localStorage.getItem(k);
+            return v !== null ? v : (_memStore[k] !== undefined ? _memStore[k] : null);
+          } catch (e) {
+            return _memStore[k] !== undefined ? _memStore[k] : null;
+          }
         },
         setItem(k, v) {
           _memStore[k] = String(v);
-          try { SafeStorage.setItem(k, v); } catch (e) {}
+          try { window.localStorage.setItem(k, String(v)); } catch (e) {}
         },
         removeItem(k) {
           delete _memStore[k];
-          try { SafeStorage.removeItem(k); } catch (e) {}
+          try { window.localStorage.removeItem(k); } catch (e) {}
+        }
+      };
+
+      const ProfileManager = {
+        storageKey: 'katar_player_profile_v1',
+        data: null,
+        selectedAvatar: '👑',
+
+        hasProfile() {
+          return Boolean(this.data && this.data.name && this.data.name.trim().length > 0);
+        },
+
+        load() {
+          try {
+            const raw = SafeStorage.getItem(this.storageKey);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed && parsed.name) {
+                this.data = {
+                  name: String(parsed.name).trim(),
+                  title: parsed.title || 'Sardar',
+                  avatar: parsed.avatar || '👑',
+                  p2Name: parsed.p2Name || 'Player 2',
+                  createdAt: parsed.createdAt || Date.now(),
+                  career: {
+                    totalMatches: (parsed.career && parsed.career.totalMatches) || 0,
+                    wins: (parsed.career && parsed.career.wins) || 0,
+                    losses: (parsed.career && parsed.career.losses) || 0,
+                    draws: (parsed.career && parsed.career.draws) || 0,
+                    currentStreak: (parsed.career && parsed.career.currentStreak) || 0,
+                    bestStreak: (parsed.career && parsed.career.bestStreak) || 0,
+                    beadsEaten: (parsed.career && parsed.career.beadsEaten) || 0
+                  }
+                };
+                this.selectedAvatar = this.data.avatar;
+                if (parsed.sessionStats) {
+                  GameState.sessionStats = {
+                    p1Wins: parsed.sessionStats.p1Wins || 0,
+                    p2Wins: parsed.sessionStats.p2Wins || 0,
+                    draws: parsed.sessionStats.draws || 0
+                  };
+                }
+                return true;
+              }
+            }
+          } catch (e) {}
+          return false;
+        },
+
+        save(profileFields = {}) {
+          const now = Date.now();
+          const prevCareer = (this.data && this.data.career) || {
+            totalMatches: 0,
+            wins: 0,
+            losses: 0,
+            draws: 0,
+            currentStreak: 0,
+            bestStreak: 0,
+            beadsEaten: 0
+          };
+          this.data = {
+            name: (profileFields.name !== undefined ? profileFields.name : (this.data ? this.data.name : '')).trim(),
+            title: profileFields.title || (this.data && this.data.title) || 'Sardar',
+            avatar: profileFields.avatar || this.selectedAvatar || (this.data && this.data.avatar) || '👑',
+            p2Name: (profileFields.p2Name !== undefined ? profileFields.p2Name : (this.data ? this.data.p2Name : 'Player 2')).trim() || 'Player 2',
+            createdAt: (this.data && this.data.createdAt) || now,
+            career: profileFields.career || prevCareer,
+            sessionStats: GameState.sessionStats
+          };
+          this.selectedAvatar = this.data.avatar;
+          SafeStorage.setItem(this.storageKey, JSON.stringify(this.data));
+          if (this.data.name) {
+            WebRTCManager.saveDeviceName(`${this.data.avatar} ${this.data.name}`);
+            const inpDev = document.getElementById('inpLocalDeviceName');
+            if (inpDev) inpDev.value = WebRTCManager.deviceName;
+          }
+          this.syncHeaderAndFormUI();
+          updateHUD();
+          updateMoveLogUI();
+        },
+
+        recordMatchResult(winner) {
+          if (!this.hasProfile()) return;
+          const c = this.data.career;
+          c.totalMatches = (c.totalMatches || 0) + 1;
+          c.beadsEaten = (c.beadsEaten || 0) + (GameState.capturedBy[1] || 0);
+          if (winner === 1) {
+            c.wins = (c.wins || 0) + 1;
+            c.currentStreak = (c.currentStreak || 0) + 1;
+            if (c.currentStreak > (c.bestStreak || 0)) {
+              c.bestStreak = c.currentStreak;
+            }
+          } else if (winner === 2) {
+            c.losses = (c.losses || 0) + 1;
+            c.currentStreak = 0;
+          } else {
+            c.draws = (c.draws || 0) + 1;
+          }
+          this.save();
+        },
+
+        getP1DisplayName(suffix) {
+          if (this.hasProfile()) {
+            return `${this.data.avatar} ${this.data.name} (${suffix})`;
+          }
+          return `Player 1 (${suffix})`;
+        },
+
+        getP2DisplayName(suffix) {
+          if (this.hasProfile() && this.data.p2Name && this.data.p2Name !== 'Player 2') {
+            return `${this.data.p2Name} (${suffix})`;
+          }
+          return `Player 2 (${suffix})`;
+        },
+
+        syncHeaderAndFormUI() {
+          const hdrAvatar = document.getElementById('hdrProfileAvatar');
+          const hdrName = document.getElementById('hdrProfileName');
+          const badgeIcon = document.getElementById('profileModalBadgeIcon');
+          if (this.hasProfile()) {
+            if (hdrAvatar) hdrAvatar.textContent = this.data.avatar;
+            if (hdrName) hdrName.textContent = this.data.name;
+            if (badgeIcon) badgeIcon.textContent = this.data.avatar;
+          }
+
+          const inpName = document.getElementById('inpProfileName');
+          const selTitle = document.getElementById('selProfileTitle');
+          const inpP2 = document.getElementById('inpProfileP2Name');
+          if (inpName && this.data) inpName.value = this.data.name || '';
+          if (selTitle && this.data) selTitle.value = this.data.title || 'Sardar';
+          if (inpP2 && this.data) inpP2.value = this.data.p2Name || 'Player 2';
+
+          document.querySelectorAll('.profile-avatar-btn').forEach((btn) => {
+            const av = btn.getAttribute('data-avatar');
+            if (av === this.selectedAvatar) {
+              btn.className = 'profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-amber-500 text-walnut-900 border-2 border-amber-700 shadow-sm scale-105';
+            } else {
+              btn.className = 'profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300';
+            }
+          });
+
+          const c = (this.data && this.data.career) || { totalMatches: 0, wins: 0, bestStreak: 0, beadsEaten: 0 };
+          const elTotal = document.getElementById('careerTotalMatches');
+          const elWins = document.getElementById('careerWins');
+          const elStreak = document.getElementById('careerBestStreak');
+          const elBeads = document.getElementById('careerBeadsEaten');
+          const elDate = document.getElementById('lblProfileCreatedDate');
+          if (elTotal) elTotal.textContent = String(c.totalMatches || 0);
+          if (elWins) elWins.textContent = String(c.wins || 0);
+          if (elStreak) elStreak.textContent = `${c.bestStreak || 0}🔥`;
+          if (elBeads) elBeads.textContent = String(c.beadsEaten || 0);
+          if (elDate && this.data && this.data.createdAt) {
+            const d = new Date(this.data.createdAt);
+            elDate.textContent = `${this.data.title} • Since ${d.toLocaleDateString()}`;
+          }
+        },
+
+        openModal(isFirstTimeOnboarding = false) {
+          this.syncHeaderAndFormUI();
+          const modal = document.getElementById('modalProfile');
+          const btnClose = document.getElementById('btnCloseProfileModal');
+          const banner = document.getElementById('firstTimeWelcomeBanner');
+          const titleEl = document.getElementById('profileModalTitle');
+          const subEl = document.getElementById('profileModalSubtitle');
+
+          const mustOnboard = isFirstTimeOnboarding || !this.hasProfile();
+          if (btnClose) btnClose.classList.toggle('hidden', mustOnboard);
+          if (banner) banner.classList.toggle('hidden', !mustOnboard);
+          if (titleEl) {
+            titleEl.textContent = mustOnboard
+              ? 'Create Your Player Profile'
+              : `${this.data.avatar} ${this.data.name} — ${this.data.title}`;
+          }
+          if (subEl) {
+            subEl.textContent = mustOnboard
+              ? 'Required once before your first match (or restore from backup)'
+              : 'Manage your player identity, career record & data backups';
+          }
+          if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+          }
+          setTimeout(() => {
+            const inp = document.getElementById('inpProfileName');
+            if (mustOnboard && inp) inp.focus();
+          }, 80);
+        },
+
+        closeModal() {
+          if (!this.hasProfile()) {
+            SoundEngine.invalid();
+            showBoardToast('Please enter your Player Name and tap Save Profile first!');
+            return;
+          }
+          const modal = document.getElementById('modalProfile');
+          if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+          }
+        },
+
+        buildBackupBundle() {
+          return {
+            app: 'Katar_Navakankari_Backup',
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            profile: this.data,
+            sessionStats: GameState.sessionStats,
+            settings: {
+              gridPreset: GameState.gridPreset,
+              chainRule: GameState.chainRule,
+              mandatoryCapture: GameState.mandatoryCapture,
+              stepDirection: GameState.stepDirection,
+              morrisMillRemovalRule: GameState.morrisMillRemovalRule,
+              morrisFlyingRule: GameState.morrisFlyingRule,
+              damaKingMode: GameState.damaKingMode,
+              pieceTheme: GameState.pieceTheme,
+              boardSurface: GameState.boardSurface,
+              nodeLabels: GameState.nodeLabels,
+              showGuides: GameState.showGuides,
+              aiDifficulty: GameState.aiDifficulty,
+              turnTimerSeconds: GameState.turnTimerSeconds,
+              matchTimerSeconds: GameState.matchTimerSeconds,
+              disconnectGraceSeconds: GameState.disconnectGraceSeconds
+            },
+            trustedPeers: WebRTCManager.getTrustedPeers(),
+            stashedMatch: (() => {
+              try {
+                const s = SafeStorage.getItem('katar_stashed_match_v1');
+                return s ? JSON.parse(s) : null;
+              } catch (e) { return null; }
+            })(),
+            liveMatch: (() => {
+              try {
+                const l = SafeStorage.getItem('katar_live_match_v3');
+                return l ? JSON.parse(l) : null;
+              } catch (e) { return null; }
+            })()
+          };
+        },
+
+        encodeBackupToken() {
+          const json = JSON.stringify(this.buildBackupBundle());
+          if (typeof pako !== 'undefined' && pako.deflate) {
+            try {
+              const deflated = pako.deflate(json, { level: 9 });
+              let bin = '';
+              for (let i = 0; i < deflated.length; i++) bin += String.fromCharCode(deflated[i]);
+              return 'KATAR-BK:' + btoa(bin);
+            } catch (e) {}
+          }
+          return 'KATAR-RAW:' + btoa(unescape(encodeURIComponent(json)));
+        },
+
+        restoreFromPayload(rawInput) {
+          const str = (rawInput || '').trim();
+          if (!str) throw new Error('Backup data is empty.');
+          let bundle = null;
+          if (str.startsWith('KATAR-BK:')) {
+            if (typeof pako === 'undefined' || !pako.inflate) throw new Error('Decompression library unavailable.');
+            const bin = atob(str.slice(9));
+            const u8 = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+            bundle = JSON.parse(pako.inflate(u8, { to: 'string' }));
+          } else if (str.startsWith('KATAR-RAW:')) {
+            bundle = JSON.parse(decodeURIComponent(escape(atob(str.slice(10)))));
+          } else {
+            bundle = JSON.parse(str);
+          }
+
+          if (!bundle || bundle.app !== 'Katar_Navakankari_Backup' || !bundle.profile || !bundle.profile.name) {
+            throw new Error('Invalid Katar backup file or code.');
+          }
+
+          if (bundle.sessionStats) {
+            GameState.sessionStats = {
+              p1Wins: bundle.sessionStats.p1Wins || 0,
+              p2Wins: bundle.sessionStats.p2Wins || 0,
+              draws: bundle.sessionStats.draws || 0
+            };
+          }
+          this.selectedAvatar = bundle.profile.avatar || '👑';
+          this.save(bundle.profile);
+
+          if (Array.isArray(bundle.trustedPeers)) {
+            SafeStorage.setItem('katar_trusted_peers_v1', JSON.stringify(bundle.trustedPeers));
+            WebRTCManager.renderTrustedPeersUI();
+          }
+          if (bundle.stashedMatch) {
+            SafeStorage.setItem('katar_stashed_match_v1', JSON.stringify(bundle.stashedMatch));
+            updateStashedMatchButtonUI();
+          }
+          if (bundle.settings) {
+            const s = bundle.settings;
+            if (s.pieceTheme) GameState.pieceTheme = s.pieceTheme;
+            if (s.boardSurface) GameState.boardSurface = s.boardSurface;
+            if (s.nodeLabels) GameState.nodeLabels = s.nodeLabels;
+            if (s.showGuides !== undefined) GameState.showGuides = Boolean(s.showGuides);
+            if (s.aiDifficulty) GameState.aiDifficulty = s.aiDifficulty;
+            if (s.chainRule) GameState.chainRule = s.chainRule;
+            if (s.mandatoryCapture) GameState.mandatoryCapture = s.mandatoryCapture;
+            if (s.stepDirection) GameState.stepDirection = s.stepDirection;
+            if (s.morrisMillRemovalRule) GameState.morrisMillRemovalRule = s.morrisMillRemovalRule;
+            if (s.morrisFlyingRule) GameState.morrisFlyingRule = s.morrisFlyingRule;
+            if (s.damaKingMode) GameState.damaKingMode = s.damaKingMode;
+            if (s.turnTimerSeconds !== undefined) GameState.turnTimerSeconds = s.turnTimerSeconds;
+            if (s.matchTimerSeconds !== undefined) GameState.matchTimerSeconds = s.matchTimerSeconds;
+            if (s.disconnectGraceSeconds !== undefined) GameState.disconnectGraceSeconds = s.disconnectGraceSeconds;
+            if (s.gridPreset) {
+              applyGridPresetConfig(s.gridPreset);
+              initMatch(false);
+            }
+          }
+          if (bundle.liveMatch && bundle.liveMatch.state && !bundle.liveMatch.state.gameOver) {
+            SafeStorage.setItem('katar_live_match_v3', JSON.stringify(bundle.liveMatch));
+            applyRemoteGameState(bundle.liveMatch.state);
+          }
+
+          this.syncHeaderAndFormUI();
+          syncSettingsControlsFromState();
+          updateHUD();
+          requestRender();
         }
       };
       GameState.lockSettingsMidGame = false;
@@ -4008,6 +4489,7 @@
         if (winner === 1) GameState.sessionStats.p1Wins++;
         else if (winner === 2) GameState.sessionStats.p2Wins++;
         else GameState.sessionStats.draws++;
+        ProfileManager.recordMatchResult(winner);
         updateMoveLogUI();
       }
 
@@ -5876,6 +6358,11 @@
        * 9. TOUCH / POINTER INPUT FOR ALL GAME FAMILIES
        * ------------------------------------------------------------------- */
       function handleBoardTap(clientX, clientY) {
+        if (!ProfileManager.hasProfile()) {
+          ProfileManager.openModal(true);
+          showBoardToast('Please create your Player Profile first!');
+          return;
+        }
         if (GameState.gameOver) return;
         if (GameState.graceTimerInterval) {
           showBoardToast('Match is paused for away player — tap "I\'m Back (Resume)" to continue!');
@@ -6433,14 +6920,14 @@
           const p1IsAI = GameState.vsAI && GameState.aiPlayerRole === 1;
           const p2IsAI = GameState.vsAI && GameState.aiPlayerRole === 2;
           return [
-            p1IsAI ? `${aiTag} (Goats 🐐)` : 'Player 1 (Goats 🐐)',
-            p2IsAI ? `${aiTag} (Tigers 🐯)` : 'Player 2 (Tigers 🐯)'
+            p1IsAI ? `${aiTag} (Goats 🐐)` : ProfileManager.getP1DisplayName('Goats 🐐'),
+            p2IsAI ? `${aiTag} (Tigers 🐯)` : ProfileManager.getP2DisplayName('Tigers 🐯')
           ];
         }
-        if (GameState.pieceTheme === 'classic') return ['Player 1 (Cobalt)', GameState.vsAI ? `${aiTag} (Ruby)` : 'Player 2 (Ruby)'];
-        if (GameState.pieceTheme === 'jade_gold') return ['Player 1 (Jade)', GameState.vsAI ? `${aiTag} (Gold)` : 'Player 2 (Gold)'];
-        if (GameState.pieceTheme === 'ivory_onyx') return ['Player 1 (Ivory)', GameState.vsAI ? `${aiTag} (Onyx)` : 'Player 2 (Onyx)'];
-        return ['Player 1 (Feroza)', GameState.vsAI ? `${aiTag} (Sang)` : 'Player 2 (Sang)'];
+        if (GameState.pieceTheme === 'classic') return [ProfileManager.getP1DisplayName('Cobalt'), GameState.vsAI ? `${aiTag} (Ruby)` : ProfileManager.getP2DisplayName('Ruby')];
+        if (GameState.pieceTheme === 'jade_gold') return [ProfileManager.getP1DisplayName('Jade'), GameState.vsAI ? `${aiTag} (Gold)` : ProfileManager.getP2DisplayName('Gold')];
+        if (GameState.pieceTheme === 'ivory_onyx') return [ProfileManager.getP1DisplayName('Ivory'), GameState.vsAI ? `${aiTag} (Onyx)` : ProfileManager.getP2DisplayName('Onyx')];
+        return [ProfileManager.getP1DisplayName('Feroza'), GameState.vsAI ? `${aiTag} (Sang)` : ProfileManager.getP2DisplayName('Sang')];
       }
 
       function getWinCaptureTargetForPlayer(player) {
@@ -9107,7 +9594,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v4').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?5').catch(() => {});
         });
       }
 
@@ -9181,12 +9668,173 @@
 
       updatePwaInstallUI(false);
 
+      const btnOpenProf = document.getElementById('btnOpenProfileModal');
+      if (btnOpenProf) {
+        btnOpenProf.addEventListener('click', () => {
+          SoundEngine.select();
+          ProfileManager.openModal(false);
+        });
+      }
+
+      const btnCloseProf = document.getElementById('btnCloseProfileModal');
+      if (btnCloseProf) {
+        btnCloseProf.addEventListener('click', () => {
+          SoundEngine.select();
+          ProfileManager.closeModal();
+        });
+      }
+
+      const tabProfId = document.getElementById('tabProfileIdentity');
+      const tabProfBk = document.getElementById('tabProfileBackup');
+      const panelProfId = document.getElementById('panelProfileIdentity');
+      const panelProfBk = document.getElementById('panelProfileBackup');
+
+      if (tabProfId && tabProfBk) {
+        tabProfId.addEventListener('click', () => {
+          SoundEngine.select();
+          tabProfId.className = 'android-btn py-2 px-3 rounded-xl text-xs font-extrabold bg-teal-600 text-white shadow-sm flex items-center justify-center gap-1.5';
+          tabProfBk.className = 'android-btn py-2 px-3 rounded-xl text-xs font-bold text-walnut-800 hover:text-walnut-900 flex items-center justify-center gap-1.5';
+          if (panelProfId) panelProfId.classList.remove('hidden');
+          if (panelProfBk) panelProfBk.classList.add('hidden');
+        });
+        tabProfBk.addEventListener('click', () => {
+          SoundEngine.select();
+          tabProfBk.className = 'android-btn py-2 px-3 rounded-xl text-xs font-extrabold bg-teal-600 text-white shadow-sm flex items-center justify-center gap-1.5';
+          tabProfId.className = 'android-btn py-2 px-3 rounded-xl text-xs font-bold text-walnut-800 hover:text-walnut-900 flex items-center justify-center gap-1.5';
+          if (panelProfBk) panelProfBk.classList.remove('hidden');
+          if (panelProfId) panelProfId.classList.add('hidden');
+          if (ProfileManager.hasProfile()) {
+            const out = document.getElementById('txtBackupExportCode');
+            if (out) out.value = ProfileManager.encodeBackupToken();
+          }
+        });
+      }
+
+      document.querySelectorAll('.profile-avatar-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          ProfileManager.selectedAvatar = btn.getAttribute('data-avatar') || '👑';
+          SoundEngine.select();
+          ProfileManager.syncHeaderAndFormUI();
+        });
+      });
+
+      const btnSaveProf = document.getElementById('btnSaveProfileStart');
+      if (btnSaveProf) {
+        btnSaveProf.addEventListener('click', () => {
+          const nameVal = (document.getElementById('inpProfileName').value || '').trim();
+          const titleVal = document.getElementById('selProfileTitle').value || 'Sardar';
+          const p2Val = (document.getElementById('inpProfileP2Name').value || '').trim() || 'Player 2';
+          if (!nameVal) {
+            SoundEngine.invalid();
+            showBoardToast('Please enter your Player Name to continue!');
+            document.getElementById('inpProfileName').focus();
+            return;
+          }
+          ProfileManager.save({
+            name: nameVal,
+            title: titleVal,
+            avatar: ProfileManager.selectedAvatar,
+            p2Name: p2Val
+          });
+          SoundEngine.victory();
+          ProfileManager.closeModal();
+          showBoardToast(`Welcome, ${ProfileManager.data.avatar} ${ProfileManager.data.name} (${ProfileManager.data.title})!`);
+        });
+      }
+
+      const btnDlBackup = document.getElementById('btnDownloadBackupFile');
+      if (btnDlBackup) {
+        btnDlBackup.addEventListener('click', () => {
+          if (!ProfileManager.hasProfile()) {
+            SoundEngine.invalid();
+            showBoardToast('Create & save a profile first before exporting a backup!');
+            return;
+          }
+          const bundle = ProfileManager.buildBackupBundle();
+          const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          const safeName = (ProfileManager.data.name || 'player').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+          const dateTag = new Date().toISOString().slice(0, 10);
+          a.href = url;
+          a.download = `katar-backup-${safeName}-${dateTag}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          const out = document.getElementById('txtBackupExportCode');
+          if (out) out.value = ProfileManager.encodeBackupToken();
+          SoundEngine.select();
+          showBoardToast('💾 Backup (.json) downloaded!');
+        });
+      }
+
+      const btnCopyBk = document.getElementById('btnCopyBackupCode');
+      if (btnCopyBk) {
+        btnCopyBk.addEventListener('click', () => {
+          if (!ProfileManager.hasProfile()) {
+            SoundEngine.invalid();
+            showBoardToast('Create & save a profile first before copying a backup code!');
+            return;
+          }
+          const code = ProfileManager.encodeBackupToken();
+          const out = document.getElementById('txtBackupExportCode');
+          if (out) out.value = code;
+          copyTextToClipboard(code, 'Backup Code');
+        });
+      }
+
+      const inpRestoreFile = document.getElementById('inpRestoreBackupFile');
+      if (inpRestoreFile) {
+        inpRestoreFile.addEventListener('change', (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              ProfileManager.restoreFromPayload(reader.result);
+              SoundEngine.victory();
+              ProfileManager.closeModal();
+              showBoardToast(`✅ Restored profile & data for ${ProfileManager.data.avatar} ${ProfileManager.data.name}!`);
+            } catch (err) {
+              SoundEngine.invalid();
+              showBoardToast(err.message || 'Failed to restore backup file.');
+            }
+            inpRestoreFile.value = '';
+          };
+          reader.readAsText(file);
+        });
+      }
+
+      const btnRestoreCode = document.getElementById('btnRestoreFromCode');
+      if (btnRestoreCode) {
+        btnRestoreCode.addEventListener('click', () => {
+          const raw = document.getElementById('txtBackupImportCode').value;
+          try {
+            ProfileManager.restoreFromPayload(raw);
+            SoundEngine.victory();
+            ProfileManager.closeModal();
+            showBoardToast(`✅ Restored profile & data for ${ProfileManager.data.avatar} ${ProfileManager.data.name}!`);
+          } catch (err) {
+            SoundEngine.invalid();
+            showBoardToast(err.message || 'Invalid backup code.');
+          }
+        });
+      }
+
       window.addEventListener('load', () => {
+        const hasExistingProfile = ProfileManager.load();
         WebRTCManager.initDeviceIdentity();
+        if (hasExistingProfile) {
+          ProfileManager.syncHeaderAndFormUI();
+        }
         applyGridPresetConfig('6x6');
         initMatch(false);
         checkAndRestoreSavedMatchOnLoad();
         resizeCanvas();
+        if (!hasExistingProfile) {
+          ProfileManager.openModal(true);
+        }
       });
     })();
   </script>
