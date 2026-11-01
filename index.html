@@ -797,6 +797,12 @@
       </div>
 
       <div id="mainMorrisRuleGroup" class="hidden flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
+        <button id="btnQuickMorrisDropOrder" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm" title="Toggle Bead Laying Order: Alternate 1-by-1 vs Lay All 9 Beads First Then Opponent Lays All 9">
+          🔄 1-by-1 Lay
+        </button>
+        <button id="btnQuickMorrisDropMill" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm" title="Toggle whether forming a full 3-in-a-row Katar is allowed during initial bead placement">
+          ⭐ Katar on Land: ON
+        </button>
         <button id="btnQuickMorrisKillAny" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm" title="Local Area Rule: Can kill and remove ANY opponent bead even in a 3-in-a-row line">
           🎯 Kill Any Bead
         </button>
@@ -1753,6 +1759,22 @@
             </div>
 
             <div>
+              <label for="selMorrisDropOrder" class="block text-xs font-extrabold text-walnut-900 mb-1">Navakankari Bead Laying Order</label>
+              <select id="selMorrisDropOrder" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-teal-900 focus:outline-none">
+                <option value="alternating" selected>Alternate 1 Bead Each Turn (Standard 1-by-1)</option>
+                <option value="all_at_once">Lay All Beads First, Then Opponent Lays All (No 3-Row Katar on Landing)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="selMorrisDropMillRule" class="block text-xs font-extrabold text-walnut-900 mb-1">3-in-a-Row Katar on First Landing</label>
+              <select id="selMorrisDropMillRule" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-amber-900 focus:outline-none">
+                <option value="allow_mill" selected>Allow 3-in-a-Row Katar on Initial Landing (Eat Immediately)</option>
+                <option value="forbid_mill">Disable 3-in-a-Row Katar on Landing (Cannot Form Line of 3 While Laying)</option>
+              </select>
+            </div>
+
+            <div>
               <label for="selDisconnectGrace" class="block text-xs font-extrabold text-walnut-900 mb-1">Player Leave / Disconnect Grace Time</label>
               <select id="selDisconnectGrace" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-rose-800 focus:outline-none">
                 <option value="15">15 Seconds Return Window</option>
@@ -2282,7 +2304,9 @@
         hasTriangularCamps: false,
         morrisDiagonals: false,
         morrisMillRemovalRule: 'any',
-        morrisFlyingRule: 'disabled',   // FIXED: Strictly disabled by default so AI/players NEVER move diagonally/off-line on last 3 beads!
+        morrisFlyingRule: 'disabled',
+        morrisDropOrder: 'alternating',
+        morrisDropMillRule: 'allow_mill',
         lastMove: null,
         diagonalMode: 'full',
         openCenterMode: 'four_open',
@@ -3191,16 +3215,28 @@
           return { allSteps: drops, allJumps: [], total: drops.length };
         }
 
-        // MORRIS: Drop phase while reserves > 0, then step phase
         if (GameState.gameFamily === 'morris') {
           const unplaced = reserves ? (reserves[player] || 0) : 0;
           if (unplaced > 0) {
-            const drops = [];
+            const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
+            const allEmptyDrops = [];
+            const nonMillDrops = [];
             for (let i = 0; i < Nodes.length; i++) {
               if (board[i] === 0) {
-                drops.push({ from: -1, to: i, type: 'drop' });
+                const act = { from: -1, to: i, type: 'drop' };
+                allEmptyDrops.push(act);
+                if (forbidLandingMill) {
+                  const sim = [...board];
+                  sim[i] = player;
+                  if (getMillsContainingNode(i, player, sim).length === 0) {
+                    nonMillDrops.push(act);
+                  }
+                }
               }
             }
+            const drops = forbidLandingMill
+              ? (nonMillDrops.length > 0 ? nonMillDrops : allEmptyDrops)
+              : allEmptyDrops;
             return { allSteps: drops, allJumps: [], total: drops.length };
           }
           const allSteps = [];
@@ -4234,6 +4270,8 @@
               stepDirection: GameState.stepDirection,
               morrisMillRemovalRule: GameState.morrisMillRemovalRule,
               morrisFlyingRule: GameState.morrisFlyingRule,
+              morrisDropOrder: GameState.morrisDropOrder,
+              morrisDropMillRule: GameState.morrisDropMillRule,
               damaKingMode: GameState.damaKingMode,
               pieceTheme: GameState.pieceTheme,
               boardSurface: GameState.boardSurface,
@@ -4323,6 +4361,8 @@
             if (s.stepDirection) GameState.stepDirection = s.stepDirection;
             if (s.morrisMillRemovalRule) GameState.morrisMillRemovalRule = s.morrisMillRemovalRule;
             if (s.morrisFlyingRule) GameState.morrisFlyingRule = s.morrisFlyingRule;
+            if (s.morrisDropOrder) GameState.morrisDropOrder = s.morrisDropOrder;
+            if (s.morrisDropMillRule) GameState.morrisDropMillRule = s.morrisDropMillRule;
             if (s.damaKingMode) GameState.damaKingMode = s.damaKingMode;
             if (s.turnTimerSeconds !== undefined) GameState.turnTimerSeconds = s.turnTimerSeconds;
             if (s.matchTimerSeconds !== undefined) GameState.matchTimerSeconds = s.matchTimerSeconds;
@@ -4581,6 +4621,24 @@
           }
 
           if (action.type === 'drop') {
+            const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
+            if (forbidLandingMill && !isRemote) {
+              const sim = [...GameState.board];
+              sim[action.to] = player;
+              if (getMillsContainingNode(action.to, player, sim).length > 0) {
+                const legalPool = getAllLegalActionsForPlayer(player).allSteps;
+                if (legalPool.some((d) => {
+                  const s2 = [...GameState.board];
+                  s2[d.to] = player;
+                  return getMillsContainingNode(d.to, player, s2).length === 0;
+                })) {
+                  SoundEngine.invalid();
+                  showBoardToast('3-in-a-Row Katar on landing is disabled! Place on another point.');
+                  return;
+                }
+              }
+            }
+
             GameState.board[action.to] = player;
             GameState.lastMove = { from: null, to: action.to, player, type: 'drop' };
             GameState.reserves[player] = Math.max(0, GameState.reserves[player] - 1);
@@ -4588,7 +4646,7 @@
             SoundEngine.move();
             appendMoveLog(`P${player} placed at ${Nodes[action.to].label || (action.to + 1)}`);
 
-            const mills = getMillsContainingNode(action.to, player);
+            const mills = forbidLandingMill ? [] : getMillsContainingNode(action.to, player);
             if (mills.length > 0 && getRemovableOpponentNodes(opponent).length > 0) {
               GameState.morrisPendingRemove = true;
               GameState.lastFormedMill = mills[0];
@@ -4615,6 +4673,28 @@
             }
 
             GameState.lastFormedMill = null;
+
+            if (GameState.morrisDropOrder === 'all_at_once' && GameState.reserves[player] > 0) {
+              resetTurnTimer();
+              saveLiveMatchSnapshot(false);
+              updateHUD();
+              requestRender();
+
+              if (!isRemote && WebRTCManager.isConnected()) {
+                WebRTCManager.send({
+                  type: 'MOVE_ACTION',
+                  action,
+                  continueChain: true,
+                  state: serializeGameState()
+                });
+              }
+
+              if (GameState.mode === 'pass_play' && GameState.vsAI && player === GameState.aiPlayerRole) {
+                setTimeout(runAITurn, 320);
+              }
+              return;
+            }
+
             finishTurnAndCheckWin(player, isRemote, action);
             return;
           }
@@ -5034,13 +5114,18 @@
 
           let score = Adjacency[m.to].size * 2 + Math.random() * 1.5;
 
+          const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
           const myMills = getMillsContainingNode(m.to, aiP, sim);
-          if (myMills.length > 0) score += 120 * myMills.length;
+          if (myMills.length > 0) {
+            score += (m.type === 'drop' && forbidLandingMill) ? -500 : (120 * myMills.length);
+          }
 
           const simOpp = [...GameState.board];
           simOpp[m.to] = humanP;
           const oppMills = getMillsContainingNode(m.to, humanP, simOpp);
-          if (oppMills.length > 0) score += 85 * oppMills.length;
+          if (oppMills.length > 0 && !(m.type === 'drop' && forbidLandingMill && GameState.reserves[humanP] > 0)) {
+            score += 85 * oppMills.length;
+          }
 
           if (diff === 'hard' || diff === 'hardest') {
             for (const line of MillLines) {
@@ -6397,6 +6482,15 @@
 
           if (GameState.reserves[GameState.currentTurn] > 0) {
             if (tappedOccupant === 0) {
+              const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
+              if (forbidLandingMill) {
+                const legalDrops = getAllLegalActionsForPlayer(GameState.currentTurn).allSteps;
+                if (legalDrops.length > 0 && !legalDrops.some((d) => d.to === closestId)) {
+                  SoundEngine.invalid();
+                  showBoardToast('3-in-a-Row Katar on landing is disabled in this mode! Pick another spot.');
+                  return;
+                }
+              }
               executeAction({ from: -1, to: closestId, type: 'drop' }, false);
             } else {
               SoundEngine.invalid();
@@ -6670,6 +6764,23 @@
             : 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-amber-400 shadow-sm';
         }
 
+        const btnDropOrder = document.getElementById('btnQuickMorrisDropOrder');
+        const btnDropMill = document.getElementById('btnQuickMorrisDropMill');
+        if (btnDropOrder) {
+          const isAllAtOnce = GameState.morrisDropOrder === 'all_at_once';
+          setResponsiveBtnIconText(btnDropOrder, isAllAtOnce ? '📦' : '🔄', isAllAtOnce ? `Lay All ${GameState.piecesPerPlayer} First` : '1-by-1 Lay');
+          btnDropOrder.className = isAllAtOnce
+            ? 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-600 text-white shadow-sm'
+            : 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm';
+        }
+        if (btnDropMill) {
+          const forbidMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
+          setResponsiveBtnIconText(btnDropMill, forbidMill ? '🚫' : '⭐', forbidMill ? 'No Katar on Land' : 'Katar on Land: ON');
+          btnDropMill.className = forbidMill
+            ? 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-600 text-white shadow-sm'
+            : 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
+        }
+
         const btnKillAny = document.getElementById('btnQuickMorrisKillAny');
         const btnProtectMills = document.getElementById('btnQuickMorrisProtectMills');
         if (btnKillAny && btnProtectMills) {
@@ -6769,6 +6880,18 @@
 
         const selFly = document.getElementById('selMorrisFlyingRule');
         if (selFly) selFly.value = GameState.morrisFlyingRule || 'disabled';
+
+        const selDropOrd = document.getElementById('selMorrisDropOrder');
+        if (selDropOrd) selDropOrd.value = GameState.morrisDropOrder || 'alternating';
+
+        const selDropMill = document.getElementById('selMorrisDropMillRule');
+        if (selDropMill) {
+          if (GameState.morrisDropOrder === 'all_at_once') {
+            GameState.morrisDropMillRule = 'forbid_mill';
+          }
+          selDropMill.value = GameState.morrisDropMillRule || 'allow_mill';
+          selDropMill.disabled = (GameState.morrisDropOrder === 'all_at_once');
+        }
 
         const selGrace = document.getElementById('selDisconnectGrace');
         if (selGrace) selGrace.value = String(GameState.disconnectGraceSeconds || 60);
@@ -7048,7 +7171,12 @@
               ? 'KATAR (Line of 3)! Tap ANY opponent bead to remove it (Area Rule)!'
               : 'KATAR (Line of 3)! Tap an opponent bead to remove it!';
           } else if (GameState.reserves[GameState.currentTurn] > 0) {
-            subtext.textContent = `Placement Phase: Tap any empty point to place a bead (${GameState.reserves[GameState.currentTurn]} in hand)`;
+            const noMillNote = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill')
+              ? ' • No 3-in-a-Row on Landing'
+              : ' • 3-in-a-Row Katar Allowed';
+            subtext.textContent = GameState.morrisDropOrder === 'all_at_once'
+              ? `Lay All Beads Phase: Place all ${GameState.reserves[GameState.currentTurn]} remaining bead(s) first${noMillNote}`
+              : `Placement Phase: Tap an empty point (${GameState.reserves[GameState.currentTurn]} in hand${noMillNote})`;
           } else if (isFlying) {
             subtext.textContent = '🕊️ Flying Phase Active (3 Beads Left)! Hop your bead to ANY vacant point on the board!';
           } else {
@@ -7171,6 +7299,8 @@
           lastFormedMill: GameState.lastFormedMill,
           morrisMillRemovalRule: GameState.morrisMillRemovalRule,
           morrisFlyingRule: GameState.morrisFlyingRule,
+          morrisDropOrder: GameState.morrisDropOrder,
+          morrisDropMillRule: GameState.morrisDropMillRule,
           lastMove: GameState.lastMove,
           moveLog: GameState.moveLog,
           gameOver: GameState.gameOver,
@@ -7235,6 +7365,8 @@
         GameState.lastFormedMill = remote.lastFormedMill || null;
         GameState.morrisMillRemovalRule = remote.morrisMillRemovalRule || 'any';
         GameState.morrisFlyingRule = remote.morrisFlyingRule || 'disabled';
+        GameState.morrisDropOrder = remote.morrisDropOrder || 'alternating';
+        GameState.morrisDropMillRule = remote.morrisDropMillRule || (GameState.morrisDropOrder === 'all_at_once' ? 'forbid_mill' : 'allow_mill');
         GameState.lastMove = remote.lastMove || null;
         GameState.moveLog = remote.moveLog ? [...remote.moveLog] : [];
         GameState.gameOver = Boolean(remote.gameOver);
@@ -9191,7 +9323,69 @@
         });
       });
 
-      // Wire Morris Strict Line vs Flying Rule Controls
+      const btnQuickDropOrder = document.getElementById('btnQuickMorrisDropOrder');
+      if (btnQuickDropOrder) {
+        btnQuickDropOrder.addEventListener('click', () => {
+          SoundEngine.select();
+          const nextOrder = GameState.morrisDropOrder === 'all_at_once' ? 'alternating' : 'all_at_once';
+          guardMidGameAction('Switch Bead Laying Order', () => {
+            GameState.morrisDropOrder = nextOrder;
+            if (nextOrder === 'all_at_once') {
+              GameState.morrisDropMillRule = 'forbid_mill';
+            } else {
+              GameState.morrisDropMillRule = 'allow_mill';
+            }
+            initMatch(true);
+            showBoardToast(
+              nextOrder === 'all_at_once'
+                ? `📦 Lay All ${GameState.piecesPerPlayer} Beads First (3-in-a-Row Katar disabled on landing)`
+                : '🔄 1-by-1 Alternating Bead Placement (3-in-a-Row Katar allowed on landing)'
+            );
+          });
+        });
+      }
+
+      const btnQuickDropMill = document.getElementById('btnQuickMorrisDropMill');
+      if (btnQuickDropMill) {
+        btnQuickDropMill.addEventListener('click', () => {
+          if (GameState.morrisDropOrder === 'all_at_once') {
+            SoundEngine.invalid();
+            showBoardToast('In "Lay All First" mode, 3-in-a-row Katar on landing is always disabled!');
+            return;
+          }
+          SoundEngine.select();
+          GameState.morrisDropMillRule = GameState.morrisDropMillRule === 'forbid_mill' ? 'allow_mill' : 'forbid_mill';
+          syncSettingsControlsFromState();
+          updateHUD();
+          showBoardToast(
+            GameState.morrisDropMillRule === 'forbid_mill'
+              ? '🚫 3-in-a-Row Katar Disabled on Initial Landing (Wait until Move Phase)'
+              : '⭐ 3-in-a-Row Katar Allowed on Initial Landing!'
+          );
+        });
+      }
+
+      const selMorrisDropOrd = document.getElementById('selMorrisDropOrder');
+      if (selMorrisDropOrd) {
+        selMorrisDropOrd.addEventListener('change', (e) => {
+          GameState.morrisDropOrder = e.target.value;
+          if (GameState.morrisDropOrder === 'all_at_once') {
+            GameState.morrisDropMillRule = 'forbid_mill';
+          }
+          syncSettingsControlsFromState();
+          updateHUD();
+        });
+      }
+
+      const selMorrisDropMill = document.getElementById('selMorrisDropMillRule');
+      if (selMorrisDropMill) {
+        selMorrisDropMill.addEventListener('change', (e) => {
+          GameState.morrisDropMillRule = GameState.morrisDropOrder === 'all_at_once' ? 'forbid_mill' : e.target.value;
+          syncSettingsControlsFromState();
+          updateHUD();
+        });
+      }
+
       const btnQuickLineRule = document.getElementById('btnQuickMorrisLineRule');
       if (btnQuickLineRule) {
         btnQuickLineRule.addEventListener('click', () => {
@@ -9566,7 +9760,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v7').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v8').catch(() => {});
         });
       }
 
