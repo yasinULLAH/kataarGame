@@ -556,11 +556,18 @@
       background: rgba(20, 11, 5, 0.85) !important;
       border-color: rgba(251, 191, 36, 0.45) !important;
     }
-    /* Prevent auto-dim from disabling clicks when hovering dock */
     .imm-dock:hover,
     .imm-top:hover {
       opacity: 1 !important;
       pointer-events: auto !important;
+    }
+    body.bars-collapsed #gameRibbon,
+    body.bars-collapsed #modeBar {
+      display: none !important;
+    }
+    body.bars-collapsed #appHeader {
+      padding-top: 2px !important;
+      padding-bottom: 2px !important;
     }
   </style>
 </head>
@@ -665,6 +672,13 @@
           <line x1="23" y1="9" x2="17" y2="15" />
           <line x1="17" y1="9" x2="23" y2="15" />
         </svg>
+      </button>
+
+      <button id="btnToggleTopBars" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-100 to-parchment-300 hover:from-white hover:to-parchment-200 text-walnut-900 border border-parchment-400 shadow-[0_2px_0_#B8976C] sm:shadow-[0_3px_0_#B8976C]" aria-label="Collapse or Expand Game &amp; Config Bars" title="Collapse / Expand Game &amp; Configuration Bars">
+        <svg id="iconBarsCollapse" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-walnut-900 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="18 15 12 9 6 15" />
+        </svg>
+        <span id="lblBarsToggle" class="hidden md:inline text-[11px]">Hide Bars</span>
       </button>
     </div>
   </header>
@@ -4520,18 +4534,127 @@
         }
       }
 
-      function saveLiveMatchSnapshot() {
+      function savePersistentPrefs() {
         try {
-          SafeStorage.removeItem('katar_live_match_v3');
+          const prefs = {
+            gridPreset: GameState.gridPreset,
+            gameFamily: GameState.gameFamily,
+            morrisVariant: GameState.morrisVariant,
+            morrisDiagonals: GameState.morrisDiagonals,
+            rows: GameState.rows,
+            cols: GameState.cols,
+            hasTriangularCamps: GameState.hasTriangularCamps,
+            diagonalMode: GameState.diagonalMode,
+            openCenterMode: GameState.openCenterMode,
+            reserveMode: GameState.reserveMode,
+            piecesPerPlayer: GameState.piecesPerPlayer,
+            chainRule: GameState.chainRule,
+            mandatoryCapture: GameState.mandatoryCapture,
+            stepDirection: GameState.stepDirection,
+            morrisMillRemovalRule: GameState.morrisMillRemovalRule,
+            morrisFlyingRule: GameState.morrisFlyingRule,
+            morrisDropOrder: GameState.morrisDropOrder,
+            morrisDropMillRule: GameState.morrisDropMillRule,
+            damaKingMode: GameState.damaKingMode,
+            tigerCaptureTarget: GameState.tigerCaptureTarget,
+            firstTurnSetting: GameState.firstTurnSetting,
+            turnTimerSeconds: GameState.turnTimerSeconds,
+            matchTimerSeconds: GameState.matchTimerSeconds,
+            disconnectGraceSeconds: GameState.disconnectGraceSeconds,
+            pieceTheme: GameState.pieceTheme,
+            boardSurface: GameState.boardSurface,
+            nodeLabels: GameState.nodeLabels,
+            showGuides: GameState.showGuides,
+            aiDifficulty: GameState.aiDifficulty,
+            vsAI: GameState.vsAI,
+            aiPlayerRole: GameState.aiPlayerRole,
+            autoRotate: GameState.autoRotate,
+            lockSettingsMidGame: GameState.lockSettingsMidGame
+          };
+          SafeStorage.setItem('katar_user_prefs_v1', JSON.stringify(prefs));
+        } catch (err) {}
+      }
+
+      function loadPersistentPrefs() {
+        try {
+          const raw = SafeStorage.getItem('katar_user_prefs_v1');
+          if (!raw) return false;
+          const p = JSON.parse(raw);
+          if (!p || !p.gridPreset) return false;
+          applyGridPresetConfig(p.gridPreset);
+          if (p.rows) GameState.rows = p.rows;
+          if (p.cols) GameState.cols = p.cols;
+          if (p.hasTriangularCamps !== undefined) GameState.hasTriangularCamps = Boolean(p.hasTriangularCamps);
+          if (p.diagonalMode) GameState.diagonalMode = p.diagonalMode;
+          if (p.openCenterMode) GameState.openCenterMode = p.openCenterMode;
+          if (p.reserveMode) GameState.reserveMode = p.reserveMode;
+          if (p.piecesPerPlayer) GameState.piecesPerPlayer = p.piecesPerPlayer;
+          if (p.chainRule) GameState.chainRule = p.chainRule;
+          if (p.mandatoryCapture) GameState.mandatoryCapture = p.mandatoryCapture;
+          if (p.stepDirection) GameState.stepDirection = p.stepDirection;
+          if (p.morrisMillRemovalRule) GameState.morrisMillRemovalRule = p.morrisMillRemovalRule;
+          if (p.morrisFlyingRule) GameState.morrisFlyingRule = p.morrisFlyingRule;
+          if (p.morrisDropOrder) GameState.morrisDropOrder = p.morrisDropOrder;
+          if (p.morrisDropMillRule) GameState.morrisDropMillRule = p.morrisDropMillRule;
+          if (p.damaKingMode) GameState.damaKingMode = p.damaKingMode;
+          if (p.tigerCaptureTarget) GameState.tigerCaptureTarget = p.tigerCaptureTarget;
+          if (p.firstTurnSetting) GameState.firstTurnSetting = p.firstTurnSetting;
+          if (p.turnTimerSeconds !== undefined) GameState.turnTimerSeconds = p.turnTimerSeconds;
+          if (p.matchTimerSeconds !== undefined) GameState.matchTimerSeconds = p.matchTimerSeconds;
+          if (p.disconnectGraceSeconds !== undefined) GameState.disconnectGraceSeconds = p.disconnectGraceSeconds;
+          if (p.pieceTheme) GameState.pieceTheme = p.pieceTheme;
+          if (p.boardSurface) GameState.boardSurface = p.boardSurface;
+          if (p.nodeLabels) GameState.nodeLabels = p.nodeLabels;
+          if (p.showGuides !== undefined) GameState.showGuides = Boolean(p.showGuides);
+          if (p.aiDifficulty) GameState.aiDifficulty = p.aiDifficulty;
+          if (p.vsAI !== undefined) GameState.vsAI = Boolean(p.vsAI);
+          if (p.aiPlayerRole) GameState.aiPlayerRole = p.aiPlayerRole;
+          if (p.autoRotate !== undefined) GameState.autoRotate = Boolean(p.autoRotate);
+          if (p.lockSettingsMidGame !== undefined) GameState.lockSettingsMidGame = Boolean(p.lockSettingsMidGame);
+          return true;
+        } catch (err) {
+          return false;
+        }
+      }
+
+      function saveLiveMatchSnapshot(isAwayGrace = false, absentPlayer = null) {
+        savePersistentPrefs();
+        try {
+          if (GameState.gameOver) {
+            SafeStorage.removeItem('katar_live_match_v3');
+            return;
+          }
+          const snap = {
+            savedAt: Date.now(),
+            isAwayGrace: Boolean(isAwayGrace),
+            absentPlayer: absentPlayer || null,
+            vsAI: GameState.vsAI,
+            aiDifficulty: GameState.aiDifficulty,
+            aiPlayerRole: GameState.aiPlayerRole,
+            state: serializeGameState()
+          };
+          SafeStorage.setItem('katar_live_match_v3', JSON.stringify(snap));
         } catch (err) {}
       }
 
       function checkAndRestoreSavedMatchOnLoad() {
-        try {
-          SafeStorage.removeItem('katar_live_match_v3');
-        } catch (err) {}
         updateStashedMatchButtonUI();
-        return false;
+        try {
+          const raw = SafeStorage.getItem('katar_live_match_v3');
+          if (!raw) return false;
+          const snap = JSON.parse(raw);
+          if (!snap || !snap.state || snap.state.gameOver) return false;
+          if (snap.vsAI !== undefined) GameState.vsAI = Boolean(snap.vsAI);
+          if (snap.aiDifficulty) GameState.aiDifficulty = snap.aiDifficulty;
+          if (snap.aiPlayerRole) GameState.aiPlayerRole = snap.aiPlayerRole;
+          applyRemoteGameState(snap.state);
+          if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
+            setTimeout(runAITurn, 480);
+          }
+          return true;
+        } catch (err) {
+          return false;
+        }
       }
 
       function recordSessionOutcome(winner) {
@@ -5103,6 +5226,272 @@
       /* -------------------------------------------------------------------
        * 7. 4-TIER AI ENGINE FOR ALL 14+ GAMES
        * ------------------------------------------------------------------- */
+      function scoreMorrisRemovalTarget(cid, board, aiP, humanP) {
+        let score = Adjacency[cid].size * 12;
+        let oppTwoConfigs = 0;
+        let blockedAiTwoConfigs = 0;
+
+        for (const line of MillLines) {
+          if (!line.includes(cid)) continue;
+          let oppC = 0, aiC = 0, empC = 0;
+          for (const id of line) {
+            if (board[id] === humanP) oppC++;
+            else if (board[id] === aiP) aiC++;
+            else empC++;
+          }
+          if (oppC === 3) {
+            score += 240;
+          } else if (oppC === 2 && empC === 1) {
+            oppTwoConfigs++;
+            const empId = line.find((id) => board[id] === 0);
+            const canCloseNext = Array.from(Adjacency[empId]).some((nb) => !line.includes(nb) && board[nb] === humanP);
+            score += canCloseNext ? 195 : 115;
+          } else if (aiC === 2 && oppC === 1) {
+            blockedAiTwoConfigs++;
+            const otherAi = line.filter((id) => id !== cid);
+            const canAiSlideIn = Array.from(Adjacency[cid]).some((nb) => !otherAi.includes(nb) && board[nb] === aiP);
+            score += canAiSlideIn ? 185 : 105;
+          } else if (oppC === 2 && aiC === 1) {
+            score -= 35;
+          }
+        }
+        if (oppTwoConfigs >= 2) score += 260;
+        if (blockedAiTwoConfigs >= 1 && oppTwoConfigs >= 1) score += 170;
+
+        for (const nb of Adjacency[cid]) {
+          if (board[nb] === humanP) score += 8;
+          if (board[nb] === aiP) score += 10;
+        }
+        return score;
+      }
+
+      function pickBestMorrisRemoval(board, aiP, humanP) {
+        const candidates = getRemovableOpponentNodes(humanP, board);
+        if (candidates.length === 0) return -1;
+        let bestId = candidates[0];
+        let bestScore = -Infinity;
+        for (const cid of candidates) {
+          const sc = scoreMorrisRemovalTarget(cid, board, aiP, humanP);
+          if (sc > bestScore) {
+            bestScore = sc;
+            bestId = cid;
+          }
+        }
+        return bestId;
+      }
+
+      function evaluateMorrisBoardState(board, res1, res2, aiP, humanP) {
+        const res = { 1: res1, 2: res2 };
+        const aiTotal = countPlayerTotalPieces(aiP, board, res);
+        const hmTotal = countPlayerTotalPieces(humanP, board, res);
+
+        if (hmTotal <= 2) return 95000;
+        if (aiTotal <= 2) return -95000;
+
+        let score = (aiTotal - hmTotal) * 380;
+
+        let aiMills = 0, hmMills = 0;
+        let aiOpenTwo = 0, hmOpenTwo = 0;
+        let aiReadyStepMill = 0, hmReadyStepMill = 0;
+        let aiBlockedTwo = 0, hmBlockedTwo = 0;
+        const aiTwoNodes = new Array(Nodes.length).fill(0);
+        const hmTwoNodes = new Array(Nodes.length).fill(0);
+
+        for (const line of MillLines) {
+          let a = 0, h = 0, e = 0, empNode = -1;
+          for (const id of line) {
+            const v = board[id];
+            if (v === aiP) a++;
+            else if (v === humanP) h++;
+            else { e++; empNode = id; }
+          }
+          if (a === 3) {
+            aiMills++;
+            for (const id of line) {
+              for (const nb of Adjacency[id]) {
+                if (!line.includes(nb) && board[nb] === 0) score += 26;
+              }
+            }
+          } else if (h === 3) {
+            hmMills++;
+            for (const id of line) {
+              for (const nb of Adjacency[id]) {
+                if (!line.includes(nb) && board[nb] === 0) score -= 28;
+              }
+            }
+          } else if (a === 2 && e === 1) {
+            aiOpenTwo++;
+            for (const id of line) if (board[id] === aiP) aiTwoNodes[id]++;
+            if (res[aiP] > 0) {
+              score += 75;
+            } else {
+              const ready = Array.from(Adjacency[empNode]).some((nb) => !line.includes(nb) && board[nb] === aiP);
+              if (ready) aiReadyStepMill++;
+            }
+          } else if (h === 2 && e === 1) {
+            hmOpenTwo++;
+            for (const id of line) if (board[id] === humanP) hmTwoNodes[id]++;
+            if (res[humanP] > 0) {
+              score -= 82;
+            } else {
+              const ready = Array.from(Adjacency[empNode]).some((nb) => !line.includes(nb) && board[nb] === humanP);
+              if (ready) hmReadyStepMill++;
+            }
+          } else if (a === 2 && h === 1) {
+            hmBlockedTwo++;
+          } else if (h === 2 && a === 1) {
+            aiBlockedTwo++;
+          }
+        }
+
+        let aiForks = 0, hmForks = 0;
+        for (let i = 0; i < Nodes.length; i++) {
+          if (aiTwoNodes[i] >= 2) aiForks++;
+          if (hmTwoNodes[i] >= 2) hmForks++;
+          if (board[i] === aiP) score += Adjacency[i].size * 6;
+          else if (board[i] === humanP) score -= Adjacency[i].size * 6;
+        }
+
+        score += (aiMills - hmMills) * 190;
+        score += (aiOpenTwo - hmOpenTwo) * 68;
+        score += (aiReadyStepMill - hmReadyStepMill) * 145;
+        score += (aiForks - hmForks) * 165;
+        score += (aiBlockedTwo - hmBlockedTwo) * 42;
+
+        if (res[1] === 0 && res[2] === 0) {
+          let aiMob = 0, hmMob = 0;
+          for (let i = 0; i < Nodes.length; i++) {
+            if (board[i] === aiP) {
+              for (const nb of Adjacency[i]) if (board[nb] === 0) aiMob++;
+            } else if (board[i] === humanP) {
+              for (const nb of Adjacency[i]) if (board[nb] === 0) hmMob++;
+            }
+          }
+          if (hmMob === 0 && GameState.morrisFlyingRule !== 'enabled') return 90000;
+          if (aiMob === 0 && GameState.morrisFlyingRule !== 'enabled') return -90000;
+          score += (aiMob - hmMob) * 18;
+        }
+
+        return score;
+      }
+
+      function simulateMorrisStep(board, res1, res2, move, player, aiP, humanP) {
+        const nextBoard = [...board];
+        let nRes1 = res1, nRes2 = res2;
+
+        if (move.type === 'drop') {
+          nextBoard[move.to] = player;
+          if (player === 1) nRes1 = Math.max(0, nRes1 - 1);
+          else nRes2 = Math.max(0, nRes2 - 1);
+        } else {
+          nextBoard[move.from] = 0;
+          nextBoard[move.to] = player;
+        }
+
+        const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
+        const mills = (move.type === 'drop' && forbidLandingMill) ? [] : getMillsContainingNode(move.to, player, nextBoard);
+        if (mills.length > 0) {
+          const opp = player === 1 ? 2 : 1;
+          const victim = pickBestMorrisRemoval(nextBoard, player, opp);
+          if (victim !== -1) {
+            nextBoard[victim] = 0;
+          }
+        }
+        return { board: nextBoard, res1: nRes1, res2: nRes2, formedMill: mills.length > 0 };
+      }
+
+      function orderMorrisMoves(moves, board, player, opp, res1, res2) {
+        const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
+        const scored = [];
+        for (const m of moves) {
+          if (m.type === 'step' && GameState.morrisFlyingRule !== 'enabled' && !Adjacency[m.from].has(m.to)) {
+            continue;
+          }
+          let priority = Adjacency[m.to].size * 10;
+          const sim = [...board];
+          if (m.type === 'step') sim[m.from] = 0;
+          sim[m.to] = player;
+
+          const myMills = getMillsContainingNode(m.to, player, sim);
+          if (myMills.length > 0) {
+            priority += (m.type === 'drop' && forbidLandingMill) ? -2000 : 1200;
+          }
+
+          const simOpp = [...board];
+          simOpp[m.to] = opp;
+          const oppMills = getMillsContainingNode(m.to, opp, simOpp);
+          if (oppMills.length > 0 && !(m.type === 'drop' && forbidLandingMill && (opp === 1 ? res1 : res2) > 0)) {
+            priority += 950;
+          }
+
+          for (const line of MillLines) {
+            if (line.includes(m.to)) {
+              let pC = 0, oC = 0, eC = 0;
+              for (const id of line) {
+                if (sim[id] === player) pC++;
+                else if (sim[id] === opp) oC++;
+                else eC++;
+              }
+              if (pC === 2 && eC === 1) priority += 160;
+              if (oC === 2 && pC === 1) priority += 190;
+            }
+          }
+          scored.push({ move: m, priority });
+        }
+        scored.sort((a, b) => b.priority - a.priority);
+        return scored.map((s) => s.move);
+      }
+
+      function minimaxMorris(board, res1, res2, depth, alpha, beta, turnPlayer, aiP, humanP) {
+        const res = { 1: res1, 2: res2 };
+        const aiTotal = countPlayerTotalPieces(aiP, board, res);
+        const hmTotal = countPlayerTotalPieces(humanP, board, res);
+        if (hmTotal <= 2) return 95000 + depth * 200;
+        if (aiTotal <= 2) return -95000 - depth * 200;
+        if (depth <= 0) {
+          return evaluateMorrisBoardState(board, res1, res2, aiP, humanP);
+        }
+
+        const rawMoves = getAllLegalActionsForPlayer(turnPlayer, board, res).allSteps;
+        if (rawMoves.length === 0) {
+          return turnPlayer === aiP ? (-90000 - depth * 150) : (90000 + depth * 150);
+        }
+
+        const opp = turnPlayer === 1 ? 2 : 1;
+        const ordered = orderMorrisMoves(rawMoves, board, turnPlayer, opp, res1, res2);
+        const branchCap = depth >= 3 ? 12 : 10;
+        const pool = ordered.slice(0, branchCap);
+
+        const isMax = (turnPlayer === aiP);
+        if (isMax) {
+          let maxEval = -Infinity;
+          for (const mv of pool) {
+            const next = simulateMorrisStep(board, res1, res2, mv, turnPlayer, aiP, humanP);
+            const nextTurn = (GameState.morrisDropOrder === 'all_at_once' && (turnPlayer === 1 ? next.res1 : next.res2) > 0)
+              ? turnPlayer
+              : opp;
+            const ev = minimaxMorris(next.board, next.res1, next.res2, depth - 1, alpha, beta, nextTurn, aiP, humanP);
+            if (ev > maxEval) maxEval = ev;
+            if (ev > alpha) alpha = ev;
+            if (beta <= alpha) break;
+          }
+          return maxEval;
+        } else {
+          let minEval = Infinity;
+          for (const mv of pool) {
+            const next = simulateMorrisStep(board, res1, res2, mv, turnPlayer, aiP, humanP);
+            const nextTurn = (GameState.morrisDropOrder === 'all_at_once' && (turnPlayer === 1 ? next.res1 : next.res2) > 0)
+              ? turnPlayer
+              : opp;
+            const ev = minimaxMorris(next.board, next.res1, next.res2, depth - 1, alpha, beta, nextTurn, aiP, humanP);
+            if (ev < minEval) minEval = ev;
+            if (ev < beta) beta = ev;
+            if (beta <= alpha) break;
+          }
+          return minEval;
+        }
+      }
+
       function runNavakankariAI() {
         const aiP = GameState.aiPlayerRole || 2;
         const humanP = aiP === 1 ? 2 : 1;
@@ -5119,20 +5508,38 @@
             executeAction({ type: 'remove_opponent', capturedId: pick }, false);
             return;
           }
-          let bestRem = candidates[0];
-          let bestScore = -999;
-          for (const cid of candidates) {
-            let threatCount = Adjacency[cid].size;
-            for (const line of MillLines) {
-              if (line.includes(cid)) {
-                const oppInLine = line.filter((id) => GameState.board[id] === humanP).length;
-                const emptyInLine = line.filter((id) => GameState.board[id] === 0).length;
-                if (oppInLine === 3) threatCount += 65;
-                else if (oppInLine === 2 && emptyInLine === 1) threatCount += 20;
-              }
+          if (diff === 'medium') {
+            if (Math.random() < 0.35) {
+              const pick = candidates[Math.floor(Math.random() * candidates.length)];
+              executeAction({ type: 'remove_opponent', capturedId: pick }, false);
+              return;
             }
-            if (threatCount > bestScore) {
-              bestScore = threatCount;
+            const bestMid = pickBestMorrisRemoval(GameState.board, aiP, humanP);
+            executeAction({ type: 'remove_opponent', capturedId: bestMid !== -1 ? bestMid : candidates[0] }, false);
+            return;
+          }
+
+          let bestRem = candidates[0];
+          let bestVal = -Infinity;
+          for (const cid of candidates) {
+            const simBoard = [...GameState.board];
+            simBoard[cid] = 0;
+            const immediateScore = scoreMorrisRemovalTarget(cid, GameState.board, aiP, humanP);
+            const lookDepth = diff === 'hardest' ? 2 : 1;
+            const futureVal = minimaxMorris(
+              simBoard,
+              GameState.reserves[1],
+              GameState.reserves[2],
+              lookDepth,
+              -Infinity,
+              Infinity,
+              humanP,
+              aiP,
+              humanP
+            );
+            const total = immediateScore * 2.5 + futureVal;
+            if (total > bestVal) {
+              bestVal = total;
               bestRem = cid;
             }
           }
@@ -5143,65 +5550,71 @@
         const { allSteps } = getAllLegalActionsForPlayer(aiP);
         if (allSteps.length === 0) return;
 
+        const orderedMoves = orderMorrisMoves(allSteps, GameState.board, aiP, humanP, GameState.reserves[1], GameState.reserves[2]);
+        if (orderedMoves.length === 0) return;
+
         if (diff === 'easy') {
-          const pick = allSteps[Math.floor(Math.random() * allSteps.length)];
-          executeAction(pick, false);
+          if (Math.random() < 0.72) {
+            executeAction(allSteps[Math.floor(Math.random() * allSteps.length)], false);
+          } else {
+            executeAction(orderedMoves[0], false);
+          }
           return;
         }
 
-        let bestMove = allSteps[0];
-        let bestScore = -99999;
-
-        for (const m of allSteps) {
-          // Strict guarantee: if this is a step and morrisFlyingRule is disabled, verify it is strictly on an adjacent connected line
-          if (m.type === 'step' && GameState.morrisFlyingRule !== 'enabled' && !Adjacency[m.from].has(m.to)) {
-            continue;
+        if (diff === 'medium') {
+          if (Math.random() < 0.32 && orderedMoves.length > 1) {
+            const pool = orderedMoves.slice(0, Math.min(4, orderedMoves.length));
+            executeAction(pool[Math.floor(Math.random() * pool.length)], false);
+            return;
           }
-          const sim = [...GameState.board];
-          if (m.type === 'step') sim[m.from] = 0;
-          sim[m.to] = aiP;
-
-          let score = Adjacency[m.to].size * 2 + Math.random() * 1.5;
-
-          const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
-          const myMills = getMillsContainingNode(m.to, aiP, sim);
-          if (myMills.length > 0) {
-            score += (m.type === 'drop' && forbidLandingMill) ? -500 : (120 * myMills.length);
-          }
-
-          const simOpp = [...GameState.board];
-          simOpp[m.to] = humanP;
-          const oppMills = getMillsContainingNode(m.to, humanP, simOpp);
-          if (oppMills.length > 0 && !(m.type === 'drop' && forbidLandingMill && GameState.reserves[humanP] > 0)) {
-            score += 85 * oppMills.length;
-          }
-
-          if (diff === 'hard' || diff === 'hardest') {
-            for (const line of MillLines) {
-              if (line.includes(m.to)) {
-                const myC = line.filter((id) => sim[id] === aiP).length;
-                const emp = line.filter((id) => sim[id] === 0).length;
-                if (myC === 2 && emp === 1) score += 18;
-              }
-            }
-            if (m.type === 'step') {
-              const oppNext = getAllLegalActionsForPlayer(humanP, sim, GameState.reserves).allSteps;
-              for (const opm of oppNext) {
-                const sim2 = [...sim];
-                if (opm.type === 'step') sim2[opm.from] = 0;
-                sim2[opm.to] = humanP;
-                if (getMillsContainingNode(opm.to, humanP, sim2).length > 0) {
-                  score -= 65;
-                  break;
-                }
-              }
+          let bestMed = orderedMoves[0];
+          let bestMedScore = -Infinity;
+          for (const mv of orderedMoves.slice(0, 10)) {
+            const sim = simulateMorrisStep(GameState.board, GameState.reserves[1], GameState.reserves[2], mv, aiP, aiP, humanP);
+            const val = evaluateMorrisBoardState(sim.board, sim.res1, sim.res2, aiP, humanP) + (Math.random() * 45 - 22);
+            if (val > bestMedScore) {
+              bestMedScore = val;
+              bestMed = mv;
             }
           }
+          executeAction(bestMed, false);
+          return;
+        }
 
-          if (score > bestScore) {
-            bestScore = score;
-            bestMove = m;
+        const isPlacement = GameState.reserves[aiP] > 0;
+        const searchDepth = diff === 'hardest'
+          ? (isPlacement ? 4 : (orderedMoves.length > 18 ? 3 : 4))
+          : (isPlacement ? 3 : 3);
+
+        let bestMove = orderedMoves[0];
+        let bestVal = -Infinity;
+        let alpha = -Infinity;
+        const beta = Infinity;
+        const topCandidates = orderedMoves.slice(0, diff === 'hardest' ? 16 : 12);
+
+        for (const mv of topCandidates) {
+          const next = simulateMorrisStep(GameState.board, GameState.reserves[1], GameState.reserves[2], mv, aiP, aiP, humanP);
+          const nextTurn = (GameState.morrisDropOrder === 'all_at_once' && (aiP === 1 ? next.res1 : next.res2) > 0)
+            ? aiP
+            : humanP;
+          const millBonus = next.formedMill ? 140 : 0;
+          const val = millBonus + minimaxMorris(
+            next.board,
+            next.res1,
+            next.res2,
+            searchDepth - 1,
+            alpha,
+            beta,
+            nextTurn,
+            aiP,
+            humanP
+          );
+          if (val > bestVal) {
+            bestVal = val;
+            bestMove = mv;
           }
+          if (val > alpha) alpha = val;
         }
 
         executeAction(bestMove, false);
@@ -8503,6 +8916,7 @@
       });
 
       function syncRulesToPeer() {
+        savePersistentPrefs();
         if (WebRTCManager.isConnected()) {
           WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState() });
         }
@@ -10059,7 +10473,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v14').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v15').catch(() => {});
         });
       }
 
@@ -10527,13 +10941,43 @@
         }
       };
 
+      function applyTopBarsCollapseState(collapsed) {
+        document.body.classList.toggle('bars-collapsed', Boolean(collapsed));
+        const icon = document.getElementById('iconBarsCollapse');
+        const lbl = document.getElementById('lblBarsToggle');
+        if (icon) {
+          icon.style.transform = collapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+        if (lbl) {
+          lbl.textContent = collapsed ? 'Show Bars' : 'Hide Bars';
+        }
+        SafeStorage.setItem('katar_top_bars_collapsed_v1', collapsed ? '1' : '0');
+        [20, 100].forEach((ms) => setTimeout(resizeCanvas, ms));
+      }
+
+      const btnToggleBars = document.getElementById('btnToggleTopBars');
+      if (btnToggleBars) {
+        btnToggleBars.addEventListener('click', () => {
+          SoundEngine.select();
+          const nextCollapsed = !document.body.classList.contains('bars-collapsed');
+          applyTopBarsCollapseState(nextCollapsed);
+          showBoardToast(nextCollapsed ? 'Top bars collapsed for maximum board space' : 'Game & configuration bars expanded');
+        });
+      }
+
       window.addEventListener('load', () => {
         const hasExistingProfile = ProfileManager.load();
         WebRTCManager.initDeviceIdentity();
         if (hasExistingProfile) {
           ProfileManager.syncHeaderAndFormUI();
         }
-        applyGridPresetConfig('6x6');
+        const savedBarsCollapsed = SafeStorage.getItem('katar_top_bars_collapsed_v1') === '1';
+        applyTopBarsCollapseState(savedBarsCollapsed);
+
+        const hadSavedPrefs = loadPersistentPrefs();
+        if (!hadSavedPrefs) {
+          applyGridPresetConfig('6x6');
+        }
         initMatch(false);
         checkAndRestoreSavedMatchOnLoad();
         resizeCanvas();
