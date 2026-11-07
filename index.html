@@ -5002,6 +5002,9 @@
           return { type: 'remove_opponent', capturedId: cid };
         }
 
+        // While a mill capture is pending, the ONLY legal packet is remove_opponent.
+        if (GameState.morrisPendingRemove) return null;
+
         if (action.type === 'drop') {
           const to = Number(action.to);
           if (!validNode(to) || board[to] !== 0) return null;
@@ -5016,6 +5019,12 @@
           if (!validNode(from) || !validNode(to)) return null;
           if (board[from] !== player || board[to] !== 0) return null;
 
+          // Mid-chain the turn is bound to the piece that just captured.
+          if (GameState.chainJumpingNode !== null || GameState.chainCount > 0) {
+            if (action.type !== 'jump') return null;
+            if (GameState.chainJumpingNode !== null && from !== GameState.chainJumpingNode) return null;
+          }
+
           const pool = getAllLegalActionsForPlayer(player);
           const all = pool.allSteps.concat(pool.allJumps);
           const match = all.find((a) => a.type === action.type && a.from === from && a.to === to);
@@ -5023,22 +5032,29 @@
 
           if (action.type !== 'jump') return { ...match };
 
-          const legalCaptures = getActionCaptureIds(match);
+          const result = { ...match };
+          let legalCaptures = getActionCaptureIds(match);
+
+          // Fanorona approach/withdrawal ambiguity: the peer must pick one mode,
+          // and the claimed captures must belong to THAT mode (not the default list).
+          if (match.captureMode === 'both') {
+            const mode = (action.captureMode === 'withdrawal') ? 'withdrawal' : 'approach';
+            const chosen = mode === 'approach' ? (match.approachIds || []) : (match.withdrawalIds || []);
+            if (chosen.length === 0) return null;
+            result.captureMode = mode;
+            result.capturedId = chosen[0];
+            result.capturedIds = chosen.slice();
+            delete result.approachIds;
+            delete result.withdrawalIds;
+            legalCaptures = chosen.slice();
+          }
+
           const claimedCaptures = getActionCaptureIds(action);
           if (claimedCaptures.length > 0) {
             for (const cid of claimedCaptures) {
               if (!validNode(cid) || board[cid] !== opponent) return null;
               if (!legalCaptures.includes(cid)) return null;
             }
-          }
-
-          const result = { ...match };
-          if (match.captureMode === 'both' && (action.captureMode === 'approach' || action.captureMode === 'withdrawal')) {
-            const chosen = action.captureMode === 'approach' ? (match.approachIds || []) : (match.withdrawalIds || []);
-            if (chosen.length === 0) return null;
-            result.captureMode = action.captureMode;
-            result.capturedId = chosen[0];
-            result.capturedIds = chosen.slice();
           }
           return result;
         }
