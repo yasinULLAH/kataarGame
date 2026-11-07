@@ -3769,7 +3769,16 @@
           : maxOnBoardPerSide;
       }
 
-      function initMatch(broadcast = false) {
+      function initMatch(broadcast = false, asRemote = false) {
+        if (GameState.mode === 'webrtc' && GameState.localPlayerRole === 2 && !asRemote) {
+          if (WebRTCManager.isConnected()) {
+            WebRTCManager.send(WebRTCManager.roomCode
+              ? { type: 'REMATCH_REQUEST' }
+              : { type: 'REQUEST_RESYNC', reason: 'guest-initMatch' });
+          }
+          showBoardToast('🛡️ Only the host can start a rematch online — request sent to Player 1.');
+          return;
+        }
         cancelGraceTimer(false);
         hideFanoronaChoiceBar();
         buildDynamicBoardGraph();
@@ -3974,7 +3983,10 @@
         requestRender();
 
         if (broadcast && WebRTCManager.isConnected()) {
-          WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState() });
+          WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
+          if (GameState.localPlayerRole === 1) {
+            WebRTCManager.send({ type: 'RESET_MATCH' });
+          }
         }
 
         if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
@@ -4186,10 +4198,9 @@
           if (GameState.graceTimeLeft <= 0) {
             const forfeitedPlayer = GameState.graceAbsentPlayer || targetAbsent;
             cancelGraceTimer(false);
-            // If our own link is also down we cannot know who really stayed — end without awarding a false win.
-            if (GameState.mode === 'webrtc' && !WebRTCManager.isConnected()) {
+            if (GameState.mode === 'webrtc' && typeof navigator !== 'undefined' && navigator.onLine === false && WebRTCManager.transport === 'peerjs') {
               endOnlineMatchByDisconnect(
-                `📡 The connection between both devices could not be restored within ${totalSecs}s — match ended without a result.`
+                `📡 Internet was disconnected on this device and could not be restored within ${totalSecs}s — match ended without a result.`
               );
               return;
             }
@@ -4246,7 +4257,9 @@
 
         GameState.gameOver = true;
         GameState.winner = winner;
-        GameState.winReason = `${absentTitle} left/closed mid-game and did not return within ${graceDuration}s — ${winnerTitle} wins by forfeit!`;
+        GameState.winReason = (graceDuration === 0)
+          ? `${absentTitle} forfeited the match — ${winnerTitle} wins by forfeit!`
+          : `${absentTitle} left/closed mid-game and did not return within ${graceDuration}s — ${winnerTitle} wins by forfeit!`;
 
         stopAllTimers();
         recordSessionOutcome(winner);
@@ -4645,6 +4658,11 @@
           proceedCallback();
           return;
         }
+        if (GameState.mode === 'webrtc' && GameState.localPlayerRole === 2) {
+          SoundEngine.invalid();
+          showBoardToast('🛡️ Only the host (Player 1) can switch game variants during an online match.');
+          return;
+        }
         if (GameState.lockSettingsMidGame) {
           SoundEngine.invalid();
           showBoardToast('🔒 Game Lock is ON! Tap "🔒 Locked" in the top bar to unlock game switching.');
@@ -4874,6 +4892,14 @@
                 showBoardToast('Saved online match is older than 15 minutes — restored locally.');
               }
             }
+          } else if (online && !online.roomCode) {
+            GameState.mode = 'pass_play';
+            GameState.vsAI = false;
+            GameState.localPlayerRole = null;
+            WebRTCManager.roomCode = '';
+            WebRTCManager.transport = 'none';
+            WebRTCManager.updateConnectionUI('idle', 'Pass & Play Active', 'Previous offline P2P match restored locally');
+            showBoardToast('Previous offline match restored locally — continue here or re-link via QR.');
           }
 
           if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
@@ -8876,6 +8902,13 @@
             return;
           }
           const room = this.normalizeRoomCode(code || this.roomCode || this.makeRoomCode()) || this.makeRoomCode();
+          const activeRoom = this.normalizeRoomCode(this.roomCode || '');
+          if (GameState.mode === 'webrtc' && this.isConnected() && isMatchActivelyInProgress() && activeRoom && room !== activeRoom) {
+            SoundEngine.invalid();
+            showBoardToast('🛡️ Finish or leave the current online match before opening another room.');
+            return;
+          }
+          if (GameState.gameOver) initMatch(false, true);
           this.cleanup();
           this.intentionalLeave = false;
           this.suppressLossGrace = false;
@@ -8946,6 +8979,13 @@
             showBoardToast('Enter a valid room code or scan the host QR.');
             return;
           }
+          const activeRoom = this.normalizeRoomCode(this.roomCode || '');
+          if (GameState.mode === 'webrtc' && this.isConnected() && isMatchActivelyInProgress() && activeRoom && room !== activeRoom) {
+            SoundEngine.invalid();
+            showBoardToast('🛡️ Finish or leave the current online match before joining another room.');
+            return;
+          }
+          if (GameState.gameOver) initMatch(false, true);
           this.cleanup();
           this.intentionalLeave = false;
           this.suppressLossGrace = false;
@@ -9030,6 +9070,10 @@
             if ((midMatch || this.reconnectAttempts > 0) && !this.intentionalLeave && this.roomCode) {
               this.updateGlobalUI('connecting', 'Host not reachable yet', 'Retrying while your return window is open…', 'PEERJS');
               this.scheduleAutoReconnect(4000);
+            } else if (this.reconnectAttempts < 3 && !this.intentionalLeave && this.roomCode) {
+              this.reconnectAttempts++;
+              this.updateGlobalUI('connecting', 'Waiting for host…', `Room ${this.roomCode} • retrying (${this.reconnectAttempts}/3)…`, 'PEERJS');
+              setTimeout(() => { if (!this.intentionalLeave && !this.isConnected()) this.joinGlobalRoom(room); }, 1800);
             } else {
               this.updateGlobalUI('error', 'Room not found', 'Check the code, or ask the host to refresh the room.', 'PEERJS');
               showBoardToast('Room not found — verify the code or QR.');
@@ -9204,13 +9248,21 @@
 
         startLanBackup() {
           if (this.transport !== 'peerjs') return;
-          if (GameState.localPlayerRole !== 1) return; // host initiates to avoid glare
-          if (this.backupInFlight || (this.backupDC && this.backupDC.readyState === 'open')) return;
+          if (GameState.localPlayerRole !== 1) return;
+          if (this.backupDC && this.backupDC.readyState === 'open') return;
+          if (this.backupInFlight) return;
           if (typeof RTCPeerConnection === 'undefined') return;
+          if (this.backupPC) this.closeBackupLink();
           this.backupInFlight = true;
+          setTimeout(() => { if (!this.backupReady) this.backupInFlight = false; }, 8000);
           try {
             const pc = new RTCPeerConnection({ iceServers: [] });
             this.backupPC = pc;
+            pc.onicecandidate = (evt) => {
+              if (evt.candidate && this.transport === 'peerjs') {
+                this.send({ type: 'LAN_BACKUP_CANDIDATE', candidate: evt.candidate });
+              }
+            };
             pc.addEventListener('connectionstatechange', () => {
               if (!this.backupReady && (pc.connectionState === 'failed' || pc.connectionState === 'closed')) {
                 this.backupInFlight = false;
@@ -9220,7 +9272,7 @@
             this.attachBackupChannel(dc);
             pc.createOffer()
               .then((offer) => pc.setLocalDescription(offer))
-              .then(() => this.gatherIce(pc))
+              .then(() => this.gatherIce(pc, 2500))
               .then((desc) => {
                 if (!desc) throw new Error('no local description');
                 this.send({ type: 'LAN_BACKUP_OFFER', sdp: desc });
@@ -9238,13 +9290,14 @@
             this.backupInFlight = false;
             this.updateGlobalUI('connected', `Connected as Player ${GameState.localPlayerRole || 1}`, 'Direct LAN backup is warm — internet loss will not stop the match.', 'LAN + P2P');
             showBoardToast('🛰️ Direct LAN backup link ready. Internet loss will not stop this match.');
-            if (!this.isConnected()) this.promoteBackupLink();
+            if (this.transport === 'none' || !this.peerConn || !this.peerConn.open) {
+              this.promoteBackupLink();
+            }
           };
           dc.onclose = () => {
             this.backupReady = false;
             if (this.backupDC === dc) this.backupDC = null;
             if (this.dc === dc) {
-              // The active LAN link died — fall back to the still-open PeerJS link if possible.
               if (this.peerConn && this.peerConn.open) {
                 this.dc = {
                   readyState: 'open',
@@ -9267,6 +9320,9 @@
             let pkt = event && event.data;
             if (typeof pkt === 'string') {
               try { pkt = JSON.parse(pkt); } catch (e) { return; }
+            }
+            if (this.transport !== 'lan-backup') {
+              this.promoteBackupLink();
             }
             this.handlePacket(pkt);
           };
@@ -9294,19 +9350,28 @@
         },
 
         async handleLanBackupOffer(sdp) {
-          if (GameState.localPlayerRole !== 2 || this.backupInFlight) return;
+          if (GameState.localPlayerRole !== 2) return;
           if (!sdp || typeof RTCPeerConnection === 'undefined') return;
+          if (this.backupDC && this.backupDC.readyState === 'open') return;
+          if (this.backupInFlight) return;
+          if (this.backupPC) this.closeBackupLink();
           this.backupInFlight = true;
+          setTimeout(() => { if (!this.backupReady) this.backupInFlight = false; }, 8000);
           try {
             const pc = new RTCPeerConnection({ iceServers: [] });
             this.backupPC = pc;
+            pc.onicecandidate = (evt) => {
+              if (evt.candidate && this.transport === 'peerjs') {
+                this.send({ type: 'LAN_BACKUP_CANDIDATE', candidate: evt.candidate });
+              }
+            };
             pc.ondatachannel = (evt) => {
               if (evt.channel) this.attachBackupChannel(evt.channel);
             };
             await pc.setRemoteDescription(new RTCSessionDescription(sdp));
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
-            const local = await this.gatherIce(pc);
+            const local = await this.gatherIce(pc, 2500);
             if (local) this.send({ type: 'LAN_BACKUP_ANSWER', sdp: local });
           } catch (e) {
             this.backupInFlight = false;
@@ -9330,6 +9395,13 @@
           this.transport = 'lan-backup';
           this.linkOpenHandledFor = null;
           this.handleLinkOpen('lan-backup');
+          try {
+            this.backupDC.send(JSON.stringify({
+              type: 'LAN_SWITCH_ACTIVATE',
+              _from: this.deviceId,
+              _seq: ++this.localSeq
+            }));
+          } catch (e) {}
           this.updateGlobalUI('connected', `Connected as Player ${GameState.localPlayerRole || 1}`, 'Running on the direct LAN WebRTC link (no internet needed).', 'LAN DIRECT');
           this.updateConnectionUI('connected', `LAN Direct (P${GameState.localPlayerRole || 1})`, 'Internet-free direct WebRTC link active');
           showBoardToast('📡 Switched to direct LAN WebRTC — the match continues without internet!');
@@ -9964,8 +10036,17 @@
           if (packet.type === 'RESET_MATCH') {
             if (GameState.localPlayerRole !== 1) return; // only the host can reset
             cancelGraceTimer(false);
-            initMatch(false);
+            initMatch(false, true);
             showBoardToast('Remote host restarted the match');
+            return;
+          }
+
+          if (packet.type === 'REMATCH_REQUEST') {
+            if (GameState.localPlayerRole !== 1) return;
+            if (GameState.gameOver) {
+              initMatch(true);
+              showBoardToast('🔁 Opponent asked for a rematch — board reset!');
+            }
             return;
           }
 
@@ -10035,6 +10116,20 @@
 
           if (packet.type === 'LAN_BACKUP_ANSWER') {
             this.handleLanBackupAnswer(packet.sdp);
+            return;
+          }
+
+          if (packet.type === 'LAN_SWITCH_ACTIVATE') {
+            if (this.transport !== 'lan-backup') {
+              this.promoteBackupLink();
+            }
+            return;
+          }
+
+          if (packet.type === 'LAN_BACKUP_CANDIDATE' && packet.candidate) {
+            if (this.backupPC && this.backupPC.remoteDescription) {
+              this.backupPC.addIceCandidate(new RTCIceCandidate(packet.candidate)).catch(() => {});
+            }
             return;
           }
         },
@@ -10538,12 +10633,12 @@
       });
 
       function syncRulesToPeer() {
-        savePersistentPrefs();
         if (GameState.mode === 'webrtc' && GameState.localPlayerRole === 2) {
           showBoardToast('🛡️ Only the host can change match rules online.');
           if (WebRTCManager.isConnected()) WebRTCManager.send({ type: 'REQUEST_RESYNC', reason: 'guest-rule-change' });
           return;
         }
+        savePersistentPrefs();
         if (WebRTCManager.isConnected()) {
           WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState() });
         }
@@ -10559,6 +10654,10 @@
       });
 
       document.getElementById('btnQuickSingleEat').addEventListener('click', () => {
+        if (GameState.mode === 'webrtc' && GameState.localPlayerRole === 2) {
+          syncRulesToPeer();
+          return;
+        }
         GameState.chainRule = 'single_only';
         if (GameState.chainJumpingNode !== null) {
           finishTurnAndCheckWin(GameState.currentTurn, false, { type: 'end_chain' });
@@ -11086,6 +11185,11 @@
 
       document.getElementById('btnVictoryPlayAgain').addEventListener('click', () => {
         SoundEngine.select();
+        if (GameState.mode === 'webrtc' && WebRTCManager.isConnected() && GameState.localPlayerRole === 2) {
+          WebRTCManager.send({ type: 'REMATCH_REQUEST' });
+          showBoardToast('🔁 Rematch requested from Host...');
+          return;
+        }
         initMatch(true);
       });
 
@@ -12425,7 +12529,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=a62aec1381').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=0dc20098aa').catch(() => {});
         });
       }
 
