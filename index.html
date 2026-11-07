@@ -12921,7 +12921,13 @@
             inviteRoom = WebRTCManager.getRoomCodeFromInvite(inviteRaw);
           }
         } catch (e) {}
+        // initMatch() writes a fresh snapshot; preserve and restore any resumable match after it.
+        let savedLiveSnapshotRaw = null;
+        try { savedLiveSnapshotRaw = SafeStorage.getItem('katar_live_match_v3'); } catch (e) {}
         initMatch(false);
+        if (savedLiveSnapshotRaw) {
+          try { SafeStorage.setItem('katar_live_match_v3', savedLiveSnapshotRaw); } catch (e) {}
+        }
         checkAndRestoreSavedMatchOnLoad(Boolean(inviteRoom));
         WebRTCManager.applyPeerServerConfigUI();
         resizeCanvas();
