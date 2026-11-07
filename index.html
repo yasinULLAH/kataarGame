@@ -3105,7 +3105,7 @@
             }
           }
         }
-        if (GameState.morrisDropOrder !== 'all_at_once' && GameState.morrisMillRemovalRule === 'any') {
+        if (GameState.morrisMillRemovalRule === 'any') {
           return allOpp;
         }
         return nonMill.length > 0 ? nonMill : allOpp;
@@ -5603,9 +5603,9 @@
 
       function getMorrisNodeWeight(nodeId) {
         const deg = Adjacency[nodeId] ? Adjacency[nodeId].size : 2;
-        if (deg >= 4) return 38;
-        if (deg === 3) return 22;
-        return 10;
+        if (deg >= 4) return 42;
+        if (deg === 3) return 24;
+        return 12;
       }
 
       function canPlayerCloseMillAt(emptyNodeId, line, player, board, reserves) {
@@ -5631,7 +5631,7 @@
 
       function scoreMorrisRemovalTarget(cid, board, aiP, humanP, res1 = GameState.reserves[1], res2 = GameState.reserves[2]) {
         const res = { 1: res1, 2: res2 };
-        let score = getMorrisNodeWeight(cid) * 2.2;
+        let score = getMorrisNodeWeight(cid) * 3;
         let oppTwoConfigs = 0;
         let blockedAiTwoConfigs = 0;
 
@@ -5644,35 +5644,35 @@
             else empC++;
           }
           if (oppC === 3) {
-            score += 480;
+            score += 550;
             for (const id of line) {
               for (const nb of Adjacency[id]) {
-                if (!line.includes(nb) && board[nb] === 0) score += 190;
+                if (!line.includes(nb) && board[nb] === 0) score += 280;
               }
             }
           } else if (oppC === 2 && empC === 1) {
             oppTwoConfigs++;
             const empId = line.find((id) => board[id] === 0);
             const canCloseNext = canPlayerCloseMillAt(empId, line, humanP, board, res);
-            score += canCloseNext ? 540 : 210;
+            score += canCloseNext ? 2400 : 900;
           } else if (aiC === 2 && oppC === 1) {
             blockedAiTwoConfigs++;
             const canAiClose = canPlayerCloseMillAt(cid, line, aiP, board, res);
-            score += canAiClose ? 520 : 240;
+            score += canAiClose ? 1900 : 750;
           } else if (oppC === 2 && aiC === 1) {
-            score -= 80;
+            score -= 100;
           }
         }
-        if (oppTwoConfigs >= 2) score += 650;
-        if (blockedAiTwoConfigs >= 1 && oppTwoConfigs >= 1) score += 420;
+        if (oppTwoConfigs >= 2) score += 3600;
+        if (blockedAiTwoConfigs >= 1 && oppTwoConfigs >= 1) score += 1600;
 
         let oppEmptyNeighbors = 0;
         for (const nb of Adjacency[cid]) {
           if (board[nb] === 0) oppEmptyNeighbors++;
-          if (board[nb] === humanP) score += 18;
-          if (board[nb] === aiP) score += 24;
+          if (board[nb] === humanP) score += 25;
+          if (board[nb] === aiP) score += 35;
         }
-        score += oppEmptyNeighbors * 22;
+        score += oppEmptyNeighbors * 30;
         return score;
       }
 
@@ -5710,7 +5710,7 @@
         if (hmTotal <= 2) return 95000;
         if (aiTotal <= 2) return -95000;
 
-        let score = (aiTotal - hmTotal) * 720;
+        let score = (aiTotal - hmTotal) * 850;
 
         let aiMills = 0, hmMills = 0;
         let aiSeeSaw = 0, hmSeeSaw = 0;
@@ -5737,7 +5737,7 @@
             for (const id of line) {
               for (const nb of Adjacency[id]) {
                 if (!line.includes(nb) && board[nb] === 0) {
-                  score += 85;
+                  score += 110;
                   for (const m2 of MillLines) {
                     if (m2.includes(nb) && !m2.includes(id)) {
                       const other2 = m2.filter((x) => x !== nb);
@@ -5754,7 +5754,7 @@
             for (const id of line) {
               for (const nb of Adjacency[id]) {
                 if (!line.includes(nb) && board[nb] === 0) {
-                  score -= 90;
+                  score -= 120;
                   for (const m2 of MillLines) {
                     if (m2.includes(nb) && !m2.includes(id)) {
                       const other2 = m2.filter((x) => x !== nb);
@@ -5818,26 +5818,26 @@
           if (aiMob === 0) return -92000;
         }
 
-        score += (aiMills - hmMills) * 340;
-        score += (aiSeeSaw - hmSeeSaw) * 680;
-        score += (aiOpenTwo - hmOpenTwo) * 115;
-        score += (aiReadyMill - hmReadyMill) * 290;
-        score += (aiForks - hmForks) * 320;
-        score += (aiBlockedTwo - hmBlockedTwo) * 95;
-        score += (aiMob - hmMob) * 28;
-        score += (hmTrapped - aiTrapped) * 65;
+        score += (aiMills - hmMills) * 1100;
+        score += (aiSeeSaw - hmSeeSaw) * 1650;
+        score += (aiOpenTwo - hmOpenTwo) * 280;
+        score += (aiReadyMill - hmReadyMill) * 780;
+        score += (aiForks - hmForks) * 1150;
+        score += (aiBlockedTwo - hmBlockedTwo) * 180;
+        score += (aiMob - hmMob) * 45;
+        score += (hmTrapped - aiTrapped) * 140;
 
         if (turnPlayer === aiP) {
-          if (aiReadyEmptySet.size >= 1) score += 520;
-          if (hmReadyEmptySet.size >= 2) score -= 580;
+          if (aiReadyEmptySet.size >= 1) score += 1250;
+          if (hmReadyEmptySet.size >= 2) score -= 1850;
         } else {
-          if (hmReadyEmptySet.size >= 1) score -= 560;
-          if (aiReadyEmptySet.size >= 2) score += 540;
+          if (hmReadyEmptySet.size >= 1) score -= 1450;
+          if (aiReadyEmptySet.size >= 2) score += 1650;
         }
 
         if (res1 > 0 || res2 > 0) {
-          if (aiOpenEmptySet.size >= 2) score += 460;
-          if (hmOpenEmptySet.size >= 2) score -= 510;
+          if (aiOpenEmptySet.size >= 2) score += 1150;
+          if (hmOpenEmptySet.size >= 2) score -= 1350;
         }
 
         return score;
@@ -5884,14 +5884,14 @@
           if (m.type === 'step' && GameState.morrisFlyingRule !== 'enabled' && !Adjacency[m.from].has(m.to)) {
             continue;
           }
-          let priority = getMorrisNodeWeight(m.to) * 2;
+          let priority = getMorrisNodeWeight(m.to) * 3;
           const sim = [...board];
           if (m.type === 'step') sim[m.from] = 0;
           sim[m.to] = player;
 
           const myMills = getMillsContainingNode(m.to, player, sim);
           if (myMills.length > 0) {
-            priority += (m.type === 'drop' && forbidLandingMill) ? -5000 : (3000 * myMills.length);
+            priority += (m.type === 'drop' && forbidLandingMill) ? -5000 : (7500 * myMills.length);
           }
 
           const simOpp = [...board];
@@ -5899,11 +5899,11 @@
           const oppMills = getMillsContainingNode(m.to, opp, simOpp);
           if (oppMills.length > 0) {
             if (m.type === 'drop' && !forbidLandingMill && res[opp] > 0) {
-              priority += 2500 * oppMills.length;
+              priority += 6800 * oppMills.length;
             } else if (res[opp] === 0 && oppMills.some((line) => canPlayerCloseMillAt(m.to, line, opp, board, res))) {
-              priority += 2650;
+              priority += 7200;
             } else {
-              priority += 950;
+              priority += 2500;
             }
           }
 
@@ -5921,10 +5921,20 @@
             if (oC === 2 && pC === 1) oppTwosBlocked++;
           }
 
-          priority += myTwosCreated * 340;
-          if (myTwosCreated >= 2) priority += 1200;
-          priority += oppTwosBlocked * 460;
-          if (oppTwosBlocked >= 2) priority += 1300;
+          priority += myTwosCreated * 420;
+          if (myTwosCreated >= 2) priority += 1800;
+          priority += oppTwosBlocked * 550;
+          if (oppTwosBlocked >= 2) priority += 1900;
+
+          if (m.type === 'drop' && forbidLandingMill) {
+            let friendlyAdj = 0;
+            let oppAdj = 0;
+            for (const nb of Adjacency[m.to]) {
+              if (board[nb] === player) friendlyAdj++;
+              else if (board[nb] === opp) oppAdj++;
+            }
+            priority += friendlyAdj * 220 + oppAdj * 110;
+          }
 
           if (m.type === 'step') {
             const wasInMill = getMillsContainingNode(m.from, player, board).length > 0;
@@ -5937,7 +5947,7 @@
                 }
                 return o === 2 && e === 1 && canPlayerCloseMillAt(emp, line, opp, sim, res);
               });
-              priority += oppHasImmediateThreat ? -480 : 190;
+              priority += oppHasImmediateThreat ? -650 : 250;
             }
           }
 
@@ -5984,9 +5994,12 @@
 
         const opp = turnPlayer === 1 ? 2 : 1;
         const ordered = orderMorrisMoves(rawMoves, board, turnPlayer, opp, res1, res2);
-        const maxMoves = depth >= 4 ? 14 : (depth === 3 ? 12 : 10);
+        const isHardest = (GameState.aiDifficulty === 'hardest');
+        const maxMoves = isHardest
+          ? (depth >= 5 ? 16 : (depth >= 3 ? 18 : 22))
+          : (depth >= 4 ? 14 : (depth === 3 ? 12 : 10));
         const pool = ordered.slice(0, maxMoves);
-        const remBranch = depth >= 3 ? 2 : 1;
+        const remBranch = isHardest ? (depth >= 3 ? 3 : 2) : (depth >= 3 ? 2 : 1);
 
         const alphaOrig = alpha;
         const betaOrig = beta;
@@ -6014,7 +6027,7 @@
           if (beta <= alpha) break;
         }
 
-        if (!morrisSearchAborted && MorrisTT.size < 45000) {
+        if (!morrisSearchAborted && MorrisTT.size < 80000) {
           let flag = 0;
           if (bestVal <= alphaOrig) flag = 2;
           else if (bestVal >= betaOrig) flag = 1;
@@ -6051,13 +6064,13 @@
             return;
           }
 
-          MorrisTT.clear();
+          if (MorrisTT.size > 80000) MorrisTT.clear();
           morrisSearchAborted = false;
-          morrisSearchDeadline = performance.now() + (diff === 'hardest' ? 420 : 220);
+          morrisSearchDeadline = performance.now() + (diff === 'hardest' ? 1200 : 240);
 
           let bestRem = candidates[0];
           let bestVal = -Infinity;
-          const lookDepth = diff === 'hardest' ? 4 : 3;
+          const lookDepth = diff === 'hardest' ? 6 : 3;
 
           for (const cid of candidates) {
             const simBoard = [...GameState.board];
@@ -6074,7 +6087,7 @@
               aiP,
               humanP
             );
-            const total = immediateScore * 1.6 + futureVal;
+            const total = immediateScore * 1.8 + futureVal;
             if (total > bestVal) {
               bestVal = total;
               bestRem = cid;
@@ -6120,13 +6133,13 @@
           return;
         }
 
-        MorrisTT.clear();
+        if (MorrisTT.size > 80000) MorrisTT.clear();
         morrisSearchAborted = false;
-        const timeBudgetMs = diff === 'hardest' ? 580 : 260;
+        const timeBudgetMs = diff === 'hardest' ? 1800 : 280;
         morrisSearchDeadline = performance.now() + timeBudgetMs;
 
-        const maxDepth = diff === 'hardest' ? 7 : 4;
-        const rootPool = orderedMoves.slice(0, diff === 'hardest' ? 18 : 13);
+        const maxDepth = diff === 'hardest' ? 9 : 4;
+        const rootPool = orderedMoves.slice(0, diff === 'hardest' ? Math.min(26, orderedMoves.length) : 13);
         let bestMove = rootPool[0];
 
         for (let d = 2; d <= maxDepth; d++) {
@@ -6143,7 +6156,7 @@
               const nextTurn = (GameState.morrisDropOrder === 'all_at_once' && (aiP === 1 ? st.res1 : st.res2) > 0)
                 ? aiP
                 : humanP;
-              const millBonus = st.formedMill ? 260 : 0;
+              const millBonus = st.formedMill ? 350 : 0;
               const v = millBonus + minimaxMorris(
                 st.board,
                 st.res1,
@@ -6206,6 +6219,7 @@
           const r0 = Math.round(n.r);
           const c0 = Math.round(n.c);
           let totalScore = 0;
+          let activeThreatLines = 0;
 
           for (const [dr, dc] of axes) {
             let count = 1;
@@ -6224,25 +6238,31 @@
               if (v === targetP) count++;
               else { if (v === 0) openEnds++; break; }
             }
-            if (count >= 5) totalScore += 100000;
-            else if (count === 4 && openEnds === 2) totalScore += 12000;
-            else if (count === 4 && openEnds === 1) totalScore += 4000;
-            else if (count === 3 && openEnds === 2) totalScore += 1200;
-            else if (count === 3 && openEnds === 1) totalScore += 180;
-            else if (count === 2 && openEnds === 2) totalScore += 65;
-            else if (count === 2 && openEnds === 1) totalScore += 15;
+            if (count >= 5) totalScore += 600000;
+            else if (count === 4 && openEnds === 2) { totalScore += 180000; activeThreatLines += 2; }
+            else if (count === 4 && openEnds === 1) { totalScore += 45000; activeThreatLines += 1; }
+            else if (count === 3 && openEnds === 2) { totalScore += 38000; activeThreatLines += 1; }
+            else if (count === 3 && openEnds === 1) totalScore += 1500;
+            else if (count === 2 && openEnds === 2) totalScore += 400;
+            else if (count === 2 && openEnds === 1) totalScore += 50;
           }
+          if (activeThreatLines >= 2) totalScore += 95000;
           return totalScore;
         }
 
+        const isHardest = (GameState.aiDifficulty === 'hardest');
+        const defMult = isHardest ? 1.35 : 1.08;
         let bestMove = allSteps[0];
         let bestVal = -Infinity;
+
         for (const m of allSteps) {
           const n = Nodes[m.to];
           const centerBonus = Math.max(0, 6 - Math.hypot(n.r - midR, n.c - midC)) * 2.5;
           const off = scorePointForPlayer(m.to, aiP);
-          const def = scorePointForPlayer(m.to, humanP) * 1.08;
-          const val = off + def + centerBonus + Math.random() * 1.2;
+          const def = scorePointForPlayer(m.to, humanP) * defMult;
+          let val = off + def + centerBonus + Math.random() * 0.8;
+          if (off >= 600000) val += 2000000;
+          else if (def >= 500000) val += 1000000;
           if (val > bestVal) {
             bestVal = val;
             bestMove = m;
@@ -6257,19 +6277,24 @@
         const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(aiP);
         if (total === 0) return;
 
-        // If AI is playing Tigers (Player 2)
         if (aiP === 2) {
           if (allJumps.length > 0) {
             let bestJump = allJumps[0];
-            let bestScore = -9999;
+            let bestScore = -99999;
             for (const j of allJumps) {
               const sim = [...GameState.board];
               sim[j.from] = 0;
               sim[j.capturedId] = 0;
               sim[j.to] = 2;
-              const nextJumps = getLegalActionsForPiece(j.to, sim).jumps.length;
-              const mobility = getLegalActionsForPiece(j.to, sim).steps.length;
-              const score = nextJumps * 30 + mobility * 4 + Adjacency[j.to].size * 2 + Math.random();
+              const nextActions = getLegalActionsForPiece(j.to, sim);
+              const nextJumps = nextActions.jumps.length;
+              const mobility = nextActions.steps.length;
+              let liberties = 0;
+              for (const nb of Adjacency[j.to]) {
+                if (sim[nb] === 0) liberties++;
+              }
+              const trapPenalty = liberties <= 1 ? -120 : 0;
+              const score = nextJumps * 45 + mobility * 8 + liberties * 14 + Adjacency[j.to].size * 4 + trapPenalty + Math.random();
               if (score > bestScore) {
                 bestScore = score;
                 bestJump = j;
@@ -6282,15 +6307,20 @@
             executeAction(allSteps[Math.floor(Math.random() * allSteps.length)], false);
             return;
           }
-          // Move Tiger to maximize future jump threats and mobility
           let bestStep = allSteps[0];
-          let bestScore = -9999;
+          let bestScore = -99999;
           for (const s of allSteps) {
             const sim = [...GameState.board];
             sim[s.from] = 0;
             sim[s.to] = 2;
             const { steps: nextS, jumps: nextJ } = getLegalActionsForPiece(s.to, sim);
-            const score = nextJ.length * 35 + nextS.length * 5 + Adjacency[s.to].size * 2.5 + Math.random() * 2;
+            let liberties = 0;
+            for (const nb of Adjacency[s.to]) {
+              if (sim[nb] === 0) liberties++;
+            }
+            const trapPenalty = liberties <= 1 ? -160 : 0;
+            const centerDist = Math.hypot(Nodes[s.to].r - 2, Nodes[s.to].c - 2);
+            const score = nextJ.length * 60 + nextS.length * 9 + liberties * 18 + (4 - centerDist) * 8 + trapPenalty + Math.random() * 1.5;
             if (score > bestScore) {
               bestScore = score;
               bestStep = s;
@@ -6300,17 +6330,28 @@
           return;
         }
 
-        // If AI is playing Goats (Player 1) — minimize Tiger jumps & mobility!
         let bestAct = allSteps[0];
         let bestScore = -99999;
+        const initialTigerMoves = getAllLegalActionsForPlayer(2, GameState.board, GameState.reserves);
+
         for (const m of allSteps) {
           const sim = [...GameState.board];
           if (m.type === 'step') sim[m.from] = 0;
           sim[m.to] = 1;
           const tigerMoves = getAllLegalActionsForPlayer(2, sim, GameState.reserves);
-          const dangerPenalty = tigerMoves.allJumps.length * 80;
-          const trapBonus = (20 - tigerMoves.total) * 8;
-          const score = trapBonus - dangerPenalty + Adjacency[m.to].size * 1.5 + Math.random() * 2;
+          if (tigerMoves.total === 0) {
+            executeAction(m, false);
+            return;
+          }
+          const jumpDiff = initialTigerMoves.allJumps.length - tigerMoves.allJumps.length;
+          const dangerPenalty = tigerMoves.allJumps.length * (diff === 'hardest' ? 2400 : 400);
+          const blockBonus = jumpDiff > 0 ? (jumpDiff * 950) : 0;
+          let clusterBonus = 0;
+          for (const nb of Adjacency[m.to]) {
+            if (sim[nb] === 1) clusterBonus += 130;
+          }
+          const trapBonus = (24 - tigerMoves.total) * (diff === 'hardest' ? 65 : 18);
+          const score = trapBonus - dangerPenalty + blockBonus + clusterBonus + Adjacency[m.to].size * 3 + Math.random() * 1.5;
           if (score > bestScore) {
             bestScore = score;
             bestAct = m;
@@ -6319,9 +6360,10 @@
         executeAction(bestAct, false);
       }
 
-      function evaluateBoardPosition(board, reservesP1, reservesP2) {
-        let p2Count = reservesP2;
-        let p1Count = reservesP1;
+      function evaluateBoardPosition(board, reservesP1, reservesP2, aiP = (GameState.aiPlayerRole || 2)) {
+        const oppP = aiP === 1 ? 2 : 1;
+        let aiCount = aiP === 1 ? reservesP1 : reservesP2;
+        let oppCount = oppP === 1 ? reservesP1 : reservesP2;
         let positionalScore = 0;
         const midR = (GameState.rows - 1) / 2;
         const midC = (GameState.cols - 1) / 2;
@@ -6332,34 +6374,34 @@
           const n = Nodes[i];
           const deg = Adjacency[i].size;
           const centerProximity = Math.max(0, 4.5 - Math.hypot(n.r - midR, n.c - midC));
-          const kingBonus = (GameState.kings && GameState.kings[i]) ? 18 : 0;
-          const nodeVal = deg * 0.45 + centerProximity * 0.9 + kingBonus;
+          const kingBonus = (GameState.kings && GameState.kings[i]) ? 22 : 0;
+          const nodeVal = deg * 0.55 + centerProximity * 1.1 + kingBonus;
 
-          if (occ === 2) {
-            p2Count++;
+          if (occ === aiP) {
+            aiCount++;
             positionalScore += nodeVal;
-          } else {
-            p1Count++;
+          } else if (occ === oppP) {
+            oppCount++;
             positionalScore -= nodeVal;
           }
         }
 
         const loseThreshold = GameState.gameFamily === 'morris' ? 2 : 1;
-        if (p1Count <= loseThreshold) return 99999;
-        if (p2Count <= loseThreshold) return -99999;
+        if (oppCount <= loseThreshold) return 99999;
+        if (aiCount <= loseThreshold) return -99999;
 
-        const p2Moves = getAllLegalActionsForPlayer(2, board);
-        const p1Moves = getAllLegalActionsForPlayer(1, board);
+        const aiMoves = getAllLegalActionsForPlayer(aiP, board);
+        const oppMoves = getAllLegalActionsForPlayer(oppP, board);
 
-        if (p1Moves.total === 0) return 88888;
-        if (p2Moves.total === 0) return -88888;
+        if (oppMoves.total === 0) return 88888;
+        if (aiMoves.total === 0) return -88888;
 
-        const p2ThreatScore = p2Moves.allJumps.length * 16;
-        const p1ThreatScore = p1Moves.allJumps.length * 19;
-        const mobilityScore = (p2Moves.total - p1Moves.total) * 0.8;
-        const materialDiff = (p2Count - p1Count) * 45;
+        const aiThreatScore = aiMoves.allJumps.length * 28;
+        const oppThreatScore = oppMoves.allJumps.length * 34;
+        const mobilityScore = (aiMoves.total - oppMoves.total) * 1.4;
+        const materialDiff = (aiCount - oppCount) * 85;
 
-        return materialDiff + positionalScore + (p2ThreatScore - p1ThreatScore) + mobilityScore;
+        return materialDiff + positionalScore + (aiThreatScore - oppThreatScore) + mobilityScore;
       }
 
       function simulateTurnOnBoard(board, action, player) {
@@ -6392,26 +6434,27 @@
         return nextBoard;
       }
 
-      function minimaxAlphaBeta(board, depth, alpha, beta, maximizingPlayer, r1, r2) {
+      function minimaxAlphaBeta(board, depth, alpha, beta, isAiTurn, r1, r2, aiP = (GameState.aiPlayerRole || 2)) {
         if (depth === 0) {
-          return evaluateBoardPosition(board, r1, r2);
+          return evaluateBoardPosition(board, r1, r2, aiP);
         }
 
-        const player = maximizingPlayer ? 2 : 1;
-        const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(player, board);
+        const oppP = aiP === 1 ? 2 : 1;
+        const currPlayer = isAiTurn ? aiP : oppP;
+        const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(currPlayer, board);
         if (total === 0) {
-          return evaluateBoardPosition(board, r1, r2);
+          return evaluateBoardPosition(board, r1, r2, aiP);
         }
 
         const candidateMoves = allJumps.length > 0
           ? [...allJumps, ...allSteps.slice(0, 10)]
-          : allSteps.slice(0, 14);
+          : allSteps.slice(0, 16);
 
-        if (maximizingPlayer) {
+        if (isAiTurn) {
           let maxEval = -Infinity;
           for (const move of candidateMoves) {
-            const childBoard = simulateTurnOnBoard(board, move, 2);
-            const ev = minimaxAlphaBeta(childBoard, depth - 1, alpha, beta, false, r1, r2);
+            const childBoard = simulateTurnOnBoard(board, move, aiP);
+            const ev = minimaxAlphaBeta(childBoard, depth - 1, alpha, beta, false, r1, r2, aiP);
             if (ev > maxEval) maxEval = ev;
             if (ev > alpha) alpha = ev;
             if (beta <= alpha) break;
@@ -6420,8 +6463,8 @@
         } else {
           let minEval = Infinity;
           for (const move of candidateMoves) {
-            const childBoard = simulateTurnOnBoard(board, move, 1);
-            const ev = minimaxAlphaBeta(childBoard, depth - 1, alpha, beta, true, r1, r2);
+            const childBoard = simulateTurnOnBoard(board, move, oppP);
+            const ev = minimaxAlphaBeta(childBoard, depth - 1, alpha, beta, true, r1, r2, aiP);
             if (ev < minEval) minEval = ev;
             if (ev < beta) beta = ev;
             if (beta <= alpha) break;
@@ -6513,7 +6556,6 @@
         const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(aiP);
         if (total === 0) return;
 
-        // Seega Phase 1 Drop AI
         if (GameState.gameFamily === 'seega' && allSteps.length > 0 && allSteps[0].type === 'drop') {
           const pick = allSteps[Math.floor(Math.random() * allSteps.length)];
           executeAction(pick, false);
@@ -6577,7 +6619,7 @@
           return;
         }
 
-        const searchDepth = diff === 'hardest' ? 3 : 2;
+        const searchDepth = diff === 'hardest' ? 4 : 2;
         const candidatePool = allJumps.length > 0
           ? [...allJumps, ...((GameState.mandatoryCapture === 'forced' || GameState.gameFamily === 'fanorona') ? [] : allSteps.slice(0, 8))]
           : allSteps;
@@ -6588,7 +6630,7 @@
         for (const rawAct of candidatePool) {
           const act = normalizeDualActionForAI(rawAct);
           const nextBoard = simulateTurnOnBoard(GameState.board, act, aiP);
-          const capBonus = act.type === 'jump' ? 28 * (act.capturedIds ? act.capturedIds.length : 1) : 0;
+          const capBonus = act.type === 'jump' ? 45 * (act.capturedIds ? act.capturedIds.length : 1) : 0;
           const val = capBonus + minimaxAlphaBeta(
             nextBoard,
             searchDepth - 1,
@@ -6596,8 +6638,9 @@
             Infinity,
             false,
             GameState.reserves[1],
-            GameState.reserves[2]
-          ) + (Math.random() * 0.4);
+            GameState.reserves[2],
+            aiP
+          ) + (Math.random() * 0.2);
 
           if (val > bestVal) {
             bestVal = val;
@@ -7928,7 +7971,6 @@
 
         if (GameState.morrisDropOrder === 'all_at_once') {
           GameState.morrisDropMillRule = 'forbid_mill';
-          GameState.morrisMillRemovalRule = 'protect_mills';
         }
 
         const selDropMill = document.getElementById('selMorrisDropMillRule');
@@ -7947,18 +7989,15 @@
         const selMorrisRule = document.getElementById('selMorrisRemovalRule');
         if (selMorrisRule) {
           selMorrisRule.value = GameState.morrisMillRemovalRule;
-          selMorrisRule.disabled = (GameState.morrisDropOrder === 'all_at_once');
+          selMorrisRule.disabled = false;
         }
 
         const btnKillAny = document.getElementById('btnQuickMorrisKillAny');
         const btnProtectMills = document.getElementById('btnQuickMorrisProtectMills');
         if (btnKillAny && btnProtectMills) {
-          const isAllAtOnce = GameState.morrisDropOrder === 'all_at_once';
-          if (GameState.morrisMillRemovalRule === 'protect_mills' || isAllAtOnce) {
+          if (GameState.morrisMillRemovalRule === 'protect_mills') {
             btnProtectMills.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm';
-            btnKillAny.className = isAllAtOnce
-              ? 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-500 opacity-50 cursor-not-allowed'
-              : 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
+            btnKillAny.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
           } else {
             btnKillAny.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm';
             btnProtectMills.className = 'android-btn px-2 py-0.5 rounded-md text-[10px] font-bold text-walnut-800 hover:bg-white/60';
@@ -10672,11 +10711,6 @@
       const btnKillAny = document.getElementById('btnQuickMorrisKillAny');
       if (btnKillAny) {
         btnKillAny.addEventListener('click', () => {
-          if (GameState.morrisDropOrder === 'all_at_once') {
-            SoundEngine.invalid();
-            showBoardToast('🛡️ Protect 3-in-Row is enforced in "Lay All Beads First" mode!');
-            return;
-          }
           GameState.morrisMillRemovalRule = 'any';
           SoundEngine.select();
           syncSettingsControlsFromState();
@@ -11029,6 +11063,7 @@
           GameState.morrisMillRemovalRule = e.target.value;
           syncSettingsControlsFromState();
           updateHUD();
+          syncRulesToPeer();
         });
       }
 
@@ -11946,14 +11981,13 @@
             GameState.morrisDropOrder = nextOrder;
             if (nextOrder === 'all_at_once') {
               GameState.morrisDropMillRule = 'forbid_mill';
-              GameState.morrisMillRemovalRule = 'protect_mills';
             } else {
               GameState.morrisDropMillRule = 'allow_mill';
             }
             initMatch(true);
             showBoardToast(
               nextOrder === 'all_at_once'
-                ? `📦 Lay All ${GameState.piecesPerPlayer} First • No Katar on Land • 🛡️ Protect 3-in-Row Enforced`
+                ? `📦 Lay All ${GameState.piecesPerPlayer} First • No Katar on Land`
                 : '🔄 1-by-1 Alternating Bead Placement (3-in-a-Row Katar allowed on landing)'
             );
           });
@@ -12005,7 +12039,6 @@
           GameState.morrisDropOrder = e.target.value;
           if (GameState.morrisDropOrder === 'all_at_once') {
             GameState.morrisDropMillRule = 'forbid_mill';
-            GameState.morrisMillRemovalRule = 'protect_mills';
           }
           syncSettingsControlsFromState();
           updateHUD();
@@ -12529,7 +12562,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=0dc20098aa').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=b0c5887d6a').catch(() => {});
         });
       }
 
