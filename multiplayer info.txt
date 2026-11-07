@@ -15,5 +15,25 @@ Option 2 — On Two Phones Without Internet (📱 Instant QR Code Link):
 
 Both phones link directly and launch into the live game, syncing every move, leap capture, and custom grid in real time without any internet!
 
-Option 3 — 📲 Install as an Offline App (PWA):
+Option 3 — 🌍 Global Online Match (PeerJS + Direct WebRTC):
+
+1. Open "Mode / P2P" on both phones and choose the 🌍 Global tab. Both phones need internet for this step only.
+
+2. On Phone 1, tap "👑 Host World Room". A short 6-character room code and QR appear (for example K7F2Q9).
+
+3. On Phone 2, either type that room code and tap "Join Room", tap "📷 Scan QR", or open the invite link shared by Phone 1 (it looks like ...index.html#join=K7F2Q9). The match starts automatically.
+
+4. Every move then travels directly between the two phones over an encrypted WebRTC DataChannel. PeerJS is used only to introduce the phones to each other.
+
+5. Same Wi-Fi failover: while the global match is running, the host keeps a second direct LAN WebRTC link warm. If the internet drops, the match automatically switches to that LAN link and play continues with no lost move.
+
+6. If a player loses connection, closes the app, or minimizes it, the opponent sees the Return Window countdown (15s–180s, configurable). Reopening the app on the same device automatically rejoins the same room and restores the exact board for up to 15 minutes.
+
+7. Explicit quit = immediate forfeit. Tapping 🏳️ Leave (or starting the Away Timer and letting it run out) tells the opponent and awards the win by forfeit. A simultaneous network outage on both sides ends the match without a false winner.
+
+8. Only the two paired players can move: the app rejects any out-of-turn or spoofed move and the guest never sends authoritative board state — the host validates and rebroadcasts it.
+
+9. Advanced: open "⚙️ PeerJS Server & TURN Settings" inside the Global tab to point at your own PeerServer (host, port, path, key) or add a TURN server for strict mobile networks. Defaults use the free public PeerJS cloud.
+
+Option 4 — 📲 Install as an Offline App (PWA):
 Tap the "Install App" button in the top navigation bar or inside "Mode / P2P" to add Katar Game directly to your Android, iOS, tablet, or desktop home screen. The game installs with its own royal icon and service worker, launching instantly 100% offline with zero browser address bars!

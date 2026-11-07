@@ -28,7 +28,7 @@
    * [6. Mid-Game Leave, Disconnect Grace & Abandonment Forfeits](#6-mid-game-leave-disconnect-grace--abandonment-forfeits)
    * [7. Mid-Game Action Guard, Game Lock & Match Stashing](#7-mid-game-action-guard-game-lock--match-stashing)
    * [8. 4-Tier Strategic AI Engine Architecture](#8-4-tier-strategic-ai-engine-architecture)
-   * [9. Multiplayer & Wireless Connectivity (WebRTC, QR, MQTT)](#9-multiplayer--wireless-connectivity-webrtc-qr-mqtt)
+   * [9. Multiplayer & Wireless Connectivity (Global PeerJS, WebRTC, QR, MQTT)](#9-multiplayer--wireless-connectivity-webrtc-qr-mqtt)
    * [10. Player Profile, Lifetime Career Stats & Portable Backups](#10-player-profile-lifetime-career-stats--portable-backups)
    * [11. Immersive Fullscreen Mode, Movable Dock & Zen Mode](#11-immersive-fullscreen-mode-movable-dock--zen-mode)
    * [12. Visual Styling, Canvas Engine & Procedural Audio/Haptics](#12-visual-styling-canvas-engine--procedural-audiohaptics)
@@ -225,6 +225,7 @@ Online and local tabletop games are frequently interrupted by phone calls, messa
 * **Manual "Away Timer" Button:** Lets a player deliberately pause for a quick break.
 * **"I'm Back (Resume)" Button:** Clears the countdown and resumes normal game clocks.
 * **Abandonment Forfeit:** If the away player fails to return before the countdown reaches 0s, victory is awarded to the waiting player by forfeit!
+* **Online Fairness:** In a Global match, an explicit quit (`🏳️ Leave`) forfeits immediately. A network drop starts the same grace window on both devices; if both links stay down for the whole window, the match ends without a false winner instead of awarding both players a win. Reopening the app on the same device auto-rejoins the room and restores the board for up to 15 minutes.
 
 ---
 
@@ -268,6 +269,15 @@ Online and local tabletop games are frequently interrupted by phone calls, messa
 * When connected to local Wi-Fi, devices automatically join a public WebSocket MQTT lobby (`broker.emqx.io:8084`).
 * Displays a live list of nearby players with their avatars, names, and platform tags (`📱 Mobile` / `💻 PC`).
 * Tap `⚔️ Send Request` to dispatch an instant challenge; the other device receives a prompt to Accept and start the match with zero QR codes.
+
+### 4. 🌍 Global Online Matches (PeerJS + Direct WebRTC)
+* **Worldwide Pairing:** Open **Mode / P2P → 🌍 Global**. Phone 1 taps **👑 Host World Room** to get a 6-character room code and QR; Phone 2 types the code, scans the QR, or opens the shared invite link (`...#join=CODE`).
+* **Signaling Only:** The free public PeerJS cloud (or your own PeerServer configured under **⚙️ PeerJS Server & TURN Settings**) introduces the two devices. Gameplay itself is a direct encrypted WebRTC DataChannel — no server sees the moves.
+* **Same-Wi-Fi Internet Failover:** The host keeps a second direct LAN WebRTC data channel warm. If the internet disappears, the app promotes that link automatically and the match continues over Wi-Fi/Hotspot with no lost move.
+* **Resume After Reload / App Close:** A mid-game snapshot stores the room code, role, and board. Reopening the game within 15 minutes re-hosts or rejoins the same room automatically; the host resends authoritative state so both boards match exactly.
+* **Strict Side Lock:** Each player is locked to their own side. Locally, turns you do not own are blocked. Remotely, every packet is checked against the peer's role and a regenerated legal-move list (`authorizeRemoteAction`), so spoofed coordinates, captures, or out-of-turn moves are rejected.
+* **Disconnect Policy:** Explicit `🏳️ Leave` sends an immediate forfeit to the opponent. A network drop, crash, or backgrounding starts the configurable Return Window; reconnecting cancels it and resumes. If both devices stay offline past the window, the match ends without awarding a false win.
+* **Anti-Replay:** Packets carry a sender ID and monotonic sequence number; replays are dropped, and the host is the only authority for full board state (guests may only request a resync).
 
 ---
 

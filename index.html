@@ -17,6 +17,7 @@
   <script src="qrcode.min.js"></script>
   <script src="jsqr.min.js"></script>
   <script src="mqtt.min.js"></script>
+  <script src="peerjs.min.js"></script>
   <link rel="stylesheet" href="fonts.css" />
   <script>
     if (typeof tailwind !== 'undefined') tailwind.config = {
@@ -1199,8 +1200,8 @@
       </div>
 
       <div class="p-4 sm:p-5 overflow-y-auto custom-scroll space-y-4">
-        <div class="grid grid-cols-2 gap-2.5 p-1.5 bg-parchment-200 rounded-2xl border border-parchment-300">
-          <button id="tabModePassPlay" type="button" class="android-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 bg-teal-600 text-white shadow-md">
+        <div class="grid grid-cols-3 gap-1.5 p-1.5 bg-parchment-200 rounded-2xl border border-parchment-300">
+          <button id="tabModePassPlay" type="button" class="android-btn py-2.5 px-2 rounded-xl text-[11px] sm:text-sm font-extrabold flex items-center justify-center gap-1.5 bg-teal-600 text-white shadow-md">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
@@ -1217,7 +1218,16 @@
               <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
               <line x1="12" y1="20" x2="12.01" y2="20" />
             </svg>
-            <span>📱 2-Phone QR Link</span>
+            <span>📶 Offline QR</span>
+          </button>
+
+          <button id="tabModeGlobal" type="button" class="android-btn py-2.5 px-2 rounded-xl text-[11px] sm:text-sm font-extrabold flex items-center justify-center gap-1.5 text-walnut-700 hover:text-walnut-900">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M3 12h18" />
+              <path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z" />
+            </svg>
+            <span>🌍 Global</span>
           </button>
         </div>
 
@@ -1534,6 +1544,160 @@
                   ⚡ Run Loopback Handshake
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- GLOBAL PLAY (PeerJS rendezvous + direct WebRTC + LAN failover) -->
+        <!-- ============================================================= -->
+        <div id="panelGlobal" class="hidden space-y-3.5">
+          <div id="globalStatusCard" class="bg-white border-2 border-parchment-300 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span id="globalStatusDot" class="w-3.5 h-3.5 rounded-full bg-amber-500 shrink-0"></span>
+              <div class="truncate">
+                <div id="globalStateTitle" class="text-xs font-extrabold text-walnut-900">Not Connected</div>
+                <div id="globalStateDetail" class="text-[11px] text-walnut-600 truncate">Host a world room or join a friend with a code / QR</div>
+              </div>
+            </div>
+            <span id="globalTransportBadge" class="text-[9px] font-mono font-black px-1.5 py-0.5 rounded-md bg-sky-100 text-sky-800 border border-sky-300 shrink-0">PEERJS</span>
+          </div>
+
+          <div id="globalChoiceView" class="space-y-3">
+            <div class="bg-sky-50 border border-sky-300 rounded-2xl p-3 text-[11px] text-walnut-800 space-y-1">
+              <div class="font-extrabold text-sky-900 flex items-center gap-1.5">
+                <span>🌍</span><span>Play with anyone, anywhere</span>
+              </div>
+              <p>PeerJS is used only to introduce the two devices. Every move then travels directly over an encrypted WebRTC DataChannel. When both players share a Wi-Fi network, a second direct LAN link is kept warm automatically — <strong>if the internet drops, the match switches to it without losing a move.</strong></p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="bg-white border-2 border-teal-500/50 rounded-2xl p-4 flex flex-col justify-between gap-3 shadow-sm">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-xl bg-teal-100 text-teal-800 font-extrabold text-sm flex items-center justify-center">1</span>
+                    <h3 class="font-extrabold text-sm text-teal-900">Host World Room</h3>
+                  </div>
+                  <p class="text-xs text-walnut-600 leading-relaxed">Creates a short room code and QR. Share either with your friend.</p>
+                </div>
+                <button id="btnStartGlobalHost" type="button" class="android-btn w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-black shadow-md flex items-center justify-center gap-2">
+                  <span>👑 Host World Room</span>
+                </button>
+              </div>
+
+              <div class="bg-white border-2 border-amber-500/50 rounded-2xl p-4 flex flex-col justify-between gap-3 shadow-sm">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-xl bg-amber-100 text-amber-900 font-extrabold text-sm flex items-center justify-center">2</span>
+                    <h3 class="font-extrabold text-sm text-walnut-900">Join a Room</h3>
+                  </div>
+                  <p class="text-xs text-walnut-600 leading-relaxed">Enter the 6-character code, paste an invite, or scan the host's QR.</p>
+                </div>
+                <div class="space-y-1.5">
+                  <input id="inpGlobalRoomCode" type="text" maxlength="40" placeholder="Room code (e.g. K7F2Q9)" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-2.5 py-2 text-xs font-mono font-extrabold uppercase text-teal-900 focus:outline-none" />
+                  <div class="grid grid-cols-2 gap-1.5">
+                    <button id="btnJoinGlobalRoom" type="button" class="android-btn py-2.5 px-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-walnut-900 text-xs font-black shadow-md">
+                      Join Room
+                    </button>
+                    <button id="btnScanGlobalQr" type="button" class="android-btn py-2.5 px-2 rounded-xl bg-walnut-800 hover:bg-walnut-700 text-amber-200 text-xs font-black shadow-md">
+                      📷 Scan QR
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="globalResumeHint" class="hidden bg-emerald-50 border border-emerald-300 rounded-2xl p-3 text-[11px] text-emerald-900 flex items-center justify-between gap-2">
+              <span id="globalResumeText" class="font-bold">A previous online match is saved on this device.</span>
+              <button id="btnGlobalResumeLast" type="button" class="android-btn px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black shrink-0 shadow">
+                ↻ Resume
+              </button>
+            </div>
+          </div>
+
+          <div id="globalHostView" class="hidden bg-white border-2 border-teal-500/60 rounded-2xl p-4 space-y-3 shadow-sm text-center">
+            <div class="space-y-1">
+              <span class="inline-block px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 text-[10px] font-extrabold tracking-wider uppercase">
+                World Room Live
+              </span>
+              <h3 class="font-extrabold text-sm text-walnut-900">Share this code or QR</h3>
+              <p class="text-xs text-walnut-600">Your friend opens <strong>🌍 Global → Join a Room</strong> and scans or types it. The match starts automatically.</p>
+            </div>
+
+            <div class="flex items-center justify-center gap-2">
+              <span class="text-[10px] uppercase tracking-wider font-extrabold text-walnut-500">Room</span>
+              <span id="globalRoomCodeLabel" class="font-mono text-xl sm:text-2xl font-black tracking-[0.25em] text-teal-800">------</span>
+            </div>
+
+            <div class="flex flex-col items-center justify-center py-1">
+              <div id="qrGlobalRoomBox" class="p-3 bg-white border-2 border-parchment-300 rounded-2xl shadow-inner min-w-[220px] min-h-[220px] flex items-center justify-center"></div>
+              <span id="globalRoomChecksum" class="text-[10px] font-mono text-walnut-500 mt-1">Waiting for room registration...</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-parchment-200">
+              <button id="btnCopyGlobalCode" type="button" class="android-btn py-2 px-2 rounded-xl bg-teal-700 hover:bg-teal-600 text-white text-xs font-black shadow">
+                📋 Copy Code
+              </button>
+              <button id="btnCopyGlobalLink" type="button" class="android-btn py-2 px-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-walnut-900 text-xs font-black shadow">
+                🔗 Copy Invite Link
+              </button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button id="btnGlobalReconnect" type="button" class="android-btn py-2 px-2 rounded-xl bg-parchment-100 hover:bg-parchment-200 text-walnut-800 text-xs font-bold border border-parchment-300">
+                ⚡ Refresh Room
+              </button>
+              <button id="btnGlobalBackToChoice" type="button" class="android-btn py-2 px-2 rounded-xl bg-parchment-100 hover:bg-parchment-200 text-walnut-800 text-xs font-bold border border-parchment-300">
+                ← Back
+              </button>
+            </div>
+            <div class="flex items-center justify-center gap-2 py-1 px-3 rounded-xl bg-sky-50 border border-sky-200 text-[11px] font-bold text-sky-900">
+              <span class="w-2.5 h-2.5 rounded-full bg-sky-500 animate-ping"></span>
+              <span>Keep this screen open until Player 2 joins.</span>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-parchment-300">
+            <button id="btnTogglePeerConfig" type="button" class="android-btn w-full py-2 px-3 rounded-xl bg-parchment-100 hover:bg-parchment-200 text-walnut-700 text-xs font-bold border border-parchment-300 flex items-center justify-between">
+              <span>⚙️ PeerJS Server &amp; TURN Settings</span>
+              <span id="peerConfigChevron">▼</span>
+            </button>
+
+            <div id="peerConfigPanel" class="hidden mt-3 space-y-2.5 bg-white border border-parchment-300 rounded-2xl p-3">
+              <p class="text-[10px] text-walnut-600 leading-relaxed">Defaults use the free public PeerJS cloud. You can point at your own PeerServer for reliability (host, port, path, key). TURN is optional and only helps players behind strict NATs.</p>
+              <div class="grid grid-cols-2 gap-2">
+                <label class="text-[10px] font-extrabold text-walnut-700">Server Host
+                  <input id="inpPeerHost" type="text" class="selectable-input mt-0.5 w-full bg-parchment-100 border border-parchment-400 rounded-lg px-2 py-1.5 text-[11px] font-mono" placeholder="0.peerjs.com" />
+                </label>
+                <label class="text-[10px] font-extrabold text-walnut-700">Port
+                  <input id="inpPeerPort" type="number" min="1" max="65535" class="selectable-input mt-0.5 w-full bg-parchment-100 border border-parchment-400 rounded-lg px-2 py-1.5 text-[11px] font-mono" placeholder="443" />
+                </label>
+                <label class="text-[10px] font-extrabold text-walnut-700">Path
+                  <input id="inpPeerPath" type="text" class="selectable-input mt-0.5 w-full bg-parchment-100 border border-parchment-400 rounded-lg px-2 py-1.5 text-[11px] font-mono" placeholder="/" />
+                </label>
+                <label class="text-[10px] font-extrabold text-walnut-700">Key
+                  <input id="inpPeerKey" type="text" class="selectable-input mt-0.5 w-full bg-parchment-100 border border-parchment-400 rounded-lg px-2 py-1.5 text-[11px] font-mono" placeholder="peerjs" />
+                </label>
+              </div>
+              <label class="flex items-center gap-2 text-[11px] font-bold text-walnut-800">
+                <input id="chkPeerSecure" type="checkbox" class="w-4 h-4 accent-teal-600" />
+                Use secure WebSocket (wss / HTTPS)
+              </label>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-parchment-200">
+                <label class="text-[10px] font-extrabold text-walnut-700 sm:col-span-3">TURN URL (optional)
+                  <input id="inpPeerTurnUrl" type="text" class="selectable-input mt-0.5 w-full bg-parchment-100 border border-parchment-400 rounded-lg px-2 py-1.5 text-[11px] font-mono" placeholder="turn:turn.example.com:3478" />
+                </label>
+                <label class="text-[10px] font-extrabold text-walnut-700">TURN User
+                  <input id="inpPeerTurnUser" type="text" class="selectable-input mt-0.5 w-full bg-parchment-100 border border-parchment-400 rounded-lg px-2 py-1.5 text-[11px] font-mono" />
+                </label>
+                <label class="text-[10px] font-extrabold text-walnut-700">TURN Password
+                  <input id="inpPeerTurnPass" type="password" class="selectable-input mt-0.5 w-full bg-parchment-100 border border-parchment-400 rounded-lg px-2 py-1.5 text-[11px] font-mono" />
+                </label>
+                <div class="flex items-end gap-1.5">
+                  <button id="btnSavePeerConfig" type="button" class="android-btn flex-1 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[11px] font-black shadow">Save</button>
+                  <button id="btnResetPeerConfig" type="button" class="android-btn flex-1 py-1.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-walnut-800 text-[11px] font-black border border-parchment-400">Reset</button>
+                </div>
+              </div>
+              <div id="peerConfigStatus" class="text-[10px] font-mono text-walnut-500">Using PeerJS public cloud defaults.</div>
             </div>
           </div>
         </div>
@@ -4022,6 +4186,13 @@
           if (GameState.graceTimeLeft <= 0) {
             const forfeitedPlayer = GameState.graceAbsentPlayer || targetAbsent;
             cancelGraceTimer(false);
+            // If our own link is also down we cannot know who really stayed — end without awarding a false win.
+            if (GameState.mode === 'webrtc' && !WebRTCManager.isConnected()) {
+              endOnlineMatchByDisconnect(
+                `📡 The connection between both devices could not be restored within ${totalSecs}s — match ended without a result.`
+              );
+              return;
+            }
             triggerAbandonmentForfeitWin(forfeitedPlayer, totalSecs);
           }
         }, 1000);
@@ -4089,6 +4260,20 @@
         if (WebRTCManager.isConnected()) {
           WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState() });
         }
+      }
+
+      function endOnlineMatchByDisconnect(reasonText) {
+        if (GameState.gameOver) return;
+        GameState.gameOver = true;
+        GameState.winner = null;
+        GameState.winReason = reasonText || '📡 Connection lost — the match ended without a result.';
+        stopAllTimers();
+        recordSessionOutcome(null);
+        showBoardToast('📡 Connection lost — match ended without a result.');
+        showVictoryModal();
+        saveLiveMatchSnapshot(false);
+        updateHUD();
+        requestRender();
       }
 
       function stopAllTimers() {
@@ -4634,13 +4819,21 @@
             vsAI: GameState.vsAI,
             aiDifficulty: GameState.aiDifficulty,
             aiPlayerRole: GameState.aiPlayerRole,
+            online: (GameState.mode === 'webrtc') ? {
+              roomCode: WebRTCManager.roomCode || null,
+              role: GameState.localPlayerRole || null,
+              sessionId: GameState.sessionId || null,
+              transport: WebRTCManager.transport || null
+            } : null,
             state: serializeGameState()
           };
           SafeStorage.setItem('katar_live_match_v3', JSON.stringify(snap));
         } catch (err) {}
       }
 
-      function checkAndRestoreSavedMatchOnLoad() {
+      const ONLINE_RESUME_MAX_AGE_MS = 15 * 60 * 1000;
+
+      function checkAndRestoreSavedMatchOnLoad(skipOnlineAutoRejoin = false) {
         updateStashedMatchButtonUI();
         try {
           const raw = SafeStorage.getItem('katar_live_match_v3');
@@ -4651,6 +4844,38 @@
           if (snap.aiDifficulty) GameState.aiDifficulty = snap.aiDifficulty;
           if (snap.aiPlayerRole) GameState.aiPlayerRole = snap.aiPlayerRole;
           applyRemoteGameState(snap.state);
+
+          const online = snap.online;
+          if (online && online.roomCode && (online.role === 1 || online.role === 2)) {
+            const age = Date.now() - (Number(snap.savedAt) || 0);
+            if (!skipOnlineAutoRejoin && age <= ONLINE_RESUME_MAX_AGE_MS) {
+              GameState.mode = 'webrtc';
+              GameState.vsAI = false;
+              GameState.localPlayerRole = online.role;
+              if (online.sessionId) GameState.sessionId = online.sessionId;
+              WebRTCManager.roomCode = online.roomCode;
+              WebRTCManager.lastRoomCode = online.roomCode;
+              WebRTCManager.transport = online.transport === 'lan-backup' ? 'lan-backup' : 'peerjs';
+              GameState.boardFlipped = (online.role === 2);
+              setTimeout(() => {
+                if (GameState.gameOver || GameState.mode !== 'webrtc') return;
+                showBoardToast(`↻ Restoring online room ${online.roomCode}…`);
+                if (online.role === 1) WebRTCManager.hostGlobalRoom(online.roomCode);
+                else WebRTCManager.joinGlobalRoom(online.roomCode);
+              }, 700);
+            } else {
+              // Too old (or an invite link is taking priority) — keep the board as a local match.
+              GameState.mode = 'pass_play';
+              GameState.vsAI = false;
+              GameState.localPlayerRole = null;
+              WebRTCManager.roomCode = '';
+              WebRTCManager.transport = 'none';
+              if (!skipOnlineAutoRejoin) {
+                showBoardToast('Saved online match is older than 15 minutes — restored locally.');
+              }
+            }
+          }
+
           if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
             setTimeout(runAITurn, 480);
           }
@@ -4736,12 +4961,113 @@
       /* -------------------------------------------------------------------
        * 6. EXECUTING MOVES ACROSS ALL 14+ GAMES & RULE FAMILIES
        * ------------------------------------------------------------------- */
+      function getActionCaptureIds(action) {
+        if (!action) return [];
+        if (Array.isArray(action.capturedIds) && action.capturedIds.length > 0) {
+          return action.capturedIds.map((n) => Number(n)).filter((n) => Number.isInteger(n));
+        }
+        if (action.capturedId !== undefined && action.capturedId !== null) {
+          const n = Number(action.capturedId);
+          return Number.isInteger(n) ? [n] : [];
+        }
+        return [];
+      }
+
+      /**
+       * Server-side style validation for every move that arrives from the network.
+       * The receiving device never trusts a peer's coordinates, captures, or turns:
+       * it regenerates the legal move list for that player and only executes a match.
+       * This is the "each user is locked to his own side" guarantee.
+       */
+      function authorizeRemoteAction(action, player) {
+        if (!action || typeof action !== 'object') return null;
+        const opponent = player === 1 ? 2 : 1;
+        const board = GameState.board;
+        const nodeCount = Array.isArray(board) ? board.length : 0;
+        const validNode = (i) => Number.isInteger(i) && i >= 0 && i < nodeCount;
+
+        if (action.type === 'end_chain') {
+          if (GameState.chainJumpingNode === null) return null;
+          if (!validNode(GameState.chainJumpingNode)) return null;
+          if (board[GameState.chainJumpingNode] !== player) return null;
+          return { type: 'end_chain' };
+        }
+
+        if (action.type === 'remove_opponent') {
+          if (!GameState.morrisPendingRemove) return null;
+          const cid = Number(action.capturedId);
+          if (!validNode(cid) || board[cid] !== opponent) return null;
+          const removable = getRemovableOpponentNodes(opponent);
+          if (!removable.includes(cid)) return null;
+          return { type: 'remove_opponent', capturedId: cid };
+        }
+
+        if (action.type === 'drop') {
+          const to = Number(action.to);
+          if (!validNode(to) || board[to] !== 0) return null;
+          const pool = getAllLegalActionsForPlayer(player);
+          const match = pool.allSteps.find((a) => a.type === 'drop' && a.to === to);
+          return match ? { ...match } : null;
+        }
+
+        if (action.type === 'step' || action.type === 'jump') {
+          const from = Number(action.from);
+          const to = Number(action.to);
+          if (!validNode(from) || !validNode(to)) return null;
+          if (board[from] !== player || board[to] !== 0) return null;
+
+          const pool = getAllLegalActionsForPlayer(player);
+          const all = pool.allSteps.concat(pool.allJumps);
+          const match = all.find((a) => a.type === action.type && a.from === from && a.to === to);
+          if (!match) return null;
+
+          if (action.type !== 'jump') return { ...match };
+
+          const legalCaptures = getActionCaptureIds(match);
+          const claimedCaptures = getActionCaptureIds(action);
+          if (claimedCaptures.length > 0) {
+            for (const cid of claimedCaptures) {
+              if (!validNode(cid) || board[cid] !== opponent) return null;
+              if (!legalCaptures.includes(cid)) return null;
+            }
+          }
+
+          const result = { ...match };
+          if (match.captureMode === 'both' && (action.captureMode === 'approach' || action.captureMode === 'withdrawal')) {
+            const chosen = action.captureMode === 'approach' ? (match.approachIds || []) : (match.withdrawalIds || []);
+            if (chosen.length === 0) return null;
+            result.captureMode = action.captureMode;
+            result.capturedId = chosen[0];
+            result.capturedIds = chosen.slice();
+          }
+          return result;
+        }
+
+        return null;
+      }
+
       function executeAction(action, isRemote = false) {
         if (GameState.gameOver) return;
         hideFanoronaChoiceBar();
 
         const player = GameState.currentTurn;
         const opponent = player === 1 ? 2 : 1;
+
+        // Side lock: in an online match only the owner of the current side may act.
+        if (GameState.mode === 'webrtc') {
+          if (!isRemote) {
+            if (!GameState.localPlayerRole || GameState.localPlayerRole !== GameState.currentTurn) {
+              SoundEngine.invalid();
+              showBoardToast('🛡️ This is your opponent\'s side — you can only move your own pieces.');
+              return;
+            }
+          } else {
+            const expected = GameState.localPlayerRole === 1 ? 2 : 1;
+            if (!GameState.localPlayerRole || GameState.currentTurn !== expected) {
+              return; // out-of-turn remote packet
+            }
+          }
+        }
 
         if (!isRemote && GameState.chainCount === 0 && !GameState.morrisPendingRemove) {
           saveUndoSnapshot();
@@ -7078,10 +7404,20 @@
           return;
         }
 
-        if (GameState.mode === 'webrtc' && WebRTCManager.isConnected() && GameState.localPlayerRole) {
+        if (GameState.mode === 'webrtc') {
+          if (!GameState.localPlayerRole) {
+            SoundEngine.invalid();
+            showBoardToast('Pair with your opponent first — no side is assigned yet.');
+            return;
+          }
           if (GameState.currentTurn !== GameState.localPlayerRole) {
             SoundEngine.invalid();
-            showBoardToast(`Waiting for Player ${GameState.currentTurn}'s move...`);
+            showBoardToast(`🛡️ Player ${GameState.currentTurn}'s turn — you control Player ${GameState.localPlayerRole} only.`);
+            return;
+          }
+          if (!WebRTCManager.isConnected()) {
+            SoundEngine.invalid();
+            showBoardToast('Connection is re-establishing — moves are locked until the link is restored.');
             return;
           }
         }
@@ -8089,6 +8425,27 @@
         activePeerName: null,
         activePin: '7860',
 
+        /* ---- Global PeerJS transport, reconnect & direct-LAN failover ---- */
+        transport: 'none',            // 'peerjs' | 'direct' | 'lan-backup' | 'none'
+        peerJS: null,                 // PeerJS Peer instance
+        peerConn: null,               // PeerJS DataConnection
+        roomCode: '',
+        backupPC: null,               // independent LAN-only RTCPeerConnection
+        backupDC: null,
+        backupReady: false,
+        backupInFlight: false,
+        remoteDeviceId: null,
+        remoteDeviceName: null,
+        remoteSeq: 0,
+        localSeq: 0,
+        linkOpenHandledFor: null,
+        reconnectTimer: null,
+        reconnectAttempts: 0,
+        intentionalLeave: false,
+        suppressLossGrace: false,
+        lastRoomCode: '',
+        globalView: 'choice',
+
         initDeviceIdentity() {
           try {
             let id = SafeStorage.getItem('katar_device_id_v1');
@@ -8249,8 +8606,759 @@
           }, 900);
         },
 
+        /* =============================================================
+         * GLOBAL PLAY (PeerJS) + DIRECT LAN FAILOVER
+         * ============================================================= */
+
+        normalizeRoomCode(raw) {
+          let t = String(raw || '').trim();
+          const m = t.match(/(?:join=|KATARJOIN[:\s]+|KATAR-GLOBAL-)([A-Za-z0-9]{4,10})/i);
+          if (m) t = m[1];
+          t = t.toUpperCase().replace(/[^A-Z0-9]/g, '');
+          if (t.length > 8) t = t.slice(-8);
+          return t;
+        },
+
+        getRoomCodeFromInvite(text) {
+          const t = String(text || '').trim();
+          if (!t || /^pk:/i.test(t)) return '';
+          let m = t.match(/^KATARJOIN[:\s]+([A-Za-z0-9-]{4,12})$/i);
+          if (!m) m = t.match(/[#?&]join=([A-Za-z0-9-]{4,12})/i);
+          if (!m) m = t.match(/^KATAR-GLOBAL-([A-Za-z0-9-]{4,12})$/i);
+          if (m) return this.normalizeRoomCode(m[1]);
+          const plain = t.toUpperCase().replace(/[^A-Z0-9]/g, '');
+          if (plain.length >= 4 && plain.length <= 8) return plain;
+          return '';
+        },
+
+        makeRoomCode() {
+          const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+          let code = '';
+          try {
+            const buf = new Uint32Array(6);
+            crypto.getRandomValues(buf);
+            for (let i = 0; i < 6; i++) code += alphabet[buf[i] % alphabet.length];
+          } catch (e) {
+            for (let i = 0; i < 6; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+          }
+          return code;
+        },
+
+        hostPeerId(code) {
+          return 'katar-v2-' + String(code || '').toUpperCase();
+        },
+
+        guestPeerId() {
+          const safeDev = String(this.deviceId || 'dev').replace(/[^A-Za-z0-9]/g, '').slice(-10);
+          const rand = Math.random().toString(36).slice(2, 8);
+          return 'katar-v2-g-' + safeDev + '-' + rand;
+        },
+
+        getPeerServerConfig() {
+          const def = {
+            host: '0.peerjs.com',
+            port: 443,
+            path: '/',
+            key: 'peerjs',
+            secure: true,
+            turnUrl: '',
+            turnUser: '',
+            turnPass: ''
+          };
+          try {
+            const raw = SafeStorage.getItem('katar_peerjs_server_v1');
+            if (raw) return { ...def, ...JSON.parse(raw) };
+          } catch (e) {}
+          return def;
+        },
+
+        savePeerServerConfig(cfg) {
+          try {
+            SafeStorage.setItem('katar_peerjs_server_v1', JSON.stringify(cfg));
+          } catch (e) {}
+        },
+
+        applyPeerServerConfigUI() {
+          const cfg = this.getPeerServerConfig();
+          const set = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+          };
+          set('inpPeerHost', cfg.host || '0.peerjs.com');
+          set('inpPeerPort', cfg.port || 443);
+          set('inpPeerPath', cfg.path || '/');
+          set('inpPeerKey', cfg.key || 'peerjs');
+          set('inpPeerTurnUrl', cfg.turnUrl || '');
+          set('inpPeerTurnUser', cfg.turnUser || '');
+          set('inpPeerTurnPass', cfg.turnPass || '');
+          const chk = document.getElementById('chkPeerSecure');
+          if (chk) chk.checked = Boolean(cfg.secure);
+          const status = document.getElementById('peerConfigStatus');
+          if (status) status.textContent = `Server: ${cfg.host || '0.peerjs.com'}:${cfg.port || 443}${cfg.path || '/'} • ${cfg.secure ? 'secure' : 'insecure'}${cfg.turnUrl ? ' • TURN configured' : ''}`;
+        },
+
+        readPeerServerConfigUI() {
+          const val = (id) => {
+            const el = document.getElementById(id);
+            return el ? String(el.value || '').trim() : '';
+          };
+          let host = val('inpPeerHost') || '0.peerjs.com';
+          host = host.replace(/^wss?:\/\//i, '').replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+          const port = parseInt(val('inpPeerPort'), 10) || 443;
+          let path = val('inpPeerPath') || '/';
+          if (!path.startsWith('/')) path = '/' + path;
+          const cfg = {
+            host,
+            port,
+            path,
+            key: val('inpPeerKey') || 'peerjs',
+            secure: Boolean(document.getElementById('chkPeerSecure') && document.getElementById('chkPeerSecure').checked),
+            turnUrl: val('inpPeerTurnUrl'),
+            turnUser: val('inpPeerTurnUser'),
+            turnPass: val('inpPeerTurnPass')
+          };
+          this.savePeerServerConfig(cfg);
+          this.applyPeerServerConfigUI();
+          return cfg;
+        },
+
+        buildPeerOptions() {
+          const cfg = this.getPeerServerConfig();
+          const iceServers = [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+          ];
+          if (cfg.turnUrl) {
+            iceServers.push({
+              urls: cfg.turnUrl,
+              username: cfg.turnUser || undefined,
+              credential: cfg.turnPass || undefined
+            });
+          }
+          return {
+            host: cfg.host || '0.peerjs.com',
+            port: Number(cfg.port) || 443,
+            path: cfg.path || '/',
+            key: cfg.key || 'peerjs',
+            secure: Boolean(cfg.secure),
+            debug: 1,
+            config: { iceServers }
+          };
+        },
+
+        updateGlobalUI(state, title, detail, badge) {
+          const dot = document.getElementById('globalStatusDot');
+          const titleEl = document.getElementById('globalStateTitle');
+          const detailEl = document.getElementById('globalStateDetail');
+          const badgeEl = document.getElementById('globalTransportBadge');
+          if (titleEl && title) titleEl.textContent = title;
+          if (detailEl && detail) detailEl.textContent = detail;
+          if (badgeEl && badge) badgeEl.textContent = badge;
+          if (dot) {
+            if (state === 'connected') dot.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 shrink-0 animate-pulse';
+            else if (state === 'connecting') dot.className = 'w-3.5 h-3.5 rounded-full bg-amber-500 shrink-0 animate-ping';
+            else if (state === 'error') dot.className = 'w-3.5 h-3.5 rounded-full bg-rose-600 shrink-0';
+            else dot.className = 'w-3.5 h-3.5 rounded-full bg-amber-500 shrink-0';
+          }
+        },
+
+        showGlobalChoiceView() {
+          this.globalView = 'choice';
+          const choice = document.getElementById('globalChoiceView');
+          const host = document.getElementById('globalHostView');
+          if (choice) choice.classList.remove('hidden');
+          if (host) host.classList.add('hidden');
+        },
+
+        showGlobalHostView() {
+          this.globalView = 'host';
+          const choice = document.getElementById('globalChoiceView');
+          const host = document.getElementById('globalHostView');
+          if (choice) choice.classList.add('hidden');
+          if (host) host.classList.remove('hidden');
+        },
+
+        renderGlobalRoomQR() {
+          const label = document.getElementById('globalRoomCodeLabel');
+          const box = document.getElementById('qrGlobalRoomBox');
+          const chk = document.getElementById('globalRoomChecksum');
+          if (label) label.textContent = this.roomCode || '------';
+          if (!box) return;
+          if (!this.roomCode) {
+            box.innerHTML = '<span class="text-xs text-walnut-500 font-bold">Waiting for room code…</span>';
+            if (chk) chk.textContent = 'No room code yet';
+            return;
+          }
+          box.innerHTML = '';
+          const payload = 'KATARJOIN:' + this.roomCode;
+          let hash = 2166136261;
+          for (let i = 0; i < payload.length; i++) {
+            hash ^= payload.charCodeAt(i);
+            hash = Math.imul(hash, 16777619);
+          }
+          if (chk) chk.textContent = `Room ID: ${(hash >>> 0).toString(16).toUpperCase().padStart(8, '0').slice(0, 6)}`;
+          if (typeof QRCode !== 'undefined') {
+            try {
+              new QRCode(box, {
+                text: payload,
+                width: 220,
+                height: 220,
+                colorDark: '#000000',
+                colorLight: '#FFFFFF',
+                correctLevel: QRCode.CorrectLevel.M
+              });
+              return;
+            } catch (e) {}
+          }
+          box.innerHTML = `<div class="p-3 text-xs text-amber-900 font-bold break-all">${payload}</div>`;
+        },
+
+        async copyText(text, okMsg) {
+          if (!text) return false;
+          try {
+            await navigator.clipboard.writeText(text);
+            showBoardToast(okMsg || 'Copied to clipboard!');
+            return true;
+          } catch (e) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              ta.remove();
+              showBoardToast(okMsg || 'Copied to clipboard!');
+              return true;
+            } catch (e2) {
+              window.prompt('Copy this:', text);
+              return false;
+            }
+          }
+        },
+
+        getInviteLink() {
+          if (!this.roomCode) return '';
+          const base = location.origin + location.pathname;
+          return `${base}#join=${this.roomCode}`;
+        },
+
+        showGlobalResumeHint() {
+          const hint = document.getElementById('globalResumeHint');
+          const txt = document.getElementById('globalResumeText');
+          let saved = '';
+          try { saved = SafeStorage.getItem('katar_last_room_v1') || ''; } catch (e) {}
+          if (!hint || !saved) return;
+          if (txt) txt.textContent = `Last world room: ${saved}. Resume if your friend is still waiting.`;
+          hint.classList.remove('hidden');
+        },
+
+        async hostGlobalRoom(code) {
+          if (typeof Peer === 'undefined') {
+            showBoardToast('PeerJS library not loaded — check peerjs.min.js');
+            return;
+          }
+          const room = this.normalizeRoomCode(code || this.roomCode || this.makeRoomCode()) || this.makeRoomCode();
+          this.cleanup();
+          this.intentionalLeave = false;
+          this.suppressLossGrace = false;
+          this.roomCode = room;
+          this.lastRoomCode = room;
+          this.transport = 'peerjs';
+          GameState.mode = 'webrtc';
+          GameState.vsAI = false;
+          GameState.localPlayerRole = 1;
+          GameState.sessionId = GameState.sessionId || ('S-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6));
+          try { SafeStorage.setItem('katar_last_room_v1', room); } catch (e) {}
+          this.showGlobalHostView();
+          this.renderGlobalRoomQR();
+          this.updateGlobalUI('connecting', `Opening room ${room}…`, 'Registering with the PeerJS rendezvous server', 'PEERJS');
+          this.updateConnectionUI('connecting', `Hosting Global Room ${room}`, 'Waiting for Player 2 to join…');
+
+          try {
+            const peer = new Peer(this.hostPeerId(room), this.buildPeerOptions());
+            this.peerJS = peer;
+
+            peer.on('open', (id) => {
+              this.reconnectAttempts = 0;
+              this.updateGlobalUI('waiting', `Room ${room} is live`, 'Share the code or QR with Player 2', 'PEERJS');
+              this.updateConnectionUI('connecting', `Room ${room} Ready`, 'Waiting for Player 2 to join…');
+              showBoardToast(`🌍 Room ${room} is live — share the code or QR.`);
+              this.renderGlobalRoomQR();
+            });
+
+            peer.on('connection', (conn) => {
+              if (this.linkedPeerIsOpen()) {
+                try { conn.close(); } catch (e) {}
+                return;
+              }
+              this.bindPeerJSConnection(conn, 1);
+            });
+
+            peer.on('disconnected', () => {
+              if (this.intentionalLeave) return;
+              this.updateGlobalUI('error', 'Signaling server disconnected', 'Game data may still be flowing directly over WebRTC.', 'PEERJS');
+              try { peer.reconnect(); } catch (e) {}
+              this.scheduleAutoReconnect(2500);
+            });
+
+            peer.on('error', (err) => this.handlePeerJSError(err, 'host', room));
+
+            peer.on('close', () => {
+              if (this.intentionalLeave) return;
+              this.updateGlobalUI('error', 'Room closed', 'Attempting to reopen the room…', 'PEERJS');
+              this.scheduleAutoReconnect(1500);
+            });
+          } catch (err) {
+            this.updateGlobalUI('error', 'Could not open room', (err && err.message) || 'PeerJS failed to start', 'PEERJS');
+            showBoardToast((err && err.message) || 'Could not open the global room.');
+          }
+        },
+
+        async joinGlobalRoom(code) {
+          if (typeof Peer === 'undefined') {
+            showBoardToast('PeerJS library not loaded — check peerjs.min.js');
+            return;
+          }
+          const room = this.normalizeRoomCode(code);
+          if (!room || room.length < 4) {
+            showBoardToast('Enter a valid room code or scan the host QR.');
+            return;
+          }
+          this.cleanup();
+          this.intentionalLeave = false;
+          this.suppressLossGrace = false;
+          this.roomCode = room;
+          this.lastRoomCode = room;
+          this.transport = 'peerjs';
+          GameState.mode = 'webrtc';
+          GameState.vsAI = false;
+          GameState.localPlayerRole = 2;
+          GameState.sessionId = GameState.sessionId || ('S-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6));
+          try { SafeStorage.setItem('katar_last_room_v1', room); } catch (e) {}
+          this.showGlobalChoiceView();
+          this.updateGlobalUI('connecting', `Joining ${room}…`, 'Contacting the host through PeerJS', 'PEERJS');
+          this.updateConnectionUI('connecting', `Joining Global Room ${room}`, 'Connecting through PeerJS…');
+
+          try {
+            const peer = new Peer(this.guestPeerId(), this.buildPeerOptions());
+            this.peerJS = peer;
+
+            peer.on('open', () => {
+              if (this.intentionalLeave) return;
+              this.reconnectAttempts = 0;
+              const conn = peer.connect(this.hostPeerId(room), {
+                reliable: true,
+                serialization: 'json',
+                metadata: {
+                  deviceId: this.deviceId,
+                  deviceName: this.deviceName,
+                  role: 2,
+                  pin: this.activePin,
+                  protocol: 'katar-p2p-v2'
+                }
+              });
+              this.bindPeerJSConnection(conn, 2);
+            });
+
+            peer.on('disconnected', () => {
+              if (this.intentionalLeave) return;
+              try { peer.reconnect(); } catch (e) {}
+            });
+
+            peer.on('error', (err) => this.handlePeerJSError(err, 'guest', room));
+
+            peer.on('close', () => {
+              if (this.intentionalLeave || this.isConnected()) return;
+              this.updateGlobalUI('error', 'Connection closed', 'Trying to rejoin the room…', 'PEERJS');
+              this.scheduleAutoReconnect(1800);
+            });
+          } catch (err) {
+            this.updateGlobalUI('error', 'Could not join room', (err && err.message) || 'PeerJS failed to start', 'PEERJS');
+            showBoardToast((err && err.message) || 'Could not join the room.');
+          }
+        },
+
+        handlePeerJSError(err, intent, room) {
+          const type = (err && err.type) || 'error';
+          const msg = (err && err.message) || type;
+          if (type === 'unavailable-id' && intent === 'host') {
+            const midMatch = isMatchActivelyInProgress();
+            if ((midMatch || this.reconnectAttempts > 0) && !this.intentionalLeave) {
+              if (this.reconnectAttempts >= 9) {
+                this.updateGlobalUI('error', 'Room code could not be reclaimed', 'Your friend can rejoin with the same code once the server releases it.', 'PEERJS');
+                return;
+              }
+              this.reconnectAttempts++;
+              this.updateGlobalUI('connecting', 'Reclaiming your room code…', 'The server is still releasing the old slot — keep this screen open.', 'PEERJS');
+              setTimeout(() => { if (!this.intentionalLeave) this.hostGlobalRoom(room); }, 3500);
+            } else if (this.reconnectAttempts < 3 && !this.intentionalLeave) {
+              this.reconnectAttempts++;
+              this.updateGlobalUI('connecting', 'Room code still reserved', 'Retrying the same room so your friend can rejoin…', 'PEERJS');
+              setTimeout(() => { if (!this.intentionalLeave) this.hostGlobalRoom(room); }, 1600);
+            } else if (!this.intentionalLeave) {
+              this.roomCode = this.makeRoomCode();
+              this.reconnectAttempts = 0;
+              this.updateGlobalUI('connecting', 'Made a fresh room code', 'The old code was busy. Share the new code.', 'PEERJS');
+              setTimeout(() => { if (!this.intentionalLeave) this.hostGlobalRoom(this.roomCode); }, 900);
+            }
+            return;
+          }
+          if (type === 'peer-unavailable') {
+            const midMatch = isMatchActivelyInProgress();
+            if ((midMatch || this.reconnectAttempts > 0) && !this.intentionalLeave && this.roomCode) {
+              this.updateGlobalUI('connecting', 'Host not reachable yet', 'Retrying while your return window is open…', 'PEERJS');
+              this.scheduleAutoReconnect(4000);
+            } else {
+              this.updateGlobalUI('error', 'Room not found', 'Check the code, or ask the host to refresh the room.', 'PEERJS');
+              showBoardToast('Room not found — verify the code or QR.');
+            }
+            return;
+          }
+          if (['network', 'server-error', 'socket-error', 'socket-closed', 'disconnected'].includes(type)) {
+            this.updateGlobalUI('error', 'PeerJS signaling unavailable', 'Direct WebRTC gameplay may continue; reconnecting…', 'PEERJS');
+            this.notifyReconnectUI('signaling server unavailable');
+            this.scheduleAutoReconnect(3500);
+            return;
+          }
+          this.updateGlobalUI('error', 'PeerJS error', msg, 'PEERJS');
+        },
+
+        bindPeerJSConnection(conn, role) {
+          if (!conn) return;
+          this.peerConn = conn;
+          this.remoteDeviceId = (conn.metadata && conn.metadata.deviceId) || conn.peer || null;
+          this.remoteDeviceName = (conn.metadata && conn.metadata.deviceName) || 'Global Player';
+          GameState.localPlayerRole = role || GameState.localPlayerRole || 2;
+          GameState.mode = 'webrtc';
+          GameState.vsAI = false;
+
+          const adapter = {
+            readyState: conn.open ? 'open' : 'connecting',
+            send: (data) => {
+              try {
+                conn.send(data);
+              } catch (e) {
+                this.handleSendFailure(e);
+              }
+            },
+            close: () => {
+              try { conn.close(); } catch (e) {}
+            }
+          };
+          this.dc = adapter;
+          this.transport = 'peerjs';
+
+          conn.on('open', () => {
+            adapter.readyState = 'open';
+            this.handleLinkOpen('peerjs');
+          });
+
+          conn.on('data', (data) => {
+            let pkt = data;
+            if (typeof pkt === 'string') {
+              try { pkt = JSON.parse(pkt); } catch (e) { return; }
+            }
+            this.handlePacket(pkt);
+          });
+
+          conn.on('close', () => {
+            adapter.readyState = 'closed';
+            this.handleLinkLost('PeerJS link closed');
+          });
+
+          conn.on('error', (err) => {
+            this.updateGlobalUI('error', 'Data link error', (err && err.message) || 'PeerJS DataConnection error', 'PEERJS');
+          });
+
+          conn.on('iceStateChanged', (state) => {
+            if (state === 'connected' || state === 'completed') {
+              this.updateGlobalUI('connected', `Connected as Player ${GameState.localPlayerRole}`, 'Encrypted direct WebRTC link active', 'PEERJS');
+            } else if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+              this.handleLinkLost('PeerJS ICE ' + state);
+            }
+          });
+
+          if (conn.open) {
+            adapter.readyState = 'open';
+            setTimeout(() => this.handleLinkOpen('peerjs'), 0);
+          }
+        },
+
+        linkedPeerIsOpen() {
+          return Boolean(
+            (this.peerConn && this.peerConn.open) ||
+            (this.dc && this.dc.readyState === 'open') ||
+            (this.backupDC && this.backupDC.readyState === 'open')
+          );
+        },
+
+        getExpectedRemoteRole() {
+          if (GameState.localPlayerRole === 1) return 2;
+          if (GameState.localPlayerRole === 2) return 1;
+          return null;
+        },
+
+        isHostAuthority() {
+          return GameState.localPlayerRole === 1;
+        },
+
+        scheduleAutoReconnect(delay = 1800) {
+          this.cancelAutoReconnect();
+          if (!this.roomCode || this.intentionalLeave || GameState.gameOver) return;
+          const wait = Math.max(600, delay);
+          this.reconnectTimer = setTimeout(() => this.attemptAutoReconnect(), wait);
+        },
+
+        cancelAutoReconnect() {
+          if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+          }
+        },
+
+        attemptAutoReconnect() {
+          this.reconnectTimer = null;
+          if (this.intentionalLeave || GameState.gameOver) return;
+          if (this.isConnected()) return;
+          if (!this.roomCode) return;
+          if (typeof document !== 'undefined' && document.hidden) {
+            this.scheduleAutoReconnect(3000);
+            return;
+          }
+          if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            this.scheduleAutoReconnect(5000);
+            return;
+          }
+          this.reconnectAttempts++;
+          const role = GameState.localPlayerRole || 1;
+          this.updateGlobalUI('connecting', 'Reconnecting…', `Room ${this.roomCode} • attempt ${this.reconnectAttempts}`, 'PEERJS');
+          if (role === 1) this.hostGlobalRoom(this.roomCode);
+          else this.joinGlobalRoom(this.roomCode);
+        },
+
+        notifyReconnectUI(reason) {
+          const btnRec = document.getElementById('btnGraceQuickReconnect');
+          if (btnRec) btnRec.classList.remove('hidden');
+          if (this.roomCode) {
+            const hint = document.getElementById('globalResumeHint');
+            const txt = document.getElementById('globalResumeText');
+            if (hint) hint.classList.remove('hidden');
+            if (txt) txt.textContent = `Room ${this.roomCode} lost (${reason || 'network'}). Rejoining automatically…`;
+          }
+        },
+
+        onNetworkOffline() {
+          if (this.backupDC && this.backupDC.readyState === 'open') {
+            if (this.transport === 'peerjs') {
+              this.promoteBackupLink();
+            } else {
+              showBoardToast('✅ Internet lost — the direct LAN link is carrying the match.');
+            }
+            return;
+          }
+          if (GameState.mode === 'webrtc' && !GameState.gameOver) {
+            this.notifyReconnectUI('internet dropped');
+            showBoardToast('🌐 Internet lost — keeping the direct WebRTC link alive; waiting for network…');
+            this.scheduleAutoReconnect(3000);
+          }
+        },
+
+        onNetworkOnline() {
+          if (this.intentionalLeave) return;
+          if (this.peerJS && this.peerJS.disconnected) {
+            try { this.peerJS.reconnect(); } catch (e) {}
+          }
+          if (GameState.mode === 'webrtc' && !GameState.gameOver && !this.isConnected()) {
+            showBoardToast('📡 Internet restored — reconnecting the match…');
+            this.scheduleAutoReconnect(800);
+          }
+        },
+
+        startLanBackup() {
+          if (this.transport !== 'peerjs') return;
+          if (GameState.localPlayerRole !== 1) return; // host initiates to avoid glare
+          if (this.backupInFlight || (this.backupDC && this.backupDC.readyState === 'open')) return;
+          if (typeof RTCPeerConnection === 'undefined') return;
+          this.backupInFlight = true;
+          try {
+            const pc = new RTCPeerConnection({ iceServers: [] });
+            this.backupPC = pc;
+            pc.addEventListener('connectionstatechange', () => {
+              if (!this.backupReady && (pc.connectionState === 'failed' || pc.connectionState === 'closed')) {
+                this.backupInFlight = false;
+              }
+            });
+            const dc = pc.createDataChannel('katar-lan-backup', { ordered: true });
+            this.attachBackupChannel(dc);
+            pc.createOffer()
+              .then((offer) => pc.setLocalDescription(offer))
+              .then(() => this.gatherIce(pc))
+              .then((desc) => {
+                if (!desc) throw new Error('no local description');
+                this.send({ type: 'LAN_BACKUP_OFFER', sdp: desc });
+              })
+              .catch(() => { this.backupInFlight = false; });
+          } catch (e) {
+            this.backupInFlight = false;
+          }
+        },
+
+        attachBackupChannel(dc) {
+          this.backupDC = dc;
+          dc.onopen = () => {
+            this.backupReady = true;
+            this.backupInFlight = false;
+            this.updateGlobalUI('connected', `Connected as Player ${GameState.localPlayerRole || 1}`, 'Direct LAN backup is warm — internet loss will not stop the match.', 'LAN + P2P');
+            showBoardToast('🛰️ Direct LAN backup link ready. Internet loss will not stop this match.');
+            if (!this.isConnected()) this.promoteBackupLink();
+          };
+          dc.onclose = () => {
+            this.backupReady = false;
+            if (this.backupDC === dc) this.backupDC = null;
+            if (this.dc === dc) {
+              // The active LAN link died — fall back to the still-open PeerJS link if possible.
+              if (this.peerConn && this.peerConn.open) {
+                this.dc = {
+                  readyState: 'open',
+                  send: (data) => {
+                    try { this.peerConn.send(data); } catch (e) { this.handleSendFailure(e); }
+                  },
+                  close: () => { try { this.peerConn.close(); } catch (e) {} }
+                };
+                this.transport = 'peerjs';
+                this.linkOpenHandledFor = null;
+                this.handleLinkOpen('peerjs');
+                showBoardToast('🌐 LAN link closed — switched back to the internet link.');
+              } else {
+                this.handleLinkLost('LAN backup link closed');
+              }
+            }
+          };
+          dc.onerror = () => {};
+          dc.onmessage = (event) => {
+            let pkt = event && event.data;
+            if (typeof pkt === 'string') {
+              try { pkt = JSON.parse(pkt); } catch (e) { return; }
+            }
+            this.handlePacket(pkt);
+          };
+        },
+
+        gatherIce(pc, timeout = 1400) {
+          return new Promise((resolve) => {
+            if (!pc) { resolve(null); return; }
+            if (pc.iceGatheringState === 'complete') { resolve(pc.localDescription); return; }
+            let done = false;
+            const finish = () => {
+              if (done) return;
+              done = true;
+              clearTimeout(timer);
+              resolve(pc.localDescription);
+            };
+            const timer = setTimeout(finish, timeout);
+            pc.addEventListener('icegatheringstatechange', () => {
+              if (pc.iceGatheringState === 'complete') finish();
+            });
+            pc.addEventListener('icecandidate', (evt) => {
+              if (!evt.candidate) finish();
+            });
+          });
+        },
+
+        async handleLanBackupOffer(sdp) {
+          if (GameState.localPlayerRole !== 2 || this.backupInFlight) return;
+          if (!sdp || typeof RTCPeerConnection === 'undefined') return;
+          this.backupInFlight = true;
+          try {
+            const pc = new RTCPeerConnection({ iceServers: [] });
+            this.backupPC = pc;
+            pc.ondatachannel = (evt) => {
+              if (evt.channel) this.attachBackupChannel(evt.channel);
+            };
+            await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            const local = await this.gatherIce(pc);
+            if (local) this.send({ type: 'LAN_BACKUP_ANSWER', sdp: local });
+          } catch (e) {
+            this.backupInFlight = false;
+          }
+        },
+
+        async handleLanBackupAnswer(sdp) {
+          if (!this.backupPC || !sdp) return;
+          try {
+            await this.backupPC.setRemoteDescription(new RTCSessionDescription(sdp));
+          } catch (e) {
+            this.backupInFlight = false;
+          }
+        },
+
+        promoteBackupLink() {
+          if (!this.backupDC || this.backupDC.readyState !== 'open') return false;
+          if (this.dc === this.backupDC && this.transport === 'lan-backup') return true;
+          this.stopHeartbeat();
+          this.dc = this.backupDC;
+          this.transport = 'lan-backup';
+          this.linkOpenHandledFor = null;
+          this.handleLinkOpen('lan-backup');
+          this.updateGlobalUI('connected', `Connected as Player ${GameState.localPlayerRole || 1}`, 'Running on the direct LAN WebRTC link (no internet needed).', 'LAN DIRECT');
+          this.updateConnectionUI('connected', `LAN Direct (P${GameState.localPlayerRole || 1})`, 'Internet-free direct WebRTC link active');
+          showBoardToast('📡 Switched to direct LAN WebRTC — the match continues without internet!');
+          return true;
+        },
+
+        closeBackupLink() {
+          try {
+            if (this.backupDC) {
+              this.backupDC.onopen = null;
+              this.backupDC.onclose = null;
+              this.backupDC.onerror = null;
+              this.backupDC.onmessage = null;
+              this.backupDC.close();
+            }
+          } catch (e) {}
+          try {
+            if (this.backupPC) this.backupPC.close();
+          } catch (e) {}
+          this.backupDC = null;
+          this.backupPC = null;
+          this.backupReady = false;
+          this.backupInFlight = false;
+        },
+
+        closePeerJS() {
+          try {
+            if (this.peerConn) {
+              this.peerConn.removeAllListeners && this.peerConn.removeAllListeners();
+              this.peerConn.close();
+            }
+          } catch (e) {}
+          try {
+            if (this.peerJS) {
+              this.peerJS.removeAllListeners && this.peerJS.removeAllListeners();
+              this.peerJS.destroy();
+            }
+          } catch (e) {}
+          this.peerConn = null;
+          this.peerJS = null;
+        },
+
+        handleSendFailure(err) {
+          if (this.backupDC && this.backupDC.readyState === 'open') {
+            this.promoteBackupLink();
+            return;
+          }
+          if (!this.suppressLossGrace) this.handleLinkLost('send failed');
+        },
+
         isConnected() {
-          return Boolean(this.dc && this.dc.readyState === 'open');
+          const direct = this.dc && this.dc.readyState === 'open';
+          const peer = this.peerConn && this.peerConn.open;
+          const backup = this.backupDC && this.backupDC.readyState === 'open';
+          return Boolean(direct || peer || backup);
         },
 
         stopHostInlineCamera() {
@@ -8279,11 +9387,8 @@
               return;
             }
             this.send({ type: 'HEARTBEAT_PING', ts: Date.now() });
-            if (Date.now() - this.lastPeerPongAt > 6500 && !GameState.gameOver && !GameState.graceTimerInterval) {
-              const remoteRole = GameState.localPlayerRole === 1 ? 2 : 1;
-              const btnRec = document.getElementById('btnGraceQuickReconnect');
-              if (btnRec) btnRec.classList.remove('hidden');
-              startMidGameGraceTimer(remoteRole, GameState.disconnectGraceSeconds || 60, 'connection/hotspot dropped', false);
+            if (Date.now() - this.lastPeerPongAt > 6500 && !GameState.gameOver) {
+              this.handleLinkLost('connection/hotspot dropped');
             }
           }, 2000);
         },
@@ -8296,12 +9401,16 @@
         },
 
         cleanup() {
+          this.suppressLossGrace = true;
+          this.cancelAutoReconnect();
           this.stopHeartbeat();
           this.stopHostInlineCamera();
           if (this.iceTimer) {
             clearTimeout(this.iceTimer);
             this.iceTimer = null;
           }
+          this.closeBackupLink();
+          this.closePeerJS();
           try {
             if (this.dc) {
               this.dc.onopen = null;
@@ -8329,6 +9438,11 @@
           this.dc = null;
           this.pc = null;
           this.loopbackPeer = null;
+          this.linkOpenHandledFor = null;
+          this.transport = 'none';
+          this.remoteSeq = 0;
+          this.localSeq = 0;
+          setTimeout(() => { this.suppressLossGrace = false; }, 60);
         },
 
         encodeSignalToken(desc, role = 1) {
@@ -8539,7 +9653,10 @@
           if (state === 'connected') {
             dotTop.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
             dotModal.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 shrink-0';
-            labelTop.textContent = `P2P (P${GameState.localPlayerRole || 1})`;
+            const role = GameState.localPlayerRole || 1;
+            if (this.transport === 'peerjs') labelTop.textContent = `Global (P${role})`;
+            else if (this.transport === 'lan-backup') labelTop.textContent = `LAN (P${role})`;
+            else labelTop.textContent = `P2P (P${role})`;
           } else if (state === 'connecting') {
             dotTop.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping';
             dotModal.className = 'w-3.5 h-3.5 rounded-full bg-amber-500 shrink-0';
@@ -8589,63 +9706,16 @@
 
         setupDataChannel(channel) {
           this.dc = channel;
+          if (this.transport !== 'peerjs' && this.transport !== 'lan-backup') this.transport = 'direct';
 
           channel.onopen = () => {
-            this.stopHostInlineCamera();
-            GameState.mode = 'webrtc';
-            GameState.vsAI = false;
-            GameState.boardFlipped = (GameState.localPlayerRole === 2);
-            cancelGraceTimer(false);
-            const btnRec = document.getElementById('btnGraceQuickReconnect');
-            if (btnRec) btnRec.classList.add('hidden');
-            resizeCanvas();
-
-            this.startHeartbeat();
-            this.send({
-              type: 'HELLO_IDENTITY',
-              deviceId: this.deviceId,
-              deviceName: this.deviceName,
-              pin: this.activePin
-            });
-            if (this.activePeerId) {
-              this.saveTrustedPeer({
-                peerId: this.activePeerId,
-                peerName: this.activePeerName || 'Paired Phone',
-                pin: this.activePin
-              });
-            }
-
-            this.updateConnectionUI(
-              'connected',
-              `Connected as Player ${GameState.localPlayerRole || 1}!`,
-              'Live P2P Link active — device remembered for future 1-tap reconnect!'
-            );
-            SoundEngine.victory();
-            showBoardToast(`✅ Connected! Device remembered for future 1-tap play.`);
-            syncSettingsControlsFromState();
-            updateHUD();
-
-            const modalConn = document.getElementById('modalConnection');
-            if (modalConn) {
-              modalConn.classList.add('hidden');
-              modalConn.classList.remove('flex');
-            }
-
-            if (GameState.localPlayerRole === 1) {
-              this.send({ type: 'SYNC_STATE', state: serializeGameState() });
-            }
+            try { channel.readyState = 'open'; } catch (e) {}
+            this.handleLinkOpen(this.transport);
           };
 
           channel.onclose = () => {
-            this.stopHeartbeat();
-            this.updateConnectionUI('idle', 'DataChannel Closed', 'Peer disconnected.');
-            showBoardToast('Peer DataChannel closed');
-            if (!GameState.gameOver && GameState.mode === 'webrtc' && !GameState.graceTimerInterval) {
-              const remoteRole = GameState.localPlayerRole === 1 ? 2 : 1;
-              const btnRec = document.getElementById('btnGraceQuickReconnect');
-              if (btnRec) btnRec.classList.remove('hidden');
-              startMidGameGraceTimer(remoteRole, GameState.disconnectGraceSeconds || 60, 'disconnected from P2P', false);
-            }
+            try { channel.readyState = 'closed'; } catch (e) {}
+            this.handleLinkLost('DataChannel closed');
           };
 
           channel.onerror = (err) => {
@@ -8654,64 +9724,302 @@
           };
 
           channel.onmessage = (event) => {
-            try {
-              const packet = JSON.parse(event.data);
-              if (!packet || !packet.type) return;
-
-              if (packet.type === 'MOVE_ACTION') {
-                cancelGraceTimer(false);
-                if (packet.action) {
-                  if (packet.action.type === 'end_chain') {
-                    endChainTurnEarly(true);
-                  } else {
-                    executeAction(packet.action, true);
-                  }
-                } else if (packet.state) {
-                  applyRemoteGameState(packet.state);
-                }
-              } else if (packet.type === 'SYNC_STATE' && packet.state) {
-                cancelGraceTimer(false);
-                applyRemoteGameState(packet.state);
-                showBoardToast('Synced grid & match state from peer');
-              } else if (packet.type === 'RESET_MATCH') {
-                cancelGraceTimer(false);
-                initMatch(false);
-                showBoardToast('Remote player restarted the match');
-              } else if (packet.type === 'PLAYER_LEFT_MIDGAME') {
-                const who = packet.absentPlayer || (GameState.localPlayerRole === 1 ? 2 : 1);
-                startMidGameGraceTimer(who, packet.graceSeconds || GameState.disconnectGraceSeconds || 60, packet.reason || 'left mid-game', false);
-                showBoardToast('Opponent stepped away — reconnect timer started!');
-              } else if (packet.type === 'PLAYER_RETURNED') {
-                cancelGraceTimer(false);
-                showBoardToast('Opponent returned! Match resumed.');
-              } else if (packet.type === 'PEER_FORFEIT_LEAVE') {
-                const whoLeft = packet.absentPlayer || (GameState.localPlayerRole === 1 ? 2 : 1);
-                this.cleanup();
-                GameState.mode = 'pass_play';
-                GameState.vsAI = true;
-                GameState.localPlayerRole = null;
-                this.updateConnectionUI('idle', 'Opponent Left Match', 'Switched to local mode');
-                triggerAbandonmentForfeitWin(whoLeft, 0);
-              } else if (packet.type === 'HEARTBEAT_PING') {
-                this.lastPeerPongAt = Date.now();
-                this.send({ type: 'HEARTBEAT_PONG', ts: Date.now() });
-                if (GameState.graceTimerInterval && GameState.graceAbsentPlayer !== GameState.localPlayerRole) {
-                  cancelGraceTimer(false);
-                }
-              } else if (packet.type === 'HEARTBEAT_PONG') {
-                this.lastPeerPongAt = Date.now();
-              } else if (packet.type === 'HELLO_IDENTITY') {
-                this.lastPeerPongAt = Date.now();
-                this.activePeerId = packet.deviceId || 'PEER-1';
-                this.activePeerName = packet.deviceName || 'Paired Phone';
-                this.saveTrustedPeer({
-                  peerId: this.activePeerId,
-                  peerName: this.activePeerName,
-                  pin: packet.pin || this.activePin
-                });
-              }
-            } catch (err) {}
+            let pkt = event && event.data;
+            if (typeof pkt === 'string') {
+              try { pkt = JSON.parse(pkt); } catch (e) { return; }
+            }
+            this.handlePacket(pkt);
           };
+
+          if (channel.readyState === 'open') {
+            setTimeout(() => this.handleLinkOpen(this.transport), 0);
+          }
+        },
+
+        handleLinkOpen(via) {
+          if (!this.dc || this.dc.readyState !== 'open') return;
+          if (this.linkOpenHandledFor === this.dc) return;
+          this.linkOpenHandledFor = this.dc;
+          this.transport = (via === 'peerjs') ? 'peerjs' : (via === 'lan-backup' ? 'lan-backup' : 'direct');
+          this.cancelAutoReconnect();
+          this.reconnectAttempts = 0;
+          this.intentionalLeave = false;
+          this.suppressLossGrace = false;
+          this.remoteSeq = 0;
+          this.lastPeerPongAt = Date.now();
+
+          this.stopHostInlineCamera();
+          GameState.mode = 'webrtc';
+          GameState.vsAI = false;
+          GameState.boardFlipped = (GameState.localPlayerRole === 2);
+          cancelGraceTimer(false);
+          const btnRec = document.getElementById('btnGraceQuickReconnect');
+          if (btnRec) btnRec.classList.add('hidden');
+          const hint = document.getElementById('globalResumeHint');
+          if (hint) hint.classList.add('hidden');
+          resizeCanvas();
+
+          this.startHeartbeat();
+          this.send({
+            type: 'HELLO_IDENTITY',
+            deviceId: this.deviceId,
+            deviceName: this.deviceName,
+            pin: this.activePin,
+            roomCode: this.roomCode || null,
+            sessionId: GameState.sessionId || null,
+            protocol: 'katar-p2p-v2'
+          });
+          if (this.activePeerId) {
+            this.saveTrustedPeer({
+              peerId: this.activePeerId,
+              peerName: this.activePeerName || 'Paired Phone',
+              pin: this.activePin
+            });
+          }
+
+          const isReconnect = GameState.moveLog.length > 0 || GameState.history.length > 0;
+          this.updateConnectionUI(
+            'connected',
+            `Connected as Player ${GameState.localPlayerRole || 1}!`,
+            this.transport === 'peerjs'
+              ? 'Global PeerJS match active — direct encrypted WebRTC data link.'
+              : (this.transport === 'lan-backup'
+                ? 'Direct LAN backup active — no internet required.'
+                : 'Live P2P link active — device remembered for 1-tap reconnect!')
+          );
+          if (this.roomCode) {
+            this.updateGlobalUI(
+              'connected',
+              `Connected as Player ${GameState.localPlayerRole || 1}`,
+              this.transport === 'lan-backup' ? 'Direct LAN link active (internet-free).' : `Global room ${this.roomCode} connected.`,
+              this.transport === 'lan-backup' ? 'LAN DIRECT' : 'PEERJS'
+            );
+          }
+          if (!isReconnect) SoundEngine.victory();
+          showBoardToast(isReconnect ? '✅ Reconnected — match resumed exactly where you left off.' : '✅ Connected! Opponent linked.');
+          syncSettingsControlsFromState();
+          updateHUD();
+
+          const modalConn = document.getElementById('modalConnection');
+          if (modalConn) {
+            modalConn.classList.add('hidden');
+            modalConn.classList.remove('flex');
+          }
+
+          if (GameState.localPlayerRole === 1) {
+            setTimeout(() => {
+              if (this.isConnected()) {
+                this.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
+              }
+            }, 260);
+          } else if (GameState.localPlayerRole === 2) {
+            setTimeout(() => {
+              if (this.isConnected()) this.send({ type: 'REQUEST_RESYNC', reason: 'guest-connected' });
+            }, 320);
+          }
+
+          if (this.transport === 'peerjs') {
+            setTimeout(() => this.startLanBackup(), 800);
+          }
+        },
+
+        handleLinkLost(reason) {
+          if (this.suppressLossGrace) return;
+          if (this.backupReady && this.backupDC && this.backupDC.readyState === 'open') {
+            this.promoteBackupLink();
+            return;
+          }
+          this.linkOpenHandledFor = null;
+          this.stopHeartbeat();
+          if (this.intentionalLeave) {
+            this.transport = 'none';
+            return;
+          }
+          if (GameState.mode !== 'webrtc') {
+            this.transport = 'none';
+            return;
+          }
+          this.updateConnectionUI('error', 'Link Lost', reason || 'Peer connection dropped');
+          if (this.roomCode) {
+            this.updateGlobalUI('error', 'Connection lost', `${reason || 'network drop'} — rejoining room ${this.roomCode}…`, 'PEERJS');
+          }
+          this.notifyReconnectUI(reason || 'connection dropped');
+          if (!GameState.gameOver && !GameState.graceTimerInterval) {
+            const remoteRole = this.getExpectedRemoteRole();
+            if (remoteRole) {
+              startMidGameGraceTimer(remoteRole, GameState.disconnectGraceSeconds || 60, reason || 'disconnected from P2P', false);
+            }
+          }
+          if (this.roomCode && !GameState.gameOver) {
+            this.scheduleAutoReconnect(1500);
+          } else if (GameState.mode === 'webrtc' && !GameState.gameOver) {
+            showBoardToast('Link lost — tap ⚡ Reconnect or re-scan the QR to resume.');
+          }
+        },
+
+        handlePacket(packet) {
+          if (!packet || typeof packet !== 'object' || !packet.type) return;
+
+          // Reject duplicate / replayed packets (works across primary + backup links).
+          if (packet._from) {
+            if (this.remoteDeviceId && packet._from !== this.remoteDeviceId && !this.roomCode) {
+              // A different device on a direct link is not expected.
+            }
+            if (typeof packet._seq === 'number' && packet._from === this.remoteDeviceId) {
+              if (packet._seq <= this.remoteSeq) return;
+              this.remoteSeq = packet._seq;
+            } else if (typeof packet._seq === 'number') {
+              this.remoteDeviceId = packet._from;
+              this.remoteSeq = packet._seq;
+            }
+          }
+
+          if (packet.deviceId && !this.remoteDeviceId) this.remoteDeviceId = packet.deviceId;
+          this.lastPeerPongAt = Date.now();
+
+          const remoteRole = this.getExpectedRemoteRole();
+          const senderRole = (typeof packet._role === 'number') ? packet._role : (packet.role || null);
+
+          // Only meaningful gameplay / presence packets count as "the opponent is back".
+          // Plain heartbeats must NOT cancel an away countdown (background tabs keep pinging).
+          const presenceTypes = ['MOVE_ACTION', 'SYNC_STATE', 'REQUEST_RESYNC', 'RESET_MATCH', 'PLAYER_RETURNED', 'HELLO_IDENTITY', 'HELLO_ACK'];
+          if (presenceTypes.includes(packet.type) && GameState.graceTimerInterval && remoteRole && GameState.graceAbsentPlayer === remoteRole) {
+            cancelGraceTimer(false);
+            showBoardToast('👋 Opponent is back — match resumed.');
+          }
+
+          if (packet.type === 'MOVE_ACTION') {
+            if (!packet.action) return;
+            if (!remoteRole || senderRole !== remoteRole) return; // spoofed side
+            if (GameState.gameOver) return;
+            if (GameState.currentTurn !== remoteRole) {
+              this.requestResync('turn mismatch');
+              return;
+            }
+            if (packet.action.type === 'end_chain') {
+              if (GameState.chainJumpingNode === null) return;
+              if (GameState.board[GameState.chainJumpingNode] !== remoteRole) return;
+              endChainTurnEarly(true);
+            } else {
+              const authorized = authorizeRemoteAction(packet.action, remoteRole);
+              if (!authorized) {
+                SoundEngine.invalid();
+                showBoardToast('🛡️ Rejected an illegal or out-of-turn move from the peer.');
+                this.requestResync('illegal action');
+                return;
+              }
+              executeAction(authorized, true);
+            }
+            if (this.isHostAuthority()) {
+              setTimeout(() => {
+                if (this.isConnected()) this.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
+              }, 40);
+            }
+            return;
+          }
+
+          if (packet.type === 'SYNC_STATE' && packet.state) {
+            if (!remoteRole) return;
+            // Host is the only authority for full state. Guests may only request it.
+            if (GameState.localPlayerRole === 2 && senderRole !== 1) return;
+            if (GameState.localPlayerRole === 1 && senderRole === 2) return;
+            applyRemoteGameState(packet.state);
+            showBoardToast('Synced match state from host');
+            return;
+          }
+
+          if (packet.type === 'REQUEST_RESYNC') {
+            if (GameState.localPlayerRole === 1 && this.isConnected()) {
+              this.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
+            }
+            return;
+          }
+
+          if (packet.type === 'RESET_MATCH') {
+            if (GameState.localPlayerRole !== 1) return; // only the host can reset
+            cancelGraceTimer(false);
+            initMatch(false);
+            showBoardToast('Remote host restarted the match');
+            return;
+          }
+
+          if (packet.type === 'PLAYER_LEFT_MIDGAME' || packet.type === 'PLAYER_AWAY') {
+            if (!remoteRole) return;
+            const secs = packet.graceSeconds || GameState.disconnectGraceSeconds || 60;
+            startMidGameGraceTimer(remoteRole, secs, packet.reason || 'left mid-game', false);
+            showBoardToast('Opponent stepped away — return countdown started!');
+            return;
+          }
+
+          if (packet.type === 'PLAYER_RETURNED') {
+            cancelGraceTimer(false);
+            showBoardToast('Opponent returned! Match resumed.');
+            return;
+          }
+
+          if (packet.type === 'PEER_FORFEIT_LEAVE') {
+            if (!remoteRole || (packet.absentPlayer && packet.absentPlayer !== remoteRole)) return;
+            this.suppressLossGrace = true;
+            this.cleanup();
+            GameState.mode = 'pass_play';
+            GameState.vsAI = true;
+            GameState.localPlayerRole = null;
+            this.updateConnectionUI('idle', 'Opponent Quit Match', 'Victory awarded by forfeit');
+            triggerAbandonmentForfeitWin(remoteRole, 0);
+            this.suppressLossGrace = false;
+            return;
+          }
+
+          if (packet.type === 'HEARTBEAT_PING') {
+            this.send({ type: 'HEARTBEAT_PONG', ts: Date.now() });
+            return;
+          }
+
+          if (packet.type === 'HEARTBEAT_PONG') {
+            return;
+          }
+
+          if (packet.type === 'HELLO_IDENTITY' || packet.type === 'HELLO_ACK') {
+            this.activePeerId = packet.deviceId || this.activePeerId || 'PEER-1';
+            this.activePeerName = packet.deviceName || this.activePeerName || 'Paired Phone';
+            if (packet.deviceId) this.remoteDeviceId = packet.deviceId;
+            if (packet.roomCode && !this.roomCode) this.roomCode = this.normalizeRoomCode(packet.roomCode);
+            this.saveTrustedPeer({
+              peerId: this.activePeerId,
+              peerName: this.activePeerName,
+              pin: packet.pin || this.activePin
+            });
+            if (packet.type === 'HELLO_IDENTITY') {
+              this.send({
+                type: 'HELLO_ACK',
+                deviceId: this.deviceId,
+                deviceName: this.deviceName,
+                pin: this.activePin,
+                roomCode: this.roomCode || null,
+                sessionId: GameState.sessionId || null
+              });
+            }
+            return;
+          }
+
+          if (packet.type === 'LAN_BACKUP_OFFER') {
+            this.handleLanBackupOffer(packet.sdp);
+            return;
+          }
+
+          if (packet.type === 'LAN_BACKUP_ANSWER') {
+            this.handleLanBackupAnswer(packet.sdp);
+            return;
+          }
+        },
+
+        requestResync(reason) {
+          if (!this.isConnected()) return;
+          if (GameState.localPlayerRole === 2) {
+            this.send({ type: 'REQUEST_RESYNC', reason: reason || 'validation' });
+          } else if (GameState.localPlayerRole === 1) {
+            this.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
+          }
         },
 
         waitForIceGathering(pc, onReady) {
@@ -8897,10 +10205,42 @@
         },
 
         send(payloadObj) {
-          if (!this.isConnected()) return;
+          if (!payloadObj || !this.isConnected()) return false;
+          let payload = { ...payloadObj };
+
+          // Guests may never overwrite authoritative state; they ask the host for it.
+          if (GameState.mode === 'webrtc' && GameState.localPlayerRole === 2) {
+            if (payload.type === 'SYNC_STATE') {
+              payload = { type: 'REQUEST_RESYNC', reason: 'guest-state' };
+            }
+            if (payload.type === 'MOVE_ACTION') {
+              delete payload.state; // host applies the validated action and rebroadcasts state
+            }
+          }
+
+          payload._seq = ++this.localSeq;
+          payload._from = this.deviceId;
+          payload._role = GameState.localPlayerRole || null;
+          payload._sid = GameState.sessionId || null;
+          payload._protocol = 'katar-p2p-v2';
+
           try {
-            this.dc.send(JSON.stringify(payloadObj));
-          } catch (err) {}
+            if (this.dc && this.dc.readyState === 'open') {
+              this.dc.send(JSON.stringify(payload));
+              return true;
+            }
+            if (this.backupDC && this.backupDC.readyState === 'open') {
+              this.backupDC.send(JSON.stringify(payload));
+              return true;
+            }
+            if (this.peerConn && this.peerConn.open) {
+              this.peerConn.send(payload);
+              return true;
+            }
+          } catch (err) {
+            this.handleSendFailure(err);
+          }
+          return false;
         }
       };
 
@@ -8908,6 +10248,26 @@
       let scannerAnimId = null;
       let scannerCallback = null;
       let currentCameraFacing = 'environment';
+
+      function isGlobalJoinPayload(text) {
+        const t = String(text || '').trim();
+        if (!t || /^pk:/i.test(t)) return false;
+        return /^(KATARJOIN[:\s]|KATAR-GLOBAL-)/i.test(t) || /[#?&]join=/i.test(t);
+      }
+
+      function routeScannedPayload(text, callback) {
+        const t = String(text || '').trim();
+        if (!t) return;
+        if (isGlobalJoinPayload(t)) {
+          const room = WebRTCManager.getRoomCodeFromInvite(t);
+          if (room) {
+            showBoardToast(`🌍 Global room ${room} detected — joining…`);
+            WebRTCManager.joinGlobalRoom(room);
+            return;
+          }
+        }
+        if (callback) callback(t);
+      }
 
       async function openQrScanner(callback, titleText) {
         closeQrScanner();
@@ -8995,7 +10355,7 @@
                 isScanning = false;
                 closeQrScanner();
                 SoundEngine.select();
-                if (scannerCallback) scannerCallback(detectedText);
+                routeScannedPayload(detectedText, scannerCallback);
                 return;
               }
             }
@@ -9072,7 +10432,7 @@
             if (detected) {
               closeQrScanner();
               SoundEngine.select();
-              if (scannerCallback) scannerCallback(detected);
+              routeScannedPayload(detected, scannerCallback);
             } else {
               showBoardToast('No QR code detected in that photo. Try again or paste code manually.');
             }
@@ -9153,6 +10513,11 @@
 
       function syncRulesToPeer() {
         savePersistentPrefs();
+        if (GameState.mode === 'webrtc' && GameState.localPlayerRole === 2) {
+          showBoardToast('🛡️ Only the host can change match rules online.');
+          if (WebRTCManager.isConnected()) WebRTCManager.send({ type: 'REQUEST_RESYNC', reason: 'guest-rule-change' });
+          return;
+        }
         if (WebRTCManager.isConnected()) {
           WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState() });
         }
@@ -9707,25 +11072,62 @@
 
       const tabPassPlay = document.getElementById('tabModePassPlay');
       const tabWebRTC = document.getElementById('tabModeWebRTC');
+      const tabGlobal = document.getElementById('tabModeGlobal');
       const panelPassPlay = document.getElementById('panelPassPlay');
       const panelWebRTC = document.getElementById('panelWebRTC');
+      const panelGlobal = document.getElementById('panelGlobal');
+
+      function setModeTabStyle(tab, active) {
+        if (!tab) return;
+        tab.className = 'android-btn py-2.5 px-2 rounded-xl text-[11px] sm:text-sm font-extrabold flex items-center justify-center gap-1.5 '
+          + (active ? 'bg-teal-600 text-white shadow-md' : 'text-walnut-700 hover:text-walnut-900');
+      }
+
+      function switchModeTab(mode) {
+        const showPass = mode === 'pass';
+        const showOffline = mode === 'offline';
+        const showGlobal = mode === 'global';
+        if (panelPassPlay) panelPassPlay.classList.toggle('hidden', !showPass);
+        if (panelWebRTC) panelWebRTC.classList.toggle('hidden', !showOffline);
+        if (panelGlobal) panelGlobal.classList.toggle('hidden', !showGlobal);
+        setModeTabStyle(tabPassPlay, showPass);
+        setModeTabStyle(tabWebRTC, showOffline);
+        setModeTabStyle(tabGlobal, showGlobal);
+        if (showGlobal) {
+          WebRTCManager.applyPeerServerConfigUI();
+          WebRTCManager.showGlobalResumeHint();
+          if (!WebRTCManager.roomCode && WebRTCManager.globalView !== 'host') {
+            WebRTCManager.showGlobalChoiceView();
+          }
+        }
+      }
+
+      function openGlobalTab() {
+        switchModeTab('global');
+        const modal = document.getElementById('modalConnection');
+        if (modal) {
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+        }
+      }
 
       tabPassPlay.addEventListener('click', () => {
         SoundEngine.select();
         WebRTCManager.stopHostInlineCamera();
-        tabPassPlay.className = 'android-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 bg-teal-600 text-white shadow-md';
-        tabWebRTC.className = 'android-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 text-walnut-700 hover:text-walnut-900';
-        panelPassPlay.classList.remove('hidden');
-        panelWebRTC.classList.add('hidden');
+        switchModeTab('pass');
       });
 
       tabWebRTC.addEventListener('click', () => {
         SoundEngine.select();
-        tabWebRTC.className = 'android-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 bg-teal-600 text-white shadow-md';
-        tabPassPlay.className = 'android-btn py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 text-walnut-700 hover:text-walnut-900';
-        panelWebRTC.classList.remove('hidden');
-        panelPassPlay.classList.add('hidden');
+        switchModeTab('offline');
       });
+
+      if (tabGlobal) {
+        tabGlobal.addEventListener('click', () => {
+          SoundEngine.select();
+          switchModeTab('global');
+        });
+      }
 
       const btnOppHuman = document.getElementById('btnOpponentHuman');
       const btnOppAI = document.getElementById('btnOpponentAI');
@@ -9866,6 +11268,184 @@
           WebRTCManager.processGuestOfferAndCreateAnswer(token);
         }, "Scan Host's QR Code");
       });
+
+      /* -----------------------------------------------------------------
+       * GLOBAL PLAY (PeerJS) UI WIRING
+       * ---------------------------------------------------------------- */
+      const inpGlobalRoomCode = document.getElementById('inpGlobalRoomCode');
+
+      function joinGlobalRoomFromInput() {
+        const raw = inpGlobalRoomCode ? inpGlobalRoomCode.value : '';
+        const room = WebRTCManager.getRoomCodeFromInvite(raw) || WebRTCManager.normalizeRoomCode(raw);
+        if (!room || room.length < 4) {
+          showBoardToast('Enter a valid room code (e.g. K7F2Q9) or scan the host QR.');
+          SoundEngine.invalid();
+          return;
+        }
+        if (inpGlobalRoomCode) inpGlobalRoomCode.value = room;
+        WebRTCManager.joinGlobalRoom(room);
+      }
+
+      const btnStartGlobalHost = document.getElementById('btnStartGlobalHost');
+      if (btnStartGlobalHost) {
+        btnStartGlobalHost.addEventListener('click', () => {
+          SoundEngine.select();
+          WebRTCManager.hostGlobalRoom();
+        });
+      }
+
+      const btnJoinGlobalRoom = document.getElementById('btnJoinGlobalRoom');
+      if (btnJoinGlobalRoom) {
+        btnJoinGlobalRoom.addEventListener('click', () => {
+          SoundEngine.select();
+          joinGlobalRoomFromInput();
+        });
+      }
+
+      if (inpGlobalRoomCode) {
+        inpGlobalRoomCode.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            joinGlobalRoomFromInput();
+          }
+        });
+      }
+
+      const btnScanGlobalQr = document.getElementById('btnScanGlobalQr');
+      if (btnScanGlobalQr) {
+        btnScanGlobalQr.addEventListener('click', () => {
+          SoundEngine.select();
+          openQrScanner((token) => {
+            const room = WebRTCManager.getRoomCodeFromInvite(token);
+            if (room) WebRTCManager.joinGlobalRoom(room);
+            else showBoardToast('That QR is not a Global room code. Use 📶 Offline QR for direct pairing.');
+          }, 'Scan Global Room QR');
+        });
+      }
+
+      const btnCopyGlobalCode = document.getElementById('btnCopyGlobalCode');
+      if (btnCopyGlobalCode) {
+        btnCopyGlobalCode.addEventListener('click', () => {
+          SoundEngine.select();
+          if (!WebRTCManager.roomCode) {
+            showBoardToast('Host a room first to get a code.');
+            return;
+          }
+          WebRTCManager.copyText(WebRTCManager.roomCode, `Room code ${WebRTCManager.roomCode} copied!`);
+        });
+      }
+
+      const btnCopyGlobalLink = document.getElementById('btnCopyGlobalLink');
+      if (btnCopyGlobalLink) {
+        btnCopyGlobalLink.addEventListener('click', () => {
+          SoundEngine.select();
+          const link = WebRTCManager.getInviteLink();
+          if (!link) {
+            showBoardToast('Host a room first to get an invite link.');
+            return;
+          }
+          WebRTCManager.copyText(link, 'Invite link copied — send it to your friend!');
+        });
+      }
+
+      const btnGlobalReconnect = document.getElementById('btnGlobalReconnect');
+      if (btnGlobalReconnect) {
+        btnGlobalReconnect.addEventListener('click', () => {
+          SoundEngine.select();
+          if (!WebRTCManager.roomCode) {
+            WebRTCManager.showGlobalChoiceView();
+            return;
+          }
+          showBoardToast(`↻ Refreshing room ${WebRTCManager.roomCode}…`);
+          if ((GameState.localPlayerRole || 1) === 1) WebRTCManager.hostGlobalRoom(WebRTCManager.roomCode);
+          else WebRTCManager.joinGlobalRoom(WebRTCManager.roomCode);
+        });
+      }
+
+      const btnGlobalBackToChoice = document.getElementById('btnGlobalBackToChoice');
+      if (btnGlobalBackToChoice) {
+        btnGlobalBackToChoice.addEventListener('click', () => {
+          SoundEngine.select();
+          if (!WebRTCManager.isConnected()) {
+            if (!isMatchActivelyInProgress()) {
+              WebRTCManager.intentionalLeave = true;
+              WebRTCManager.cleanup();
+              WebRTCManager.roomCode = '';
+              WebRTCManager.transport = 'none';
+              GameState.localPlayerRole = null;
+              GameState.sessionId = null;
+              if (GameState.mode === 'webrtc') GameState.mode = 'pass_play';
+              WebRTCManager.updateGlobalUI('idle', 'Not Connected', 'Host a world room or join a friend with a code / QR', 'PEERJS');
+            } else {
+              showBoardToast('↻ Still reconnecting your match — use Away Timer → Leave to forfeit.');
+              WebRTCManager.scheduleAutoReconnect(1200);
+            }
+          }
+          WebRTCManager.showGlobalChoiceView();
+        });
+      }
+
+      const btnGlobalResumeLast = document.getElementById('btnGlobalResumeLast');
+      if (btnGlobalResumeLast) {
+        btnGlobalResumeLast.addEventListener('click', () => {
+          SoundEngine.select();
+          let room = '';
+          let role = 2;
+          try {
+            room = SafeStorage.getItem('katar_last_room_v1') || '';
+            const raw = SafeStorage.getItem('katar_live_match_v3');
+            if (raw) {
+              const snap = JSON.parse(raw);
+              if (snap && snap.online && snap.online.roomCode) {
+                room = snap.online.roomCode;
+                role = snap.online.role || role;
+                applyRemoteGameState(snap.state);
+              }
+            }
+          } catch (e) {}
+          room = WebRTCManager.normalizeRoomCode(room);
+          if (!room) {
+            showBoardToast('No previous room found on this device.');
+            return;
+          }
+          if (inpGlobalRoomCode) inpGlobalRoomCode.value = room;
+          if (role === 1) WebRTCManager.hostGlobalRoom(room);
+          else WebRTCManager.joinGlobalRoom(room);
+        });
+      }
+
+      const btnTogglePeerConfig = document.getElementById('btnTogglePeerConfig');
+      if (btnTogglePeerConfig) {
+        btnTogglePeerConfig.addEventListener('click', () => {
+          SoundEngine.select();
+          const panel = document.getElementById('peerConfigPanel');
+          const chev = document.getElementById('peerConfigChevron');
+          if (!panel) return;
+          const willShow = panel.classList.contains('hidden');
+          panel.classList.toggle('hidden', !willShow);
+          if (chev) chev.textContent = willShow ? '▲' : '▼';
+          if (willShow) WebRTCManager.applyPeerServerConfigUI();
+        });
+      }
+
+      const btnSavePeerConfig = document.getElementById('btnSavePeerConfig');
+      if (btnSavePeerConfig) {
+        btnSavePeerConfig.addEventListener('click', () => {
+          SoundEngine.select();
+          const cfg = WebRTCManager.readPeerServerConfigUI();
+          showBoardToast(`⚙️ PeerJS server saved: ${cfg.host}:${cfg.port}${cfg.path}`);
+        });
+      }
+
+      const btnResetPeerConfig = document.getElementById('btnResetPeerConfig');
+      if (btnResetPeerConfig) {
+        btnResetPeerConfig.addEventListener('click', () => {
+          SoundEngine.select();
+          try { SafeStorage.removeItem('katar_peerjs_server_v1'); } catch (e) {}
+          WebRTCManager.applyPeerServerConfigUI();
+          showBoardToast('⚙️ PeerJS settings reset to the public cloud defaults.');
+        });
+      }
 
       async function readClipboardOrPrompt(promptTitle) {
         if (navigator.clipboard && navigator.clipboard.readText) {
@@ -10406,7 +11986,10 @@
         btnGraceResume.addEventListener('click', () => {
           SoundEngine.select();
           if (GameState.mode === 'webrtc' && !WebRTCManager.isConnected()) {
+            WebRTCManager.intentionalLeave = true;
             WebRTCManager.cleanup();
+            WebRTCManager.roomCode = '';
+            WebRTCManager.transport = 'none';
             GameState.mode = 'pass_play';
             GameState.vsAI = false;
             GameState.localPlayerRole = null;
@@ -10427,8 +12010,11 @@
           SoundEngine.select();
           SafeStorage.removeItem('katar_live_match_v3');
           SafeStorage.removeItem('katar_stashed_match_v1');
+          try { SafeStorage.removeItem('katar_last_room_v1'); } catch (e) {}
           updateStashedMatchButtonUI();
           if (GameState.mode === 'webrtc') {
+            // Explicit quit = immediate forfeit. Tell the opponent before tearing anything down.
+            WebRTCManager.intentionalLeave = true;
             if (WebRTCManager.isConnected()) {
               WebRTCManager.send({
                 type: 'PEER_FORFEIT_LEAVE',
@@ -10436,39 +12022,83 @@
               });
             }
             WebRTCManager.cleanup();
+            WebRTCManager.roomCode = '';
+            WebRTCManager.transport = 'none';
             GameState.mode = 'pass_play';
             GameState.vsAI = true;
             GameState.localPlayerRole = null;
+            GameState.sessionId = null;
             GameState.boardFlipped = false;
             WebRTCManager.updateConnectionUI('idle', 'Pass & Play Ready', 'Left P2P match');
+            WebRTCManager.showGlobalChoiceView();
           }
           cancelGraceTimer(false);
           initMatch(false);
-          showBoardToast('🏳️ Left match — started a fresh local game!');
+          showBoardToast('🏳️ Left the match — started a fresh local game!');
         });
       }
 
+      let pageHiddenSince = 0;
       document.addEventListener('visibilitychange', () => {
         const hasMoves = (GameState.history.length > 0 || GameState.moveLog.length > 0);
         if (GameState.gameOver || !hasMoves) return;
         const myRole = (GameState.mode === 'webrtc' && GameState.localPlayerRole)
           ? GameState.localPlayerRole
           : (GameState.vsAI ? (GameState.aiPlayerRole === 2 ? 1 : 2) : GameState.currentTurn);
+        const onlineLive = GameState.mode === 'webrtc' && GameState.localPlayerRole;
         if (document.visibilityState === 'hidden') {
-          startMidGameGraceTimer(myRole, GameState.disconnectGraceSeconds || 60, 'minimized/left tab mid-game', true);
+          pageHiddenSince = Date.now();
+          if (onlineLive) {
+            // Never start a self-forfeit countdown online: tell the peer we stepped away instead.
+            saveLiveMatchSnapshot(true, myRole);
+            if (WebRTCManager.isConnected()) {
+              WebRTCManager.send({
+                type: 'PLAYER_AWAY',
+                absentPlayer: myRole,
+                graceSeconds: GameState.disconnectGraceSeconds || 60,
+                reason: 'minimized/left tab mid-game'
+              });
+            }
+          } else {
+            startMidGameGraceTimer(myRole, GameState.disconnectGraceSeconds || 60, 'minimized/left tab mid-game', true);
+          }
         } else if (document.visibilityState === 'visible') {
-          if (GameState.graceTimerInterval && (GameState.mode !== 'webrtc' || GameState.graceAbsentPlayer === myRole)) {
+          if (onlineLive) {
+            const hadSelfGrace = Boolean(GameState.graceTimerInterval && GameState.graceAbsentPlayer === myRole);
+            if (WebRTCManager.isConnected()) {
+              WebRTCManager.send({ type: 'PLAYER_RETURNED' });
+            }
+            if (hadSelfGrace) {
+              cancelGraceTimer(true);
+            }
+            if (!GameState.gameOver) saveLiveMatchSnapshot(false);
+            if (hadSelfGrace || Date.now() - pageHiddenSince > 2500) {
+              showBoardToast('👋 Welcome back! Match resumed.');
+            }
+            pageHiddenSince = 0;
+          } else if (GameState.graceTimerInterval && (GameState.mode !== 'webrtc' || GameState.graceAbsentPlayer === myRole)) {
             cancelGraceTimer(true);
             showBoardToast('👋 Welcome back! Match resumed.');
           }
         }
       });
 
+      let pageUnloadHandled = false;
       const handlePageUnloadMidGame = () => {
-        SafeStorage.removeItem('katar_live_match_v3');
+        if (pageUnloadHandled) return;
+        pageUnloadHandled = true;
         const hasMoves = (GameState.history.length > 0 || GameState.moveLog.length > 0);
-        if (!GameState.gameOver && hasMoves && WebRTCManager.isConnected()) {
-          const whoLeft = GameState.localPlayerRole || GameState.currentTurn;
+        if (GameState.gameOver || !hasMoves) {
+          SafeStorage.removeItem('katar_live_match_v3');
+          return;
+        }
+        const myRole = (GameState.mode === 'webrtc' && GameState.localPlayerRole)
+          ? GameState.localPlayerRole
+          : null;
+        // Keep the snapshot so the same device can resume after a reload / accidental close.
+        saveLiveMatchSnapshot(true, myRole);
+        if (GameState.mode === 'webrtc' && !WebRTCManager.intentionalLeave && WebRTCManager.isConnected()) {
+          const whoLeft = myRole || GameState.currentTurn;
           WebRTCManager.send({
             type: 'PLAYER_LEFT_MIDGAME',
             absentPlayer: whoLeft,
@@ -10479,22 +12109,21 @@
       };
       window.addEventListener('pagehide', handlePageUnloadMidGame);
       window.addEventListener('beforeunload', handlePageUnloadMidGame);
+      window.addEventListener('pageshow', () => { pageUnloadHandled = false; });
 
       // Hotspot / Wi-Fi Network Drop & Recovery Listeners
       window.addEventListener('offline', () => {
-        if (!GameState.gameOver && GameState.mode === 'webrtc') {
-          const remoteRole = GameState.localPlayerRole === 1 ? 2 : 1;
-          const btnRec = document.getElementById('btnGraceQuickReconnect');
-          if (btnRec) btnRec.classList.remove('hidden');
-          startMidGameGraceTimer(remoteRole, GameState.disconnectGraceSeconds || 60, 'Wi-Fi / Hotspot turned off', false);
-          showBoardToast('📡 Wi-Fi / Hotspot connection dropped! Grace timer started.');
+        if (GameState.gameOver) return;
+        if (GameState.mode !== 'webrtc') return;
+        if (typeof WebRTCManager.onNetworkOffline === 'function') {
+          WebRTCManager.onNetworkOffline();
         }
       });
 
       window.addEventListener('online', () => {
-        if (!GameState.gameOver && GameState.graceTimerInterval && WebRTCManager.activePeerId) {
-          showBoardToast('📡 Network restored! Attempting auto-reconnect to peer...');
-          WebRTCManager.tryAutoReconnectToPeer(WebRTCManager.activePeerId);
+        if (GameState.gameOver) return;
+        if (typeof WebRTCManager.onNetworkOnline === 'function') {
+          WebRTCManager.onNetworkOnline();
         }
       });
 
@@ -11239,12 +12868,30 @@
         if (!hadSavedPrefs) {
           applyGridPresetConfig('6x6');
         }
+        let inviteRoom = '';
+        try {
+          const inviteRaw = `${location.hash || ''} ${location.search || ''}`;
+          if (/(?:#|\?|&)join=/i.test(inviteRaw) || /KATARJOIN|KATAR-GLOBAL-/i.test(inviteRaw)) {
+            inviteRoom = WebRTCManager.getRoomCodeFromInvite(inviteRaw);
+          }
+        } catch (e) {}
         initMatch(false);
-        checkAndRestoreSavedMatchOnLoad();
+        checkAndRestoreSavedMatchOnLoad(Boolean(inviteRoom));
+        WebRTCManager.applyPeerServerConfigUI();
         resizeCanvas();
         WifiLobby.init();
         if (!hasExistingProfile) {
           ProfileManager.openModal(true);
+        }
+        if (inviteRoom) {
+          try { history.replaceState(null, '', location.pathname); } catch (e) {}
+          setTimeout(() => {
+            openGlobalTab();
+            showBoardToast(`🌍 Opening invite link for room ${inviteRoom}…`);
+            WebRTCManager.joinGlobalRoom(inviteRoom);
+          }, 900);
+        } else {
+          WebRTCManager.showGlobalResumeHint();
         }
       });
     })();
