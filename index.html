@@ -8889,8 +8889,12 @@
             });
 
             peer.on('connection', (conn) => {
-              if (this.linkedPeerIsOpen()) {
+              const incomingDevice = (conn.metadata && conn.metadata.deviceId) || null;
+              const sameDevice = Boolean(incomingDevice && this.remoteDeviceId && incomingDevice === this.remoteDeviceId);
+              // A reconnect from the same device may replace a stale-but-"open" connection.
+              if (this.linkedPeerIsOpen() && !sameDevice) {
                 try { conn.close(); } catch (e) {}
+                showBoardToast('👥 Room is already full — only 2 players can join.');
                 return;
               }
               this.bindPeerJSConnection(conn, 1);
@@ -9027,6 +9031,12 @@
 
         bindPeerJSConnection(conn, role) {
           if (!conn) return;
+          if (this.peerConn && this.peerConn !== conn) {
+            try {
+              if (this.peerConn.removeAllListeners) this.peerConn.removeAllListeners();
+              this.peerConn.close();
+            } catch (e) {}
+          }
           this.peerConn = conn;
           this.remoteDeviceId = (conn.metadata && conn.metadata.deviceId) || conn.peer || null;
           this.remoteDeviceName = (conn.metadata && conn.metadata.deviceName) || 'Global Player';
@@ -10778,6 +10788,7 @@
 
       document.getElementById('btnOpenConnectionModal').addEventListener('click', () => {
         SoundEngine.select();
+        if (WebRTCManager.roomCode) switchModeTab('global');
         document.getElementById('modalConnection').classList.remove('hidden');
         document.getElementById('modalConnection').classList.add('flex');
       });
@@ -11111,6 +11122,28 @@
         }
       }
 
+      // Leaving an online room to start a different local mode is an explicit quit → forfeit.
+      function forfeitAndDetachOnline(reasonText) {
+        if (GameState.mode !== 'webrtc') return;
+        const role = GameState.localPlayerRole;
+        if (WebRTCManager.isConnected() && role) {
+          WebRTCManager.send({
+            type: 'PEER_FORFEIT_LEAVE',
+            absentPlayer: role,
+            reason: reasonText || 'switched game mode'
+          });
+        }
+        WebRTCManager.intentionalLeave = true;
+        WebRTCManager.cleanup();
+        WebRTCManager.roomCode = '';
+        WebRTCManager.transport = 'none';
+        GameState.localPlayerRole = null;
+        GameState.sessionId = null;
+        GameState.boardFlipped = false;
+        try { SafeStorage.removeItem('katar_last_room_v1'); } catch (e) {}
+        SafeStorage.removeItem('katar_live_match_v3');
+      }
+
       tabPassPlay.addEventListener('click', () => {
         SoundEngine.select();
         WebRTCManager.stopHostInlineCamera();
@@ -11154,6 +11187,7 @@
       });
 
       document.getElementById('btnMainModeAI').addEventListener('click', () => {
+        forfeitAndDetachOnline('switched to AI mode');
         WebRTCManager.cleanup();
         GameState.mode = 'pass_play';
         GameState.vsAI = true;
@@ -11168,6 +11202,7 @@
       });
 
       document.getElementById('btnMainMode2P').addEventListener('click', () => {
+        forfeitAndDetachOnline('switched to local 2P mode');
         WebRTCManager.cleanup();
         GameState.mode = 'pass_play';
         GameState.vsAI = false;
@@ -11203,6 +11238,7 @@
       });
 
       document.getElementById('btnStartPassPlay').addEventListener('click', () => {
+        forfeitAndDetachOnline('started a local match');
         WebRTCManager.cleanup();
         GameState.mode = 'pass_play';
         GameState.localPlayerRole = null;
@@ -11243,6 +11279,7 @@
       btnRoleLoopback.addEventListener('click', () => switchRtcRoleTab('loopback'));
 
       document.getElementById('btnResetRTC').addEventListener('click', () => {
+        forfeitAndDetachOnline('reset the link');
         WebRTCManager.cleanup();
         GameState.mode = 'pass_play';
         GameState.localPlayerRole = null;
@@ -11259,11 +11296,13 @@
 
       document.getElementById('btnStartHostQR').addEventListener('click', () => {
         SoundEngine.select();
+        forfeitAndDetachOnline('switched to offline QR hosting');
         WebRTCManager.generateHostOffer();
       });
 
       document.getElementById('btnStartGuestScan').addEventListener('click', () => {
         SoundEngine.select();
+        forfeitAndDetachOnline('switched to offline QR joining');
         openQrScanner((token) => {
           WebRTCManager.processGuestOfferAndCreateAnswer(token);
         }, "Scan Host's QR Code");
@@ -12256,6 +12295,13 @@
       if (btnGraceRec) {
         btnGraceRec.addEventListener('click', () => {
           SoundEngine.select();
+          if (WebRTCManager.roomCode) {
+            openGlobalTab();
+            showBoardToast(`⚡ Reconnecting room ${WebRTCManager.roomCode}…`);
+            if ((GameState.localPlayerRole || 1) === 1) WebRTCManager.hostGlobalRoom(WebRTCManager.roomCode);
+            else WebRTCManager.joinGlobalRoom(WebRTCManager.roomCode);
+            return;
+          }
           document.getElementById('modalConnection').classList.remove('hidden');
           document.getElementById('modalConnection').classList.add('flex');
           document.getElementById('tabModeWebRTC').click();
