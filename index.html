@@ -1390,58 +1390,36 @@
           <div id="rtcHostQrView" class="hidden bg-white border-2 border-teal-500/60 rounded-2xl p-4 space-y-3 shadow-sm text-center">
             <div class="space-y-1">
               <span class="inline-block px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 text-[10px] font-extrabold tracking-wider uppercase">
-                Hands-Free Auto-Link • Host Screen
+                Step 1 of 2 • Host Game (Player 1)
               </span>
-              <h3 class="font-extrabold text-sm text-walnut-900">Hold Phones Facing Each Other</h3>
-              <p class="text-xs text-walnut-600">Phone 2 scans this compact QR, then our inline camera below automatically reads Phone 2's screen!</p>
+              <h3 class="font-extrabold text-sm text-walnut-900">Show this QR to Player 2</h3>
+              <p class="text-xs text-walnut-600">Player 2 taps "📷 Scan QR to Join" to scan this code. Then tap Step 2 below to scan Player 2's Return QR!</p>
             </div>
 
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 py-1">
-              <div class="flex flex-col items-center">
-                <div id="qrHostOfferBox" class="p-3 bg-white border-2 border-parchment-300 rounded-2xl shadow-inner min-w-[215px] min-h-[215px] flex items-center justify-center"></div>
-                <span id="hostOfferChecksum" class="text-[10px] font-mono text-walnut-500 mt-1">Generating compact QR...</span>
-              </div>
-
-              <div id="hostInlineCamWrap" class="flex flex-col items-center gap-1.5 bg-walnut-900 text-parchment-100 p-2.5 rounded-2xl border-2 border-amber-400 w-44">
-                <div class="text-[10px] font-extrabold text-amber-300 uppercase tracking-wider flex items-center gap-1">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                  <span>Auto-Receiver Cam</span>
-                </div>
-                <div class="relative w-32 h-32 rounded-xl overflow-hidden bg-black border border-amber-400/60 flex items-center justify-center">
-                  <video id="hostInlineVideo" playsinline autoplay muted class="w-full h-full object-cover"></video>
-                  <div id="hostInlineCamPlaceholder" class="text-[10px] text-parchment-300 px-2 text-center">Camera paused — tap Flip/Start or Full Scanner</div>
-                </div>
-                <div class="flex items-center gap-1 w-full">
-                  <button id="btnFlipHostInlineCam" type="button" class="android-btn flex-1 py-1 px-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-[10px] font-extrabold text-amber-200 border border-white/20">
-                    🔄 Flip Cam
-                  </button>
-                  <button id="btnToggleHostInlineCam" type="button" class="android-btn py-1 px-2 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-[10px] font-extrabold text-white">
-                    ⏹ Stop
-                  </button>
-                </div>
-                <span id="hostInlineCamStatus" class="text-[9.5px] text-amber-200 font-semibold leading-tight">Back Cam Active</span>
-              </div>
+            <div class="flex flex-col items-center justify-center py-1">
+              <div id="qrHostOfferBox" class="p-3 bg-white border-2 border-parchment-300 rounded-2xl shadow-inner min-w-[240px] min-h-[240px] flex items-center justify-center"></div>
+              <span id="hostOfferChecksum" class="text-[10px] font-mono text-walnut-500 mt-1">Generating compact QR...</span>
             </div>
 
             <div class="space-y-2 pt-2 border-t border-parchment-200">
-              <div class="grid grid-cols-2 gap-2">
-                <button id="btnQuickCopyHostCode" type="button" class="android-btn py-2.5 px-2 rounded-xl bg-teal-700 hover:bg-teal-600 text-white text-xs font-black shadow flex items-center justify-center gap-1.5">
-                  <span>📋 1. Copy Host Code (PC)</span>
-                </button>
-                <button id="btnQuickPasteGuestReturn" type="button" class="android-btn py-2.5 px-2 rounded-xl bg-walnut-800 hover:bg-walnut-700 text-amber-200 text-xs font-black shadow flex items-center justify-center gap-1.5">
-                  <span>📥 2. Paste P2 Return (PC)</span>
-                </button>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <input id="inpQuickHostPasteAnswer" type="text" placeholder="Or press Ctrl+V / paste Player 2's return code here..." class="selectable-input flex-1 bg-parchment-100 border border-parchment-400 rounded-xl px-2.5 py-2 text-[11px] font-mono text-walnut-900 focus:outline-none" />
-              </div>
-              <button id="btnHostScanGuestReturn" type="button" class="android-btn w-full py-2.5 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 text-xs font-black shadow-[0_3px_0_#B45309] flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <button id="btnHostScanGuestReturn" type="button" class="android-btn w-full py-3 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 text-xs sm:text-sm font-black shadow-[0_3px_0_#B45309] flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                   <circle cx="12" cy="13" r="4"/>
                 </svg>
-                <span>📷 Or Scan Player 2's Return QR with Camera</span>
+                <span>📷 Step 2: Scan Player 2's Return QR Code</span>
               </button>
+              <div class="grid grid-cols-2 gap-2">
+                <button id="btnQuickCopyHostCode" type="button" class="android-btn py-2 px-2 rounded-xl bg-teal-700 hover:bg-teal-600 text-white text-xs font-black shadow flex items-center justify-center gap-1.5">
+                  <span>📋 Copy Host Code (PC)</span>
+                </button>
+                <button id="btnQuickPasteGuestReturn" type="button" class="android-btn py-2 px-2 rounded-xl bg-walnut-800 hover:bg-walnut-700 text-amber-200 text-xs font-black shadow flex items-center justify-center gap-1.5">
+                  <span>📥 Paste P2 Return (PC)</span>
+                </button>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <input id="inpQuickHostPasteAnswer" type="text" placeholder="Or press Ctrl+V / paste Player 2's return code here..." class="selectable-input flex-1 bg-parchment-100 border border-parchment-400 rounded-xl px-2.5 py-1.5 text-[11px] font-mono text-walnut-900 focus:outline-none" />
+              </div>
               <button id="btnHostBackToChoice" type="button" class="android-btn w-full py-2 rounded-xl bg-parchment-100 hover:bg-parchment-200 text-walnut-800 text-xs font-bold border border-parchment-300">
                 ← Back to Mode Selector
               </button>
@@ -8286,61 +8264,10 @@
             } catch (e) {}
             this.hostInlineStream = null;
           }
-          const v = document.getElementById('hostInlineVideo');
-          if (v) v.srcObject = null;
-          const ph = document.getElementById('hostInlineCamPlaceholder');
-          if (ph) ph.classList.remove('hidden');
-          const st = document.getElementById('hostInlineCamStatus');
-          if (st) st.textContent = 'Camera stopped';
-          const btnTog = document.getElementById('btnToggleHostInlineCam');
-          if (btnTog) btnTog.textContent = '▶ Start';
         },
 
-        async startHostInlineCamera() {
+        startHostInlineCamera() {
           this.stopHostInlineCamera();
-          const video = document.getElementById('hostInlineVideo');
-          const ph = document.getElementById('hostInlineCamPlaceholder');
-          const st = document.getElementById('hostInlineCamStatus');
-          const btnTog = document.getElementById('btnToggleHostInlineCam');
-          if (!video || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              video: { facingMode: { ideal: this.hostInlineFacing || 'environment' }, width: { ideal: 320 }, height: { ideal: 320 } },
-              audio: false
-            });
-            this.hostInlineStream = stream;
-            video.srcObject = stream;
-            await video.play();
-            if (ph) ph.classList.add('hidden');
-            if (btnTog) btnTog.textContent = '⏹ Stop';
-            const camLabel = (this.hostInlineFacing === 'user') ? 'Front Cam' : 'Back Cam';
-            if (st) st.textContent = `📷 ${camLabel} Live! Scan P2 Return QR`;
-
-            const offCanvas = document.createElement('canvas');
-            const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
-
-            const loop = async () => {
-              if (!this.hostInlineStream || this.isConnected()) return;
-              if (video.readyState >= video.HAVE_ENOUGH_DATA && typeof jsQR !== 'undefined') {
-                offCanvas.width = video.videoWidth || 240;
-                offCanvas.height = video.videoHeight || 240;
-                offCtx.drawImage(video, 0, 0, offCanvas.width, offCanvas.height);
-                const imgData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
-                const res = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'dontInvert' });
-                if (res && res.data) {
-                  this.stopHostInlineCamera();
-                  SoundEngine.select();
-                  this.acceptGuestAnswerOnHost(res.data);
-                  return;
-                }
-              }
-              this.hostInlineAnimId = requestAnimationFrame(loop);
-            };
-            this.hostInlineAnimId = requestAnimationFrame(loop);
-          } catch (e) {
-            if (st) st.textContent = 'Tap Step 2 button below when Phone 2 is ready';
-          }
         },
 
         startHeartbeat() {
@@ -8404,25 +8331,57 @@
           this.loopbackPeer = null;
         },
 
-        // ULTRA-COMPACT MINI-SDP ENCODER (~65% smaller QR Code for instant camera scan!)
-        encodeSignalToken(desc) {
-          const sdp = desc.sdp || "";
+        encodeSignalToken(desc, role = 1) {
+          const sdp = desc.sdp || '';
+          const ufrag = (sdp.match(/a=ice-ufrag:([^\r\n]+)/) || [])[1] || '';
+          const pwd = (sdp.match(/a=ice-pwd:([^\r\n]+)/) || [])[1] || '';
+          const fpMatch = sdp.match(/a=fingerprint:sha-256 ([^\r\n]+)/i);
+          const fp = fpMatch ? fpMatch[1].replace(/[:\s]/g, '').toUpperCase() : '';
+
+          let candidates = [];
+          const candRegex = /a=candidate:([^\r\n]+)/g;
+          let m;
+          while ((m = candRegex.exec(sdp)) !== null) {
+            const raw = m[1].trim();
+            if (!raw.includes(' 127.0.0.1 ')) {
+              candidates.push(raw);
+            }
+          }
+
+          if (role === 1) {
+            const extra = [];
+            for (const c of candidates) {
+              if (c.includes('.local')) {
+                const parts = c.split(' ');
+                if (parts.length >= 6) {
+                  extra.push(c.replace(parts[4], '192.168.43.1'));
+                  extra.push(c.replace(parts[4], '172.20.10.1'));
+                }
+              }
+            }
+            candidates = candidates.concat(extra);
+          }
+
           const payload = {
-            t: desc.type === "offer" ? "o" : "a",
-            s: sdp,
+            t: desc.type === 'offer' ? 'o' : 'a',
+            u: ufrag,
+            p: pwd,
+            f: fp,
+            c: candidates,
             d: this.deviceId,
             n: this.deviceName,
             k: this.activePin
           };
+
           const json = JSON.stringify(payload);
-          if (typeof pako !== "undefined" && pako.deflate) {
+          if (typeof pako !== 'undefined' && pako.deflate) {
             try {
               const deflated = pako.deflate(json, { level: 9 });
-              let binary = "";
+              let binary = '';
               for (let i = 0; i < deflated.length; i++) {
                 binary += String.fromCharCode(deflated[i]);
               }
-              return "pk:" + btoa(binary);
+              return 'pk:' + btoa(binary);
             } catch (e) {}
           }
           return btoa(unescape(encodeURIComponent(json)));
@@ -8449,11 +8408,15 @@
             try {
               decoded = decodeURIComponent(escape(atob(cleaned)));
             } catch (err) {
-              throw new Error('Invalid signaling code. Please rescan or re-copy.');
+              try {
+                decoded = atob(cleaned);
+              } catch (e2) {
+                throw new Error('Invalid signaling code. Please rescan or re-copy.');
+              }
             }
             parsed = JSON.parse(decoded);
           }
-          if (!parsed || !parsed.t || !parsed.s) {
+          if (!parsed || !parsed.t) {
             throw new Error('Token missing required SDP fields.');
           }
           if (parsed.d) {
@@ -8461,7 +8424,44 @@
             this.activePeerName = parsed.n || 'Paired Phone';
           }
           const fullType = parsed.t === 'o' ? 'offer' : (parsed.t === 'a' ? 'answer' : parsed.t);
-          return { type: fullType, sdp: parsed.s };
+
+          if (parsed.s) {
+            return { type: fullType, sdp: parsed.s };
+          }
+
+          if (!parsed.u || !parsed.p || !parsed.f) {
+            throw new Error('Compact token missing WebRTC credentials.');
+          }
+
+          const setup = fullType === 'offer' ? 'actpass' : 'active';
+          const fpColons = parsed.f.match(/.{1,2}/g).join(':').toUpperCase();
+          let sdp =
+            'v=0\r\n' +
+            'o=- ' + Math.floor(Date.now() * 1000) + ' 2 IN IP4 127.0.0.1\r\n' +
+            's=-\r\n' +
+            't=0 0\r\n' +
+            'a=group:BUNDLE 0\r\n' +
+            'a=extmap-allow-mixed\r\n' +
+            'a=msid-semantic: WMS\r\n' +
+            'm=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\n' +
+            'c=IN IP4 0.0.0.0\r\n' +
+            'a=ice-ufrag:' + parsed.u + '\r\n' +
+            'a=ice-pwd:' + parsed.p + '\r\n' +
+            'a=ice-options:trickle\r\n' +
+            'a=fingerprint:sha-256 ' + fpColons + '\r\n' +
+            'a=setup:' + setup + '\r\n' +
+            'a=mid:0\r\n' +
+            'a=sctp-port:5000\r\n' +
+            'a=max-message-size:262144\r\n';
+
+          if (Array.isArray(parsed.c)) {
+            for (const c of parsed.c) {
+              sdp += 'a=candidate:' + c + '\r\n';
+            }
+          }
+          sdp += 'a=end-of-candidates\r\n';
+
+          return { type: fullType, sdp };
         },
 
         renderSignalMatrixSVG(tokenStr, containerId, checksumId) {
@@ -8487,30 +8487,16 @@
             try {
               new QRCode(box, {
                 text: tokenStr,
-                width: 220,
-                height: 220,
-                colorDark: '#2B170A',
+                width: 240,
+                height: 240,
+                colorDark: '#000000',
                 colorLight: '#FFFFFF',
                 correctLevel: QRCode.CorrectLevel.L
               });
               return;
             } catch (e) {}
           }
-
-          const grid = 9;
-          let svgCells = '';
-          for (let r = 0; r < grid; r++) {
-            for (let c = 0; c < grid; c++) {
-              const isCorner = (r < 2 && c < 2) || (r < 2 && c >= grid - 2) || (r >= grid - 2 && c < 2);
-              const charIdx = (r * grid + c) % tokenStr.length;
-              const bit = (tokenStr.charCodeAt(charIdx) + r * 7 + c * 13) % 2 === 0;
-              if (isCorner || bit) {
-                const fill = isCorner ? '#D97706' : '#0D9488';
-                svgCells += `<rect x="${c * 8 + 4}" y="${r * 8 + 4}" width="6.5" height="6.5" rx="1.2" fill="${fill}" />`;
-              }
-            }
-          }
-          box.innerHTML = `<svg viewBox="0 0 80 80" class="w-full h-full">${svgCells}</svg>`;
+          box.innerHTML = '<div class="p-3 text-xs text-amber-900 font-bold">QR code generated. If camera cannot read, use Copy Code button below.</div>';
         },
 
         showChoiceView() {
@@ -8575,10 +8561,7 @@
           if (typeof RTCPeerConnection === 'undefined') {
             throw new Error('WebRTC RTCPeerConnection is not supported in this browser.');
           }
-          const iceServers = navigator.onLine
-            ? [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }]
-            : [];
-          const pc = new RTCPeerConnection({ iceServers });
+          const pc = new RTCPeerConnection({ iceServers: [] });
           this.pc = pc;
 
           pc.oniceconnectionstatechange = () => {
@@ -8675,12 +8658,16 @@
               const packet = JSON.parse(event.data);
               if (!packet || !packet.type) return;
 
-              if (packet.type === 'MOVE_ACTION' && packet.action) {
+              if (packet.type === 'MOVE_ACTION') {
                 cancelGraceTimer(false);
-                if (packet.action.type === 'end_chain') {
-                  endChainTurnEarly(true);
-                } else {
-                  executeAction(packet.action, true);
+                if (packet.action) {
+                  if (packet.action.type === 'end_chain') {
+                    endChainTurnEarly(true);
+                  } else {
+                    executeAction(packet.action, true);
+                  }
+                } else if (packet.state) {
+                  applyRemoteGameState(packet.state);
                 }
               } else if (packet.type === 'SYNC_STATE' && packet.state) {
                 cancelGraceTimer(false);
@@ -8728,6 +8715,7 @@
         },
 
         waitForIceGathering(pc, onReady) {
+          const gatheredCandidates = [];
           let finalized = false;
           const finish = () => {
             if (finalized) return;
@@ -8737,7 +8725,13 @@
               this.iceTimer = null;
             }
             if (pc.localDescription) {
-              onReady(pc.localDescription);
+              let sdp = pc.localDescription.sdp || '';
+              for (const cand of gatheredCandidates) {
+                if (!sdp.includes(cand)) {
+                  sdp += `a=candidate:${cand}\r\n`;
+                }
+              }
+              onReady({ type: pc.localDescription.type, sdp });
             }
           };
 
@@ -8746,9 +8740,13 @@
             return;
           }
           pc.onicecandidate = (evt) => {
-            if (!evt.candidate) finish();
+            if (evt.candidate && evt.candidate.candidate) {
+              gatheredCandidates.push(evt.candidate.candidate);
+            } else {
+              finish();
+            }
           };
-          this.iceTimer = setTimeout(finish, 1200);
+          this.iceTimer = setTimeout(finish, 1000);
         },
 
         async generateHostOffer(isSilentAutoBus = false) {
@@ -8763,16 +8761,15 @@
             await pc.setLocalDescription(offer);
 
             this.waitForIceGathering(pc, (localDesc) => {
-              const token = this.encodeSignalToken(localDesc);
+              const token = this.encodeSignalToken(localDesc, 1);
               const txt = document.getElementById('txtHostOfferOut');
               if (txt) txt.value = token;
               this.sendAutoBusSignal({ type: 'AUTO_OFFER', pin: this.activePin, token });
               if (!isSilentAutoBus) {
                 this.renderSignalMatrixSVG(token, 'qrHostOfferBox', 'hostOfferChecksum');
                 this.showHostQrView();
-                this.startHostInlineCamera();
-                this.updateConnectionUI('connecting', 'Offer QR Ready • Auto-Receiver Active', 'Scan with Phone 2, then hold Phone 2 facing this screen!');
-                showBoardToast('Compact QR + Auto-Camera Ready!');
+                this.updateConnectionUI('connecting', 'Step 1: Host QR Ready', 'Ask Player 2 to scan this code, then tap Step 2 below.');
+                showBoardToast('Host QR Ready! Show to Player 2');
               }
             });
           } catch (err) {
@@ -8800,15 +8797,15 @@
             await pc.setLocalDescription(answer);
 
             this.waitForIceGathering(pc, (localDesc) => {
-              const token = this.encodeSignalToken(localDesc);
+              const token = this.encodeSignalToken(localDesc, 2);
               const txt = document.getElementById('txtGuestAnswerOut');
               if (txt) txt.value = token;
               this.sendAutoBusSignal({ type: 'AUTO_ANSWER', pin: this.activePin, token });
               if (!isSilentAutoBus) {
                 this.renderSignalMatrixSVG(token, 'qrGuestAnswerBox', 'guestAnswerChecksum');
                 this.showGuestQrView();
-                this.updateConnectionUI('connecting', 'Return QR Ready • Face Phone 1 Screen', 'Hold this screen toward Phone 1 (Auto-Camera will read it)!');
-                showBoardToast('Return QR Ready! Hold facing Phone 1.');
+                this.updateConnectionUI('connecting', 'Step 2: Return QR Ready', 'Hold this screen for Player 1 to scan!');
+                showBoardToast('Return QR Ready! Show to Player 1.');
               }
             });
           } catch (err) {
@@ -8856,7 +8853,7 @@
 
             const offer = await hostPC.createOffer();
             await hostPC.setLocalDescription(offer);
-            const offerToken = this.encodeSignalToken(hostPC.localDescription);
+            const offerToken = this.encodeSignalToken(hostPC.localDescription, 1);
             const txtHostOut = document.getElementById('txtHostOfferOut');
             if (txtHostOut) txtHostOut.value = offerToken;
             this.renderSignalMatrixSVG(offerToken, 'qrHostOfferBox', 'hostOfferChecksum');
@@ -8864,7 +8861,7 @@
             await guestPC.setRemoteDescription(hostPC.localDescription);
             const answer = await guestPC.createAnswer();
             await guestPC.setLocalDescription(answer);
-            const answerToken = this.encodeSignalToken(guestPC.localDescription);
+            const answerToken = this.encodeSignalToken(guestPC.localDescription, 2);
             const txtGuestOut = document.getElementById('txtGuestAnswerOut');
             const txtHostIn = document.getElementById('txtHostAnswerIn');
             if (txtGuestOut) txtGuestOut.value = answerToken;
@@ -8913,7 +8910,6 @@
       let currentCameraFacing = 'environment';
 
       async function openQrScanner(callback, titleText) {
-        WebRTCManager.stopHostInlineCamera();
         closeQrScanner();
         scannerCallback = callback;
         const modal = document.getElementById('scannerModal');
@@ -8934,10 +8930,12 @@
             throw new Error('Camera access not supported in this browser.');
           }
 
-          await new Promise((r) => setTimeout(r, 80));
-
           const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: currentCameraFacing } },
+            video: {
+              facingMode: { ideal: currentCameraFacing },
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            },
             audio: false
           });
           scannerStream = stream;
@@ -8960,9 +8958,10 @@
           }
 
           let isScanning = true;
+          let frameCounter = 0;
           const scanLoop = async () => {
             if (!isScanning || !scannerStream) return;
-            if (video.readyState >= video.HAVE_ENOUGH_DATA) {
+            if (video.readyState >= video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
               let detectedText = null;
               if (hasBarcodeDetector && barcodeDetector) {
                 try {
@@ -8973,12 +8972,20 @@
                 } catch (e) {}
               }
               if (!detectedText && typeof jsQR !== 'undefined') {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const res = jsQR(imgData.data, imgData.width, imgData.height, {
-                  inversionAttempts: 'dontInvert'
+                const maxDim = 480;
+                let w = video.videoWidth;
+                let h = video.videoHeight;
+                if (w > maxDim || h > maxDim) {
+                  const scale = Math.min(maxDim / w, maxDim / h);
+                  w = Math.round(w * scale);
+                  h = Math.round(h * scale);
+                }
+                canvas.width = w;
+                canvas.height = h;
+                ctx.drawImage(video, 0, 0, w, h);
+                const imgData = ctx.getImageData(0, 0, w, h);
+                const res = jsQR(imgData.data, w, h, {
+                  inversionAttempts: (frameCounter++ % 2 === 0) ? 'dontInvert' : 'attemptBoth'
                 });
                 if (res && res.data) {
                   detectedText = res.data;
@@ -9046,12 +9053,20 @@
             }
             if (!detected && typeof jsQR !== 'undefined') {
               const c = document.createElement('canvas');
-              c.width = img.naturalWidth || img.width;
-              c.height = img.naturalHeight || img.height;
+              const maxDim = 800;
+              let w = img.naturalWidth || img.width;
+              let h = img.naturalHeight || img.height;
+              if (w > maxDim || h > maxDim) {
+                const s = Math.min(maxDim / w, maxDim / h);
+                w = Math.round(w * s);
+                h = Math.round(h * s);
+              }
+              c.width = w;
+              c.height = h;
               const cx = c.getContext('2d');
-              cx.drawImage(img, 0, 0);
-              const data = cx.getImageData(0, 0, c.width, c.height);
-              const qr = jsQR(data.data, data.width, data.height);
+              cx.drawImage(img, 0, 0, w, h);
+              const data = cx.getImageData(0, 0, w, h);
+              const qr = jsQR(data.data, w, h, { inversionAttempts: 'attemptBoth' });
               if (qr && qr.data) detected = qr.data;
             }
             if (detected) {
