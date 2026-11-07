@@ -9964,36 +9964,13 @@
 
       document.getElementById('btnHostScanGuestReturn').addEventListener('click', () => {
         SoundEngine.select();
-        WebRTCManager.stopHostInlineCamera();
         openQrScanner((token) => {
           WebRTCManager.acceptGuestAnswerOnHost(token);
         }, "Scan Player 2's Return Code");
       });
 
-      const btnFlipInline = document.getElementById('btnFlipHostInlineCam');
-      if (btnFlipInline) {
-        btnFlipInline.addEventListener('click', () => {
-          SoundEngine.select();
-          WebRTCManager.hostInlineFacing = WebRTCManager.hostInlineFacing === 'environment' ? 'user' : 'environment';
-          WebRTCManager.startHostInlineCamera();
-        });
-      }
-
-      const btnToggleInline = document.getElementById('btnToggleHostInlineCam');
-      if (btnToggleInline) {
-        btnToggleInline.addEventListener('click', () => {
-          SoundEngine.select();
-          if (WebRTCManager.hostInlineStream) {
-            WebRTCManager.stopHostInlineCamera();
-          } else {
-            WebRTCManager.startHostInlineCamera();
-          }
-        });
-      }
-
       document.getElementById('btnHostBackToChoice').addEventListener('click', () => {
         SoundEngine.select();
-        WebRTCManager.stopHostInlineCamera();
         WebRTCManager.showChoiceView();
       });
 
@@ -10757,7 +10734,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=a0ea2b819e').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=3df53a58cf').catch(() => {});
         });
       }
 
