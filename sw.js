@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwa-cache-43f7b78984';
+const CACHE_NAME = 'pwa-cache-bbfeb0d470';
 const ASSETS = [
   "./fonts.css",
   "./fonts/cinzel.woff2",
@@ -22,7 +22,8 @@ const ASSETS = [
   "./pako.min.js",
   "./peerjs.min.js",
   "./qrcode.min.js",
-  "./tailwind.min.js"
+  "./tailwind.min.js",
+  "./version.json"
 ];
 
 self.addEventListener('install', (e) => {
