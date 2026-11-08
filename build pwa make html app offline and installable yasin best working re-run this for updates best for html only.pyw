@@ -20,7 +20,6 @@ EXCLUDE_DIRS = {".git", "__pycache__", ".vscode", ".idea", ".gemini", "node_modu
 EXCLUDE_EXTS = {".py", ".pyw", ".pyc", ".txt", ".md", ".log", ".bak", ".zip", ".gz", ".tar"}
 EXCLUDE_NAMES = {
     "sw.js",
-    "favicon.ico",
     ".gitattributes",
     "update_pwa.py",
     os.path.basename(__file__)
@@ -192,7 +191,7 @@ const ASSETS = {assets_js};
 self.addEventListener('install', (e) => {{
   e.waitUntil(
     caches.open(CACHE_NAME)
-      .then((c) => c.addAll(ASSETS))
+      .then((c) => Promise.allSettled(ASSETS.map((url) => c.add(url))))
       .then(() => self.skipWaiting())
   );
 }});
@@ -208,40 +207,62 @@ self.addEventListener('activate', (e) => {{
 self.addEventListener('fetch', (e) => {{
   const req = e.request;
   if (req.method !== 'GET') return;
+  if (!req.url.startsWith('http')) return;
+  if (req.cache === 'only-if-cached' && req.mode !== 'same-origin') return;
+
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.endsWith('/sw.js')) return;
 
   if (req.mode === 'navigate') {{
     e.respondWith(
       fetch(req)
         .then((res) => {{
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+          if (res && res.status === 200) {{
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {{}});
+          }}
           return res;
         }})
-        .catch(() => caches.match('./index.html').then((r) => r || caches.match('./') || caches.match('./offline.html')))
+        .catch(() =>
+          caches.match(req, {{ ignoreSearch: true }})
+            .then((cached) => cached || caches.match('./index.html', {{ ignoreSearch: true }}))
+            .then((cached) => cached || caches.match('./', {{ ignoreSearch: true }}))
+            .then((cached) => cached || caches.match('./offline.html', {{ ignoreSearch: true }}))
+            .then((cached) => cached || new Response('Offline', {{ status: 503, headers: {{ 'Content-Type': 'text/plain' }} }}))
+        )
     );
     return;
   }}
 
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
-
   e.respondWith(
-    caches.match(req).then((cached) => {{
+    caches.match(req, {{ ignoreSearch: true }}).then((cached) => {{
       if (cached) {{
-        fetch(req).then((res) => {{
-          if (res && res.status === 200) {{
-            caches.open(CACHE_NAME).then((c) => c.put(req, res));
-          }}
-        }}).catch(() => {{}});
+        fetch(req)
+          .then((res) => {{
+            if (res && res.status === 200) {{
+              const copy = res.clone();
+              caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {{}});
+            }}
+          }})
+          .catch(() => {{}});
         return cached;
       }}
-      return fetch(req).then((res) => {{
-        if (res && res.status === 200) {{
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
-        }}
-        return res;
-      }});
+      return fetch(req)
+        .then((res) => {{
+          if (res && res.status === 200) {{
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {{}});
+          }}
+          return res;
+        }})
+        .catch(() => caches.match(req, {{ ignoreSearch: true }}))
+        .then((finalRes) => {{
+          if (finalRes) return finalRes;
+          return new Response('', {{ status: 408, statusText: 'Offline' }});
+        }});
+    }}).catch(() => {{
+      return caches.match(req, {{ ignoreSearch: true }}).then((r) => r || new Response('', {{ status: 408 }}));
     }})
   );
 }});
