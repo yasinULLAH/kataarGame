@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwa-cache-a561000571';
+const CACHE_NAME = 'pwa-cache-afd44d353e';
 const ASSETS = [
   "./favicon.ico",
   "./fonts.css",

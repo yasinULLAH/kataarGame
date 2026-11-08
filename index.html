@@ -581,6 +581,25 @@
       width: 0;
       height: 0;
     }
+    #boardToast {
+      left: 50% !important;
+      right: auto !important;
+      transform: translateX(-50%) !important;
+      width: max-content;
+      max-width: calc(100% - 16px);
+      white-space: normal !important;
+      text-align: center;
+      line-height: 1.3;
+      word-break: break-word;
+      z-index: 30;
+    }
+    #fanoronaChoiceBar,
+    #wifiInvitePopup {
+      left: 50% !important;
+      right: auto !important;
+      transform: translateX(-50%) !important;
+      max-width: calc(100vw - 16px);
+    }
   </style>
 </head>
 <body class="flex flex-col h-full w-full select-none overflow-hidden relative">
@@ -933,12 +952,12 @@
         </div>
       </div>
 
-      <div id="turnBanner" class="game-card rounded-xl sm:rounded-2xl px-2.5 sm:px-3 py-1 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2">
-        <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+      <div id="turnBanner" class="game-card rounded-xl sm:rounded-2xl px-2.5 sm:px-3 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2">
+        <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
           <span id="turnIndicatorDot" class="w-3 sm:w-3.5 h-3 sm:h-3.5 rounded-full bg-teal-600 shrink-0 ring-2 sm:ring-4 ring-teal-500/20"></span>
-          <div class="truncate">
+          <div class="min-w-0 flex-1">
             <div id="turnHeadline" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Player 1's Turn (Feroza)</div>
-            <div id="turnSubtext" class="text-[10px] sm:text-[11px] font-medium text-walnut-600 truncate">Tap a piece to inspect legal moves</div>
+            <div id="turnSubtext" class="text-[10px] sm:text-[11px] font-medium text-walnut-600 leading-snug whitespace-normal sm:truncate">Tap a piece to inspect legal moves</div>
           </div>
         </div>
 
@@ -951,7 +970,7 @@
     <section id="boardContainerWrapper" class="flex-1 w-full h-full flex items-center justify-center min-h-0 min-w-0 relative overflow-hidden">
       <div id="canvasAspectBox" class="board-3d-frame relative flex items-center justify-center">
         <canvas id="katarCanvas" class="block rounded-2xl cursor-pointer"></canvas>
-        <div id="boardToast" class="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-walnut-900/95 border-2 border-amber-400 text-amber-300 text-xs font-extrabold shadow-xl opacity-0 transition-opacity duration-200 whitespace-nowrap z-10">
+        <div id="boardToast" class="pointer-events-none absolute top-2.5 sm:top-4 left-1/2 -translate-x-1/2 px-3 sm:px-4 py-1.5 rounded-2xl bg-walnut-900/95 border-2 border-amber-400 text-amber-300 text-[11px] sm:text-xs font-extrabold shadow-xl opacity-0 transition-opacity duration-200 z-30">
           Leap Capture!
         </div>
 
@@ -5635,21 +5654,75 @@
 
       function scoreMorrisRemovalTarget(cid, board, aiP, humanP, res1 = GameState.reserves[1], res2 = GameState.reserves[2]) {
         const res = { 1: res1, 2: res2 };
-        let score = getMorrisNodeWeight(cid) * 12;
+        let score = getMorrisNodeWeight(cid) * 20;
 
         const simB = [...board];
         simB[cid] = 0;
-        const oppActs = getAllLegalActionsForPlayer(humanP, simB, res);
-        if (oppActs.total === 0) return 96000;
+        const hmRemaining = countPlayerTotalPieces(humanP, simB, res);
+        if (hmRemaining <= 2) return 180000;
+        if (res[humanP] === 0) {
+          const oppActs = getAllLegalActionsForPlayer(humanP, simB, res);
+          if (oppActs.total === 0) return 170000;
+        }
+
+        let inActiveThreat = 0;
+        let inOpenTwo = 0;
+        for (const line of MillLines) {
+          if (!line.includes(cid)) continue;
+          let oppC = 0, empId = -1, aiC = 0;
+          for (const id of line) {
+            if (board[id] === humanP) oppC++;
+            else if (board[id] === 0) empId = id;
+            else if (board[id] === aiP) aiC++;
+          }
+          if (oppC === 2 && empId !== -1) {
+            inOpenTwo++;
+            if (canPlayerCloseMillAt(empId, line, humanP, board, res)) {
+              inActiveThreat++;
+              score += 52000;
+            } else {
+              score += 18000;
+            }
+          }
+          if (aiC === 2 && oppC === 1) {
+            if (canPlayerCloseMillAt(cid, line, aiP, simB, res)) {
+              score += 42000;
+            } else {
+              score += 14000;
+            }
+          }
+        }
+
+        if (inOpenTwo >= 2) score += 38000;
+
+        for (const nb of Adjacency[cid]) {
+          if (board[nb] === 0) {
+            for (const line of MillLines) {
+              if (line.includes(nb) && !line.includes(cid)) {
+                let oppCount = 0;
+                for (const id of line) if (board[id] === humanP) oppCount++;
+                if (oppCount === 2) {
+                  let otherSliders = 0;
+                  for (const snb of Adjacency[nb]) {
+                    if (snb !== cid && !line.includes(snb) && board[snb] === humanP) otherSliders++;
+                  }
+                  score += otherSliders === 0 ? 48000 : 18000;
+                }
+              }
+            }
+          }
+        }
 
         if (isNodeInAnyMill(cid, board)) {
-          score += 26000;
+          let canReopenSafely = false;
           let partOfSeeSaw = false;
           for (const m1 of MillLines) {
             if (!m1.includes(cid)) continue;
+            if (board[m1[0]] !== humanP || board[m1[1]] !== humanP || board[m1[2]] !== humanP) continue;
             for (const nid of m1) {
               for (const nb of Adjacency[nid]) {
                 if (!m1.includes(nb) && board[nb] === 0) {
+                  canReopenSafely = true;
                   for (const m2 of MillLines) {
                     if (m2.includes(nb) && !m2.includes(nid)) {
                       const o2 = m2.filter((x) => x !== nb);
@@ -5662,44 +5735,16 @@
               }
             }
           }
-          if (partOfSeeSaw) score += 36000;
-        }
-
-        for (const line of MillLines) {
-          if (!line.includes(cid)) continue;
-          let oppC = 0, empId = -1, aiC = 0;
-          for (const id of line) {
-            if (board[id] === humanP) oppC++;
-            else if (board[id] === 0) empId = id;
-            else if (board[id] === aiP) aiC++;
-          }
-          if (oppC === 2 && empId !== -1) {
-            const hasSlider = hasReadySliderForMill(empId, line, humanP, board);
-            score += hasSlider ? 19000 : 8500;
-          }
-          if (aiC === 2 && oppC === 1) {
-            const hasAiSlider = hasReadySliderForMill(cid, line, aiP, board);
-            score += hasAiSlider ? 15000 : 7000;
-          }
-        }
-
-        for (const nb of Adjacency[cid]) {
-          if (board[nb] === 0) {
-            for (const line of MillLines) {
-              if (line.includes(nb) && !line.includes(cid)) {
-                let oppCount = 0;
-                for (const id of line) if (board[id] === humanP) oppCount++;
-                if (oppCount === 2) score += 16500;
-              }
-            }
-          }
+          if (partOfSeeSaw) score += 46000;
+          else if (canReopenSafely) score += 22000;
+          else score += 9000;
         }
 
         let oppEmptyNeighbors = 0;
         for (const nb of Adjacency[cid]) {
           if (board[nb] === 0) oppEmptyNeighbors++;
         }
-        score += oppEmptyNeighbors * 40;
+        score += oppEmptyNeighbors * 160;
         return score;
       }
 
@@ -5729,29 +5774,173 @@
         return scored.slice(0, maxCount).map((x) => x.cid);
       }
 
+      function evaluateAllAtOnceBoard(board, aiP, humanP, resAi, resHuman) {
+        if (resHuman > 0) {
+          let score = 0;
+          let linesCovered = 0;
+          const readyTargets = new Set();
+          const cageTrapTargets = new Set();
+          const openTwoTargets = new Set();
+          const targetShareCount = new Map();
+          const frontierSet = new Set();
+
+          for (let i = 0; i < Nodes.length; i++) {
+            if (board[i] !== aiP) continue;
+            const deg = Adjacency[i] ? Adjacency[i].size : 2;
+            if (deg >= 4) score += 14000;
+            else if (deg === 3) score += 2200;
+            else score += 4500;
+
+            let empNb = 0;
+            let friendlyNb = 0;
+            for (const nb of Adjacency[i]) {
+              if (board[nb] === 0) {
+                empNb++;
+                frontierSet.add(nb);
+              } else if (board[nb] === aiP) {
+                friendlyNb++;
+              }
+            }
+            if (empNb === 0) score -= 55000;
+            else if (empNb === 1) score -= 18000;
+            else score += empNb * 1400;
+
+            if (friendlyNb > 0) {
+              score -= friendlyNb * 8500;
+            }
+          }
+
+          score += frontierSet.size * 3200;
+
+          for (const line of MillLines) {
+            let aC = 0, hC = 0, empNode = -1;
+            for (const id of line) {
+              if (board[id] === aiP) aC++;
+              else if (board[id] === humanP) hC++;
+              else empNode = id;
+            }
+            if (aC >= 1) linesCovered++;
+            if (aC === 2 && hC === 0 && empNode !== -1) {
+              openTwoTargets.add(empNode);
+              targetShareCount.set(empNode, (targetShareCount.get(empNode) || 0) + 1);
+              if (hasReadySliderForMill(empNode, line, aiP, board)) {
+                readyTargets.add(empNode);
+                let allNeighborsOwnedByAi = true;
+                for (const nb of Adjacency[empNode]) {
+                  if (board[nb] !== aiP) {
+                    allNeighborsOwnedByAi = false;
+                    break;
+                  }
+                }
+                if (allNeighborsOwnedByAi) {
+                  cageTrapTargets.add(empNode);
+                }
+              }
+            }
+          }
+
+          score += linesCovered * 6800;
+          score += openTwoTargets.size * 7500;
+          score += readyTargets.size * 26000;
+          score += cageTrapTargets.size * 42000;
+
+          for (const [, count] of targetShareCount) {
+            if (count > 1) score -= (count - 1) * 14000;
+          }
+
+          return score;
+        }
+
+        let score = evaluateMorrisBoardState(board, 0, 0, humanP, aiP, humanP) * 4;
+        const hmReadyTargets = new Set();
+        const aiReadyTargets = new Set();
+        const aiUncontestedTargets = new Set();
+
+        for (const line of MillLines) {
+          let a = 0, h = 0, emp = -1;
+          for (const id of line) {
+            if (board[id] === aiP) a++;
+            else if (board[id] === humanP) h++;
+            else emp = id;
+          }
+          if (h === 2 && a === 0 && emp !== -1) {
+            if (hasReadySliderForMill(emp, line, humanP, board)) {
+              hmReadyTargets.add(emp);
+            } else {
+              score -= 14000;
+            }
+          } else if (a === 2 && h === 0 && emp !== -1) {
+            if (hasReadySliderForMill(emp, line, aiP, board)) {
+              aiReadyTargets.add(emp);
+              let oppAdj = false;
+              for (const nb of Adjacency[emp]) {
+                if (board[nb] === humanP) {
+                  oppAdj = true;
+                  break;
+                }
+              }
+              if (!oppAdj) aiUncontestedTargets.add(emp);
+            }
+          }
+        }
+
+        score -= hmReadyTargets.size * 135000;
+        score += aiReadyTargets.size * 34000;
+        score += aiUncontestedTargets.size * 42000;
+        if (aiReadyTargets.size >= 2) score += 65000;
+
+        let hmMob = 0;
+        let hmTrapped = 0;
+        for (let i = 0; i < Nodes.length; i++) {
+          if (board[i] === humanP) {
+            let lib = 0;
+            for (const nb of Adjacency[i]) if (board[nb] === 0) lib++;
+            hmMob += lib;
+            if (lib === 0) hmTrapped++;
+          }
+        }
+        if (hmMob === 0) score += 500000;
+        score += hmTrapped * 14000;
+
+        return score;
+      }
+
       function scoreMorrisPlacement(nodeId, board, aiP, humanP, isAllAtOnce, resAi, resHuman) {
         const landingMillForbidden = (isAllAtOnce || GameState.morrisDropMillRule === 'forbid_mill');
         const sim = [...board];
         sim[nodeId] = aiP;
 
+        if (isAllAtOnce) {
+          return evaluateAllAtOnceBoard(sim, aiP, humanP, Math.max(0, resAi - 1), resHuman);
+        }
+
+        const simOpp = [...board];
+        simOpp[nodeId] = humanP;
+
         if (!landingMillForbidden) {
-          if (getMillsContainingNode(nodeId, aiP, sim).length > 0) return 250000;
-          const simOpp = [...board];
-          simOpp[nodeId] = humanP;
-          if (getMillsContainingNode(nodeId, humanP, simOpp).length > 0) return 190000;
+          const myMills = getMillsContainingNode(nodeId, aiP, sim).length;
+          const oppMills = getMillsContainingNode(nodeId, humanP, simOpp).length;
+          if (myMills > 0) return 320000 + myMills * 40000 + oppMills * 20000;
+          if (oppMills > 0) return 240000 + oppMills * 35000;
         }
 
         let score = 0;
         const deg = Adjacency[nodeId] ? Adjacency[nodeId].size : 2;
-        score += (deg >= 4 ? 4200 : (deg === 3 ? 2000 : 700));
+        score += (deg >= 4 ? 6500 : (deg === 3 ? 2800 : 1200));
 
         let liberties = 0;
+        let friendlyAdj = 0;
         for (const nb of Adjacency[nodeId]) {
           if (sim[nb] === 0) liberties++;
+          else if (sim[nb] === aiP) friendlyAdj++;
         }
-        if (liberties === 0) score -= 14000;
-        else if (liberties === 1) score -= 2200;
-        else score += liberties * 750;
+        if (liberties === 0) score -= 24000;
+        else if (liberties === 1) score -= 4500;
+        else score += liberties * 1100;
+
+        if (landingMillForbidden && resHuman > 2 && friendlyAdj > 0) {
+          score -= friendlyAdj * 4200;
+        }
 
         for (const nb of Adjacency[nodeId]) {
           if (board[nb] === humanP) {
@@ -5759,107 +5948,155 @@
             for (const onb of Adjacency[nb]) {
               if (sim[onb] === 0) oppLib++;
             }
-            if (oppLib === 0) score += 5500;
-            else if (oppLib === 1) score += 2000;
+            if (oppLib === 0) score += 9500;
+            else if (oppLib === 1) score += 3200;
           }
         }
+
+        const aiOpenTargets = new Set();
+        const aiReadyTargets = new Set();
+        const oppOpenTargetsIfOppPlays = new Set();
+        const oppReadyTargetsIfOppPlays = new Set();
 
         for (const line of MillLines) {
-          if (!line.includes(nodeId)) continue;
-          let oppCount = 0;
+          let aSim = 0, hSim = 0, empSim = -1;
+          let aOpp = 0, hOpp = 0, empOpp = -1;
           for (const id of line) {
-            if (board[id] === humanP) oppCount++;
-          }
-          if (oppCount === 2) {
-            const hasSlider = hasReadySliderForMill(nodeId, line, humanP, board);
-            score += hasSlider ? 40000 : 15000;
-          } else if (oppCount === 1) {
-            score += 1800;
-          }
-        }
+            if (sim[id] === aiP) aSim++;
+            else if (sim[id] === humanP) hSim++;
+            else empSim = id;
 
-        for (const nb of Adjacency[nodeId]) {
-          if (board[nb] === 0) {
-            for (const line of MillLines) {
-              if (line.includes(nb) && !line.includes(nodeId)) {
-                let oC = 0;
-                for (const id of line) if (board[id] === humanP) oC++;
-                if (oC === 2) score += 9500;
-              }
-            }
+            if (simOpp[id] === aiP) aOpp++;
+            else if (simOpp[id] === humanP) hOpp++;
+            else empOpp = id;
           }
-        }
 
-        let readyMillsCreated = 0;
-        let twosCreated = 0;
-        for (const line of MillLines) {
-          if (!line.includes(nodeId)) continue;
-          let aC = 0, empNode = -1;
-          for (const id of line) {
-            if (sim[id] === aiP) aC++;
-            else if (sim[id] === 0) empNode = id;
-          }
-          if (aC === 2 && empNode !== -1) {
-            twosCreated++;
-            if (hasReadySliderForMill(empNode, line, aiP, sim)) {
-              readyMillsCreated++;
-              score += 29000;
-            } else {
-              score += 7500;
-              let openNeighbors = 0;
-              for (const nb of Adjacency[empNode]) if (sim[nb] === 0) openNeighbors++;
-              if (openNeighbors >= 1) score += 3000;
-            }
-          }
-        }
-
-        for (const nb of Adjacency[nodeId]) {
-          if (sim[nb] === 0) {
-            for (const line of MillLines) {
-              if (line.includes(nb) && !line.includes(nodeId)) {
-                let aC = 0;
-                for (const id of line) if (sim[id] === aiP) aC++;
-                if (aC === 2) {
-                  readyMillsCreated++;
-                  score += 25000;
+          if (aSim === 2 && hSim === 0 && empSim !== -1) {
+            aiOpenTargets.add(empSim);
+            if (hasReadySliderForMill(empSim, line, aiP, sim)) {
+              aiReadyTargets.add(empSim);
+              let cageTrap = true;
+              for (const nb of Adjacency[empSim]) {
+                if (sim[nb] !== aiP) {
+                  cageTrap = false;
+                  break;
                 }
               }
+              if (cageTrap) score += 28000;
+            }
+          }
+
+          if (hOpp === 2 && aOpp === 0 && empOpp !== -1) {
+            oppOpenTargetsIfOppPlays.add(empOpp);
+            if (hasReadySliderForMill(empOpp, line, humanP, simOpp)) {
+              oppReadyTargetsIfOppPlays.add(empOpp);
+            }
+          }
+
+          if (line.includes(nodeId)) {
+            let oppCount = 0, aiCount = 0;
+            for (const id of line) {
+              if (board[id] === humanP) oppCount++;
+              else if (board[id] === aiP) aiCount++;
+            }
+            if (oppCount === 2 && aiCount === 0) {
+              const hasSlider = hasReadySliderForMill(nodeId, line, humanP, board);
+              score += hasSlider ? 72000 : 26000;
+            } else if (oppCount === 1 && aiCount === 0) {
+              score += 3200;
             }
           }
         }
 
-        if (readyMillsCreated >= 2) score += 58000;
-        else if (twosCreated >= 2) score += 16000;
-
-        let intersectingAiLines = 0;
-        for (const line of MillLines) {
-          if (!line.includes(nodeId)) continue;
-          let aC = 0;
-          for (const id of line) if (sim[id] === aiP) aC++;
-          if (aC >= 2) intersectingAiLines++;
+        if (!landingMillForbidden) {
+          score += aiOpenTargets.size * 14000;
+          if (aiOpenTargets.size >= 2) score += 88000;
+          if (oppOpenTargetsIfOppPlays.size >= 2) score += 82000;
+        } else {
+          score += aiOpenTargets.size * 8500;
+          score += aiReadyTargets.size * 28000;
+          if (aiReadyTargets.size >= 2) score += 64000;
+          if (oppReadyTargetsIfOppPlays.size >= 2) score += 58000;
+          else if (oppReadyTargetsIfOppPlays.size === 1) score += 22000;
         }
-        if (intersectingAiLines >= 2) score += 24000;
 
         return score;
       }
 
       function chooseBestMorrisDrop(allSteps, board, aiP, humanP, isAllAtOnce, resAi, resHuman, diff) {
+        if (isAllAtOnce && diff !== 'easy' && resAi >= 1) {
+          const forbidLandingMill = true;
+          const beamWidth = diff === 'hardest' ? 10 : (diff === 'hard' ? 6 : 3);
+          let beam = [{
+            board: [...board],
+            firstMove: null,
+            score: evaluateAllAtOnceBoard(board, aiP, humanP, resAi, resHuman)
+          }];
+
+          const stepsToPlan = diff === 'medium' ? Math.min(2, resAi) : resAi;
+          for (let step = 0; step < stepsToPlan; step++) {
+            const nextBeam = [];
+            const seenKeys = new Set();
+            const remAfter = resAi - step - 1;
+
+            for (const state of beam) {
+              const emptyIds = [];
+              const nonMillIds = [];
+              for (let i = 0; i < Nodes.length; i++) {
+                if (state.board[i] === 0) {
+                  emptyIds.push(i);
+                  if (forbidLandingMill) {
+                    state.board[i] = aiP;
+                    const formsMill = getMillsContainingNode(i, aiP, state.board).length > 0;
+                    state.board[i] = 0;
+                    if (!formsMill) nonMillIds.push(i);
+                  }
+                }
+              }
+              const legalIds = (forbidLandingMill && nonMillIds.length > 0) ? nonMillIds : emptyIds;
+              for (const nid of legalIds) {
+                const nb = [...state.board];
+                nb[nid] = aiP;
+                const key = computeMorrisStateKey(nb, 0, 0, aiP);
+                if (seenKeys.has(key)) continue;
+                seenKeys.add(key);
+                const firstMv = state.firstMove || { from: -1, to: nid, type: 'drop' };
+                const sc = evaluateAllAtOnceBoard(nb, aiP, humanP, remAfter, resHuman);
+                nextBeam.push({ board: nb, firstMove: firstMv, score: sc });
+              }
+            }
+
+            if (nextBeam.length === 0) break;
+            nextBeam.sort((a, b) => b.score - a.score);
+            beam = nextBeam.slice(0, beamWidth);
+          }
+
+          if (resHuman === 0 && resAi <= 2 && (diff === 'hard' || diff === 'hardest') && beam.length > 0) {
+            if (MorrisTT.size > 120000) MorrisTT.clear();
+            morrisSearchAborted = false;
+            morrisSearchDeadline = performance.now() + 900;
+            let bestCand = beam[0];
+            let bestTotal = -Infinity;
+            for (const cand of beam.slice(0, 5)) {
+              const mmVal = minimaxMorris(cand.board, 0, 0, diff === 'hardest' ? 5 : 3, -Infinity, Infinity, humanP, aiP, humanP);
+              const combined = cand.score + mmVal * 6;
+              if (combined > bestTotal) {
+                bestTotal = combined;
+                bestCand = cand;
+              }
+            }
+            if (bestCand && bestCand.firstMove) return bestCand.firstMove;
+          }
+
+          if (beam[0] && beam[0].firstMove) {
+            return beam[0].firstMove;
+          }
+        }
+
         const scored = [];
         for (const m of allSteps) {
           const s1 = scoreMorrisPlacement(m.to, board, aiP, humanP, isAllAtOnce, resAi, resHuman);
-          let combined = s1;
-          if (isAllAtOnce && resAi > 1) {
-            const sim = [...board];
-            sim[m.to] = aiP;
-            let bestS2 = -Infinity;
-            const follow = allSteps.filter((x) => x.to !== m.to);
-            for (const m2 of follow) {
-              const s2 = scoreMorrisPlacement(m2.to, sim, aiP, humanP, true, resAi - 1, resHuman);
-              if (s2 > bestS2) bestS2 = s2;
-            }
-            if (bestS2 !== -Infinity) combined += bestS2 * 0.42;
-          }
-          scored.push({ move: m, score: combined });
+          scored.push({ move: m, score: s1 });
         }
         scored.sort((a, b) => b.score - a.score);
         if (diff === 'easy') {
@@ -5869,17 +6106,7 @@
           const pool = scored.slice(0, Math.min(3, scored.length));
           return pool[Math.floor(Math.random() * pool.length)].move;
         }
-        const maxScore = scored[0].score;
-        const elite = scored.filter((x) => x.score >= maxScore - 90);
-        if (elite.length <= 1) return scored[0].move;
-        const weights = elite.map((x) => Math.exp((x.score - maxScore) / 32));
-        const totalW = weights.reduce((a, b) => a + b, 0);
-        let r = Math.random() * totalW;
-        for (let i = 0; i < elite.length; i++) {
-          r -= weights[i];
-          if (r <= 0) return elite[i].move;
-        }
-        return elite[0].move;
+        return scored[0].move;
       }
 
       function evaluateMorrisBoardState(board, res1, res2, turnPlayer, aiP, humanP) {
@@ -5890,17 +6117,20 @@
         if (hmTotal <= 2) return 95000;
         if (aiTotal <= 2) return -95000;
 
-        let score = (aiTotal - hmTotal) * 1400;
+        let score = (aiTotal - hmTotal) * 4500;
+        if (hmTotal === 3 && res[humanP] === 0) score += 2400;
+        if (aiTotal === 3 && res[aiP] === 0) score -= 2400;
 
-        let aiMills = 0, hmMills = 0;
+        let aiRepeatableMills = 0, hmRepeatableMills = 0;
+        let aiLockedMills = 0, hmLockedMills = 0;
         let aiSeeSaw = 0, hmSeeSaw = 0;
-        let aiOpenTwo = 0, hmOpenTwo = 0;
-        let aiReadyMill = 0, hmReadyMill = 0;
         let aiBlockedTwo = 0, hmBlockedTwo = 0;
         const aiOpenEmptySet = new Set();
         const hmOpenEmptySet = new Set();
         const aiReadyEmptySet = new Set();
         const hmReadyEmptySet = new Set();
+        const aiUncontestedReadySet = new Set();
+        const hmUncontestedReadySet = new Set();
         const aiTwoShare = new Array(Nodes.length).fill(0);
         const hmTwoShare = new Array(Nodes.length).fill(0);
 
@@ -5913,54 +6143,88 @@
             else { e++; empNode = id; }
           }
           if (a === 3) {
-            aiMills++;
+            let canSafelyOpen = false;
             for (const id of line) {
+              let hasEmptyOut = false;
+              let oppAdjacentToId = false;
               for (const nb of Adjacency[id]) {
-                if (!line.includes(nb) && board[nb] === 0) {
-                  score += 140;
-                  for (const m2 of MillLines) {
-                    if (m2.includes(nb) && !m2.includes(id)) {
-                      const other2 = m2.filter((x) => x !== nb);
-                      if (board[other2[0]] === aiP && board[other2[1]] === aiP) {
-                        aiSeeSaw++;
+                if (!line.includes(nb)) {
+                  if (board[nb] === 0) {
+                    hasEmptyOut = true;
+                    for (const m2 of MillLines) {
+                      if (m2.includes(nb) && !m2.includes(id)) {
+                        const other2 = m2.filter((x) => x !== nb);
+                        if (board[other2[0]] === aiP && board[other2[1]] === aiP) {
+                          aiSeeSaw++;
+                        }
                       }
                     }
+                  } else if (board[nb] === humanP) {
+                    oppAdjacentToId = true;
                   }
                 }
               }
+              if (hasEmptyOut && !oppAdjacentToId) canSafelyOpen = true;
             }
+            if (canSafelyOpen) aiRepeatableMills++;
+            else aiLockedMills++;
           } else if (h === 3) {
-            hmMills++;
+            let canSafelyOpen = false;
             for (const id of line) {
+              let hasEmptyOut = false;
+              let aiAdjacentToId = false;
               for (const nb of Adjacency[id]) {
-                if (!line.includes(nb) && board[nb] === 0) {
-                  score -= 160;
-                  for (const m2 of MillLines) {
-                    if (m2.includes(nb) && !m2.includes(id)) {
-                      const other2 = m2.filter((x) => x !== nb);
-                      if (board[other2[0]] === humanP && board[other2[1]] === humanP) {
-                        hmSeeSaw++;
+                if (!line.includes(nb)) {
+                  if (board[nb] === 0) {
+                    hasEmptyOut = true;
+                    for (const m2 of MillLines) {
+                      if (m2.includes(nb) && !m2.includes(id)) {
+                        const other2 = m2.filter((x) => x !== nb);
+                        if (board[other2[0]] === humanP && board[other2[1]] === humanP) {
+                          hmSeeSaw++;
+                        }
                       }
                     }
+                  } else if (board[nb] === aiP) {
+                    aiAdjacentToId = true;
                   }
                 }
               }
+              if (hasEmptyOut && !aiAdjacentToId) canSafelyOpen = true;
             }
+            if (canSafelyOpen) hmRepeatableMills++;
+            else hmLockedMills++;
           } else if (a === 2 && e === 1) {
-            aiOpenTwo++;
             aiOpenEmptySet.add(empNode);
             for (const id of line) if (board[id] === aiP) aiTwoShare[id]++;
             if (canPlayerCloseMillAt(empNode, line, aiP, board, res)) {
-              aiReadyMill++;
               aiReadyEmptySet.add(empNode);
+              let oppCanBlock = res[humanP] > 0;
+              if (!oppCanBlock) {
+                for (const nb of Adjacency[empNode]) {
+                  if (board[nb] === humanP) {
+                    oppCanBlock = true;
+                    break;
+                  }
+                }
+              }
+              if (!oppCanBlock) aiUncontestedReadySet.add(empNode);
             }
           } else if (h === 2 && e === 1) {
-            hmOpenTwo++;
             hmOpenEmptySet.add(empNode);
             for (const id of line) if (board[id] === humanP) hmTwoShare[id]++;
             if (canPlayerCloseMillAt(empNode, line, humanP, board, res)) {
-              hmReadyMill++;
               hmReadyEmptySet.add(empNode);
+              let aiCanBlock = res[aiP] > 0;
+              if (!aiCanBlock) {
+                for (const nb of Adjacency[empNode]) {
+                  if (board[nb] === aiP) {
+                    aiCanBlock = true;
+                    break;
+                  }
+                }
+              }
+              if (!aiCanBlock) hmUncontestedReadySet.add(empNode);
             }
           } else if (a === 2 && h === 1) {
             hmBlockedTwo++;
@@ -5998,26 +6262,30 @@
           if (aiMob === 0) return -92000;
         }
 
-        score += (aiMills - hmMills) * 2600;
-        score += (aiSeeSaw - hmSeeSaw) * 5500;
-        score += (aiOpenTwo - hmOpenTwo) * 450;
-        score += (aiReadyMill - hmReadyMill) * 2200;
-        score += (aiForks - hmForks) * 2800;
-        score += (aiBlockedTwo - hmBlockedTwo) * 250;
-        score += (aiMob - hmMob) * 75;
-        score += (hmTrapped - aiTrapped) * 450;
+        score += (aiSeeSaw - hmSeeSaw) * 6500;
+        score += (aiRepeatableMills - hmRepeatableMills) * 2100;
+        score += (aiLockedMills - hmLockedMills) * 650;
+        score += (aiUncontestedReadySet.size - hmUncontestedReadySet.size) * 3200;
+        score += ((aiReadyEmptySet.size - aiUncontestedReadySet.size) - (hmReadyEmptySet.size - hmUncontestedReadySet.size)) * 1350;
+        score += (aiOpenEmptySet.size - hmOpenEmptySet.size) * 550;
+        score += (aiForks - hmForks) * 2400;
+        score += (aiBlockedTwo - hmBlockedTwo) * 280;
+        score += (aiMob - hmMob) * 110;
+        score += (hmTrapped - aiTrapped) * 850;
 
         if (turnPlayer === aiP) {
-          if (aiReadyEmptySet.size >= 1) score += 2600;
-          if (hmReadyEmptySet.size >= 2) score -= 3200;
+          if (aiReadyEmptySet.size >= 1) score += 3600;
+          if (hmUncontestedReadySet.size >= 1) score -= 2800;
+          if (hmReadyEmptySet.size >= 2) score -= 4200;
         } else {
-          if (hmReadyEmptySet.size >= 1) score -= 2800;
-          if (aiReadyEmptySet.size >= 2) score += 3000;
+          if (hmReadyEmptySet.size >= 1) score -= 3600;
+          if (aiUncontestedReadySet.size >= 1) score += 2800;
+          if (aiReadyEmptySet.size >= 2) score += 4200;
         }
 
         if (res1 > 0 || res2 > 0) {
-          if (aiOpenEmptySet.size >= 2) score += 1800;
-          if (hmOpenEmptySet.size >= 2) score -= 2000;
+          if (aiOpenEmptySet.size >= 2) score += 2600;
+          if (hmOpenEmptySet.size >= 2) score -= 2800;
         }
 
         return score;
@@ -6078,8 +6346,8 @@
           const wasInMill = isNodeInAnyMill(m.from, board);
 
           if (myMills.length > 0) {
-            priority += 45000 * myMills.length;
-            if (wasInMill) priority += 85000;
+            priority += 55000 * myMills.length;
+            if (wasInMill) priority += 90000;
           }
 
           if (wasInMill && myMills.length === 0) {
@@ -6087,8 +6355,8 @@
             for (const nb of Adjacency[m.from]) {
               if (board[nb] === opp) oppCanEnterFrom = true;
             }
-            if (!oppCanEnterFrom) priority += 24000;
-            else priority -= 18000;
+            if (!oppCanEnterFrom) priority += 28000;
+            else priority -= 24000;
           }
 
           for (const line of MillLines) {
@@ -6097,7 +6365,7 @@
             for (const id of line) if (board[id] === opp) oppCount++;
             if (oppCount === 2) {
               const hasSlider = hasReadySliderForMill(m.to, line, opp, board);
-              priority += hasSlider ? 36000 : 14000;
+              priority += hasSlider ? 46000 : 16000;
             }
           }
 
@@ -6106,7 +6374,7 @@
               if (!line.includes(m.from)) continue;
               let oppCount = 0;
               for (const id of line) if (board[id] === opp) oppCount++;
-              if (oppCount === 2) priority -= 30000;
+              if (oppCount === 2) priority -= 38000;
             }
           }
 
@@ -6118,8 +6386,8 @@
               else if (sim[id] === 0) emp = id;
             }
             if (pC === 2 && emp !== -1) {
-              if (hasReadySliderForMill(emp, line, player, sim)) priority += 14000;
-              else priority += 5000;
+              if (hasReadySliderForMill(emp, line, player, sim)) priority += 18000;
+              else priority += 6000;
             }
           }
 
@@ -6127,14 +6395,14 @@
           for (const nb of Adjacency[m.to]) {
             if (sim[nb] === 0) myLib++;
           }
-          if (myLib === 0 && myMills.length === 0) priority -= 9000;
-          else priority += myLib * 500;
+          if (myLib === 0 && myMills.length === 0) priority -= 12000;
+          else priority += myLib * 550;
 
           for (const nb of Adjacency[m.to]) {
             if (board[nb] === opp) {
               let oppLib = 0;
               for (const onb of Adjacency[nb]) if (sim[onb] === 0) oppLib++;
-              if (oppLib === 0) priority += 7000;
+              if (oppLib === 0) priority += 9500;
             }
           }
 
@@ -6187,8 +6455,8 @@
         const ordered = orderMorrisMoves(rawMoves, board, turnPlayer, opp, res1, res2);
         const isHardest = (GameState.aiDifficulty === 'hardest');
         const maxMoves = isHardest
-          ? (depth >= 6 ? 16 : (depth >= 4 ? 20 : 26))
-          : (depth >= 4 ? 14 : (depth === 3 ? 12 : 10));
+          ? (depth >= 6 ? 14 : (depth >= 4 ? 18 : 24))
+          : (depth >= 4 ? 12 : (depth === 3 ? 10 : 8));
         const pool = ordered.slice(0, maxMoves);
         const remBranch = isHardest ? (depth >= 3 ? 3 : 2) : (depth >= 3 ? 2 : 1);
 
@@ -6257,16 +6525,17 @@
 
           if (MorrisTT.size > 120000) MorrisTT.clear();
           morrisSearchAborted = false;
-          morrisSearchDeadline = performance.now() + 1800;
+          morrisSearchDeadline = performance.now() + 1400;
 
           let bestRem = candidates[0];
           let bestVal = -Infinity;
-          const lookDepth = 6;
+          const lookDepth = diff === 'hardest' ? 6 : 4;
 
           for (const cid of candidates) {
             const simBoard = [...GameState.board];
             simBoard[cid] = 0;
             const immediateScore = scoreMorrisRemovalTarget(cid, GameState.board, aiP, humanP, GameState.reserves[1], GameState.reserves[2]);
+            const nextTurn = (GameState.morrisDropOrder === 'all_at_once' && GameState.reserves[aiP] > 0) ? aiP : humanP;
             const futureVal = minimaxMorris(
               simBoard,
               GameState.reserves[1],
@@ -6274,11 +6543,11 @@
               lookDepth,
               -Infinity,
               Infinity,
-              humanP,
+              nextTurn,
               aiP,
               humanP
             );
-            const total = immediateScore * 1.5 + futureVal;
+            const total = immediateScore * 0.35 + futureVal;
             if (total > bestVal) {
               bestVal = total;
               bestRem = cid;
@@ -6291,13 +6560,14 @@
         const { allSteps } = getAllLegalActionsForPlayer(aiP);
         if (allSteps.length === 0) return;
 
-        if (allSteps[0].type === 'drop') {
+        const isAllAtOnce = (GameState.morrisDropOrder === 'all_at_once');
+        if (allSteps[0].type === 'drop' && (isAllAtOnce || diff === 'easy' || diff === 'medium')) {
           const chosenDrop = chooseBestMorrisDrop(
             allSteps,
             GameState.board,
             aiP,
             humanP,
-            GameState.morrisDropOrder === 'all_at_once',
+            isAllAtOnce,
             GameState.reserves[aiP],
             GameState.reserves[humanP],
             diff
@@ -6341,13 +6611,13 @@
 
         if (MorrisTT.size > 120000) MorrisTT.clear();
         morrisSearchAborted = false;
-        const timeBudgetMs = 2400;
+        const isDropPhase = (allSteps[0].type === 'drop');
+        const timeBudgetMs = diff === 'hardest' ? (isDropPhase ? 1300 : 2200) : 1000;
         morrisSearchDeadline = performance.now() + timeBudgetMs;
 
-        const maxDepth = 10;
-        const rootPool = orderedMoves.slice(0, Math.min(28, orderedMoves.length));
+        const maxDepth = diff === 'hardest' ? (isDropPhase ? 7 : 10) : (isDropPhase ? 5 : 6);
+        const rootPool = orderedMoves.slice(0, Math.min(isDropPhase ? 14 : 24, orderedMoves.length));
         let bestMove = rootPool[0];
-        let rootMoveEvals = new Map();
 
         for (let d = 2; d <= maxDepth; d++) {
           let iterBestMove = rootPool[0];
@@ -6358,11 +6628,14 @@
           for (const mv of rootPool) {
             const states = expandMorrisMoveStates(GameState.board, GameState.reserves[1], GameState.reserves[2], mv, aiP, aiP, humanP, 3);
             let bestBranchVal = -Infinity;
+            const tieBreakBias = isDropPhase
+              ? scoreMorrisPlacement(mv.to, GameState.board, aiP, humanP, false, GameState.reserves[aiP], GameState.reserves[humanP]) * 0.015
+              : 0;
 
             for (const st of states) {
               const nextTurn = humanP;
-              const millBonus = st.formedMill ? 1200 : 0;
-              const v = millBonus + minimaxMorris(
+              const millBonus = st.formedMill ? 1800 : 0;
+              const v = millBonus + tieBreakBias + minimaxMorris(
                 st.board,
                 st.res1,
                 st.res2,
@@ -6379,7 +6652,6 @@
 
             if (morrisSearchAborted) break;
 
-            rootMoveEvals.set(mv, bestBranchVal);
             if (bestBranchVal > iterBestVal) {
               iterBestVal = bestBranchVal;
               iterBestMove = mv;
@@ -6397,23 +6669,6 @@
             if (iterBestVal >= 90000) break;
           } else {
             break;
-          }
-        }
-
-        const topVal = rootMoveEvals.get(bestMove);
-        if (topVal !== undefined && topVal < 88000) {
-          const eliteMoves = rootPool.filter((m) => rootMoveEvals.has(m) && rootMoveEvals.get(m) >= topVal - 45);
-          if (eliteMoves.length > 1) {
-            const weights = eliteMoves.map((m) => Math.exp((rootMoveEvals.get(m) - topVal) / 22));
-            const totalW = weights.reduce((a, b) => a + b, 0);
-            let r = Math.random() * totalW;
-            for (let i = 0; i < eliteMoves.length; i++) {
-              r -= weights[i];
-              if (r <= 0) {
-                bestMove = eliteMoves[i];
-                break;
-              }
-            }
           }
         }
 
@@ -12851,7 +13106,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=a561000571').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=afd44d353e').catch(() => {});
         });
       }
 
