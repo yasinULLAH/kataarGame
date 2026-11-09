@@ -29,6 +29,8 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.2.1'
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -45,13 +47,10 @@ jobs:
       - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Make gradlew executable
-        run: chmod +x android/gradlew
-
       - name: Build debug APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon
+          gradle assembleDebug --no-daemon
 
       - name: Copy and rename APK
         run: |
