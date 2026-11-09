@@ -1,0 +1,15 @@
+node_modules/
+www/
+android/.gradle/
+android/build/
+android/app/build/
+android/app/src/main/assets/public/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/*.iml
+*.apk
+*.aab
+__pycache__/
+.DS_Store
+Thumbs.db

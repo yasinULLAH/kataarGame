@@ -1,0 +1,8 @@
+{
+  "appId": "com.yasin.katargame",
+  "appName": "Katar Game",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Katar Game</string>
+    <string name="title_activity_main">Katar Game</string>
+    <string name="package_name">com.yasin.katargame</string>
+    <string name="custom_url_scheme">com.yasin.katargame</string>
+</resources>

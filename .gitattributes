@@ -1,2 +1,10 @@
-# Auto detect text files and perform LF normalization
 * text=auto
+android/gradlew text eol=lf
+android/gradlew.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary

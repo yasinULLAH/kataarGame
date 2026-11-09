@@ -1,0 +1,21 @@
+{
+  "name": "kataargame",
+  "version": "1.0.0",
+  "description": "Katar & Navakankari — Royal Board Game",
+  "main": "prepare-www.js",
+  "scripts": {
+    "prepare-www": "node prepare-www.js",
+    "build": "node prepare-www.js && cap sync android"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yasinULLAH/kataarGame.git"
+  },
+  "author": "Yasin Ullah",
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/cli": "^6.2.0",
+    "@capacitor/core": "^6.2.0"
+  }
+}
