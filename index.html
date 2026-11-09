@@ -12,13 +12,14 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <title>Katar (قطار) &amp; Navakankari — By Yasin Ullah (Dedicated to Muhib Ullah)</title>
-  <script src="tailwind.min.js"></script>
-  <script src="pako.min.js"></script>
-  <script src="qrcode.min.js"></script>
-  <script src="jsqr.min.js"></script>
-  <script src="mqtt.min.js"></script>
-  <script src="peerjs.min.js"></script>
-  <link rel="stylesheet" href="fonts.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script src="https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="https://js.puter.com/v2/"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" />
   <script>
     if (typeof tailwind !== 'undefined') tailwind.config = {
       theme: {
@@ -600,6 +601,17 @@
       transform: translateX(-50%) !important;
       max-width: calc(100vw - 16px);
     }
+
+    /* Always-On Pro Game Mode: no play/pause/exit/away clutter buttons */
+    #btnPlayImmersive,
+    #btnTriggerAwayGrace,
+    #btnExitImmersive,
+    #btnResumeStashedMatch,
+    #graceTimerBanner,
+    #modalMidGameGuard,
+    [data-imm-action="away"] {
+      display: none !important;
+    }
   </style>
 </head>
 <body class="flex flex-col h-full w-full select-none overflow-hidden relative">
@@ -650,6 +662,11 @@
           <polyline points="12 7 12 12 15 15" />
         </svg>
         <span class="hidden md:inline">Away Timer</span>
+      </button>
+
+      <button id="btnHeaderPuterQuota" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-extrabold bg-gradient-to-b from-violet-600 to-indigo-800 hover:from-violet-500 hover:to-indigo-700 text-white border border-indigo-950 shadow-[0_2px_0_#1E1B4B] sm:shadow-[0_3px_0_#1E1B4B]" aria-label="Puter AI &amp; Quota Stats" title="Play with Real AI (Puter Cloud) &amp; View Live Hourly/Daily/Monthly Quota Stats">
+        <span class="text-xs sm:text-sm leading-none">🧠</span>
+        <span id="hdrPuterSummary" class="hidden sm:inline font-mono text-[10px] sm:text-[11px]">Real AI • Quota</span>
       </button>
 
       <button id="btnOpenProfileModal" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-100 to-amber-200 hover:from-white hover:to-amber-100 text-walnut-900 border border-amber-400 shadow-[0_2px_0_#B45309] sm:shadow-[0_3px_0_#B45309]" aria-label="Player Profile &amp; Backup" title="Player Profile, Career Stats &amp; Backup/Restore">
@@ -784,8 +801,15 @@
 
   <div id="modeBar" class="scrub-bar shrink-0 min-w-0 bg-parchment-50/95 border-b border-parchment-300 px-2.5 py-1 flex items-center justify-between gap-2 overflow-x-auto z-10">
     <div class="flex items-center gap-1 shrink-0">
-      <button id="btnMainModeAI" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1" title="Solo vs AI">
+      <button id="btnMainModeAI" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1" title="Solo vs Built-in Grandmaster AI">
         <span>🤖</span><span class="hidden sm:inline">Solo vs AI</span>
+      </button>
+      <button id="btnMainModePuterAI" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-indigo-900 border border-indigo-300 flex items-center gap-1" title="Play with Real Cloud AI (Puter.js: Fast/Cheap on Easy &amp; Medium, Deep Reasoning on Hard &amp; Hardest)">
+        <span>🧠</span><span class="hidden sm:inline">Play with Real AI</span>
+      </button>
+      <button id="btnOpenPuterStats" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[10px] font-mono font-extrabold bg-indigo-50 text-indigo-900 border border-indigo-300 flex items-center gap-1 shadow-sm" title="View Puter AI Hourly, Daily &amp; Monthly Quota Usage &amp; Remaining Moves">
+        <span id="puterLiveDot" class="w-2 h-2 rounded-full bg-indigo-500"></span>
+        <span id="lblPuterQuotaMini">Quota: 100%</span>
       </button>
       <button id="btnMainMode2P" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1" title="2-Player Local Pass &amp; Play">
         <span>👥</span><span class="hidden sm:inline">2P Local</span>
@@ -2418,6 +2442,181 @@
     </div>
   </div>
 
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 6: PUTER REAL AI ENGINE, QUOTA STATS & ADAPTIVE BRAIN DASHBOARD -->
+  <!-- ===================================================================== -->
+  <div id="modalPuterStats" class="fixed inset-0 z-50 bg-walnut-900/75 backdrop-blur-md hidden items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="w-full sm:max-w-2xl bg-parchment-50 border-t-4 sm:border-2 border-indigo-500 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-walnut-900">
+      <div class="px-5 py-3.5 bg-gradient-to-r from-indigo-950 via-indigo-900 to-walnut-900 text-white border-b border-indigo-700 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-indigo-500/30 border border-indigo-300/40 flex items-center justify-center text-base shadow-sm">🧠</span>
+          <div>
+            <h2 class="font-display text-sm sm:text-base font-extrabold text-white leading-tight">Play with Real AI (Puter) &amp; Live Quota Stats</h2>
+            <p id="puterModalSubheader" class="text-[11px] font-medium text-indigo-200">Auto-selects fastest/cheapest AI in Easy &amp; Medium, and smartest reasoning AI in Hard &amp; Hardest</p>
+          </div>
+        </div>
+        <button id="btnClosePuterModal" type="button" class="android-btn p-1.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20" aria-label="Close Puter AI Modal">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-4 sm:p-5 overflow-y-auto custom-scroll space-y-4 text-xs">
+        <!-- Real AI Activation & Model Routing Card -->
+        <div class="bg-white border-2 border-indigo-200 rounded-2xl p-4 space-y-3 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="text-xs font-extrabold text-indigo-950 flex items-center gap-1.5">
+                <span>⚡ Active AI Engine Mode</span>
+                <span id="puterEngineStatusBadge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-extrabold bg-teal-100 text-teal-800 border border-teal-300">Built-in Grandmaster AI</span>
+              </div>
+              <p class="text-[11px] text-walnut-600 mt-0.5">If Puter AI quota runs out mid-game, it automatically switches to Built-in Grandmaster AI without interrupting play.</p>
+            </div>
+            <div class="flex items-center gap-1.5 bg-parchment-100 p-1 rounded-xl border border-parchment-300">
+              <button id="btnModalSelectBuiltinAI" type="button" class="android-btn px-3 py-1.5 rounded-lg text-xs font-extrabold bg-teal-600 text-white shadow-sm">🤖 Built-in AI</button>
+              <button id="btnModalSelectPuterAI" type="button" class="android-btn px-3 py-1.5 rounded-lg text-xs font-bold text-indigo-900">🧠 Real AI (Puter)</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-parchment-200">
+            <div>
+              <label for="selPuterModelOverride" class="block text-[11px] font-extrabold text-walnut-900 mb-1">Puter AI Model Selection</label>
+              <select id="selPuterModelOverride" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-2.5 py-2 text-xs font-extrabold text-indigo-950 focus:outline-none">
+                <option value="auto" selected>✨ Auto by Difficulty (Cheapest/Fastest → Smartest)</option>
+                <option value="gpt-4o-mini">⚡ gpt-4o-mini (Ultra-Fast &amp; Cheapest • Easy/Med)</option>
+                <option value="deepseek-chat">⚡ deepseek-chat (Fast &amp; Low-Cost Tactical • Med)</option>
+                <option value="gemini-2.0-flash">⚡ gemini-2.0-flash (High-Speed Flash • Easy/Med)</option>
+                <option value="o3-mini">🧠 o3-mini (Deep Strategic Reasoning • Hard)</option>
+                <option value="deepseek-reasoner">🧠 deepseek-reasoner (R1 Chain-of-Thought • Hard/Hardest)</option>
+                <option value="claude-3-7-sonnet-latest">👑 claude-3-7-sonnet-latest (Grandmaster Intelligence • Hardest)</option>
+                <option value="gpt-4o">👑 gpt-4o (Flagship Omni Strategist • Hard/Hardest)</option>
+              </select>
+            </div>
+            <div class="bg-indigo-50/80 border border-indigo-200 rounded-xl p-2.5 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-extrabold uppercase text-indigo-800">Difficulty Tier Mapping</span>
+                <span id="puterActiveModelPill" class="font-mono text-[10px] font-black px-1.5 py-0.5 rounded bg-indigo-600 text-white">gpt-4o-mini</span>
+              </div>
+              <div class="text-[10px] text-walnut-700 leading-snug mt-1">
+                <div><strong>Easy/Med:</strong> <code class="text-indigo-800">gpt-4o-mini</code> / <code class="text-indigo-800">deepseek-chat</code> (Fastest &amp; Cheapest)</div>
+                <div><strong>Hard/Hardest:</strong> <code class="text-rose-800">o3-mini</code> / <code class="text-rose-800">claude-3-7-sonnet</code> (Smartest)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Puter Monthly Quota & "How Much More You Can Use" Card -->
+        <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="text-xs font-extrabold uppercase tracking-wider text-indigo-900">📊 Puter Account Quota &amp; Remaining Capacity</h3>
+              <p id="puterAuthAccountLine" class="text-[11px] text-walnut-600">Synced with Puter User-Pays Usage API (<code class="font-mono">puter.auth.getMonthlyUsage</code>)</p>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button id="btnRefreshPuterQuota" type="button" class="android-btn px-2.5 py-1 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 font-extrabold text-[11px] border border-indigo-300">
+                🔄 Refresh Quota
+              </button>
+              <button id="btnPuterSignIn" type="button" class="android-btn px-2.5 py-1 rounded-xl bg-gradient-to-b from-indigo-500 to-indigo-700 text-white font-extrabold text-[11px] shadow-sm">
+                🔐 Puter Sign-In
+              </button>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-[11px] font-bold">
+              <span id="puterQuotaUsedPctLabel" class="text-rose-700">Used: 0.0%</span>
+              <span id="puterQuotaLeftPctLabel" class="text-emerald-700 font-extrabold">Remaining: 100.0% Left</span>
+            </div>
+            <div class="w-full h-3 bg-parchment-200 rounded-full overflow-hidden border border-parchment-400 flex">
+              <div id="puterQuotaProgressBar" class="h-full bg-gradient-to-r from-indigo-500 via-amber-500 to-rose-600 transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- 3-Column Quota Summary (Total / Used / Left) -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-center">
+            <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+              <div class="text-[10px] font-extrabold uppercase text-walnut-600">Total Monthly Quota</div>
+              <div id="puterStatTotalAllowance" class="font-mono text-sm font-black text-walnut-900 mt-0.5">$0.50 (50M μ¢)</div>
+              <div id="puterStatTotalTokensEst" class="text-[10px] font-semibold text-walnut-600">~5,000,000 tokens</div>
+            </div>
+            <div class="bg-rose-50 border border-rose-200 rounded-xl p-2.5">
+              <div class="text-[10px] font-extrabold uppercase text-rose-800">How Much Used</div>
+              <div id="puterStatUsedQuota" class="font-mono text-sm font-black text-rose-700 mt-0.5">$0.0000 (0 μ¢)</div>
+              <div id="puterStatUsedTokensEst" class="text-[10px] font-semibold text-rose-800">0 tokens • 0 calls</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5">
+              <div class="text-[10px] font-extrabold uppercase text-emerald-800">How Much Is Left</div>
+              <div id="puterStatRemainingQuota" class="font-mono text-sm font-black text-emerald-700 mt-0.5">$0.5000 (50M μ¢)</div>
+              <div id="puterStatRemainingTokensEst" class="text-[10px] font-semibold text-emerald-800">~5,000,000 tokens left</div>
+            </div>
+          </div>
+
+          <!-- How Much More You Can Still Use (Moves & Matches Estimate) -->
+          <div class="bg-gradient-to-r from-indigo-50 via-teal-50 to-amber-50 border border-indigo-200 rounded-xl p-3 space-y-1.5">
+            <div class="text-[11px] font-extrabold text-indigo-950 flex items-center justify-between">
+              <span>🎯 How Much More You Can Still Use (Estimated Remaining Gameplay):</span>
+              <span id="puterFallbackNotice" class="text-[10px] font-mono font-bold text-teal-800">Auto-Fallback Armed ✓</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+              <div class="bg-white/90 border border-teal-200 rounded-lg p-2 flex items-center justify-between">
+                <span class="font-bold text-teal-900">🌱⚔️ Easy / Medium (Fast):</span>
+                <strong id="puterStatCanStillUseEasy" class="font-mono text-teal-700">~6,250 moves (~208 games)</strong>
+              </div>
+              <div class="bg-white/90 border border-rose-200 rounded-lg p-2 flex items-center justify-between">
+                <span class="font-bold text-rose-900">🛡️🔥 Hard / Hardest (Pro):</span>
+                <strong id="puterStatCanStillUseHard" class="font-mono text-rose-700">~1,110 moves (~37 games)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hourly, Daily & Session Real-Time Telemetry -->
+        <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-amber-800">⏱️ Hourly, Daily &amp; Session Usage Breakdown</h3>
+            <button id="btnResetLocalPuterStats" type="button" class="android-btn px-2 py-0.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-[10px] font-bold text-walnut-800">
+              Reset Local Counters
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+            <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+              <div class="text-[10px] font-bold text-walnut-600">Last 1 Hour</div>
+              <div id="puterStatHourlyCalls" class="font-mono text-sm font-black text-indigo-800 mt-0.5">0 calls</div>
+              <div id="puterStatHourlyTokens" class="text-[10px] font-mono text-walnut-600">0 tok • 0 μ¢</div>
+            </div>
+            <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+              <div class="text-[10px] font-bold text-walnut-600">Today (24h)</div>
+              <div id="puterStatDailyCalls" class="font-mono text-sm font-black text-teal-800 mt-0.5">0 calls</div>
+              <div id="puterStatDailyTokens" class="text-[10px] font-mono text-walnut-600">0 tok • 0 μ¢</div>
+            </div>
+            <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+              <div class="text-[10px] font-bold text-walnut-600">This Session</div>
+              <div id="puterStatSessionCalls" class="font-mono text-sm font-black text-amber-800 mt-0.5">0 calls</div>
+              <div id="puterStatAvgLatency" class="text-[10px] font-mono text-walnut-600">Avg: — ms</div>
+            </div>
+            <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+              <div class="text-[10px] font-bold text-walnut-600">Adaptive AI Brain</div>
+              <div id="aiBrainGamesLearned" class="font-mono text-sm font-black text-rose-700 mt-0.5">0 learned</div>
+              <div id="aiBrainPatternsCount" class="text-[10px] font-mono text-walnut-600">12 Archetypes × 8 Sym</div>
+            </div>
+          </div>
+
+          <div class="bg-parchment-50 border border-parchment-300 rounded-xl p-2.5 text-[11px] flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="font-extrabold text-walnut-900">Last Real AI Thought:</span>
+              <span id="puterLastThoughtText" class="text-walnut-700 italic ml-1">Ready — enable "Play with Real AI" to see live strategic reasoning.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================================================================== -->
   <!-- COMPLETE DUAL-GAME ENGINE (LEAP KATAR + NAVAKANKARI NINE MEN'S MORRIS)-->
   <!-- ===================================================================== -->
@@ -2553,6 +2752,8 @@
         damaKingMode: 'flying',
         aiDifficulty: 'medium',
         aiPlayerRole: 2,
+        usePuterAI: false,
+        puterAIThinking: false,
 
         board: [],
         kings: [],                      // Boolean array for Dama King promotion
@@ -3834,6 +4035,12 @@
         GameState.winReason = '';
         GameState.history = [];
         GameState.moveLog = [];
+        if (typeof LoopTracker !== 'undefined') {
+          LoopTracker.reset();
+        }
+        if (typeof MorrisLearner !== 'undefined') {
+          MorrisLearner.onMatchStart();
+        }
         VisualFX.particles = [];
         VisualFX.movingPiece = null;
         VisualFX.hintHighlight = null;
@@ -4673,10 +4880,6 @@
       }
 
       function guardMidGameAction(actionDescription, proceedCallback) {
-        if (!isMatchActivelyInProgress()) {
-          proceedCallback();
-          return;
-        }
         if (GameState.mode === 'webrtc' && GameState.localPlayerRole === 2) {
           SoundEngine.invalid();
           showBoardToast('🛡️ Only the host (Player 1) can switch game variants during an online match.');
@@ -4687,20 +4890,7 @@
           showBoardToast('🔒 Game Lock is ON! Tap "🔒 Locked" in the top bar to unlock game switching.');
           return;
         }
-        pendingGuardedCallback = proceedCallback;
-        const modal = document.getElementById('modalMidGameGuard');
-        const titleEl = document.getElementById('midGuardTitle');
-        const descEl = document.getElementById('midGuardDesc');
-        if (titleEl) titleEl.textContent = `Confirm: ${actionDescription}`;
-        if (descEl) {
-          descEl.textContent = GameState.mode === 'webrtc' && WebRTCManager.isConnected()
-            ? `You are in a live 2-Phone P2P match (${GameState.moveLog.length} moves played). You can stash this match to resume later, or switch both phones to the new game now.`
-            : `You have an active match in progress (${GameState.moveLog.length} moves played). Save/stash it to resume later, or discard it to proceed.`;
-        }
-        if (modal) {
-          modal.classList.remove('hidden');
-          modal.classList.add('flex');
-        }
+        proceedCallback();
       }
 
       function stashCurrentMatchToSlot() {
@@ -5206,9 +5396,15 @@
               }
             }
 
+            if (GameState.vsAI && player !== GameState.aiPlayerRole && typeof MorrisLearner !== 'undefined') {
+              MorrisLearner.recordHumanAction(GameState.board, action, player);
+            }
             GameState.board[action.to] = player;
             GameState.lastMove = { from: null, to: action.to, player, type: 'drop' };
             GameState.reserves[player] = Math.max(0, GameState.reserves[player] - 1);
+            if (typeof LoopTracker !== 'undefined') {
+              LoopTracker.recordAction(player, action, GameState.board, GameState.reserves, GameState.kings, true);
+            }
             VisualFX.spawnPulseRing(action.to, player === 1 ? '#0D9488' : '#E11D48');
             SoundEngine.move();
             appendMoveLog(`P${player} placed at ${Nodes[action.to].label || (action.to + 1)}`);
@@ -5273,12 +5469,19 @@
               showBoardToast('Illegal move: Beads must move strictly along connected board lines!');
               return;
             }
+            if (GameState.vsAI && player !== GameState.aiPlayerRole && typeof MorrisLearner !== 'undefined') {
+              MorrisLearner.recordHumanAction(GameState.board, action, player);
+            }
             const fromNode = Nodes[action.from];
             const toNode = Nodes[action.to];
             GameState.board[action.from] = 0;
             GameState.board[action.to] = player;
             GameState.lastMove = { from: action.from, to: action.to, player, type: 'step' };
             GameState.selectedNode = null;
+            const formedMillNow = getMillsContainingNode(action.to, player).length > 0;
+            if (typeof LoopTracker !== 'undefined') {
+              LoopTracker.recordAction(player, action, GameState.board, GameState.reserves, GameState.kings, formedMillNow);
+            }
             VisualFX.startPieceTween(fromNode, toNode, player, false);
             SoundEngine.move();
             appendMoveLog(`P${player} slid ${fromNode.label || (action.from + 1)} → ${toNode.label || (action.to + 1)}`);
@@ -5454,10 +5657,16 @@
               return;
             }
           }
+          if (typeof LoopTracker !== 'undefined') {
+            LoopTracker.recordAction(player, action, GameState.board, GameState.reserves, GameState.kings, true);
+          }
         } else {
           SoundEngine.move();
           appendMoveLog(`P${player} moved ${fromNode.label || (action.from + 1)} → ${toNode.label || (action.to + 1)}`);
           tryDeployReserve(player);
+          if (typeof LoopTracker !== 'undefined') {
+            LoopTracker.recordAction(player, action, GameState.board, GameState.reserves, GameState.kings, false);
+          }
         }
 
         finishTurnAndCheckWin(player, isRemote, action);
@@ -5620,17 +5829,277 @@
       }
 
       /* -------------------------------------------------------------------
-       * 7. 4-TIER AI ENGINE FOR ALL 14+ GAMES
+       * 7. GRANDMASTER 4-TIER AI ENGINE + ANTI-LOOP + ADAPTIVE BRAIN + PUTER AI
        * ------------------------------------------------------------------- */
       let MorrisTT = new Map();
       let morrisSearchDeadline = 0;
       let morrisSearchAborted = false;
 
+      // 8-Fold Dihedral Symmetry Engine for the 24-Node Navakankari Board
+      const MorrisSymmetry = {
+        maps: null,
+        ensureMaps() {
+          if (this.maps && this.maps.length === 8) return this.maps;
+          if (!Nodes || Nodes.length !== 24 || GameState.gameFamily !== 'morris') return null;
+          const coordToId = new Map();
+          for (let i = 0; i < 24; i++) {
+            coordToId.set(`${Math.round(Nodes[i].r)},${Math.round(Nodes[i].c)}`, i);
+          }
+          const transforms = [
+            (r, c) => [r, c],
+            (r, c) => [c, 6 - r],
+            (r, c) => [6 - r, 6 - c],
+            (r, c) => [6 - c, r],
+            (r, c) => [r, 6 - c],
+            (r, c) => [6 - r, c],
+            (r, c) => [c, r],
+            (r, c) => [6 - c, 6 - r]
+          ];
+          const maps = [];
+          for (const tf of transforms) {
+            const perm = new Array(24);
+            let valid = true;
+            for (let i = 0; i < 24; i++) {
+              const [nr, nc] = tf(Math.round(Nodes[i].r), Math.round(Nodes[i].c));
+              const mapped = coordToId.get(`${nr},${nc}`);
+              if (mapped === undefined) {
+                valid = false;
+                break;
+              }
+              perm[i] = mapped;
+            }
+            if (valid) maps.push(perm);
+          }
+          if (maps.length === 8) this.maps = maps;
+          return this.maps;
+        },
+
+        transformNode(nodeId, symIdx) {
+          const maps = this.ensureMaps();
+          if (!maps || nodeId < 0 || nodeId >= 24) return nodeId;
+          return maps[symIdx % 8][nodeId];
+        },
+
+        canonicalizeStateAndAction(board, action, aiP) {
+          const maps = this.ensureMaps();
+          if (!maps || board.length !== 24) {
+            let raw = '';
+            for (let i = 0; i < board.length; i++) {
+              const v = board[i];
+              raw += v === 0 ? '0' : (v === aiP ? '1' : '2');
+            }
+            const aStr = !action ? '' : (action.type === 'drop' ? `d:${action.to}` : (action.type === 'step' ? `s:${action.from}>${action.to}` : `r:${action.capturedId}`));
+            return { stateKey: raw, actionKey: aStr };
+          }
+          let bestBoardStr = null;
+          let bestActStr = '';
+          for (let s = 0; s < 8; s++) {
+            const perm = maps[s];
+            const inv = new Array(24);
+            for (let i = 0; i < 24; i++) inv[perm[i]] = i;
+            let bStr = '';
+            for (let j = 0; j < 24; j++) {
+              const v = board[inv[j]];
+              bStr += v === 0 ? '0' : (v === aiP ? '1' : '2');
+            }
+            let aStr = '';
+            if (action) {
+              if (action.type === 'drop') aStr = `d:${perm[action.to]}`;
+              else if (action.type === 'step') aStr = `s:${perm[action.from]}>${perm[action.to]}`;
+              else if (action.type === 'remove_opponent') aStr = `r:${perm[action.capturedId]}`;
+            }
+            if (bestBoardStr === null || bStr < bestBoardStr || (bStr === bestBoardStr && aStr < bestActStr)) {
+              bestBoardStr = bStr;
+              bestActStr = aStr;
+            }
+          }
+          return { stateKey: bestBoardStr, actionKey: bestActStr };
+        }
+      };
+
+      // Anti-Loop & Oscillation Prevention Tracker across ALL games
+      const LoopTracker = {
+        stateCounts: new Map(),
+        stateSequence: [],
+        playerMoves: { 1: [], 2: [] },
+        nonProgressPlies: 0,
+
+        reset() {
+          this.stateCounts.clear();
+          this.stateSequence = [];
+          this.playerMoves = { 1: [], 2: [] };
+          this.nonProgressPlies = 0;
+        },
+
+        computeSignature(board, reserves, kings) {
+          let s = '';
+          for (let i = 0; i < board.length; i++) s += board[i];
+          const r1 = (reserves && reserves[1]) || 0;
+          const r2 = (reserves && reserves[2]) || 0;
+          s += `|${r1},${r2}`;
+          if (kings && GameState.gameFamily === 'dama') {
+            s += '|';
+            for (let i = 0; i < kings.length; i++) s += kings[i] ? '1' : '0';
+          }
+          return s;
+        },
+
+        recordAction(player, action, boardAfter, reservesAfter, kingsAfter, isIrreversibleProgress = false) {
+          if (isIrreversibleProgress || !action || action.type === 'drop' || action.type === 'jump' || action.type === 'remove_opponent') {
+            this.nonProgressPlies = 0;
+            this.playerMoves = { 1: [], 2: [] };
+            this.stateCounts.clear();
+          } else {
+            this.nonProgressPlies++;
+            if (action.from !== undefined && action.from >= 0 && action.to !== undefined && action.to >= 0) {
+              const list = this.playerMoves[player] || (this.playerMoves[player] = []);
+              list.push({ from: action.from, to: action.to, ply: this.nonProgressPlies });
+              if (list.length > 16) list.shift();
+            }
+          }
+          const sig = this.computeSignature(boardAfter, reservesAfter, kingsAfter);
+          this.stateSequence.push(sig);
+          if (this.stateSequence.length > 80) this.stateSequence.shift();
+          this.stateCounts.set(sig, (this.stateCounts.get(sig) || 0) + 1);
+        },
+
+        evaluateLoopPenalty(move, boardBefore, boardAfter, player, res1, res2, formsMillNow = false) {
+          if (!move || move.type === 'drop' || move.type === 'jump' || move.type === 'remove_opponent' || formsMillNow) {
+            return { penalty: 0, isForbiddenLoop: false, repCount: 0, oscCount: 0, breakthroughBonus: 0 };
+          }
+          const sigAfter = this.computeSignature(boardAfter, { 1: res1, 2: res2 }, GameState.kings);
+          const repCount = this.stateCounts.get(sigAfter) || 0;
+
+          const pList = this.playerMoves[player] || [];
+          let oscCount = 0;
+          for (let i = pList.length - 1; i >= 0; i--) {
+            const pm = pList[i];
+            const isSameEdge = (pm.from === move.to && pm.to === move.from) || (pm.from === move.from && pm.to === move.to);
+            if (isSameEdge) {
+              oscCount++;
+            } else if (pm.to === move.from || pm.from === move.to) {
+              // related piece shuttle
+              if (pList.length - 1 - i <= 3) oscCount += 0.5;
+            }
+          }
+
+          const lastMove = pList.length > 0 ? pList[pList.length - 1] : null;
+          const isImmediateReversal = Boolean(lastMove && lastMove.from === move.to && lastMove.to === move.from);
+
+          let penalty = 0;
+          let isForbiddenLoop = false;
+
+          if (isImmediateReversal) {
+            penalty += 14500;
+          }
+          if (repCount === 1 || oscCount >= 1.5) {
+            penalty += 32000;
+          }
+          if (repCount === 2 || oscCount >= 2.5) {
+            penalty += 95000;
+            isForbiddenLoop = true;
+          }
+          if (repCount >= 3 || oscCount >= 3.5) {
+            penalty += 280000;
+            isForbiddenLoop = true;
+          }
+
+          let breakthroughBonus = 0;
+          if ((this.nonProgressPlies >= 4 || repCount >= 1 || isImmediateReversal) && lastMove && move.from !== lastMove.to) {
+            // Reward moving a different bead to break a stalemate/shuttle!
+            breakthroughBonus += 9200;
+            const opp = player === 1 ? 2 : 1;
+            if (Adjacency[move.to]) {
+              for (const nb of Adjacency[move.to]) {
+                if (boardAfter[nb] === opp) breakthroughBonus += 2800;
+              }
+            }
+          }
+
+          return { penalty, isForbiddenLoop, repCount, oscCount, breakthroughBonus };
+        }
+      };
+
+      // 12 Mathematically Proven Grandmaster 9-Bead / 12-Bead Formation Archetypes (16/16 Line Lockout + Multi-Forks)
+      const GRANDMASTER_MORRIS_ARCHETYPES = [
+        {
+          id: 'iron_cross_bastion',
+          name: 'Iron Cross 16-Line Lockout',
+          nodes: [4, 10, 13, 19, 0, 23, 8, 15, 2, 20, 6, 21]
+        },
+        {
+          id: 'spiral_vortex_web',
+          name: 'Spiral Vortex 16-Line Lockout',
+          nodes: [4, 10, 13, 19, 0, 23, 6, 17, 2, 21, 5, 18]
+        },
+        {
+          id: 'twin_fortress_pinch',
+          name: 'Twin Fortress 16-Line Lockout',
+          nodes: [4, 10, 13, 19, 2, 21, 6, 17, 0, 23, 3, 20]
+        },
+        {
+          id: 'octagon_t_citadel',
+          name: 'Octagon T-Hub 16-Line Lockout',
+          nodes: [1, 9, 14, 22, 3, 20, 8, 15, 0, 23, 7, 16]
+        },
+        {
+          id: 'double_ring_scissors',
+          name: 'Double-Ring Scissors Lockout',
+          nodes: [1, 9, 14, 22, 5, 18, 6, 17, 0, 21, 11, 12]
+        },
+        {
+          id: 'inner_sanctum_lock',
+          name: 'Inner Sanctum 16-Line Lockout',
+          nodes: [7, 11, 12, 16, 0, 23, 3, 20, 5, 18, 1, 22]
+        },
+        {
+          id: 'starburst_interceptor',
+          name: 'Starburst 16-Line Interceptor',
+          nodes: [7, 11, 12, 16, 2, 21, 5, 18, 3, 20, 9, 14]
+        },
+        {
+          id: 'knights_diagonal_net',
+          name: 'Knight Diagonal 16-Line Net',
+          nodes: [4, 10, 13, 19, 2, 21, 8, 15, 0, 23, 3, 20]
+        },
+        {
+          id: 'quad_fork_juggernaut',
+          name: 'Quad-Fork 4-Threat Juggernaut',
+          nodes: [4, 10, 13, 0, 23, 8, 15, 2, 6, 19, 17, 21]
+        },
+        {
+          id: 'hammer_and_anvil',
+          name: 'Hammer & Anvil Quad-Fork',
+          nodes: [4, 10, 19, 0, 23, 6, 17, 15, 21, 13, 2, 8]
+        },
+        {
+          id: 'shadow_counter_weaver',
+          name: 'Shadow Counter Quad-Fork',
+          nodes: [4, 13, 19, 2, 21, 6, 17, 8, 23, 10, 0, 15]
+        },
+        {
+          id: 'apex_minimax_dynamo',
+          name: 'Apex Minimax Quad-Fork',
+          nodes: [10, 13, 19, 2, 21, 8, 15, 17, 23, 4, 0, 6]
+        }
+      ];
+
       const MorrisLearner = {
-        storageKey: 'katar_morris_brain_v1',
+        storageKey: 'katar_morris_brain_v2',
         table: new Map(),
         episode: [],
         loaded: false,
+        gamesLearned: 0,
+        mistakesCorrected: 0,
+        archetypeStats: {},
+        lastArchetypeId: null,
+        lastSymmetryIdx: -1,
+        activeArchetypeId: 'iron_cross_bastion',
+        activeSymmetryIdx: 0,
+        recentFormationSignatures: [],
+        tabooFormationSignatures: new Set(),
+        humanNodeFreq: new Array(24).fill(0),
+        currentDropSequence: [],
 
         load() {
           if (this.loaded) return;
@@ -5638,12 +6107,28 @@
           try {
             const raw = SafeStorage.getItem(this.storageKey);
             if (!raw) return;
-            const entries = JSON.parse(raw);
-            if (Array.isArray(entries)) {
-              for (const [k, v] of entries) {
-                if (typeof k === 'string' && typeof v === 'number') {
-                  this.table.set(k, v);
+            const data = JSON.parse(raw);
+            if (data && typeof data === 'object') {
+              if (Array.isArray(data.entries)) {
+                for (const [k, v] of data.entries) {
+                  if (typeof k === 'string' && typeof v === 'number') {
+                    this.table.set(k, v);
+                  }
                 }
+              }
+              this.gamesLearned = Number(data.gamesLearned) || 0;
+              this.mistakesCorrected = Number(data.mistakesCorrected) || 0;
+              this.archetypeStats = data.archetypeStats || {};
+              this.lastArchetypeId = data.lastArchetypeId || null;
+              this.lastSymmetryIdx = typeof data.lastSymmetryIdx === 'number' ? data.lastSymmetryIdx : -1;
+              if (Array.isArray(data.recentFormationSignatures)) {
+                this.recentFormationSignatures = data.recentFormationSignatures.slice(-10);
+              }
+              if (Array.isArray(data.tabooFormationSignatures)) {
+                this.tabooFormationSignatures = new Set(data.tabooFormationSignatures.slice(-30));
+              }
+              if (Array.isArray(data.humanNodeFreq) && data.humanNodeFreq.length === 24) {
+                this.humanNodeFreq = data.humanNodeFreq.map((n) => Number(n) || 0);
               }
             }
           } catch (e) {}
@@ -5651,98 +6136,184 @@
 
         save() {
           try {
-            if (this.table.size > 2400) {
+            if (this.table.size > 3200) {
               const sorted = Array.from(this.table.entries())
                 .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-                .slice(0, 1800);
+                .slice(0, 2400);
               this.table = new Map(sorted);
             }
-            SafeStorage.setItem(this.storageKey, JSON.stringify(Array.from(this.table.entries())));
+            const payload = {
+              entries: Array.from(this.table.entries()),
+              gamesLearned: this.gamesLearned,
+              mistakesCorrected: this.mistakesCorrected,
+              archetypeStats: this.archetypeStats,
+              lastArchetypeId: this.lastArchetypeId,
+              lastSymmetryIdx: this.lastSymmetryIdx,
+              recentFormationSignatures: this.recentFormationSignatures.slice(-10),
+              tabooFormationSignatures: Array.from(this.tabooFormationSignatures).slice(-30),
+              humanNodeFreq: this.humanNodeFreq
+            };
+            SafeStorage.setItem(this.storageKey, JSON.stringify(payload));
           } catch (e) {}
         },
 
-        makeStateKey(board, aiP, resAi, resHuman) {
-          let chars = '';
-          for (let i = 0; i < board.length; i++) {
-            const v = board[i];
-            chars += v === 0 ? '0' : (v === aiP ? '1' : '2');
+        onMatchStart() {
+          this.load();
+          this.episode = [];
+          this.currentDropSequence = [];
+          // Select a fresh, non-repeating Grandmaster Archetype + Symmetry for this match
+          const candidates = [];
+          for (const arch of GRANDMASTER_MORRIS_ARCHETYPES) {
+            const st = this.archetypeStats[arch.id] || { wins: 0, losses: 0, draws: 0, plays: 0 };
+            const winRate = (st.wins + 1.2) / (st.plays + 2.0);
+            const exploreBonus = Math.sqrt(Math.log((this.gamesLearned || 1) + 2) / (st.plays + 1)) * 0.45;
+            const repeatPenalty = (arch.id === this.lastArchetypeId) ? -1.5 : 0;
+            const lossStreakPenalty = (st.lastOutcome === 'loss') ? -0.9 : 0;
+            candidates.push({
+              arch,
+              score: winRate + exploreBonus + repeatPenalty + lossStreakPenalty + (Math.random() * 0.22)
+            });
           }
-          const modeTag = GameState.morrisDropOrder === 'all_at_once' ? 'A' : 'S';
-          const phaseTag = (resAi > 0 || resHuman > 0) ? `D${resAi}_${resHuman}` : 'M';
-          return `${modeTag}:${phaseTag}:${chars}`;
+          candidates.sort((a, b) => b.score - a.score);
+          const chosenArch = candidates[0].arch;
+
+          // Pick a symmetry (0..7) different from lastSymmetryIdx and avoiding taboo formation signatures
+          const symOrder = [0, 1, 2, 3, 4, 5, 6, 7].sort(() => Math.random() - 0.5);
+          let chosenSym = symOrder[0];
+          for (const s of symOrder) {
+            if (s === this.lastSymmetryIdx) continue;
+            const sig = `${chosenArch.id}@${s}`;
+            if (!this.tabooFormationSignatures.has(sig) && !this.recentFormationSignatures.slice(-3).includes(sig)) {
+              chosenSym = s;
+              break;
+            }
+          }
+
+          this.activeArchetypeId = chosenArch.id;
+          this.activeSymmetryIdx = chosenSym;
+          this.lastArchetypeId = chosenArch.id;
+          this.lastSymmetryIdx = chosenSym;
+          this.recentFormationSignatures.push(`${chosenArch.id}@${chosenSym}`);
+          if (this.recentFormationSignatures.length > 12) this.recentFormationSignatures.shift();
+          this.save();
         },
 
-        makeActionKey(action) {
-          if (!action) return '';
-          if (action.type === 'drop') return `d:${action.to}`;
-          if (action.type === 'step') return `s:${action.from}>${action.to}`;
-          if (action.type === 'remove_opponent') return `r:${action.capturedId}`;
-          return '';
+        getActiveBlueprintNodes() {
+          this.load();
+          const arch = GRANDMASTER_MORRIS_ARCHETYPES.find((a) => a.id === this.activeArchetypeId) || GRANDMASTER_MORRIS_ARCHETYPES[0];
+          const sym = this.activeSymmetryIdx || 0;
+          return arch.nodes.map((nid) => MorrisSymmetry.transformNode(nid, sym));
+        },
+
+        recordHumanAction(board, action, humanP) {
+          this.load();
+          if (!action) return;
+          if (action.type === 'drop' && action.to >= 0 && action.to < 24) {
+            this.humanNodeFreq[action.to] = (this.humanNodeFreq[action.to] || 0) + 1;
+          }
+        },
+
+        makeStateKey(board, action, aiP, resAi, resHuman) {
+          const canon = MorrisSymmetry.canonicalizeStateAndAction(board, action, aiP);
+          const modeTag = GameState.morrisDropOrder === 'all_at_once' ? 'A' : (GameState.morrisDropMillRule === 'forbid_mill' ? 'F' : 'S');
+          const phaseTag = (resAi > 0 || resHuman > 0) ? `D${resAi}_${resHuman}` : 'M';
+          return {
+            fullKey: `${modeTag}:${phaseTag}:${canon.stateKey}|${canon.actionKey}`,
+            stateOnlyKey: `${modeTag}:${phaseTag}:${canon.stateKey}`
+          };
         },
 
         getBonus(board, action, aiP, resAi, resHuman) {
           this.load();
-          const sKey = this.makeStateKey(board, aiP, resAi, resHuman);
-          const aKey = this.makeActionKey(action);
-          const val = this.table.get(`${sKey}|${aKey}`);
-          return val ? val : 0;
+          const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
+          return this.table.get(fullKey) || 0;
         },
 
         recordStep(board, action, aiP, resAi, resHuman) {
           this.load();
-          if (GameState.moveLog.length === 0 && this.episode.length > 0) {
-            this.episode = [];
+          if (!action) return;
+          if (action.type === 'drop') {
+            this.currentDropSequence.push(action.to);
           }
-          const sKey = this.makeStateKey(board, aiP, resAi, resHuman);
-          const aKey = this.makeActionKey(action);
-          if (!aKey) return;
-          this.episode.push(`${sKey}|${aKey}`);
-          if (this.episode.length > 80) this.episode.shift();
+          const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
+          this.episode.push(fullKey);
+          if (this.episode.length > 90) this.episode.shift();
         },
 
         adjustWeight(fullKey, delta) {
           const prev = this.table.get(fullKey) || 0;
-          const next = Math.max(-45000, Math.min(45000, Math.round(prev * 0.85 + delta)));
-          if (Math.abs(next) < 50) this.table.delete(fullKey);
+          const next = Math.max(-65000, Math.min(65000, Math.round(prev * 0.86 + delta)));
+          if (Math.abs(next) < 40) this.table.delete(fullKey);
           else this.table.set(fullKey, next);
         },
 
         onHumanCapturedAiBead() {
+          this.load();
+          this.mistakesCorrected++;
           if (this.episode.length === 0) return;
           const lastIdx = this.episode.length - 1;
-          this.adjustWeight(this.episode[lastIdx], -9500);
-          if (lastIdx >= 1) {
-            this.adjustWeight(this.episode[lastIdx - 1], -4200);
-          }
+          this.adjustWeight(this.episode[lastIdx], -14000);
+          if (lastIdx >= 1) this.adjustWeight(this.episode[lastIdx - 1], -7500);
+          if (lastIdx >= 2) this.adjustWeight(this.episode[lastIdx - 2], -3800);
           this.save();
         },
 
         onMatchEnd(winner) {
-          if (GameState.gameFamily !== 'morris' || !GameState.vsAI || this.episode.length === 0) {
+          if (GameState.gameFamily !== 'morris' || !GameState.vsAI) {
             this.episode = [];
             return;
           }
           this.load();
           const aiP = GameState.aiPlayerRole || 2;
-          const baseDelta = winner === aiP ? 6500 : (winner === 0 ? 800 : -12000);
-          let discount = 1.0;
-          for (let i = this.episode.length - 1; i >= 0; i--) {
-            const stepDelta = Math.round(baseDelta * discount);
-            if (Math.abs(stepDelta) >= 120) {
-              this.adjustWeight(this.episode[i], stepDelta);
+          this.gamesLearned++;
+
+          const archId = this.activeArchetypeId || 'iron_cross_bastion';
+          const st = this.archetypeStats[archId] || { wins: 0, losses: 0, draws: 0, plays: 0, lastOutcome: 'none' };
+          st.plays++;
+          if (winner === aiP) {
+            st.wins++;
+            st.lastOutcome = 'win';
+          } else if (winner === 0 || winner === null) {
+            st.draws++;
+            st.lastOutcome = 'draw';
+          } else {
+            st.losses++;
+            st.lastOutcome = 'loss';
+            this.mistakesCorrected++;
+            // Mark this exact archetype+symmetry and drop bitmask as taboo so AI immediately changes strategy next match!
+            this.tabooFormationSignatures.add(`${archId}@${this.activeSymmetryIdx}`);
+            if (this.currentDropSequence.length > 0) {
+              const sortedDrops = [...this.currentDropSequence].sort((a, b) => a - b).join(',');
+              this.tabooFormationSignatures.add(`DROP:${sortedDrops}`);
             }
-            discount *= 0.88;
+          }
+          this.archetypeStats[archId] = st;
+
+          if (this.episode.length > 0) {
+            const baseDelta = winner === aiP ? 9500 : (winner === 0 ? 1200 : -18500);
+            let discount = 1.0;
+            for (let i = this.episode.length - 1; i >= 0; i--) {
+              const stepDelta = Math.round(baseDelta * discount);
+              if (Math.abs(stepDelta) >= 100) {
+                this.adjustWeight(this.episode[i], stepDelta);
+              }
+              discount *= 0.9;
+            }
           }
           this.episode = [];
+          this.currentDropSequence = [];
           this.save();
+          if (typeof PuterAIManager !== 'undefined') {
+            PuterAIManager.syncModalUI();
+          }
         }
       };
 
       function getMorrisNodeWeight(nodeId) {
         const deg = Adjacency[nodeId] ? Adjacency[nodeId].size : 2;
-        if (deg >= 4) return 42;
-        if (deg === 3) return 24;
-        return 12;
+        if (deg >= 4) return 48;
+        if (deg === 3) return 28;
+        return 14;
       }
 
       function hasReadySliderForMill(emptyNodeId, line, player, board) {
@@ -5751,6 +6322,15 @@
           if (!line.includes(nb) && board[nb] === player) return true;
         }
         return false;
+      }
+
+      function countReadySlidersForMill(emptyNodeId, line, player, board) {
+        if (!Adjacency[emptyNodeId]) return 0;
+        let count = 0;
+        for (const nb of Adjacency[emptyNodeId]) {
+          if (!line.includes(nb) && board[nb] === player) count++;
+        }
+        return count;
       }
 
       function canPlayerCloseMillAt(emptyNodeId, line, player, board, reserves) {
@@ -5772,18 +6352,17 @@
 
       function scoreMorrisRemovalTarget(cid, board, aiP, humanP, res1 = GameState.reserves[1], res2 = GameState.reserves[2]) {
         const res = { 1: res1, 2: res2 };
-        let score = getMorrisNodeWeight(cid) * 20;
+        let score = getMorrisNodeWeight(cid) * 24;
 
         const simB = [...board];
         simB[cid] = 0;
         const hmRemaining = countPlayerTotalPieces(humanP, simB, res);
-        if (hmRemaining <= 2) return 180000;
+        if (hmRemaining <= 2) return 250000;
         if (res[humanP] === 0) {
           const oppActs = getAllLegalActionsForPlayer(humanP, simB, res);
-          if (oppActs.total === 0) return 170000;
+          if (oppActs.total === 0) return 240000;
         }
 
-        let inActiveThreat = 0;
         let inOpenTwo = 0;
         for (const line of MillLines) {
           if (!line.includes(cid)) continue;
@@ -5796,22 +6375,21 @@
           if (oppC === 2 && empId !== -1) {
             inOpenTwo++;
             if (canPlayerCloseMillAt(empId, line, humanP, board, res)) {
-              inActiveThreat++;
-              score += 52000;
+              score += 65000;
             } else {
-              score += 18000;
+              score += 22000;
             }
           }
           if (aiC === 2 && oppC === 1) {
             if (canPlayerCloseMillAt(cid, line, aiP, simB, res)) {
-              score += 42000;
+              score += 54000;
             } else {
-              score += 14000;
+              score += 18000;
             }
           }
         }
 
-        if (inOpenTwo >= 2) score += 38000;
+        if (inOpenTwo >= 2) score += 45000;
 
         for (const nb of Adjacency[cid]) {
           if (board[nb] === 0) {
@@ -5824,7 +6402,7 @@
                   for (const snb of Adjacency[nb]) {
                     if (snb !== cid && !line.includes(snb) && board[snb] === humanP) otherSliders++;
                   }
-                  score += otherSliders === 0 ? 48000 : 18000;
+                  score += otherSliders === 0 ? 58000 : 22000;
                 }
               }
             }
@@ -5853,16 +6431,16 @@
               }
             }
           }
-          if (partOfSeeSaw) score += 46000;
-          else if (canReopenSafely) score += 22000;
-          else score += 9000;
+          if (partOfSeeSaw) score += 55000;
+          else if (canReopenSafely) score += 26000;
+          else score += 11000;
         }
 
         let oppEmptyNeighbors = 0;
         for (const nb of Adjacency[cid]) {
           if (board[nb] === 0) oppEmptyNeighbors++;
         }
-        score += oppEmptyNeighbors * 160;
+        score += oppEmptyNeighbors * 220;
         return score;
       }
 
@@ -5892,22 +6470,42 @@
         return scored.slice(0, maxCount).map((x) => x.cid);
       }
 
+      // Grandmaster evaluation for "Lay All 9 Beads First" (both 1st-Placer and 2nd-Placer)
       function evaluateAllAtOnceBoard(board, aiP, humanP, resAi, resHuman) {
+        const blueprint = MorrisLearner.getActiveBlueprintNodes();
+        const humanFreq = MorrisLearner.humanNodeFreq || [];
+
+        // CASE A: AI is laying all 9 beads FIRST (resHuman > 0, human hasn't placed yet)
         if (resHuman > 0) {
           let score = 0;
           let linesCovered = 0;
+          let linesWithTwo = 0;
           const readyTargets = new Set();
+          const multiSliderTargets = new Set();
           const cageTrapTargets = new Set();
           const openTwoTargets = new Set();
           const targetShareCount = new Map();
           const frontierSet = new Set();
 
+          const placedNodes = [];
           for (let i = 0; i < Nodes.length; i++) {
             if (board[i] !== aiP) continue;
+            placedNodes.push(i);
             const deg = Adjacency[i] ? Adjacency[i].size : 2;
-            if (deg >= 4) score += 14000;
-            else if (deg === 3) score += 2200;
-            else score += 4500;
+            if (deg >= 4) score += 18500;
+            else if (deg === 3) score += 6200;
+            else score += 3800;
+
+            // Blueprint alignment bonus (ensures coherent 3-ring Grandmaster web formation that changes every game!)
+            const bpIdx = blueprint.indexOf(i);
+            if (bpIdx !== -1 && bpIdx < GameState.piecesPerPlayer) {
+              score += 26000 + (12 - bpIdx) * 1800;
+            }
+
+            // Pre-emptively contest the human's favorite drop intersections
+            if (humanFreq[i] > 0) {
+              score += Math.min(4500, humanFreq[i] * 650);
+            }
 
             let empNb = 0;
             let friendlyNb = 0;
@@ -5919,16 +6517,26 @@
                 friendlyNb++;
               }
             }
-            if (empNb === 0) score -= 55000;
-            else if (empNb === 1) score -= 18000;
-            else score += empNb * 1400;
+            // Never allow self-trapped beads that the human can suffocate with 1-2 drops
+            if (empNb === 0) score -= 75000;
+            else if (empNb === 1) score -= 24000;
+            else score += empNb * 2100;
 
-            if (friendlyNb > 0) {
-              score -= friendlyNb * 8500;
+            // Penalize clumping on low-degree corners where 1 human blocker locks 2 AI beads
+            if (deg === 2 && friendlyNb >= 2) {
+              score -= 19000;
             }
           }
 
-          score += frontierSet.size * 3200;
+          // Check if completed 9-bead pattern is in taboo memory (lost previously)
+          if (resAi === 0 && placedNodes.length >= 6) {
+            const dropSig = `DROP:${placedNodes.slice().sort((a, b) => a - b).join(',')}`;
+            if (MorrisLearner.tabooFormationSignatures.has(dropSig)) {
+              score -= 220000;
+            }
+          }
+
+          score += frontierSet.size * 3800;
 
           for (const line of MillLines) {
             let aC = 0, hC = 0, empNode = -1;
@@ -5937,40 +6545,117 @@
               else if (board[id] === humanP) hC++;
               else empNode = id;
             }
-            if (aC >= 1) linesCovered++;
+            if (aC >= 1 && hC === 0) {
+              linesCovered++;
+            }
             if (aC === 2 && hC === 0 && empNode !== -1) {
+              linesWithTwo++;
               openTwoTargets.add(empNode);
               targetShareCount.set(empNode, (targetShareCount.get(empNode) || 0) + 1);
-              if (hasReadySliderForMill(empNode, line, aiP, board)) {
+              const sliders = countReadySlidersForMill(empNode, line, aiP, board);
+              if (sliders >= 1) {
                 readyTargets.add(empNode);
-                let allNeighborsOwnedByAi = true;
+                if (sliders >= 2) multiSliderTargets.add(empNode);
+                let emptyNeighborsOfTarget = 0;
                 for (const nb of Adjacency[empNode]) {
-                  if (board[nb] !== aiP) {
-                    allNeighborsOwnedByAi = false;
-                    break;
-                  }
+                  if (board[nb] === 0) emptyNeighborsOfTarget++;
                 }
-                if (allNeighborsOwnedByAi) {
+                if (emptyNeighborsOfTarget === 0) {
                   cageTrapTargets.add(empNode);
                 }
               }
             }
           }
 
-          score += linesCovered * 6800;
-          score += openTwoTargets.size * 7500;
-          score += readyTargets.size * 26000;
-          score += cageTrapTargets.size * 42000;
+          // Enforce 3-Ring Balance (Outer, Middle, Inner rings must each have >= 2 AI beads by the end of placement!)
+          if (Nodes.length === 24 && resAi <= 3) {
+            let outerC = 0, midC = 0, innerC = 0;
+            const outerSet = [0, 1, 2, 9, 14, 21, 22, 23];
+            const midSet = [3, 4, 5, 10, 13, 18, 19, 20];
+            const innerSet = [6, 7, 8, 11, 12, 15, 16, 17];
+            for (const id of outerSet) if (board[id] === aiP) outerC++;
+            for (const id of midSet) if (board[id] === aiP) midC++;
+            for (const id of innerSet) if (board[id] === aiP) innerC++;
+            if (resAi === 0) {
+              if (outerC < 2) score -= 140000;
+              if (midC < 2) score -= 140000;
+              if (innerC < 2) score -= 140000;
+            } else {
+              if (outerC === 0) score -= 45000;
+              if (midC === 0) score -= 45000;
+              if (innerC === 0) score -= 45000;
+            }
+          }
 
+          // Total Mill-Line Denial is paramount when placing all 9 beads first:
+          // Covering 15-16 of the 16 mill lines leaves the human ZERO open lines to build their own mill!
+          score += linesCovered * 24000;
+          if (linesCovered >= 14) score += 65000;
+          if (linesCovered >= 15) score += 95000;
+          if (linesCovered >= 16) score += 165000;
+
+          // Distribute 2-in-a-row + slider threats across distinct target nodes so human cannot block them all
+          score += openTwoTargets.size * 9500;
+          score += readyTargets.size * 34000;
+          score += multiSliderTargets.size * 22000;
+          score += cageTrapTargets.size * 58000;
+
+          // Avoid putting 2 different 2-in-a-rows onto the exact same empty target node (where 1 human blocker stops both!)
           for (const [, count] of targetShareCount) {
-            if (count > 1) score -= (count - 1) * 14000;
+            if (count > 1) score -= (count - 1) * 18000;
+          }
+
+          // When AI finishes placing its 9th bead (resAi === 0), simulate the human's best counter-placement!
+          if (resAi === 0) {
+            const simBoard = [...board];
+            let hmLeft = Math.min(resHuman, 9);
+            while (hmLeft > 0) {
+              let bestHNode = -1;
+              let bestHVal = -Infinity;
+              for (let i = 0; i < Nodes.length; i++) {
+                if (simBoard[i] !== 0) continue;
+                simBoard[i] = humanP;
+                const formsForbiddenMill = getMillsContainingNode(i, humanP, simBoard).length > 0;
+                if (formsForbiddenMill) {
+                  simBoard[i] = 0;
+                  continue;
+                }
+                let hVal = (Adjacency[i] ? Adjacency[i].size : 2) * 800;
+                if (readyTargets.has(i)) hVal += 45000;
+                else if (openTwoTargets.has(i)) hVal += 18000;
+                for (const line of MillLines) {
+                  if (!line.includes(i)) continue;
+                  let hC = 0, aC = 0, emp = -1;
+                  for (const id of line) {
+                    if (simBoard[id] === humanP) hC++;
+                    else if (simBoard[id] === aiP) aC++;
+                    else emp = id;
+                  }
+                  if (hC === 2 && aC === 0 && emp !== -1) {
+                    hVal += hasReadySliderForMill(emp, line, humanP, simBoard) ? 28000 : 9000;
+                  }
+                }
+                simBoard[i] = 0;
+                if (hVal > bestHVal) {
+                  bestHVal = hVal;
+                  bestHNode = i;
+                }
+              }
+              if (bestHNode === -1) break;
+              simBoard[bestHNode] = humanP;
+              hmLeft--;
+            }
+            const postEval = evaluateMorrisBoardState(simBoard, 0, 0, humanP, aiP, humanP);
+            score += postEval * 2.5;
           }
 
           return score;
         }
 
-        let score = evaluateMorrisBoardState(board, 0, 0, humanP, aiP, humanP) * 4;
+        // CASE B: Human already placed all 9 beads first (resHuman === 0), now AI places its 9 beads!
+        let score = evaluateMorrisBoardState(board, 0, 0, humanP, aiP, humanP) * 4.5;
         const hmReadyTargets = new Set();
+        const hmTwoWithoutSliderTargets = new Set();
         const aiReadyTargets = new Set();
         const aiUncontestedTargets = new Set();
 
@@ -5985,7 +6670,7 @@
             if (hasReadySliderForMill(emp, line, humanP, board)) {
               hmReadyTargets.add(emp);
             } else {
-              score -= 14000;
+              hmTwoWithoutSliderTargets.add(emp);
             }
           } else if (a === 2 && h === 0 && emp !== -1) {
             if (hasReadySliderForMill(emp, line, aiP, board)) {
@@ -6002,10 +6687,13 @@
           }
         }
 
-        score -= hmReadyTargets.size * 135000;
-        score += aiReadyTargets.size * 34000;
-        score += aiUncontestedTargets.size * 42000;
-        if (aiReadyTargets.size >= 2) score += 65000;
+        // Human moves FIRST after AI finishes placing, so any unblocked hmReadyTarget is an immediate human Katar!
+        score -= hmReadyTargets.size * 220000;
+        score -= hmTwoWithoutSliderTargets.size * 24000;
+        score += aiReadyTargets.size * 42000;
+        score += aiUncontestedTargets.size * 78000;
+        if (aiUncontestedTargets.size >= 1 && hmReadyTargets.size === 0) score += 95000;
+        if (aiReadyTargets.size >= 2) score += 88000;
 
         let hmMob = 0;
         let hmTrapped = 0;
@@ -6017,12 +6705,14 @@
             if (lib === 0) hmTrapped++;
           }
         }
-        if (hmMob === 0) score += 500000;
-        score += hmTrapped * 14000;
+        if (hmMob === 0) score += 900000; // Instant immobilization win!
+        score += hmTrapped * 22000;
+        score -= hmMob * 1800;
 
         return score;
       }
 
+      // Grandmaster Single-Drop Evaluator (handles both Standard and "Disable 3-in-a-Row on First Lay" forbid_mill!)
       function scoreMorrisPlacement(nodeId, board, aiP, humanP, isAllAtOnce, resAi, resHuman) {
         const landingMillForbidden = (isAllAtOnce || GameState.morrisDropMillRule === 'forbid_mill');
         const sim = [...board];
@@ -6038,13 +6728,24 @@
         if (!landingMillForbidden) {
           const myMills = getMillsContainingNode(nodeId, aiP, sim).length;
           const oppMills = getMillsContainingNode(nodeId, humanP, simOpp).length;
-          if (myMills > 0) return 320000 + myMills * 40000 + oppMills * 20000;
-          if (oppMills > 0) return 240000 + oppMills * 35000;
+          if (myMills > 0) return 360000 + myMills * 45000 + oppMills * 25000;
+          if (oppMills > 0) return 270000 + oppMills * 40000;
         }
 
         let score = 0;
         const deg = Adjacency[nodeId] ? Adjacency[nodeId].size : 2;
-        score += (deg >= 4 ? 6500 : (deg === 3 ? 2800 : 1200));
+        score += (deg >= 4 ? 11500 : (deg === 3 ? 4800 : 1800));
+
+        // Blueprint & Human Habit Counter Bonus so AI varies openings and counters human's favorite spots
+        const blueprint = MorrisLearner.getActiveBlueprintNodes();
+        const bpIdx = blueprint.indexOf(nodeId);
+        if (bpIdx !== -1 && bpIdx < 8) {
+          score += (9 - bpIdx) * 750;
+        }
+        const hFreq = (MorrisLearner.humanNodeFreq && MorrisLearner.humanNodeFreq[nodeId]) || 0;
+        if (hFreq > 0) {
+          score += Math.min(3600, hFreq * 550);
+        }
 
         let liberties = 0;
         let friendlyAdj = 0;
@@ -6052,13 +6753,9 @@
           if (sim[nb] === 0) liberties++;
           else if (sim[nb] === aiP) friendlyAdj++;
         }
-        if (liberties === 0) score -= 24000;
-        else if (liberties === 1) score -= 4500;
-        else score += liberties * 1100;
-
-        if (landingMillForbidden && resHuman > 2 && friendlyAdj > 0) {
-          score -= friendlyAdj * 4200;
-        }
+        if (liberties === 0) score -= 32000;
+        else if (liberties === 1) score -= 6500;
+        else score += liberties * 1500;
 
         for (const nb of Adjacency[nodeId]) {
           if (board[nb] === humanP) {
@@ -6066,13 +6763,14 @@
             for (const onb of Adjacency[nb]) {
               if (sim[onb] === 0) oppLib++;
             }
-            if (oppLib === 0) score += 9500;
-            else if (oppLib === 1) score += 3200;
+            if (oppLib === 0) score += 16500;
+            else if (oppLib === 1) score += 5800;
           }
         }
 
         const aiOpenTargets = new Set();
         const aiReadyTargets = new Set();
+        const aiUncontestedReadyTargets = new Set();
         const oppOpenTargetsIfOppPlays = new Set();
         const oppReadyTargetsIfOppPlays = new Set();
 
@@ -6093,14 +6791,14 @@
             aiOpenTargets.add(empSim);
             if (hasReadySliderForMill(empSim, line, aiP, sim)) {
               aiReadyTargets.add(empSim);
-              let cageTrap = true;
+              let oppAdjToTarget = false;
+              let emptyNbCount = 0;
               for (const nb of Adjacency[empSim]) {
-                if (sim[nb] !== aiP) {
-                  cageTrap = false;
-                  break;
-                }
+                if (sim[nb] === humanP) oppAdjToTarget = true;
+                else if (sim[nb] === 0) emptyNbCount++;
               }
-              if (cageTrap) score += 28000;
+              if (!oppAdjToTarget) aiUncontestedReadyTargets.add(empSim);
+              if (emptyNbCount === 0 && !oppAdjToTarget) score += 48000; // Sealed cage trap!
             }
           }
 
@@ -6119,23 +6817,68 @@
             }
             if (oppCount === 2 && aiCount === 0) {
               const hasSlider = hasReadySliderForMill(nodeId, line, humanP, board);
-              score += hasSlider ? 72000 : 26000;
+              if (!landingMillForbidden) {
+                score += hasSlider ? 245000 : 210000;
+              } else {
+                // KEY GRANDMASTER INSIGHT for forbid_mill ("Disable 3-in-a-Row on First Lay"):
+                // Under forbid_mill, the human is LEGALLY FORBIDDEN from dropping their 3rd bead on `nodeId`!
+                // Therefore, `nodeId` is ONLY a real threat if the human ALREADY has a 3rd slider adjacent to `nodeId`
+                // OR if placement is nearly over (resHuman <= 3) and human can place a slider adjacent to `nodeId`!
+                let emptySliderSpotsForHuman = 0;
+                for (const nb of Adjacency[nodeId]) {
+                  if (!line.includes(nb) && board[nb] === 0) emptySliderSpotsForHuman++;
+                }
+                if (hasSlider) {
+                  // Human already has a slider ready to slide into `nodeId` once drops finish!
+                  score += (resHuman <= 3) ? 125000 : 62000;
+                } else if (emptySliderSpotsForHuman === 0) {
+                  // Human has NO slider and NO empty neighbor to ever slide into `nodeId`, AND cannot drop on `nodeId`!
+                  // So `nodeId` is a dead square for the human — don't waste our tempo blocking it early!
+                  score += 2500;
+                } else {
+                  score += (resHuman <= 2) ? 34000 : 12000;
+                }
+              }
             } else if (oppCount === 1 && aiCount === 0) {
-              score += 3200;
+              score += 4200;
+            }
+          }
+        }
+
+        // Under forbid_mill, also check if `nodeId` is the slider neighbor `nb` of an existing 2-in-a-row!
+        if (landingMillForbidden) {
+          for (const nb of Adjacency[nodeId]) {
+            if (board[nb] !== 0) continue;
+            for (const line of MillLines) {
+              if (!line.includes(nb) || line.includes(nodeId)) continue;
+              let aC = 0, hC = 0;
+              for (const id of line) {
+                if (board[id] === aiP) aC++;
+                else if (board[id] === humanP) hC++;
+              }
+              // Placing on `nodeId` arms a ready slider for our own 2-in-a-row at `nb`!
+              if (aC === 2 && hC === 0) {
+                score += 46000;
+              }
+              // Placing on `nodeId` denies the human from arming a slider for their 2-in-a-row at `nb` (while `nb` itself remains illegal for human to drop on!)
+              if (hC === 2 && aC === 0) {
+                score += 52000;
+              }
             }
           }
         }
 
         if (!landingMillForbidden) {
-          score += aiOpenTargets.size * 14000;
-          if (aiOpenTargets.size >= 2) score += 88000;
-          if (oppOpenTargetsIfOppPlays.size >= 2) score += 82000;
+          score += aiOpenTargets.size * 15000;
+          if (aiOpenTargets.size >= 2) score += 92000;
+          if (oppOpenTargetsIfOppPlays.size >= 2) score += 86000;
         } else {
-          score += aiOpenTargets.size * 8500;
-          score += aiReadyTargets.size * 28000;
-          if (aiReadyTargets.size >= 2) score += 64000;
-          if (oppReadyTargetsIfOppPlays.size >= 2) score += 58000;
-          else if (oppReadyTargetsIfOppPlays.size === 1) score += 22000;
+          score += aiOpenTargets.size * 7500;
+          score += aiReadyTargets.size * 38000;
+          score += aiUncontestedReadyTargets.size * 32000;
+          if (aiReadyTargets.size >= 2) score += 84000;
+          if (oppReadyTargetsIfOppPlays.size >= 2) score += 76000;
+          else if (oppReadyTargetsIfOppPlays.size === 1) score += 32000;
         }
 
         return score;
@@ -6144,14 +6887,15 @@
       function chooseBestMorrisDrop(allSteps, board, aiP, humanP, isAllAtOnce, resAi, resHuman, diff) {
         if (isAllAtOnce && diff !== 'easy' && resAi >= 1) {
           const forbidLandingMill = true;
-          const beamWidth = diff === 'hardest' ? 10 : (diff === 'hard' ? 6 : 3);
+          const beamWidth = diff === 'hardest' ? 14 : (diff === 'hard' ? 9 : 4);
           let beam = [{
             board: [...board],
             firstMove: null,
+            learnedSum: 0,
             score: evaluateAllAtOnceBoard(board, aiP, humanP, resAi, resHuman)
           }];
 
-          const stepsToPlan = diff === 'medium' ? Math.min(2, resAi) : resAi;
+          const stepsToPlan = diff === 'medium' ? Math.min(3, resAi) : resAi;
           for (let step = 0; step < stepsToPlan; step++) {
             const nextBeam = [];
             const seenKeys = new Set();
@@ -6178,9 +6922,13 @@
                 const key = computeMorrisStateKey(nb, 0, 0, aiP);
                 if (seenKeys.has(key)) continue;
                 seenKeys.add(key);
-                const firstMv = state.firstMove || { from: -1, to: nid, type: 'drop' };
-                const sc = evaluateAllAtOnceBoard(nb, aiP, humanP, remAfter, resHuman);
-                nextBeam.push({ board: nb, firstMove: firstMv, score: sc });
+                const stepMove = { from: -1, to: nid, type: 'drop' };
+                const firstMv = state.firstMove || stepMove;
+                const stepLearned = MorrisLearner.getBonus(state.board, stepMove, aiP, resAi - step, resHuman);
+                const newLearnedSum = state.learnedSum + stepLearned * (step === 0 ? 2.5 : 1.2);
+                const jitter = (diff === 'medium' ? (Math.random() * 1400 - 700) : (Math.random() * 240 - 120));
+                const sc = evaluateAllAtOnceBoard(nb, aiP, humanP, remAfter, resHuman) + newLearnedSum + jitter;
+                nextBeam.push({ board: nb, firstMove: firstMv, learnedSum: newLearnedSum, score: sc });
               }
             }
 
@@ -6189,30 +6937,32 @@
             beam = nextBeam.slice(0, beamWidth);
           }
 
-          if (resHuman === 0 && resAi <= 2 && (diff === 'hard' || diff === 'hardest') && beam.length > 0) {
+          if (resHuman === 0 && resAi <= 3 && (diff === 'hard' || diff === 'hardest') && beam.length > 0) {
             if (MorrisTT.size > 120000) MorrisTT.clear();
             morrisSearchAborted = false;
-            morrisSearchDeadline = performance.now() + 900;
+            morrisSearchDeadline = performance.now() + 700;
             let bestCand = beam[0];
             let bestTotal = -Infinity;
-            for (const cand of beam.slice(0, 5)) {
-              const mmVal = minimaxMorris(cand.board, 0, 0, diff === 'hardest' ? 5 : 3, -Infinity, Infinity, humanP, aiP, humanP);
-              const combined = cand.score + mmVal * 6;
+            for (const cand of beam.slice(0, 6)) {
+              const mmVal = minimaxMorris(
+                cand.board,
+                0,
+                0,
+                diff === 'hardest' ? 6 : 4,
+                -Infinity,
+                Infinity,
+                humanP,
+                aiP,
+                humanP,
+                new Set()
+              );
+              const combined = cand.score + mmVal * 8;
               if (combined > bestTotal) {
                 bestTotal = combined;
                 bestCand = cand;
               }
             }
             if (bestCand && bestCand.firstMove) return bestCand.firstMove;
-          }
-
-          if (beam.length > 1) {
-            for (const cand of beam) {
-              if (cand.firstMove) {
-                cand.score += MorrisLearner.getBonus(board, cand.firstMove, aiP, resAi, resHuman) * 2.2;
-              }
-            }
-            beam.sort((a, b) => b.score - a.score);
           }
 
           if (beam[0] && beam[0].firstMove) {
@@ -6222,16 +6972,17 @@
 
         const scored = [];
         for (const m of allSteps) {
-          const learned = MorrisLearner.getBonus(board, m, aiP, resAi, resHuman) * 2.0;
+          const learned = MorrisLearner.getBonus(board, m, aiP, resAi, resHuman) * 2.5;
           const s1 = scoreMorrisPlacement(m.to, board, aiP, humanP, isAllAtOnce, resAi, resHuman) + learned;
           scored.push({ move: m, score: s1 });
         }
         scored.sort((a, b) => b.score - a.score);
         if (diff === 'easy') {
-          return scored[Math.floor(Math.random() * scored.length)].move;
+          const easyPool = scored.slice(0, Math.min(5, scored.length));
+          return easyPool[Math.floor(Math.random() * easyPool.length)].move;
         }
         if (diff === 'medium') {
-          const pool = scored.slice(0, Math.min(3, scored.length));
+          const pool = scored.slice(0, Math.min(2, scored.length));
           return pool[Math.floor(Math.random() * pool.length)].move;
         }
         return scored[0].move;
@@ -6245,9 +6996,9 @@
         if (hmTotal <= 2) return 95000;
         if (aiTotal <= 2) return -95000;
 
-        let score = (aiTotal - hmTotal) * 4500;
-        if (hmTotal === 3 && res[humanP] === 0) score += 2400;
-        if (aiTotal === 3 && res[aiP] === 0) score -= 2400;
+        let score = (aiTotal - hmTotal) * 5200;
+        if (hmTotal === 3 && res[humanP] === 0) score += 3200;
+        if (aiTotal === 3 && res[aiP] === 0) score -= 3200;
 
         let aiRepeatableMills = 0, hmRepeatableMills = 0;
         let aiLockedMills = 0, hmLockedMills = 0;
@@ -6386,34 +7137,37 @@
         }
 
         if (res1 === 0 && res2 === 0 && GameState.morrisFlyingRule !== 'enabled') {
-          if (hmMob === 0) return 92000;
-          if (aiMob === 0) return -92000;
+          if (hmMob === 0) return 93000;
+          if (aiMob === 0) return -93000;
+          // Squeeze bonus when human has only 1-2 legal slides left
+          if (hmMob === 1) score += 6500;
+          else if (hmMob === 2) score += 3200;
         }
 
-        score += (aiSeeSaw - hmSeeSaw) * 6500;
-        score += (aiRepeatableMills - hmRepeatableMills) * 2100;
-        score += (aiLockedMills - hmLockedMills) * 650;
-        score += (aiUncontestedReadySet.size - hmUncontestedReadySet.size) * 3200;
-        score += ((aiReadyEmptySet.size - aiUncontestedReadySet.size) - (hmReadyEmptySet.size - hmUncontestedReadySet.size)) * 1350;
-        score += (aiOpenEmptySet.size - hmOpenEmptySet.size) * 550;
-        score += (aiForks - hmForks) * 2400;
-        score += (aiBlockedTwo - hmBlockedTwo) * 280;
-        score += (aiMob - hmMob) * 110;
-        score += (hmTrapped - aiTrapped) * 850;
+        score += (aiSeeSaw - hmSeeSaw) * 7200;
+        score += (aiRepeatableMills - hmRepeatableMills) * 2400;
+        score += (aiLockedMills - hmLockedMills) * 700;
+        score += (aiUncontestedReadySet.size - hmUncontestedReadySet.size) * 3800;
+        score += ((aiReadyEmptySet.size - aiUncontestedReadySet.size) - (hmReadyEmptySet.size - hmUncontestedReadySet.size)) * 1600;
+        score += (aiOpenEmptySet.size - hmOpenEmptySet.size) * 650;
+        score += (aiForks - hmForks) * 2800;
+        score += (aiBlockedTwo - hmBlockedTwo) * 340;
+        score += (aiMob - hmMob) * 145;
+        score += (hmTrapped - aiTrapped) * 1150;
 
         if (turnPlayer === aiP) {
-          if (aiReadyEmptySet.size >= 1) score += 3600;
-          if (hmUncontestedReadySet.size >= 1) score -= 2800;
-          if (hmReadyEmptySet.size >= 2) score -= 4200;
+          if (aiReadyEmptySet.size >= 1) score += 4800;
+          if (hmUncontestedReadySet.size >= 1) score -= 3600;
+          if (hmReadyEmptySet.size >= 2) score -= 5400;
         } else {
-          if (hmReadyEmptySet.size >= 1) score -= 3600;
-          if (aiUncontestedReadySet.size >= 1) score += 2800;
-          if (aiReadyEmptySet.size >= 2) score += 4200;
+          if (hmReadyEmptySet.size >= 1) score -= 4800;
+          if (aiUncontestedReadySet.size >= 1) score += 3600;
+          if (aiReadyEmptySet.size >= 2) score += 5400;
         }
 
         if (res1 > 0 || res2 > 0) {
-          if (aiOpenEmptySet.size >= 2) score += 2600;
-          if (hmOpenEmptySet.size >= 2) score -= 2800;
+          if (aiOpenEmptySet.size >= 2) score += 3100;
+          if (hmOpenEmptySet.size >= 2) score -= 3300;
         }
 
         return score;
@@ -6451,7 +7205,7 @@
         });
       }
 
-      function orderMorrisMoves(moves, board, player, opp, res1, res2) {
+      function orderMorrisMoves(moves, board, player, opp, res1, res2, applyRootAntiLoop = false) {
         const res = { 1: res1, 2: res2 };
         const scored = [];
 
@@ -6461,11 +7215,11 @@
           }
           if (m.type === 'drop') {
             const p = scoreMorrisPlacement(m.to, board, player, opp, GameState.morrisDropOrder === 'all_at_once', res[player], res[opp]);
-            scored.push({ move: m, priority: p });
+            scored.push({ move: m, priority: p, isForbiddenLoop: false });
             continue;
           }
 
-          let priority = getMorrisNodeWeight(m.to) * 6;
+          let priority = getMorrisNodeWeight(m.to) * 8;
           const sim = [...board];
           sim[m.from] = 0;
           sim[m.to] = player;
@@ -6474,8 +7228,8 @@
           const wasInMill = isNodeInAnyMill(m.from, board);
 
           if (myMills.length > 0) {
-            priority += 55000 * myMills.length;
-            if (wasInMill) priority += 90000;
+            priority += 65000 * myMills.length;
+            if (wasInMill) priority += 95000;
           }
 
           if (wasInMill && myMills.length === 0) {
@@ -6483,29 +7237,34 @@
             for (const nb of Adjacency[m.from]) {
               if (board[nb] === opp) oppCanEnterFrom = true;
             }
-            if (!oppCanEnterFrom) priority += 28000;
-            else priority -= 24000;
+            if (!oppCanEnterFrom) priority += 26000;
+            else priority -= 28000;
           }
 
+          // Blocking opponent 1-step mill
           for (const line of MillLines) {
             if (!line.includes(m.to)) continue;
             let oppCount = 0;
             for (const id of line) if (board[id] === opp) oppCount++;
             if (oppCount === 2) {
               const hasSlider = hasReadySliderForMill(m.to, line, opp, board);
-              priority += hasSlider ? 46000 : 16000;
+              priority += hasSlider ? 52000 : 16000;
             }
           }
 
+          // Penalty for vacating a critical block of an opponent's 2-in-a-row
           if (myMills.length === 0) {
             for (const line of MillLines) {
               if (!line.includes(m.from)) continue;
               let oppCount = 0;
               for (const id of line) if (board[id] === opp) oppCount++;
-              if (oppCount === 2) priority -= 38000;
+              if (oppCount === 2 && hasReadySliderForMill(m.from, line, opp, sim)) {
+                priority -= 54000;
+              }
             }
           }
 
+          // Creating our own 1-step ready mill
           for (const line of MillLines) {
             if (!line.includes(m.to)) continue;
             let pC = 0, emp = -1;
@@ -6514,8 +7273,8 @@
               else if (sim[id] === 0) emp = id;
             }
             if (pC === 2 && emp !== -1) {
-              if (hasReadySliderForMill(emp, line, player, sim)) priority += 18000;
-              else priority += 6000;
+              if (hasReadySliderForMill(emp, line, player, sim)) priority += 22000;
+              else priority += 6500;
             }
           }
 
@@ -6523,21 +7282,37 @@
           for (const nb of Adjacency[m.to]) {
             if (sim[nb] === 0) myLib++;
           }
-          if (myLib === 0 && myMills.length === 0) priority -= 12000;
-          else priority += myLib * 550;
+          if (myLib === 0 && myMills.length === 0) priority -= 14000;
+          else priority += myLib * 650;
 
           for (const nb of Adjacency[m.to]) {
             if (board[nb] === opp) {
               let oppLib = 0;
               for (const onb of Adjacency[nb]) if (sim[onb] === 0) oppLib++;
-              if (oppLib === 0) priority += 9500;
+              if (oppLib === 0) priority += 12500;
             }
           }
 
-          scored.push({ move: m, priority });
+          let isForbiddenLoop = false;
+          if (applyRootAntiLoop) {
+            const loopInfo = LoopTracker.evaluateLoopPenalty(m, board, sim, player, res1, res2, myMills.length > 0);
+            priority -= loopInfo.penalty;
+            priority += loopInfo.breakthroughBonus;
+            isForbiddenLoop = loopInfo.isForbiddenLoop;
+          }
+
+          scored.push({ move: m, priority, isForbiddenLoop });
         }
 
         scored.sort((a, b) => b.priority - a.priority);
+        // If anti-loop flagged looping moves and there is at least one non-looping move that doesn't immediately lose, put non-looping moves first
+        if (applyRootAntiLoop && scored.length > 1) {
+          const nonLooping = scored.filter((s) => !s.isForbiddenLoop);
+          if (nonLooping.length > 0) {
+            const looping = scored.filter((s) => s.isForbiddenLoop);
+            return [...nonLooping, ...looping].map((s) => s.move);
+          }
+        }
         return scored.map((s) => s.move);
       }
 
@@ -6549,7 +7324,7 @@
         return `${turnPlayer}:${res1}:${res2}:${h1}:${h2}`;
       }
 
-      function minimaxMorris(board, res1, res2, depth, alpha, beta, turnPlayer, aiP, humanP) {
+      function minimaxMorris(board, res1, res2, depth, alpha, beta, turnPlayer, aiP, humanP, pathSet = null) {
         if (morrisSearchDeadline && performance.now() > morrisSearchDeadline) {
           morrisSearchAborted = true;
           return evaluateMorrisBoardState(board, res1, res2, turnPlayer, aiP, humanP);
@@ -6561,13 +7336,25 @@
         if (hmTotal <= 2) return 95000 + depth * 250;
         if (aiTotal <= 2) return -95000 - depth * 250;
 
+        const ttKey = computeMorrisStateKey(board, res1, res2, turnPlayer);
+        // Anti-Loop Contempt inside Minimax Tree: if this position repeats along the search path or match history, penalize loops!
+        if (pathSet && pathSet.has(ttKey)) {
+          return -26000;
+        }
+        if (res1 === 0 && res2 === 0) {
+          const sig = LoopTracker.computeSignature(board, res, null);
+          const matchReps = LoopTracker.stateCounts.get(sig) || 0;
+          if (matchReps >= 2) {
+            return -32000;
+          }
+        }
+
         if (depth <= 0) {
           return evaluateMorrisBoardState(board, res1, res2, turnPlayer, aiP, humanP);
         }
 
-        const ttKey = computeMorrisStateKey(board, res1, res2, turnPlayer);
         const cached = MorrisTT.get(ttKey);
-        if (cached && cached.depth >= depth) {
+        if (cached && cached.depth >= depth && (!pathSet || pathSet.size <= 1)) {
           if (cached.flag === 0) return cached.val;
           if (cached.flag === 1 && cached.val > alpha) alpha = cached.val;
           else if (cached.flag === 2 && cached.val < beta) beta = cached.val;
@@ -6576,17 +7363,20 @@
 
         const rawMoves = getAllLegalActionsForPlayer(turnPlayer, board, res).allSteps;
         if (rawMoves.length === 0) {
-          return turnPlayer === aiP ? (-92000 - depth * 200) : (92000 + depth * 200);
+          return turnPlayer === aiP ? (-93000 - depth * 200) : (93000 + depth * 200);
         }
 
         const opp = turnPlayer === 1 ? 2 : 1;
-        const ordered = orderMorrisMoves(rawMoves, board, turnPlayer, opp, res1, res2);
+        const ordered = orderMorrisMoves(rawMoves, board, turnPlayer, opp, res1, res2, false);
         const isHardest = (GameState.aiDifficulty === 'hardest');
         const maxMoves = isHardest
-          ? (depth >= 6 ? 14 : (depth >= 4 ? 18 : 24))
+          ? (depth >= 6 ? 15 : (depth >= 4 ? 19 : 24))
           : (depth >= 4 ? 12 : (depth === 3 ? 10 : 8));
         const pool = ordered.slice(0, maxMoves);
         const remBranch = isHardest ? (depth >= 3 ? 3 : 2) : (depth >= 3 ? 2 : 1);
+
+        const nextPathSet = new Set(pathSet || []);
+        nextPathSet.add(ttKey);
 
         const alphaOrig = alpha;
         const betaOrig = beta;
@@ -6599,7 +7389,7 @@
             const nextTurn = (GameState.morrisDropOrder === 'all_at_once' && (turnPlayer === 1 ? st.res1 : st.res2) > 0)
               ? turnPlayer
               : opp;
-            const ev = minimaxMorris(st.board, st.res1, st.res2, depth - 1, alpha, beta, nextTurn, aiP, humanP);
+            const ev = minimaxMorris(st.board, st.res1, st.res2, depth - 1, alpha, beta, nextTurn, aiP, humanP, nextPathSet);
             if (morrisSearchAborted) return bestVal === -Infinity || bestVal === Infinity ? ev : bestVal;
 
             if (isMax) {
@@ -6614,7 +7404,7 @@
           if (beta <= alpha) break;
         }
 
-        if (!morrisSearchAborted && MorrisTT.size < 120000) {
+        if (!morrisSearchAborted && MorrisTT.size < 120000 && (!pathSet || pathSet.size <= 1)) {
           let flag = 0;
           if (bestVal <= alphaOrig) flag = 2;
           else if (bestVal >= betaOrig) flag = 1;
@@ -6624,31 +7414,22 @@
         return bestVal;
       }
 
-      function runNavakankariAI() {
+      function computeBestLocalMorrisAction() {
         const aiP = GameState.aiPlayerRole || 2;
         const humanP = aiP === 1 ? 2 : 1;
         const diff = GameState.aiDifficulty;
 
         if (GameState.morrisPendingRemove) {
           const candidates = getRemovableOpponentNodes(humanP);
-          if (candidates.length === 0) {
-            finishTurnAndCheckWin(aiP, false, null);
-            return;
-          }
+          if (candidates.length === 0) return null;
           if (diff === 'easy') {
             const pick = candidates[Math.floor(Math.random() * candidates.length)];
-            executeAction({ type: 'remove_opponent', capturedId: pick }, false);
-            return;
+            return { bestAction: { type: 'remove_opponent', capturedId: pick }, ranked: candidates.map((c) => ({ action: { type: 'remove_opponent', capturedId: c }, score: 0 })) };
           }
           if (diff === 'medium') {
-            if (Math.random() < 0.35) {
-              const pick = candidates[Math.floor(Math.random() * candidates.length)];
-              executeAction({ type: 'remove_opponent', capturedId: pick }, false);
-              return;
-            }
             const bestMid = pickBestMorrisRemoval(GameState.board, aiP, humanP);
-            executeAction({ type: 'remove_opponent', capturedId: bestMid !== -1 ? bestMid : candidates[0] }, false);
-            return;
+            const act = { type: 'remove_opponent', capturedId: bestMid !== -1 ? bestMid : candidates[0] };
+            return { bestAction: act, ranked: candidates.map((c) => ({ action: { type: 'remove_opponent', capturedId: c }, score: scoreMorrisRemovalTarget(c, GameState.board, aiP, humanP) })) };
           }
 
           if (MorrisTT.size > 120000) MorrisTT.clear();
@@ -6658,6 +7439,7 @@
           let bestRem = candidates[0];
           let bestVal = -Infinity;
           const lookDepth = diff === 'hardest' ? 5 : 4;
+          const ranked = [];
 
           for (const cid of candidates) {
             const simBoard = [...GameState.board];
@@ -6675,25 +7457,28 @@
               Infinity,
               nextTurn,
               aiP,
-              humanP
+              humanP,
+              new Set()
             );
             const total = immediateScore * 0.35 + futureVal + learned;
+            ranked.push({ action: remAct, score: Math.round(total) });
             if (total > bestVal) {
               bestVal = total;
               bestRem = cid;
             }
           }
-          const finalRem = { type: 'remove_opponent', capturedId: bestRem };
-          MorrisLearner.recordStep(GameState.board, finalRem, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
-          executeAction(finalRem, false);
-          return;
+          ranked.sort((a, b) => b.score - a.score);
+          return { bestAction: { type: 'remove_opponent', capturedId: bestRem }, ranked };
         }
 
         const { allSteps } = getAllLegalActionsForPlayer(aiP);
-        if (allSteps.length === 0) return;
+        if (allSteps.length === 0) return null;
 
         const isAllAtOnce = (GameState.morrisDropOrder === 'all_at_once');
-        if (allSteps[0].type === 'drop' && (isAllAtOnce || diff === 'easy' || diff === 'medium')) {
+        const isForbidMillDrop = (allSteps[0].type === 'drop' && (isAllAtOnce || GameState.morrisDropMillRule === 'forbid_mill'));
+
+        // For all_at_once drops, or easy/medium drops, or early forbid_mill drops where strategic web setup dominates:
+        if (allSteps[0].type === 'drop' && (isAllAtOnce || diff === 'easy' || diff === 'medium' || (isForbidMillDrop && GameState.reserves[aiP] > 3))) {
           const chosenDrop = chooseBestMorrisDrop(
             allSteps,
             GameState.board,
@@ -6704,75 +7489,74 @@
             GameState.reserves[humanP],
             diff
           );
-          MorrisLearner.recordStep(GameState.board, chosenDrop, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
-          executeAction(chosenDrop, false);
-          return;
+          const rankedDrops = allSteps.map((m) => ({
+            action: m,
+            score: Math.round(scoreMorrisPlacement(m.to, GameState.board, aiP, humanP, isAllAtOnce, GameState.reserves[aiP], GameState.reserves[humanP]))
+          })).sort((a, b) => b.score - a.score);
+          return { bestAction: chosenDrop, ranked: rankedDrops };
         }
 
-        const orderedMoves = orderMorrisMoves(allSteps, GameState.board, aiP, humanP, GameState.reserves[1], GameState.reserves[2]);
-        if (orderedMoves.length === 0) return;
+        const orderedMoves = orderMorrisMoves(allSteps, GameState.board, aiP, humanP, GameState.reserves[1], GameState.reserves[2], true);
+        if (orderedMoves.length === 0) return null;
 
         if (diff === 'easy') {
-          if (Math.random() < 0.75) {
-            executeAction(allSteps[Math.floor(Math.random() * allSteps.length)], false);
-          } else {
-            executeAction(orderedMoves[Math.min(1, orderedMoves.length - 1)], false);
-          }
-          return;
+          const pick = Math.random() < 0.72
+            ? orderedMoves[Math.floor(Math.random() * Math.min(5, orderedMoves.length))]
+            : orderedMoves[0];
+          return { bestAction: pick, ranked: orderedMoves.map((m, i) => ({ action: m, score: 100 - i })) };
         }
 
         if (diff === 'medium') {
-          if (Math.random() < 0.38 && orderedMoves.length > 1) {
-            const pool = orderedMoves.slice(0, Math.min(4, orderedMoves.length));
-            const pick = pool[Math.floor(Math.random() * pool.length)];
-            MorrisLearner.recordStep(GameState.board, pick, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
-            executeAction(pick, false);
-            return;
-          }
           let bestMed = orderedMoves[0];
           let bestMedScore = -Infinity;
-          for (const mv of orderedMoves.slice(0, 8)) {
+          const ranked = [];
+          for (const mv of orderedMoves.slice(0, 10)) {
             const states = expandMorrisMoveStates(GameState.board, GameState.reserves[1], GameState.reserves[2], mv, aiP, aiP, humanP, 1);
             const st = states[0];
-            const val = evaluateMorrisBoardState(st.board, st.res1, st.res2, humanP, aiP, humanP) + (Math.random() * 90 - 45);
+            const loopInfo = LoopTracker.evaluateLoopPenalty(mv, GameState.board, st.board, aiP, st.res1, st.res2, st.formedMill);
+            const val = evaluateMorrisBoardState(st.board, st.res1, st.res2, humanP, aiP, humanP)
+              - loopInfo.penalty + loopInfo.breakthroughBonus + (Math.random() * 70 - 35);
+            ranked.push({ action: mv, score: Math.round(val), isLoop: loopInfo.isForbiddenLoop });
             if (val > bestMedScore) {
               bestMedScore = val;
               bestMed = mv;
             }
           }
-          MorrisLearner.recordStep(GameState.board, bestMed, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
-          executeAction(bestMed, false);
-          return;
+          ranked.sort((a, b) => b.score - a.score);
+          return { bestAction: bestMed, ranked };
         }
 
         if (MorrisTT.size > 120000) MorrisTT.clear();
         morrisSearchAborted = false;
         const isDropPhase = (allSteps[0].type === 'drop');
-        const timeBudgetMs = diff === 'hardest' ? (isDropPhase ? 340 : 480) : 260;
+        const timeBudgetMs = diff === 'hardest' ? (isDropPhase ? 380 : 540) : 280;
         morrisSearchDeadline = performance.now() + timeBudgetMs;
 
         const maxDepth = diff === 'hardest' ? (isDropPhase ? 6 : 9) : (isDropPhase ? 4 : 6);
-        const rootPool = orderedMoves.slice(0, Math.min(isDropPhase ? 12 : 20, orderedMoves.length));
+        const rootPool = orderedMoves.slice(0, Math.min(isDropPhase ? 14 : 20, orderedMoves.length));
         let bestMove = rootPool[0];
+        let latestScores = new Map();
 
         for (let d = 2; d <= maxDepth; d++) {
           let iterBestMove = rootPool[0];
           let iterBestVal = -Infinity;
           let alpha = -Infinity;
           const beta = Infinity;
+          const iterMap = new Map();
 
           for (const mv of rootPool) {
             const states = expandMorrisMoveStates(GameState.board, GameState.reserves[1], GameState.reserves[2], mv, aiP, aiP, humanP, 3);
             let bestBranchVal = -Infinity;
             const learnedBias = MorrisLearner.getBonus(GameState.board, mv, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
-            const tieBreakBias = (isDropPhase
-              ? scoreMorrisPlacement(mv.to, GameState.board, aiP, humanP, false, GameState.reserves[aiP], GameState.reserves[humanP]) * 0.015
-              : 0) + learnedBias;
+            const placementBias = isDropPhase
+              ? scoreMorrisPlacement(mv.to, GameState.board, aiP, humanP, false, GameState.reserves[aiP], GameState.reserves[humanP]) * 0.08
+              : 0;
 
             for (const st of states) {
               const nextTurn = humanP;
-              const millBonus = st.formedMill ? 1800 : 0;
-              const v = millBonus + tieBreakBias + minimaxMorris(
+              const millBonus = st.formedMill ? 2600 : 0;
+              const loopInfo = LoopTracker.evaluateLoopPenalty(mv, GameState.board, st.board, aiP, st.res1, st.res2, st.formedMill);
+              const v = millBonus + placementBias + learnedBias - loopInfo.penalty + loopInfo.breakthroughBonus + minimaxMorris(
                 st.board,
                 st.res1,
                 st.res2,
@@ -6781,13 +7565,15 @@
                 beta,
                 nextTurn,
                 aiP,
-                humanP
+                humanP,
+                new Set()
               );
               if (v > bestBranchVal) bestBranchVal = v;
               if (morrisSearchAborted) break;
             }
 
             if (morrisSearchAborted) break;
+            iterMap.set(mv, Math.round(bestBranchVal));
 
             if (bestBranchVal > iterBestVal) {
               iterBestVal = bestBranchVal;
@@ -6798,6 +7584,7 @@
 
           if (!morrisSearchAborted) {
             bestMove = iterBestMove;
+            latestScores = iterMap;
             const winIdx = rootPool.indexOf(bestMove);
             if (winIdx > 0) {
               rootPool.splice(winIdx, 1);
@@ -6809,8 +7596,48 @@
           }
         }
 
-        MorrisLearner.recordStep(GameState.board, bestMove, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
-        executeAction(bestMove, false);
+        // Final strict anti-loop safeguard: if bestMove is a 3x repeated loop and another root move doesn't lose immediately, break the loop!
+        if (!isDropPhase && rootPool.length > 1) {
+          const checkSim = [...GameState.board];
+          checkSim[bestMove.from] = 0;
+          checkSim[bestMove.to] = aiP;
+          const formedM = getMillsContainingNode(bestMove.to, aiP, checkSim).length > 0;
+          const bestLoop = LoopTracker.evaluateLoopPenalty(bestMove, GameState.board, checkSim, aiP, GameState.reserves[1], GameState.reserves[2], formedM);
+          if (bestLoop.isForbiddenLoop || bestLoop.repCount >= 2 || bestLoop.oscCount >= 2) {
+            for (const alt of rootPool) {
+              if (alt === bestMove) continue;
+              const altSim = [...GameState.board];
+              altSim[alt.from] = 0;
+              altSim[alt.to] = aiP;
+              const altMill = getMillsContainingNode(alt.to, aiP, altSim).length > 0;
+              const altLoop = LoopTracker.evaluateLoopPenalty(alt, GameState.board, altSim, aiP, GameState.reserves[1], GameState.reserves[2], altMill);
+              const altScore = latestScores.get(alt) || 0;
+              if (!altLoop.isForbiddenLoop && altLoop.repCount < 2 && altScore > -45000) {
+                bestMove = alt;
+                break;
+              }
+            }
+          }
+        }
+
+        const ranked = rootPool.map((m) => ({
+          action: m,
+          score: latestScores.has(m) ? latestScores.get(m) : 0
+        })).sort((a, b) => b.score - a.score);
+
+        return { bestAction: bestMove, ranked };
+      }
+
+      function runNavakankariAI() {
+        const aiP = GameState.aiPlayerRole || 2;
+        const humanP = aiP === 1 ? 2 : 1;
+        const result = computeBestLocalMorrisAction();
+        if (!result || !result.bestAction) {
+          if (GameState.morrisPendingRemove) finishTurnAndCheckWin(aiP, false, null);
+          return;
+        }
+        MorrisLearner.recordStep(GameState.board, result.bestAction, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
+        executeAction(result.bestAction, false);
       }
 
       function runGomokuAI() {
@@ -6936,7 +7763,8 @@
             }
             const trapPenalty = liberties <= 1 ? -160 : 0;
             const centerDist = Math.hypot(Nodes[s.to].r - 2, Nodes[s.to].c - 2);
-            const score = nextJ.length * 60 + nextS.length * 9 + liberties * 18 + (4 - centerDist) * 8 + trapPenalty + Math.random() * 1.5;
+            const loopInfo = LoopTracker.evaluateLoopPenalty(s, GameState.board, sim, 2, GameState.reserves[1], GameState.reserves[2], false);
+            const score = nextJ.length * 60 + nextS.length * 9 + liberties * 18 + (4 - centerDist) * 8 + trapPenalty - loopInfo.penalty * 0.05 + Math.random() * 1.5;
             if (score > bestScore) {
               bestScore = score;
               bestStep = s;
@@ -6966,8 +7794,11 @@
           for (const nb of Adjacency[m.to]) {
             if (sim[nb] === 1) clusterBonus += 130;
           }
+          const loopInfo = m.type === 'step'
+            ? LoopTracker.evaluateLoopPenalty(m, GameState.board, sim, 1, GameState.reserves[1], GameState.reserves[2], false)
+            : { penalty: 0 };
           const trapBonus = (24 - tigerMoves.total) * (diff === 'hardest' ? 65 : 18);
-          const score = trapBonus - dangerPenalty + blockBonus + clusterBonus + Adjacency[m.to].size * 3 + Math.random() * 1.5;
+          const score = trapBonus - dangerPenalty + blockBonus + clusterBonus + Adjacency[m.to].size * 3 - loopInfo.penalty * 0.1 + Math.random() * 1.5;
           if (score > bestScore) {
             bestScore = score;
             bestAct = m;
@@ -7020,7 +7851,7 @@
         return materialDiff + positionalScore + (aiThreatScore - oppThreatScore) + mobilityScore;
       }
 
-      function orderGeneralMoves(moves, board, player) {
+      function orderGeneralMoves(moves, board, player, applyRootAntiLoop = false) {
         const opp = player === 1 ? 2 : 1;
         const midR = (GameState.rows - 1) / 2;
         const midC = (GameState.cols - 1) / 2;
@@ -7042,7 +7873,12 @@
             const jumpThreatBonus = myReplies.allJumps.length * 3500;
             const dist = Math.hypot(Nodes[m.to].r - midR, Nodes[m.to].c - midC);
             const centerBonus = (6 - dist) * 220;
-            const prio = jumpThreatBonus + centerBonus - dangerPenalty - hangingPenalty;
+            let loopPen = 0;
+            if (applyRootAntiLoop && m.from >= 0) {
+              const li = LoopTracker.evaluateLoopPenalty(m, board, sim, player, GameState.reserves[1], GameState.reserves[2], false);
+              loopPen = li.penalty - li.breakthroughBonus;
+            }
+            const prio = jumpThreatBonus + centerBonus - dangerPenalty - hangingPenalty - loopPen;
             scored.push({ move: m, priority: prio });
           }
         }
@@ -7094,7 +7930,7 @@
         }
 
         const rawList = allJumps.length > 0 ? allJumps : allSteps;
-        const candidateMoves = orderGeneralMoves(rawList, board, currPlayer).slice(0, 18);
+        const candidateMoves = orderGeneralMoves(rawList, board, currPlayer, false).slice(0, 18);
 
         if (isAiTurn) {
           let maxEval = -Infinity;
@@ -7163,10 +7999,538 @@
         return act;
       }
 
+      /* -------------------------------------------------------------------
+       * PUTER REAL CLOUD AI ENGINE & LIVE QUOTA ANALYTICS MANAGER
+       * ------------------------------------------------------------------- */
+      const PuterAIManager = {
+        storageKey: 'katar_puter_telemetry_v1',
+        modelOverride: 'auto',
+        monthAllowanceMicrocents: 50000000, // Puter free tier default ($0.50 = 50,000,000 microcents ~ 5M tokens)
+        remainingMicrocents: 50000000,
+        remoteApiCalls: 0,
+        remoteApiTokens: 0,
+        callEvents: [], // [{ ts, model, diff, tokens, microcents, latencyMs }]
+        sessionCalls: 0,
+        totalLatencyMs: 0,
+        lastThought: 'Ready — enable "Play with Real AI" to play against live Puter cloud models.',
+        isSignedIn: false,
+        username: '',
+        loaded: false,
+
+        load() {
+          if (this.loaded) return;
+          this.loaded = true;
+          try {
+            const raw = SafeStorage.getItem(this.storageKey);
+            if (raw) {
+              const d = JSON.parse(raw);
+              if (d && typeof d === 'object') {
+                this.modelOverride = d.modelOverride || 'auto';
+                if (typeof d.monthAllowanceMicrocents === 'number' && d.monthAllowanceMicrocents > 0) {
+                  this.monthAllowanceMicrocents = d.monthAllowanceMicrocents;
+                }
+                if (typeof d.remainingMicrocents === 'number' && d.remainingMicrocents >= 0) {
+                  this.remainingMicrocents = d.remainingMicrocents;
+                }
+                if (Array.isArray(d.callEvents)) {
+                  const cutoff = Date.now() - 7 * 86400 * 1000;
+                  this.callEvents = d.callEvents.filter((e) => e && e.ts >= cutoff);
+                }
+              }
+            }
+          } catch (e) {}
+        },
+
+        save() {
+          try {
+            const cutoff = Date.now() - 7 * 86400 * 1000;
+            this.callEvents = this.callEvents.filter((e) => e && e.ts >= cutoff).slice(-500);
+            SafeStorage.setItem(this.storageKey, JSON.stringify({
+              modelOverride: this.modelOverride,
+              monthAllowanceMicrocents: this.monthAllowanceMicrocents,
+              remainingMicrocents: this.remainingMicrocents,
+              callEvents: this.callEvents
+            }));
+          } catch (e) {}
+        },
+
+        getModelForDifficulty(diff = GameState.aiDifficulty) {
+          this.load();
+          if (this.modelOverride && this.modelOverride !== 'auto') {
+            return {
+              primary: this.modelOverride,
+              fallbacks: [this.modelOverride, 'gpt-4o-mini', 'deepseek-chat', 'gemini-2.0-flash']
+            };
+          }
+          // User requested:
+          // - Easy & Medium: best, cheapest, and fastest models
+          // - Hard & Hardest: best, most intelligent, and hardest models
+          if (diff === 'easy') {
+            return {
+              primary: 'gpt-4o-mini',
+              fallbacks: ['gpt-4o-mini', 'gemini-2.0-flash', 'deepseek-chat']
+            };
+          }
+          if (diff === 'medium') {
+            return {
+              primary: 'deepseek-chat',
+              fallbacks: ['deepseek-chat', 'gpt-4o-mini', 'gemini-2.0-flash']
+            };
+          }
+          if (diff === 'hard') {
+            return {
+              primary: 'o3-mini',
+              fallbacks: ['o3-mini', 'deepseek-reasoner', 'gpt-4o', 'claude-3-7-sonnet-latest', 'gpt-4o-mini']
+            };
+          }
+          return {
+            primary: 'claude-3-7-sonnet-latest',
+            fallbacks: ['claude-3-7-sonnet-latest', 'o3-mini', 'deepseek-reasoner', 'gpt-4o', 'gpt-4o-mini']
+          };
+        },
+
+        estimateCallCostMicrocents(model, tokens) {
+          const m = String(model || '').toLowerCase();
+          // Puter microcents: 100,000,000 microcents = $1.00 (so $0.15 / 1M tokens = 0.015 microcents/token -> ~30 microcents per 1k tokens)
+          // We scale realistically against the 50,000,000 microcent ($0.50) monthly free allowance:
+          if (m.includes('mini') || m.includes('flash') || m === 'deepseek-chat') {
+            return Math.max(1500, Math.round(tokens * 25)); // ~7,500 microcents per 300-token move (~6,600 moves on $0.50)
+          }
+          return Math.max(8000, Math.round(tokens * 110)); // ~44,000 microcents per 400-token reasoning move (~1,130 moves on $0.50)
+        },
+
+        async refreshQuotaFromPuter(silent = true) {
+          this.load();
+          if (typeof puter === 'undefined' || !puter.auth) {
+            this.syncModalUI();
+            return false;
+          }
+          try {
+            if (typeof puter.auth.isSignedIn === 'function') {
+              this.isSignedIn = Boolean(puter.auth.isSignedIn());
+            }
+            if (this.isSignedIn && typeof puter.auth.getUser === 'function') {
+              const u = await puter.auth.getUser().catch(() => null);
+              if (u && u.username) this.username = u.username;
+            }
+            if (typeof puter.auth.getMonthlyUsage === 'function') {
+              const usageData = await puter.auth.getMonthlyUsage();
+              if (usageData && usageData.allowanceInfo) {
+                const allow = Number(usageData.allowanceInfo.monthUsageAllowance);
+                const rem = Number(usageData.allowanceInfo.remaining);
+                if (Number.isFinite(allow) && allow > 0) this.monthAllowanceMicrocents = allow;
+                if (Number.isFinite(rem) && rem >= 0) this.remainingMicrocents = rem;
+              }
+              if (usageData && usageData.usage && typeof usageData.usage === 'object') {
+                let totalCalls = 0;
+                let totalUnits = 0;
+                for (const k of Object.keys(usageData.usage)) {
+                  const item = usageData.usage[k];
+                  if (item) {
+                    totalCalls += Number(item.count) || 0;
+                    totalUnits += Number(item.units) || 0;
+                  }
+                }
+                this.remoteApiCalls = totalCalls;
+                this.remoteApiTokens = totalUnits;
+              }
+              this.save();
+              this.syncModalUI();
+              if (!silent) showBoardToast('✅ Synced live quota from your Puter account!');
+              if (this.remainingMicrocents <= 0 && GameState.usePuterAI) {
+                this.triggerQuotaExhaustedFallback('Monthly Puter quota reached 0 remaining');
+              }
+              return true;
+            }
+          } catch (err) {
+            if (!silent) {
+              showBoardToast('Showing local + estimated Puter quota stats (Sign in to Puter for live account sync).');
+            }
+          }
+          this.syncModalUI();
+          return false;
+        },
+
+        recordCallTelemetry(model, diff, tokensUsed, latencyMs, thoughtText) {
+          this.load();
+          const estCost = this.estimateCallCostMicrocents(model, tokensUsed);
+          this.callEvents.push({
+            ts: Date.now(),
+            model,
+            diff,
+            tokens: tokensUsed,
+            microcents: estCost,
+            latencyMs
+          });
+          this.sessionCalls++;
+          this.totalLatencyMs += latencyMs;
+          if (thoughtText) this.lastThought = `[${model}] ${thoughtText}`;
+          this.remainingMicrocents = Math.max(0, this.remainingMicrocents - estCost);
+          this.save();
+          this.syncModalUI();
+          // Also asynchronously poll Puter's getMonthlyUsage() to keep exact server balance synced
+          if (typeof puter !== 'undefined' && puter.auth && typeof puter.auth.getMonthlyUsage === 'function') {
+            puter.auth.getMonthlyUsage().then((u) => {
+              if (u && u.allowanceInfo && typeof u.allowanceInfo.remaining === 'number') {
+                this.monthAllowanceMicrocents = u.allowanceInfo.monthUsageAllowance || this.monthAllowanceMicrocents;
+                this.remainingMicrocents = Math.max(0, u.allowanceInfo.remaining);
+                this.save();
+                this.syncModalUI();
+                if (this.remainingMicrocents <= 0 && GameState.usePuterAI) {
+                  this.triggerQuotaExhaustedFallback('Puter quota exhausted');
+                }
+              }
+            }).catch(() => {});
+          }
+        },
+
+        triggerQuotaExhaustedFallback(reason) {
+          GameState.usePuterAI = false;
+          GameState.puterAIThinking = false;
+          this.lastThought = `Auto-switched to Built-in Grandmaster AI (${reason}).`;
+          syncSettingsControlsFromState();
+          this.syncModalUI();
+          updateHUD();
+          showBoardToast(`⚡ Puter AI quota/limit reached — switched to Built-in Grandmaster AI mid-game!`);
+        },
+
+        getWindowStats() {
+          this.load();
+          const now = Date.now();
+          const hourAgo = now - 3600 * 1000;
+          const dayAgo = now - 86400 * 1000;
+          let hourlyCalls = 0, hourlyTokens = 0, hourlyMicro = 0;
+          let dailyCalls = 0, dailyTokens = 0, dailyMicro = 0;
+          let localTotalMicro = 0, localTotalTokens = 0;
+
+          for (const ev of this.callEvents) {
+            if (!ev) continue;
+            localTotalMicro += ev.microcents || 0;
+            localTotalTokens += ev.tokens || 0;
+            if (ev.ts >= dayAgo) {
+              dailyCalls++;
+              dailyTokens += ev.tokens || 0;
+              dailyMicro += ev.microcents || 0;
+            }
+            if (ev.ts >= hourAgo) {
+              hourlyCalls++;
+              hourlyTokens += ev.tokens || 0;
+              hourlyMicro += ev.microcents || 0;
+            }
+          }
+
+          const totalAllow = Math.max(1000000, this.monthAllowanceMicrocents || 50000000);
+          const remMicro = Math.max(0, Math.min(totalAllow, this.remainingMicrocents));
+          const usedMicro = Math.max(localTotalMicro, totalAllow - remMicro);
+          const effectiveRemMicro = Math.max(0, totalAllow - usedMicro);
+          const usedPct = Math.min(100, (usedMicro / totalAllow) * 100);
+          const leftPct = Math.max(0, 100 - usedPct);
+
+          // Approximate tokens & moves remaining
+          const estTotalTokens = Math.round(totalAllow / 10);
+          const estUsedTokens = Math.max(localTotalTokens, this.remoteApiTokens || Math.round(usedMicro / 10));
+          const estLeftTokens = Math.max(0, estTotalTokens - estUsedTokens);
+
+          const easyMovesLeft = Math.floor(effectiveRemMicro / 7500);
+          const hardMovesLeft = Math.floor(effectiveRemMicro / 44000);
+
+          return {
+            totalAllow,
+            usedMicro,
+            effectiveRemMicro,
+            usedPct,
+            leftPct,
+            estTotalTokens,
+            estUsedTokens,
+            estLeftTokens,
+            easyMovesLeft,
+            easyGamesLeft: Math.max(0, Math.floor(easyMovesLeft / 30)),
+            hardMovesLeft,
+            hardGamesLeft: Math.max(0, Math.floor(hardMovesLeft / 30)),
+            hourlyCalls,
+            hourlyTokens,
+            hourlyMicro,
+            dailyCalls,
+            dailyTokens,
+            dailyMicro
+          };
+        },
+
+        syncModalUI() {
+          const st = this.getWindowStats();
+          const modelInfo = this.getModelForDifficulty(GameState.aiDifficulty);
+
+          const lblMini = document.getElementById('lblPuterQuotaMini');
+          const dotMini = document.getElementById('puterLiveDot');
+          const hdrSum = document.getElementById('hdrPuterSummary');
+          if (lblMini) {
+            lblMini.textContent = GameState.usePuterAI
+              ? `${modelInfo.primary} • ${st.leftPct.toFixed(0)}% Left`
+              : `Quota: ${st.leftPct.toFixed(0)}% (~${st.easyMovesLeft} mv)`;
+          }
+          if (dotMini) {
+            dotMini.className = GameState.usePuterAI
+              ? 'w-2 h-2 rounded-full bg-emerald-500 animate-ping'
+              : 'w-2 h-2 rounded-full bg-indigo-500';
+          }
+          if (hdrSum) {
+            hdrSum.textContent = GameState.usePuterAI
+              ? `Real AI (${st.leftPct.toFixed(0)}%)`
+              : `Real AI • ${st.leftPct.toFixed(0)}%`;
+          }
+
+          const badge = document.getElementById('puterEngineStatusBadge');
+          if (badge) {
+            if (GameState.usePuterAI) {
+              badge.textContent = `🧠 Real AI Active (${modelInfo.primary})`;
+              badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono font-extrabold bg-indigo-600 text-white shadow-sm';
+            } else {
+              badge.textContent = '🤖 Built-in Grandmaster AI';
+              badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono font-extrabold bg-teal-100 text-teal-800 border border-teal-300';
+            }
+          }
+
+          const btnBuiltin = document.getElementById('btnModalSelectBuiltinAI');
+          const btnPuter = document.getElementById('btnModalSelectPuterAI');
+          if (btnBuiltin && btnPuter) {
+            if (GameState.usePuterAI) {
+              btnPuter.className = 'android-btn px-3 py-1.5 rounded-lg text-xs font-extrabold bg-indigo-600 text-white shadow-sm';
+              btnBuiltin.className = 'android-btn px-3 py-1.5 rounded-lg text-xs font-bold text-walnut-700';
+            } else {
+              btnBuiltin.className = 'android-btn px-3 py-1.5 rounded-lg text-xs font-extrabold bg-teal-600 text-white shadow-sm';
+              btnPuter.className = 'android-btn px-3 py-1.5 rounded-lg text-xs font-bold text-indigo-900';
+            }
+          }
+
+          const selMod = document.getElementById('selPuterModelOverride');
+          if (selMod) selMod.value = this.modelOverride || 'auto';
+          const actModPill = document.getElementById('puterActiveModelPill');
+          if (actModPill) actModPill.textContent = modelInfo.primary;
+
+          const setTxt = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+          };
+
+          const fmtUsd = (micro) => `$${(micro / 100000000).toFixed(4)}`;
+          const fmtMicro = (micro) => micro >= 1000000 ? `${(micro / 1000000).toFixed(1)}M μ¢` : `${micro.toLocaleString()} μ¢`;
+
+          setTxt('puterQuotaUsedPctLabel', `Used: ${st.usedPct.toFixed(1)}% (${fmtUsd(st.usedMicro)})`);
+          setTxt('puterQuotaLeftPctLabel', `Remaining: ${st.leftPct.toFixed(1)}% Left`);
+          const bar = document.getElementById('puterQuotaProgressBar');
+          if (bar) bar.style.width = `${Math.max(1, st.usedPct)}%`;
+
+          setTxt('puterStatTotalAllowance', `${fmtUsd(st.totalAllow)} (${fmtMicro(st.totalAllow)})`);
+          setTxt('puterStatTotalTokensEst', `~${st.estTotalTokens.toLocaleString()} tokens capacity`);
+          setTxt('puterStatUsedQuota', `${fmtUsd(st.usedMicro)} (${fmtMicro(st.usedMicro)})`);
+          setTxt('puterStatUsedTokensEst', `${st.estUsedTokens.toLocaleString()} tok • ${Math.max(this.callEvents.length, this.remoteApiCalls)} calls`);
+          setTxt('puterStatRemainingQuota', `${fmtUsd(st.effectiveRemMicro)} (${fmtMicro(st.effectiveRemMicro)})`);
+          setTxt('puterStatRemainingTokensEst', `~${st.estLeftTokens.toLocaleString()} tokens left`);
+
+          setTxt('puterStatCanStillUseEasy', `~${st.easyMovesLeft.toLocaleString()} moves (~${st.easyGamesLeft} games)`);
+          setTxt('puterStatCanStillUseHard', `~${st.hardMovesLeft.toLocaleString()} moves (~${st.hardGamesLeft} games)`);
+
+          setTxt('puterStatHourlyCalls', `${st.hourlyCalls} calls`);
+          setTxt('puterStatHourlyTokens', `${st.hourlyTokens.toLocaleString()} tok • ${fmtMicro(st.hourlyMicro)}`);
+          setTxt('puterStatDailyCalls', `${st.dailyCalls} calls`);
+          setTxt('puterStatDailyTokens', `${st.dailyTokens.toLocaleString()} tok • ${fmtMicro(st.dailyMicro)}`);
+          setTxt('puterStatSessionCalls', `${this.sessionCalls} calls`);
+          setTxt('puterStatAvgLatency', this.sessionCalls > 0 ? `Avg: ${Math.round(this.totalLatencyMs / this.sessionCalls)} ms` : 'Avg: — ms');
+
+          MorrisLearner.load();
+          setTxt('aiBrainGamesLearned', `${MorrisLearner.gamesLearned} games`);
+          setTxt('aiBrainPatternsCount', `${MorrisLearner.mistakesCorrected} fixes • ${MorrisLearner.activeArchetypeId.replace(/_/g, ' ')}`);
+          setTxt('puterLastThoughtText', this.lastThought);
+
+          const authLine = document.getElementById('puterAuthAccountLine');
+          if (authLine) {
+            authLine.textContent = this.username
+              ? `Signed into Puter as @${this.username} • Live Monthly & Rolling Hourly/Daily Quota`
+              : 'Puter User-Pays Cloud AI • Hourly, Daily & Monthly Quota Tracker';
+          }
+        },
+
+        formatActionDesc(a) {
+          if (!a) return 'none';
+          const lbl = (id) => (id !== undefined && id >= 0 && Nodes[id]) ? (Nodes[id].label || `N${id + 1}`) : `N${id}`;
+          if (a.type === 'drop') return `DROP at ${lbl(a.to)} (node ${a.to})`;
+          if (a.type === 'remove_opponent') return `REMOVE opponent bead at ${lbl(a.capturedId)} (node ${a.capturedId})`;
+          if (a.type === 'jump') return `JUMP ${lbl(a.from)} -> ${lbl(a.to)} capturing ${lbl(a.capturedId)}`;
+          return `MOVE ${lbl(a.from)} -> ${lbl(a.to)} (nodes ${a.from}->${a.to})`;
+        },
+
+        async executePuterAITurn(aiP, fallbackFn) {
+          this.load();
+          const st = this.getWindowStats();
+          if (st.effectiveRemMicro <= 0) {
+            this.triggerQuotaExhaustedFallback('0 remaining quota');
+            fallbackFn();
+            return;
+          }
+          if (typeof puter === 'undefined' || !puter.ai || typeof puter.ai.chat !== 'function') {
+            this.triggerQuotaExhaustedFallback('Puter.js cloud SDK offline/unreachable');
+            fallbackFn();
+            return;
+          }
+
+          // Gather legal moves and our Grandmaster engine's top ranked candidates
+          let candidateList = [];
+          let localBest = null;
+
+          if (GameState.gameFamily === 'morris') {
+            const res = computeBestLocalMorrisAction();
+            if (!res || !res.bestAction) {
+              fallbackFn();
+              return;
+            }
+            localBest = res.bestAction;
+            candidateList = (res.ranked || []).slice(0, 8);
+          } else {
+            const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(aiP);
+            if (total === 0) {
+              fallbackFn();
+              return;
+            }
+            const rawPool = allJumps.length > 0 ? allJumps : allSteps;
+            const ordered = GameState.gameFamily === 'gomoku'
+              ? rawPool.slice(0, 10)
+              : orderGeneralMoves(rawPool, GameState.board, aiP, true).slice(0, 8);
+            localBest = normalizeDualActionForAI(ordered[0]);
+            candidateList = ordered.map((m, idx) => ({ action: normalizeDualActionForAI(m), score: 1000 - idx * 50 }));
+          }
+
+          if (candidateList.length <= 1 && localBest) {
+            if (GameState.gameFamily === 'morris') {
+              MorrisLearner.recordStep(GameState.board, localBest, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
+            }
+            executeAction(localBest, false);
+            return;
+          }
+
+          const diff = GameState.aiDifficulty;
+          const modelRoute = this.getModelForDifficulty(diff);
+          const activeModel = modelRoute.primary;
+
+          GameState.puterAIThinking = true;
+          const subEl = document.getElementById('turnSubtext');
+          if (subEl) {
+            subEl.textContent = `🧠 Real AI (${activeModel}) analyzing board (${diff.toUpperCase()})...`;
+          }
+
+          const optionsText = candidateList.map((item, idx) => {
+            return `${idx}: ${this.formatActionDesc(item.action)} [tacticalScore=${item.score}]`;
+          }).join('\n');
+
+          const recentLog = GameState.moveLog.slice(-6).join(' | ') || 'Opening turn';
+          const rolePrompt = (diff === 'easy' || diff === 'medium')
+            ? `You are playing ${GameState.gridPreset} at ${diff.toUpperCase()} level. Pick a legal move index from the list below. Reply ONLY with compact JSON: {"idx":0,"note":"short reason"}`
+            : `You are a World Grandmaster playing ${GameState.gridPreset} (${GameState.gameFamily}) at ${diff.toUpperCase()} difficulty. Avoid any back-and-forth move loops, maximize mill/capture forks, and suffocate opponent mobility. Choose the strongest move index (0 is top engine line). Reply ONLY with compact JSON: {"idx":0,"note":"short tactical reason"}`;
+
+          const userPrompt = `Game: ${GameState.gridPreset} | Turn: P${aiP} | Reserves P1:${GameState.reserves[1]} P2:${GameState.reserves[2]} | Eaten P1:${GameState.capturedBy[1]} P2:${GameState.capturedBy[2]} | Recent: ${recentLog}\nCandidates:\n${optionsText}`;
+
+          const startTime = performance.now();
+          let chosenAction = localBest;
+          let chosenNote = 'Selected top grandmaster line';
+          let usedModel = activeModel;
+          let succeeded = false;
+
+          for (const tryModel of modelRoute.fallbacks) {
+            usedModel = tryModel;
+            try {
+              const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 7500));
+              const chatPromise = puter.ai.chat(
+                [
+                  { role: 'system', content: rolePrompt },
+                  { role: 'user', content: userPrompt }
+                ],
+                { model: tryModel }
+              );
+              const resp = await Promise.race([chatPromise, timeoutPromise]);
+              let text = '';
+              if (typeof resp === 'string') text = resp;
+              else if (resp && resp.message && typeof resp.message.content === 'string') text = resp.message.content;
+              else if (resp && resp.message && Array.isArray(resp.message.content)) {
+                text = resp.message.content.map((c) => c.text || '').join(' ');
+              } else if (resp && typeof resp.text === 'string') text = resp.text;
+              else text = JSON.stringify(resp || '');
+
+              const matchJson = text.match(/\{[\s\S]*?\}/);
+              let pickedIdx = 0;
+              if (matchJson) {
+                try {
+                  const parsed = JSON.parse(matchJson[0]);
+                  if (typeof parsed.idx === 'number' && parsed.idx >= 0 && parsed.idx < candidateList.length) {
+                    pickedIdx = parsed.idx;
+                  } else if (typeof parsed.moveIndex === 'number' && parsed.moveIndex >= 0 && parsed.moveIndex < candidateList.length) {
+                    pickedIdx = parsed.moveIndex;
+                  }
+                  if (parsed.note || parsed.plan) chosenNote = String(parsed.note || parsed.plan).slice(0, 90);
+                } catch (e) {}
+              } else {
+                const numMatch = text.match(/\b([0-7])\b/);
+                if (numMatch) {
+                  const n = parseInt(numMatch[1], 10);
+                  if (n >= 0 && n < candidateList.length) pickedIdx = n;
+                }
+              }
+
+              // In Hardest mode, never let the LLM pick a move that scores drastically worse than the top grandmaster line or enters a loop
+              if ((diff === 'hard' || diff === 'hardest') && pickedIdx > 0) {
+                const topSc = candidateList[0].score;
+                const pickSc = candidateList[pickedIdx].score;
+                if (topSc - pickSc > 18000) {
+                  pickedIdx = 0;
+                }
+              }
+
+              chosenAction = candidateList[pickedIdx].action;
+              const estTokens = Math.max(120, Math.round((rolePrompt.length + userPrompt.length + text.length) / 3.8));
+              const latency = Math.round(performance.now() - startTime);
+              this.recordCallTelemetry(usedModel, diff, estTokens, latency, chosenNote);
+              succeeded = true;
+              break;
+            } catch (err) {
+              const errMsg = String((err && (err.message || err.code || err.status)) || err || '').toLowerCase();
+              if (errMsg.includes('402') || errMsg.includes('insufficient') || errMsg.includes('quota') || errMsg.includes('limit') || errMsg.includes('credit')) {
+                this.triggerQuotaExhaustedFallback(errMsg.slice(0, 40));
+                fallbackFn();
+                return;
+              }
+            }
+          }
+
+          GameState.puterAIThinking = false;
+          if (!succeeded) {
+            this.triggerQuotaExhaustedFallback('Cloud AI unreachable — using Built-in Grandmaster AI');
+            fallbackFn();
+            return;
+          }
+
+          if (GameState.gameOver || GameState.currentTurn !== aiP) return;
+          if (GameState.gameFamily === 'morris') {
+            MorrisLearner.recordStep(GameState.board, chosenAction, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
+          }
+          executeAction(chosenAction, false);
+        }
+      };
+
       function runAITurn() {
         const aiP = GameState.aiPlayerRole || 2;
         if (GameState.gameOver || GameState.currentTurn !== aiP || !GameState.vsAI) return;
-        if (GameState.graceTimerInterval) return;
+        if (GameState.graceTimerInterval || GameState.puterAIThinking) return;
+
+        if (GameState.usePuterAI) {
+          PuterAIManager.executePuterAITurn(aiP, () => {
+            runBuiltinAITurn();
+          });
+          return;
+        }
+        runBuiltinAITurn();
+      }
+
+      function runBuiltinAITurn() {
+        const aiP = GameState.aiPlayerRole || 2;
+        if (GameState.gameOver || GameState.currentTurn !== aiP || !GameState.vsAI) return;
 
         if (GameState.gameFamily === 'morris') {
           runNavakankariAI();
@@ -7266,7 +8630,7 @@
           const midR = (GameState.rows - 1) / 2;
           const midC = (GameState.cols - 1) / 2;
           let bestStep = allSteps[0];
-          let bestScore = -9999;
+          let bestScore = -999999;
           for (const s of allSteps) {
             const simBoard = [...GameState.board];
             simBoard[s.from] = 0;
@@ -7274,7 +8638,8 @@
             const oppReplies = getAllLegalActionsForPlayer(aiP === 1 ? 2 : 1, simBoard);
             const dangerPenalty = oppReplies.allJumps.length * 12;
             const centerBonus = (4 - Math.abs(midR - Nodes[s.to].r)) * 1.5 + (4 - Math.abs(midC - Nodes[s.to].c)) * 1.1;
-            const score = centerBonus - dangerPenalty + Math.random() * 2.5;
+            const loopInfo = LoopTracker.evaluateLoopPenalty(s, GameState.board, simBoard, aiP, GameState.reserves[1], GameState.reserves[2], false);
+            const score = centerBonus - dangerPenalty - loopInfo.penalty * 0.05 + loopInfo.breakthroughBonus * 0.05 + Math.random() * 2.5;
             if (score > bestScore) {
               bestScore = score;
               bestStep = s;
@@ -7284,10 +8649,10 @@
           return;
         }
 
-        const searchDepth = diff === 'hardest' ? 6 : 2;
+        const searchDepth = diff === 'hardest' ? 6 : 3;
         const candidatePool = allJumps.length > 0
-          ? [...allJumps, ...((GameState.mandatoryCapture === 'forced' || GameState.gameFamily === 'fanorona') ? [] : orderGeneralMoves(allSteps, GameState.board, aiP).slice(0, 10))]
-          : orderGeneralMoves(allSteps, GameState.board, aiP).slice(0, 20);
+          ? [...allJumps, ...((GameState.mandatoryCapture === 'forced' || GameState.gameFamily === 'fanorona') ? [] : orderGeneralMoves(allSteps, GameState.board, aiP, true).slice(0, 10))]
+          : orderGeneralMoves(allSteps, GameState.board, aiP, true).slice(0, 20);
 
         let bestAction = normalizeDualActionForAI(candidatePool[0]);
         let bestVal = -Infinity;
@@ -7297,7 +8662,10 @@
           const act = normalizeDualActionForAI(rawAct);
           const nextBoard = simulateTurnOnBoard(GameState.board, act, aiP);
           const capBonus = act.type === 'jump' ? 60 * (act.capturedIds ? act.capturedIds.length : 1) : 0;
-          const val = capBonus + minimaxAlphaBeta(
+          const loopInfo = act.type === 'step'
+            ? LoopTracker.evaluateLoopPenalty(act, GameState.board, nextBoard, aiP, GameState.reserves[1], GameState.reserves[2], false)
+            : { penalty: 0, breakthroughBonus: 0 };
+          const val = capBonus - loopInfo.penalty * 0.1 + loopInfo.breakthroughBonus * 0.1 + minimaxAlphaBeta(
             nextBoard,
             searchDepth - 1,
             -Infinity,
@@ -7311,22 +8679,6 @@
           if (val > bestVal) {
             bestVal = val;
             bestAction = act;
-          }
-        }
-
-        if (diff === 'hardest' && scoredActions.length > 1) {
-          const elite = scoredActions.filter((x) => x.val >= bestVal - 1.2);
-          if (elite.length > 1) {
-            const weights = elite.map((x) => Math.exp((x.val - bestVal) / 0.4));
-            const totalW = weights.reduce((a, b) => a + b, 0);
-            let r = Math.random() * totalW;
-            for (let i = 0; i < elite.length; i++) {
-              r -= weights[i];
-              if (r <= 0) {
-                bestAction = elite[i].act;
-                break;
-              }
-            }
           }
         }
 
@@ -8156,9 +9508,7 @@
        * ------------------------------------------------------------------- */
       function handleBoardTap(clientX, clientY) {
         if (!ProfileManager.hasProfile()) {
-          ProfileManager.openModal(true);
-          showBoardToast('Please create your Player Profile first!');
-          return;
+          ProfileManager.save({ name: 'Player 1', title: 'Sardar', avatar: '👑', p2Name: 'Player 2' });
         }
         if (GameState.gameOver) return;
         if (GameState.graceTimerInterval) {
@@ -8699,18 +10049,29 @@
         }
 
         const btnMainAI = document.getElementById('btnMainModeAI');
+        const btnMainPuter = document.getElementById('btnMainModePuterAI');
         const btnMain2P = document.getElementById('btnMainMode2P');
         const diffGroup = document.getElementById('mainAIDiffGroup');
         if (btnMainAI && btnMain2P) {
           if (GameState.vsAI && GameState.mode === 'pass_play') {
-            btnMainAI.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1';
+            if (GameState.usePuterAI) {
+              btnMainAI.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1';
+              if (btnMainPuter) btnMainPuter.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-indigo-600 text-white shadow-sm flex items-center gap-1';
+            } else {
+              btnMainAI.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1';
+              if (btnMainPuter) btnMainPuter.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-indigo-900 border border-indigo-300 flex items-center gap-1';
+            }
             btnMain2P.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1';
             if (diffGroup) diffGroup.classList.remove('opacity-40', 'pointer-events-none');
           } else {
             btnMain2P.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1';
             btnMainAI.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1';
+            if (btnMainPuter) btnMainPuter.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-indigo-900 border border-indigo-300 flex items-center gap-1';
             if (diffGroup) diffGroup.classList.add('opacity-40', 'pointer-events-none');
           }
+        }
+        if (typeof PuterAIManager !== 'undefined') {
+          PuterAIManager.syncModalUI();
         }
 
         const btnModalHuman = document.getElementById('btnOpponentHuman');
@@ -8767,6 +10128,11 @@
       }
 
       function getAILabel() {
+        if (GameState.usePuterAI && typeof PuterAIManager !== 'undefined') {
+          const m = PuterAIManager.getModelForDifficulty(GameState.aiDifficulty).primary;
+          const shortM = m.replace('-latest', '');
+          return `Real AI • ${shortM}`;
+        }
         const map = { easy: 'Easy AI', medium: 'Medium AI', hard: 'Hard AI', hardest: 'Khan AI (Hardest)' };
         return map[GameState.aiDifficulty] || 'Tactical AI';
       }
@@ -9595,7 +10961,7 @@
               showBoardToast(okMsg || 'Copied to clipboard!');
               return true;
             } catch (e2) {
-              window.prompt('Copy this:', text);
+              showBoardToast('Code ready: ' + String(text).slice(0, 32));
               return false;
             }
           }
@@ -12028,15 +13394,150 @@
         WebRTCManager.cleanup();
         GameState.mode = 'pass_play';
         GameState.vsAI = true;
+        GameState.usePuterAI = false;
         GameState.localPlayerRole = null;
         SoundEngine.select();
         syncSettingsControlsFromState();
         updateHUD();
-        showBoardToast(`Solo Mode: Playing vs ${getAILabel()}`);
+        showBoardToast(`Solo Mode: Playing vs Built-in ${getAILabel()}`);
         if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
           setTimeout(runAITurn, 380);
         }
       });
+
+      const btnMainModePuter = document.getElementById('btnMainModePuterAI');
+      if (btnMainModePuter) {
+        btnMainModePuter.addEventListener('click', () => {
+          forfeitAndDetachOnline('switched to Real Puter AI mode');
+          WebRTCManager.cleanup();
+          GameState.mode = 'pass_play';
+          GameState.vsAI = true;
+          GameState.usePuterAI = !GameState.usePuterAI;
+          GameState.localPlayerRole = null;
+          SoundEngine.select();
+          PuterAIManager.refreshQuotaFromPuter(true);
+          syncSettingsControlsFromState();
+          updateHUD();
+          if (GameState.usePuterAI) {
+            const mod = PuterAIManager.getModelForDifficulty(GameState.aiDifficulty).primary;
+            showBoardToast(`🧠 Real AI Mode ON! Playing vs Puter Cloud (${mod})`);
+          } else {
+            showBoardToast(`🤖 Switched to Built-in Grandmaster AI`);
+          }
+          if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
+            setTimeout(runAITurn, 380);
+          }
+        });
+      }
+
+      const openPuterModalFn = () => {
+        SoundEngine.select();
+        PuterAIManager.refreshQuotaFromPuter(true);
+        PuterAIManager.syncModalUI();
+        const m = document.getElementById('modalPuterStats');
+        if (m) {
+          m.classList.remove('hidden');
+          m.classList.add('flex');
+        }
+      };
+      const btnOpenPuterSt = document.getElementById('btnOpenPuterStats');
+      if (btnOpenPuterSt) btnOpenPuterSt.addEventListener('click', openPuterModalFn);
+      const btnHdrPuter = document.getElementById('btnHeaderPuterQuota');
+      if (btnHdrPuter) btnHdrPuter.addEventListener('click', openPuterModalFn);
+
+      const btnClosePuter = document.getElementById('btnClosePuterModal');
+      if (btnClosePuter) {
+        btnClosePuter.addEventListener('click', () => {
+          SoundEngine.select();
+          const m = document.getElementById('modalPuterStats');
+          if (m) {
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+          }
+        });
+      }
+
+      const btnModBuiltin = document.getElementById('btnModalSelectBuiltinAI');
+      if (btnModBuiltin) {
+        btnModBuiltin.addEventListener('click', () => {
+          GameState.vsAI = true;
+          GameState.usePuterAI = false;
+          SoundEngine.select();
+          syncSettingsControlsFromState();
+          updateHUD();
+          showBoardToast('🤖 Built-in Grandmaster AI Active');
+          if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
+            setTimeout(runAITurn, 360);
+          }
+        });
+      }
+
+      const btnModPuter = document.getElementById('btnModalSelectPuterAI');
+      if (btnModPuter) {
+        btnModPuter.addEventListener('click', () => {
+          GameState.vsAI = true;
+          GameState.usePuterAI = true;
+          SoundEngine.select();
+          PuterAIManager.refreshQuotaFromPuter(true);
+          syncSettingsControlsFromState();
+          updateHUD();
+          const mod = PuterAIManager.getModelForDifficulty(GameState.aiDifficulty).primary;
+          showBoardToast(`🧠 Real AI (Puter) Active — Model: ${mod}`);
+          if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
+            setTimeout(runAITurn, 360);
+          }
+        });
+      }
+
+      const selPuterMod = document.getElementById('selPuterModelOverride');
+      if (selPuterMod) {
+        selPuterMod.addEventListener('change', (e) => {
+          PuterAIManager.modelOverride = e.target.value || 'auto';
+          PuterAIManager.save();
+          PuterAIManager.syncModalUI();
+          updateHUD();
+          const mod = PuterAIManager.getModelForDifficulty(GameState.aiDifficulty).primary;
+          showBoardToast(`🧠 Puter AI Model set to: ${mod}`);
+        });
+      }
+
+      const btnRefQuota = document.getElementById('btnRefreshPuterQuota');
+      if (btnRefQuota) {
+        btnRefQuota.addEventListener('click', () => {
+          SoundEngine.select();
+          PuterAIManager.refreshQuotaFromPuter(false);
+        });
+      }
+
+      const btnPuterLogin = document.getElementById('btnPuterSignIn');
+      if (btnPuterLogin) {
+        btnPuterLogin.addEventListener('click', async () => {
+          SoundEngine.select();
+          if (typeof puter !== 'undefined' && puter.auth && typeof puter.auth.signIn === 'function') {
+            try {
+              await puter.auth.signIn();
+              await PuterAIManager.refreshQuotaFromPuter(false);
+            } catch (e) {
+              showBoardToast('Puter sign-in window closed or unavailable in sandbox.');
+            }
+          } else {
+            showBoardToast('Puter SDK is running in guest mode.');
+          }
+        });
+      }
+
+      const btnResetPuterLocal = document.getElementById('btnResetLocalPuterStats');
+      if (btnResetPuterLocal) {
+        btnResetPuterLocal.addEventListener('click', () => {
+          SoundEngine.select();
+          PuterAIManager.callEvents = [];
+          PuterAIManager.sessionCalls = 0;
+          PuterAIManager.totalLatencyMs = 0;
+          PuterAIManager.save();
+          PuterAIManager.syncModalUI();
+          showBoardToast('Cleared local hourly & daily Puter counters.');
+        });
+      }
 
       document.getElementById('btnMainMode2P').addEventListener('click', () => {
         forfeitAndDetachOnline('switched to local 2P mode');
@@ -12330,8 +13831,12 @@
             if (clip) return clip;
           } catch (e) {}
         }
-        const manual = window.prompt(promptTitle, '');
-        return (manual || '').trim();
+        const acc = document.getElementById('rtcManualAccordion');
+        if (acc) acc.classList.remove('hidden');
+        const guestIn = document.getElementById('txtGuestOfferIn');
+        if (guestIn && guestIn.value.trim()) return guestIn.value.trim();
+        showBoardToast(promptTitle + ' Use the Manual Text Code box below.');
+        return '';
       }
 
       const btnPcPasteOffer = document.getElementById('btnPcPasteHostOffer');
@@ -12934,7 +14439,7 @@
               });
             }
           } else {
-            startMidGameGraceTimer(myRole, GameState.disconnectGraceSeconds || 60, 'minimized/left tab mid-game', true);
+            saveLiveMatchSnapshot(false);
           }
         } else if (document.visibilityState === 'visible') {
           if (onlineLive) {
@@ -13244,7 +14749,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=d4bc8ea7e7').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=38ee3c648e').catch(() => {});
         });
       }
 
@@ -13768,8 +15273,10 @@
         resizeCanvas();
         WifiLobby.init();
         if (!hasExistingProfile) {
-          ProfileManager.openModal(true);
+          ProfileManager.save({ name: 'Player 1', title: 'Sardar', avatar: '👑', p2Name: 'Player 2' });
         }
+        PuterAIManager.load();
+        PuterAIManager.refreshQuotaFromPuter(true);
         if (inviteRoom) {
           try { history.replaceState(null, '', location.pathname); } catch (e) {}
           setTimeout(() => {
