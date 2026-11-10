@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwa-cache-cbbb4dff7b';
+const CACHE_NAME = 'pwa-cache-e32356c808';
 const ASSETS = [
   "./.gitignore",
   "./android/.gitignore",

@@ -700,6 +700,14 @@
         <span id="connStatusLabel" class="hidden sm:inline">P2P</span>
       </button>
 
+      <button id="btnHeaderPause" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 h-7 sm:h-7.5 px-2 rounded-lg text-[10.5px] sm:text-[11px] font-extrabold bg-gradient-to-b from-amber-200 to-amber-300 hover:from-white hover:to-amber-200 text-walnut-900 border border-amber-400 shadow-[0_1.5px_0_#B45309] active:translate-y-0.5" aria-label="Pause match or open main menu" title="Pause Match / Main Menu (Space or Esc)">
+        <svg id="iconHeaderPause" class="w-3.5 h-3.5 text-walnut-900" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6" y="4" width="4" height="16" rx="1" />
+          <rect x="14" y="4" width="4" height="16" rx="1" />
+        </svg>
+        <span id="lblHeaderPause" class="hidden sm:inline font-black">Pause</span>
+      </button>
+
       <button id="btnPlayImmersive" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 h-7 sm:h-7.5 px-2 rounded-lg text-[10.5px] sm:text-[11px] font-extrabold bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white border border-teal-800 shadow-[0_1.5px_0_#115E59] active:translate-y-0.5 active:shadow-none" aria-label="Play in fullscreen immersive mode" title="Play Fullscreen (Distraction-Free Immersive Mode)">
         <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
@@ -1044,6 +1052,64 @@
           </div>
         </div>
       </div>
+
+      <div id="mainMenuOverlay" class="absolute inset-0 z-40 flex items-center justify-center p-3 sm:p-4 bg-walnut-950/70 backdrop-blur-sm transition-opacity duration-200">
+        <div class="w-full max-w-sm sm:max-w-md bg-parchment-50 border-4 border-amber-500 rounded-3xl p-5 sm:p-6 text-center shadow-2xl text-walnut-900 space-y-3.5 relative overflow-hidden">
+          <div class="pashtun-border absolute inset-x-0 top-0 h-1.5"></div>
+          
+          <div class="flex items-center justify-center gap-2">
+            <span id="menuBadgeIcon" class="text-2xl sm:text-3xl leading-none">👑</span>
+            <span id="menuStateBadge" class="text-[10px] sm:text-xs font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-900 border border-teal-300">
+              Ready to Play
+            </span>
+          </div>
+
+          <div>
+            <h2 id="menuGameTitle" class="font-display text-xl sm:text-2xl font-black text-walnut-900 tracking-wide">
+              6×6 Katar Classic
+            </h2>
+            <p id="menuGameSubtitle" class="text-xs sm:text-sm font-semibold text-walnut-600 mt-0.5">
+              36 Nodes • 18v18 Beads • Pashtun War Game
+            </p>
+          </div>
+
+          <div class="flex items-center justify-center gap-1 p-1 bg-parchment-200/90 rounded-2xl border border-parchment-300 text-[11px] font-black">
+            <button id="btnMenuModeAI" type="button" class="flex-1 py-1 px-2 rounded-xl transition-all" title="Play vs Built-in Grandmaster AI">
+              🤖 Solo vs AI
+            </button>
+            <button id="btnMenuMode2P" type="button" class="flex-1 py-1 px-2 rounded-xl transition-all" title="Local Pass &amp; Play 2-Player">
+              👥 2-Player
+            </button>
+            <button id="btnMenuModePuter" type="button" class="flex-1 py-1 px-2 rounded-xl transition-all" title="Play with Cloud Puter AI">
+              🧠 Real AI
+            </button>
+          </div>
+
+          <div class="pt-1">
+            <button id="btnMenuPlay" type="button" class="android-btn w-full py-3 sm:py-3.5 rounded-2xl bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-walnut-900 font-black text-base sm:text-lg shadow-[0_4px_0_#B45309] active:translate-y-1 active:shadow-none flex items-center justify-center gap-2">
+              <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.52.86l10.2-6.5a1 1 0 0 0 0-1.72L9.52 4.64A1 1 0 0 0 8 5.5z"/></svg>
+              <span id="btnMenuPlayLabel">Play Match</span>
+            </button>
+
+            <button id="btnMenuResume" type="button" class="hidden android-btn w-full py-3 sm:py-3.5 rounded-2xl bg-gradient-to-b from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-white font-black text-base sm:text-lg shadow-[0_4px_0_#065F46] active:translate-y-1 active:shadow-none flex items-center justify-center gap-2">
+              <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.52.86l10.2-6.5a1 1 0 0 0 0-1.72L9.52 4.64A1 1 0 0 0 8 5.5z"/></svg>
+              <span>Resume Match</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2 pt-0.5">
+            <button id="btnMenuReplay" type="button" class="android-btn flex-1 py-2 rounded-xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400 shadow-[0_2px_0_#B8976C] flex items-center justify-center gap-1.5" title="Restart match from move 1">
+              <span>🔄</span> <span>Restart / Replay</span>
+            </button>
+            <button id="btnMenuRules" type="button" class="android-btn px-3 py-2 rounded-xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400 shadow-[0_2px_0_#B8976C] flex items-center justify-center gap-1" title="Customize Grid, Bead Count &amp; Rules">
+              <span>⚙️</span> <span>Settings</span>
+            </button>
+            <button id="btnMenuExitStandby" type="button" class="hidden android-btn px-3 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-900 font-extrabold text-xs border border-rose-300 shadow-[0_2px_0_#FDA4AF] flex items-center justify-center gap-1" title="Abandon match and return to Main Menu">
+              <span>🏠</span> <span>Menu</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section id="sidePanelP1" class="w-full lg:w-72 flex flex-col gap-1 sm:gap-1.5 shrink-0">
@@ -1198,6 +1264,13 @@
           <polyline points="12 7 12 12 15 15" />
         </svg>
         <span>Away</span>
+      </button>
+      <button type="button" data-imm-action="pause" class="imm-act" aria-label="Pause match or open main menu" title="Pause Match / Main Menu">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6" y="4" width="4" height="16" rx="1" />
+          <rect x="14" y="4" width="4" height="16" rx="1" />
+        </svg>
+        <span>Menu</span>
       </button>
       <button type="button" data-imm-action="restart" class="imm-act imm-danger" aria-label="Restart match">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -2167,12 +2240,17 @@
       <div class="text-[11px] font-bold text-walnut-700">
         Created by Yasin Ullah • Dedicated to Muhib Ullah ❤️
       </div>
-      <div class="flex gap-2">
-        <button id="btnVictoryPlayAgain" type="button" class="android-btn flex-1 py-3 rounded-2xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-sm shadow-[0_4px_0_#B45309]">
-          Play Rematch
-        </button>
-        <button id="btnVictoryChangeGrid" type="button" class="android-btn px-4 py-3 rounded-2xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400">
-          Change Grid
+      <div class="space-y-2">
+        <div class="flex gap-2">
+          <button id="btnVictoryPlayAgain" type="button" class="android-btn flex-1 py-3 rounded-2xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-sm shadow-[0_4px_0_#B45309]">
+            Play Rematch
+          </button>
+          <button id="btnVictoryChangeGrid" type="button" class="android-btn px-4 py-3 rounded-2xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400">
+            Change Grid
+          </button>
+        </div>
+        <button id="btnVictoryExitToMenu" type="button" class="android-btn w-full py-2.5 rounded-xl bg-parchment-200 hover:bg-parchment-300 text-walnut-800 font-extrabold text-xs border border-parchment-400 shadow-[0_1.5px_0_#B8976C] flex items-center justify-center gap-1.5">
+          <span>🏠</span> <span>Exit to Main Menu</span>
         </button>
       </div>
     </div>
@@ -2782,7 +2860,9 @@
         vsAI: true,
         autoRotate: false,
         boardFlipped: false,
-        localPlayerRole: null
+        localPlayerRole: null,
+        isStarted: false,
+        isPaused: false
       };
 
       /* -------------------------------------------------------------------
@@ -4206,6 +4286,10 @@
         saveLiveMatchSnapshot(false);
         requestRender();
 
+        if (typeof MainMenu !== 'undefined') {
+          MainMenu.syncUI();
+        }
+
         if (broadcast && WebRTCManager.isConnected()) {
           WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
           if (GameState.localPlayerRole === 1) {
@@ -4213,7 +4297,7 @@
           }
         }
 
-        if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
+        if (GameState.isStarted && !GameState.isPaused && !GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
           setTimeout(runAITurn, 480);
         }
       }
@@ -4261,13 +4345,15 @@
         }
         syncImmersiveTimer();
 
+        if (!GameState.isStarted || GameState.isPaused) return;
+
         GameState.timerInterval = setInterval(() => {
           if (GameState.gameOver) {
             clearInterval(GameState.timerInterval);
             GameState.timerInterval = null;
             return;
           }
-          if (GameState.graceTimerInterval) return; // Pause turn clock while waiting for disconnected player
+          if (GameState.graceTimerInterval || GameState.isPaused || !GameState.isStarted) return;
           GameState.timeLeft--;
           if (badge) {
             badge.textContent = `${Math.max(0, GameState.timeLeft)}s`;
@@ -4313,13 +4399,15 @@
         GameState.matchTimeLeft = GameState.matchTimerSeconds;
         updateMatchTimerDisplay();
 
+        if (!GameState.isStarted || GameState.isPaused) return;
+
         GameState.matchTimerInterval = setInterval(() => {
           if (GameState.gameOver) {
             clearInterval(GameState.matchTimerInterval);
             GameState.matchTimerInterval = null;
             return;
           }
-          if (GameState.graceTimerInterval) return;
+          if (GameState.graceTimerInterval || GameState.isPaused || !GameState.isStarted) return;
           GameState.matchTimeLeft--;
           updateMatchTimerDisplay();
           if (GameState.matchTimeLeft <= 0) {
@@ -5109,7 +5197,7 @@
             showBoardToast('Previous offline match restored locally — continue here or re-link via QR.');
           }
 
-          if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
+          if (GameState.isStarted && !GameState.isPaused && !GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
             setTimeout(runAITurn, 480);
           }
           return true;
@@ -8515,6 +8603,7 @@
       function runAITurn() {
         const aiP = GameState.aiPlayerRole || 2;
         if (GameState.gameOver || GameState.currentTurn !== aiP || !GameState.vsAI) return;
+        if (!GameState.isStarted || GameState.isPaused) return;
         if (GameState.graceTimerInterval || GameState.puterAIThinking) return;
 
         if (GameState.usePuterAI) {
@@ -9509,6 +9598,15 @@
           ProfileManager.save({ name: 'Player 1', title: 'Sardar', avatar: '👑', p2Name: 'Player 2' });
         }
         if (GameState.gameOver) return;
+        if (!GameState.isStarted) {
+          if (typeof MainMenu !== 'undefined') MainMenu.openStandby();
+          showBoardToast('Tap "Play Match" to start playing!');
+          return;
+        }
+        if (GameState.isPaused) {
+          showBoardToast('Match is paused — tap "Resume" to continue!');
+          return;
+        }
         if (GameState.graceTimerInterval) {
           showBoardToast('Match is paused for away player — tap "I\'m Back (Resume)" to continue!');
           return;
@@ -12705,14 +12803,17 @@
             document.getElementById('modalRules').classList.add('flex');
             return;
           }
-          if (preset === GameState.gridPreset && !GameState.gameOver) {
+          if (preset === GameState.gridPreset && !GameState.gameOver && GameState.isStarted && typeof MainMenu !== 'undefined' && !MainMenu.isOpen) {
             showBoardToast(`Already playing ${chip.textContent.trim()}`);
             return;
           }
           guardMidGameAction(`Switch Game to ${chip.textContent.trim()}`, () => {
             applyGridPresetConfig(preset);
+            GameState.isStarted = false;
+            GameState.isPaused = false;
             initMatch(true);
-            showBoardToast(`Switched to ${chip.textContent.trim()}`);
+            if (typeof MainMenu !== 'undefined') MainMenu.openStandby();
+            showBoardToast(`Viewing ${chip.textContent.trim()} — Tap Play to start!`);
           });
         });
       });
@@ -13260,7 +13361,8 @@
         SoundEngine.select();
         guardMidGameAction('Restart Current Match', () => {
           initMatch(true);
-          showBoardToast('New match started!');
+          MainMenu.play();
+          showBoardToast('Match restarted!');
         });
       });
 
@@ -13272,6 +13374,7 @@
           return;
         }
         initMatch(true);
+        MainMenu.play();
       });
 
       document.getElementById('btnVictoryChangeGrid').addEventListener('click', () => {
@@ -13281,6 +13384,16 @@
         document.getElementById('modalRules').classList.remove('hidden');
         document.getElementById('modalRules').classList.add('flex');
       });
+
+      const btnExitMenu = document.getElementById('btnVictoryExitToMenu');
+      if (btnExitMenu) {
+        btnExitMenu.addEventListener('click', () => {
+          SoundEngine.select();
+          document.getElementById('modalVictory').classList.add('hidden');
+          document.getElementById('modalVictory').classList.remove('flex');
+          MainMenu.exitToStandby();
+        });
+      }
 
       const tabPassPlay = document.getElementById('tabModePassPlay');
       const tabWebRTC = document.getElementById('tabModeWebRTC');
@@ -13994,6 +14107,255 @@
         WebRTCManager.runLoopbackSimulation();
       });
 
+      const MainMenu = {
+        isOpen: false,
+
+        getVariantMeta(preset) {
+          const map = {
+            '6x6': { title: '6×6 Katar Classic', subtitle: '36 Nodes • 18v18 Beads • Pashtun War Game', icon: '👑' },
+            '6x6_diagonal': { title: '6×6 Diagonal Lines', subtitle: 'Diagonal Tracks • Aggressive Capture Paths', icon: '⚡' },
+            '8x8': { title: '8×8 Grand Katar', subtitle: '64 Nodes • 32v32 Beads • Extended Strategy', icon: '🏰' },
+            'alquerque': { title: 'Alquerque Ancient 5×5', subtitle: 'Historical 12v12 Ancestor of Draughts & Katar', icon: '🏛️' },
+            'morris9': { title: '9 Men’s Morris', subtitle: 'Mill Formation & Capture Strategy', icon: '⚔️' },
+            'morris12': { title: '12 Men’s Morris', subtitle: 'Classic Mill Game with Diagonal Junctions', icon: '🛡️' }
+          };
+          return map[preset] || { title: 'Katar Board Battle', subtitle: 'Traditional Pashtun Tactical Strategy', icon: '👑' };
+        },
+
+        openStandby() {
+          GameState.isStarted = false;
+          GameState.isPaused = false;
+          this.isOpen = true;
+          this.syncUI();
+        },
+
+        openPause() {
+          if (!GameState.isStarted) {
+            this.openStandby();
+            return;
+          }
+          GameState.isPaused = true;
+          this.isOpen = true;
+          this.syncUI();
+        },
+
+        resume() {
+          if (!GameState.isStarted) {
+            this.play();
+            return;
+          }
+          GameState.isPaused = false;
+          this.isOpen = false;
+          this.syncUI();
+          resetTurnTimer();
+          resetMatchTimer();
+          if (GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
+            setTimeout(runAITurn, 300);
+          }
+        },
+
+        play() {
+          GameState.isStarted = true;
+          GameState.isPaused = false;
+          this.isOpen = false;
+          this.syncUI();
+          resetTurnTimer();
+          resetMatchTimer();
+          SoundEngine.matchStart();
+          showBoardToast('⚔️ Match Started! Make your move.');
+          if (GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
+            setTimeout(runAITurn, 300);
+          }
+        },
+
+        replay() {
+          initMatch(true);
+          this.play();
+        },
+
+        exitToStandby() {
+          initMatch(false);
+          this.openStandby();
+          showBoardToast('Returned to Main Menu');
+        },
+
+        togglePause() {
+          if (this.isOpen) {
+            if (GameState.isStarted && GameState.isPaused) {
+              this.resume();
+            } else {
+              this.play();
+            }
+          } else {
+            this.openPause();
+          }
+        },
+
+        syncUI() {
+          const overlay = document.getElementById('mainMenuOverlay');
+          const title = document.getElementById('menuGameTitle');
+          const subtitle = document.getElementById('menuGameSubtitle');
+          const badgeIcon = document.getElementById('menuBadgeIcon');
+          const stateBadge = document.getElementById('menuStateBadge');
+          const btnPlay = document.getElementById('btnMenuPlay');
+          const btnResume = document.getElementById('btnMenuResume');
+          const btnReplay = document.getElementById('btnMenuReplay');
+          const btnExit = document.getElementById('btnMenuExitStandby');
+          const btnModeAI = document.getElementById('btnMenuModeAI');
+          const btnMode2P = document.getElementById('btnMenuMode2P');
+          const btnModePuter = document.getElementById('btnMenuModePuter');
+          const headerPauseLbl = document.getElementById('lblHeaderPause');
+          const headerPauseIcon = document.getElementById('iconHeaderPause');
+
+          const meta = this.getVariantMeta(GameState.gridPreset);
+          if (title) title.textContent = meta.title;
+          if (subtitle) subtitle.textContent = meta.subtitle;
+          if (badgeIcon) badgeIcon.textContent = meta.icon;
+
+          if (overlay) {
+            if (this.isOpen) {
+              overlay.classList.remove('hidden');
+              overlay.classList.add('flex');
+            } else {
+              overlay.classList.add('hidden');
+              overlay.classList.remove('flex');
+            }
+          }
+
+          const isOngoing = GameState.isStarted && !GameState.gameOver;
+          if (stateBadge) {
+            if (!GameState.isStarted) {
+              stateBadge.textContent = 'Ready to Play';
+              stateBadge.className = 'text-[10px] sm:text-xs font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-900 border border-teal-300';
+            } else if (GameState.isPaused) {
+              stateBadge.textContent = 'Match Paused';
+              stateBadge.className = 'text-[10px] sm:text-xs font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300';
+            } else {
+              stateBadge.textContent = 'In Progress';
+              stateBadge.className = 'text-[10px] sm:text-xs font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300';
+            }
+          }
+
+          const hasMoves = Boolean((GameState.moveLog && GameState.moveLog.length > 0) || (GameState.history && GameState.history.length > 0));
+          if (btnPlay) btnPlay.classList.toggle('hidden', isOngoing);
+          if (btnResume) btnResume.classList.toggle('hidden', !isOngoing);
+          if (btnReplay) btnReplay.classList.toggle('hidden', !GameState.isStarted && !hasMoves);
+          if (btnExit) btnExit.classList.toggle('hidden', !GameState.isStarted);
+
+          const activeModeClass = 'bg-teal-600 text-white shadow';
+          const idleModeClass = 'text-walnut-700 hover:text-walnut-900 hover:bg-parchment-300/60';
+          const isPuter = Boolean(GameState.usePuterAI);
+          const isAI = GameState.vsAI && !isPuter;
+          const is2P = !GameState.vsAI && !isPuter;
+
+          if (btnModeAI) btnModeAI.className = `flex-1 py-1 px-2 rounded-xl transition-all ${isAI ? activeModeClass : idleModeClass}`;
+          if (btnMode2P) btnMode2P.className = `flex-1 py-1 px-2 rounded-xl transition-all ${is2P ? activeModeClass : idleModeClass}`;
+          if (btnModePuter) btnModePuter.className = `flex-1 py-1 px-2 rounded-xl transition-all ${isPuter ? activeModeClass : idleModeClass}`;
+
+          if (headerPauseLbl) {
+            headerPauseLbl.textContent = (!GameState.isStarted || GameState.isPaused || this.isOpen) ? 'Play' : 'Pause';
+          }
+          if (headerPauseIcon) {
+            if (!GameState.isStarted || GameState.isPaused || this.isOpen) {
+              headerPauseIcon.innerHTML = '<polygon points="5,3 19,12 5,21" />';
+            } else {
+              headerPauseIcon.innerHTML = '<rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" />';
+            }
+          }
+        }
+      };
+
+      const btnHeaderPause = document.getElementById('btnHeaderPause');
+      if (btnHeaderPause) {
+        btnHeaderPause.addEventListener('click', () => {
+          SoundEngine.select();
+          MainMenu.togglePause();
+        });
+      }
+
+      const btnMenuPlay = document.getElementById('btnMenuPlay');
+      if (btnMenuPlay) {
+        btnMenuPlay.addEventListener('click', () => {
+          MainMenu.play();
+        });
+      }
+
+      const btnMenuResume = document.getElementById('btnMenuResume');
+      if (btnMenuResume) {
+        btnMenuResume.addEventListener('click', () => {
+          SoundEngine.select();
+          MainMenu.resume();
+        });
+      }
+
+      const btnMenuReplay = document.getElementById('btnMenuReplay');
+      if (btnMenuReplay) {
+        btnMenuReplay.addEventListener('click', () => {
+          SoundEngine.select();
+          MainMenu.replay();
+        });
+      }
+
+      const btnMenuRules = document.getElementById('btnMenuRules');
+      if (btnMenuRules) {
+        btnMenuRules.addEventListener('click', () => {
+          SoundEngine.select();
+          const modalRules = document.getElementById('modalRules');
+          if (modalRules) {
+            modalRules.classList.remove('hidden');
+            modalRules.classList.add('flex');
+          }
+        });
+      }
+
+      const btnMenuExitStandby = document.getElementById('btnMenuExitStandby');
+      if (btnMenuExitStandby) {
+        btnMenuExitStandby.addEventListener('click', () => {
+          SoundEngine.select();
+          MainMenu.exitToStandby();
+        });
+      }
+
+      const btnMenuModeAI = document.getElementById('btnMenuModeAI');
+      if (btnMenuModeAI) {
+        btnMenuModeAI.addEventListener('click', () => {
+          GameState.vsAI = true;
+          GameState.usePuterAI = false;
+          GameState.localPlayerRole = null;
+          SoundEngine.select();
+          syncSettingsControlsFromState();
+          updateHUD();
+          MainMenu.syncUI();
+        });
+      }
+
+      const btnMenuMode2P = document.getElementById('btnMenuMode2P');
+      if (btnMenuMode2P) {
+        btnMenuMode2P.addEventListener('click', () => {
+          GameState.vsAI = false;
+          GameState.usePuterAI = false;
+          GameState.localPlayerRole = null;
+          SoundEngine.select();
+          syncSettingsControlsFromState();
+          updateHUD();
+          MainMenu.syncUI();
+        });
+      }
+
+      const btnMenuModePuter = document.getElementById('btnMenuModePuter');
+      if (btnMenuModePuter) {
+        btnMenuModePuter.addEventListener('click', () => {
+          GameState.vsAI = true;
+          GameState.usePuterAI = true;
+          GameState.localPlayerRole = null;
+          SoundEngine.select();
+          PuterAIManager.refreshQuotaFromPuter(true);
+          syncSettingsControlsFromState();
+          updateHUD();
+          MainMenu.syncUI();
+        });
+      }
+
       const Immersive = {
         active: false,
         nativeFullscreen: false,
@@ -14107,6 +14469,7 @@
       });
 
       const immActionMap = {
+        pause: 'btnHeaderPause',
         undo: 'btnUndoMove',
         hint: 'btnHintMove',
         flip: 'btnFlipBoard',
@@ -14375,7 +14738,7 @@
           cancelGraceTimer(true);
           updateHUD();
           showBoardToast('👋 Player returned in time! Match resumed.');
-          if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
+          if (GameState.isStarted && !GameState.isPaused && !GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
             setTimeout(runAITurn, 420);
           }
         });
@@ -14689,9 +15052,29 @@
       });
 
       document.addEventListener('keydown', (event) => {
-        if (!Immersive.active) return;
-        if (event.key === 'Escape') Immersive.exit();
-        else Immersive.wake();
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+        if (event.key === ' ' || event.code === 'KeyP') {
+          event.preventDefault();
+          MainMenu.togglePause();
+          return;
+        }
+        if (event.key === 'Escape') {
+          if (Immersive.active) {
+            Immersive.exit();
+            return;
+          }
+          if (MainMenu.isOpen && GameState.isStarted) {
+            MainMenu.resume();
+            return;
+          }
+          if (!MainMenu.isOpen) {
+            MainMenu.openPause();
+            return;
+          }
+        }
+        if (Immersive.active) {
+          Immersive.wake();
+        }
       });
 
       function enableDesktopDragScrub(el) {
@@ -14747,7 +15130,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=cbbb4dff7b').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=e32356c808').catch(() => {});
         });
       }
 
@@ -15266,7 +15649,14 @@
         if (savedLiveSnapshotRaw) {
           try { SafeStorage.setItem('katar_live_match_v3', savedLiveSnapshotRaw); } catch (e) {}
         }
-        checkAndRestoreSavedMatchOnLoad(Boolean(inviteRoom));
+        const hasRestoredMatch = checkAndRestoreSavedMatchOnLoad(Boolean(inviteRoom));
+        if (hasRestoredMatch && ((GameState.moveLog && GameState.moveLog.length > 0) || (GameState.history && GameState.history.length > 0))) {
+          GameState.isStarted = true;
+          GameState.isPaused = true;
+          MainMenu.openPause();
+        } else {
+          MainMenu.openStandby();
+        }
         WebRTCManager.applyPeerServerConfigUI();
         resizeCanvas();
         WifiLobby.init();
