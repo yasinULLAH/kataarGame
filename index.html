@@ -12,6 +12,42 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <title>Katar (قطار) &amp; Navakankari — By Yasin Ullah (Dedicated to Muhib Ullah)</title>
+  <script>
+    (function () {
+      if (typeof XMLHttpRequest !== 'undefined' && XMLHttpRequest.prototype && XMLHttpRequest.prototype.setRequestHeader) {
+        const _origSetHeader = XMLHttpRequest.prototype.setRequestHeader;
+        XMLHttpRequest.prototype.setRequestHeader = function (header, value) {
+          if (typeof header === 'string') {
+            const h = header.toLowerCase();
+            if (h === 'origin' || h === 'referer' || h === 'user-agent') {
+              return;
+            }
+          }
+          return _origSetHeader.apply(this, arguments);
+        };
+      }
+      if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
+        const _origFetch = window.fetch;
+        window.fetch = function (input, init) {
+          if (init && init.headers) {
+            if (typeof Headers !== 'undefined' && init.headers instanceof Headers) {
+              init.headers.delete('origin');
+              init.headers.delete('Origin');
+            } else if (Array.isArray(init.headers)) {
+              init.headers = init.headers.filter(([k]) => !k || k.toLowerCase() !== 'origin');
+            } else if (typeof init.headers === 'object') {
+              const clean = {};
+              for (const [k, v] of Object.entries(init.headers)) {
+                if (k.toLowerCase() !== 'origin') clean[k] = v;
+              }
+              init.headers = clean;
+            }
+          }
+          return _origFetch.apply(this, arguments);
+        };
+      }
+    })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -2774,6 +2810,14 @@
         invalid() {
           this.haptic([25, 40, 25]);
           this.playTone(165, 'sawtooth', 0.12, 0.09, 130);
+        },
+
+        matchStart() {
+          this.haptic([25, 35, 45]);
+          const notes = [392.00, 523.25, 659.25];
+          notes.forEach((n, idx) => {
+            setTimeout(() => this.playTone(n, 'triangle', 0.16, 0.14, n * 1.05), idx * 75);
+          });
         },
 
         victory() {
@@ -15130,7 +15174,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=e32356c808').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=23884c4dda').catch(() => {});
         });
       }
 
