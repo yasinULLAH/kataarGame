@@ -618,11 +618,11 @@
   <div class="pashtun-border shrink-0 z-20"></div>
 
   <!-- Top Arcade Game Bar -->
-  <header id="appHeader" class="shrink-0 w-full min-w-0 bg-parchment-50/95 backdrop-blur border-b-2 border-parchment-300 px-1.5 sm:px-4 py-1 sm:py-1.5 flex items-center justify-between gap-1.5 sm:gap-2 z-20 shadow-sm overflow-hidden">
+  <header id="appHeader" class="shrink-0 w-full min-w-0 bg-parchment-50/95 backdrop-blur border-b border-parchment-300 px-1.5 sm:px-3 py-1 flex items-center justify-between gap-1.5 sm:gap-2 z-20 shadow-sm overflow-hidden">
     <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 overflow-hidden">
-      <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-walnut-800 p-0.5 shadow-md shrink-0">
-        <div class="w-full h-full rounded-[10px] sm:rounded-[14px] bg-parchment-50 flex items-center justify-center">
-          <svg class="w-4 h-4 sm:w-6 sm:h-6 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-500 via-amber-600 to-walnut-800 p-0.5 shadow-sm shrink-0">
+        <div class="w-full h-full rounded-[6px] sm:rounded-[10px] bg-parchment-50 flex items-center justify-center">
+          <svg class="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <polygon points="12 2 22 12 12 22 2 12" fill="rgba(217,119,6,0.15)" stroke-linejoin="round" />
             <circle cx="12" cy="12" r="3" fill="currentColor" />
             <line x1="12" y1="2" x2="12" y2="22" stroke-opacity="0.45" />
@@ -644,17 +644,17 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 max-w-[68vw] sm:max-w-none overflow-x-auto no-scrollbar py-0.5">
-      <button id="btnInstallPwa" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-black bg-gradient-to-b from-indigo-500 to-indigo-700 hover:from-indigo-400 hover:to-indigo-600 text-white border border-indigo-900 shadow-[0_2px_0_#312E81] sm:shadow-[0_3px_0_#312E81] active:translate-y-0.5" aria-label="Install App" title="Install Katar App to Home Screen (Play 100% Offline)">
+    <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 max-w-full overflow-x-auto no-scrollbar py-0.5">
+      <button id="btnInstallPwa" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 h-7 sm:h-7.5 px-2 rounded-lg text-[10.5px] sm:text-[11px] font-bold bg-gradient-to-b from-indigo-500 to-indigo-700 hover:from-indigo-400 hover:to-indigo-600 text-white border border-indigo-900 shadow-[0_1.5px_0_#312E81] active:translate-y-0.5" aria-label="Install App" title="Install Katar App to Home Screen (Play 100% Offline)">
         <svg class="w-3.5 h-3.5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="7 10 12 15 17 10" />
           <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
-        <span class="hidden sm:inline">Install App</span>
+        <span class="hidden md:inline">Install</span>
       </button>
 
-      <button id="btnTriggerAwayGrace" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-extrabold bg-gradient-to-b from-rose-500 to-rose-700 hover:from-rose-400 hover:to-rose-600 text-white border border-rose-900 shadow-[0_2px_0_#881337] sm:shadow-[0_3px_0_#881337]" aria-label="Player Left / Reconnect Timer" title="Start Mid-Game Player Leave / Reconnect Countdown">
+      <button id="btnTriggerAwayGrace" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 h-7 sm:h-7.5 px-2 rounded-lg text-[10.5px] font-bold bg-gradient-to-b from-rose-500 to-rose-700 hover:from-rose-400 hover:to-rose-600 text-white border border-rose-900 shadow-[0_1.5px_0_#881337]" aria-label="Player Left / Reconnect Timer" title="Start Mid-Game Player Leave / Reconnect Countdown">
         <svg class="w-3.5 h-3.5 text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <circle cx="12" cy="12" r="9" />
           <polyline points="12 7 12 12 15 15" />
@@ -662,52 +662,52 @@
         <span class="hidden md:inline">Away Timer</span>
       </button>
 
-      <button id="btnHeaderPuterQuota" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-extrabold bg-gradient-to-b from-violet-600 to-indigo-800 hover:from-violet-500 hover:to-indigo-700 text-white border border-indigo-950 shadow-[0_2px_0_#1E1B4B] sm:shadow-[0_3px_0_#1E1B4B]" aria-label="Puter AI &amp; Quota Stats" title="Play with Real AI (Puter Cloud) &amp; View Live Hourly/Daily/Monthly Quota Stats">
-        <span class="text-xs sm:text-sm leading-none">🧠</span>
-        <span id="hdrPuterSummary" class="hidden sm:inline font-mono text-[10px] sm:text-[11px]">Real AI • Quota</span>
+      <button id="btnHeaderPuterQuota" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 h-7 sm:h-7.5 px-2 rounded-lg text-[10.5px] sm:text-[11px] font-bold bg-gradient-to-b from-violet-600 to-indigo-800 hover:from-violet-500 hover:to-indigo-700 text-white border border-indigo-950 shadow-[0_1.5px_0_#1E1B4B] active:translate-y-0.5" aria-label="Puter AI &amp; Quota Stats" title="Play with Real AI (Puter Cloud) &amp; View Live Hourly/Daily/Monthly Quota Stats">
+        <span class="text-xs leading-none">🧠</span>
+        <span id="hdrPuterSummary" class="hidden lg:inline font-mono text-[10px]">Real AI • Quota</span>
       </button>
 
-      <button id="btnOpenProfileModal" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-100 to-amber-200 hover:from-white hover:to-amber-100 text-walnut-900 border border-amber-400 shadow-[0_2px_0_#B45309] sm:shadow-[0_3px_0_#B45309]" aria-label="Player Profile &amp; Backup" title="Player Profile, Career Stats &amp; Backup/Restore">
-        <span id="hdrProfileAvatar" class="text-xs sm:text-sm leading-none">👑</span>
-        <span id="hdrProfileName" class="hidden sm:inline max-w-[90px] truncate">Profile</span>
+      <button id="btnOpenProfileModal" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 h-7 sm:h-7.5 px-2 rounded-lg text-[10.5px] sm:text-[11px] font-bold bg-gradient-to-b from-amber-100 to-amber-200 hover:from-white hover:to-amber-100 text-walnut-900 border border-amber-400 shadow-[0_1.5px_0_#B45309] active:translate-y-0.5" aria-label="Player Profile &amp; Backup" title="Player Profile, Career Stats &amp; Backup/Restore">
+        <span id="hdrProfileAvatar" class="text-xs leading-none">👑</span>
+        <span id="hdrProfileName" class="hidden sm:inline max-w-[70px] truncate">Profile</span>
       </button>
 
-      <button id="btnOpenEncyclopedia" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-extrabold bg-gradient-to-b from-parchment-100 to-parchment-300 hover:from-white hover:to-parchment-200 text-walnut-900 border border-parchment-400 shadow-[0_2px_0_#B8976C] sm:shadow-[0_3px_0_#B8976C]" aria-label="Game Rules &amp; Guide" title="Encyclopedia, Rules &amp; Match Log">
+      <button id="btnOpenEncyclopedia" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 h-7 sm:h-7.5 px-2 rounded-lg text-[10.5px] sm:text-[11px] font-bold bg-gradient-to-b from-parchment-100 to-parchment-300 hover:from-white hover:to-parchment-200 text-walnut-900 border border-parchment-400 shadow-[0_1.5px_0_#B8976C] active:translate-y-0.5" aria-label="Game Rules &amp; Guide" title="Encyclopedia, Rules &amp; Match Log">
         <svg class="w-3.5 h-3.5 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
           <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
         </svg>
-        <span class="hidden lg:inline">Guide &amp; Log</span>
+        <span class="hidden xl:inline">Guide</span>
       </button>
 
-      <button id="btnPlayImmersive" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-black bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white border border-teal-800 shadow-[0_2px_0_#115E59] sm:shadow-[0_3px_0_#115E59] active:translate-y-0.5 active:shadow-none" aria-label="Play in fullscreen immersive mode" title="Play Fullscreen (Distraction-Free)">
-        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-        </svg>
-        <span class="hidden sm:inline font-black tracking-wide">Play Fullscreen</span>
-      </button>
-
-      <button id="btnOpenRulesModal" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 border border-amber-600/40 shadow-[0_2px_0_#B45309] sm:shadow-[0_3px_0_#B45309]" aria-label="Grid &amp; Match Settings" title="Customize Grid, Bead Count &amp; Rules">
+      <button id="btnOpenRulesModal" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 h-7 sm:h-7.5 px-2 rounded-lg text-[10.5px] sm:text-[11px] font-bold bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 border border-amber-600/40 shadow-[0_1.5px_0_#B45309] active:translate-y-0.5" aria-label="Grid &amp; Match Settings" title="Customize Grid, Bead Count &amp; Rules">
         <svg class="w-3.5 h-3.5 text-walnut-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <rect x="3" y="3" width="7" height="7" rx="1.5" />
           <rect x="14" y="3" width="7" height="7" rx="1.5" />
           <rect x="14" y="14" width="7" height="7" rx="1.5" />
           <rect x="3" y="14" width="7" height="7" rx="1.5" />
         </svg>
-        <span class="hidden sm:inline">Grid &amp; Settings</span>
+        <span class="hidden sm:inline">Settings</span>
       </button>
 
-      <button id="btnOpenConnectionModal" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-extrabold bg-gradient-to-b from-white to-parchment-200 hover:from-white hover:to-parchment-100 text-walnut-800 border border-parchment-400 shadow-[0_2px_0_#C4A67C] sm:shadow-[0_3px_0_#C4A67C]" title="Multiplayer &amp; Offline P2P">
-        <span id="connStatusDot" class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200"></span>
+      <button id="btnOpenConnectionModal" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 h-7 sm:h-7.5 px-2 rounded-lg text-[10.5px] sm:text-[11px] font-bold bg-gradient-to-b from-white to-parchment-200 hover:from-white hover:to-parchment-100 text-walnut-800 border border-parchment-400 shadow-[0_1.5px_0_#C4A67C] active:translate-y-0.5" title="Multiplayer &amp; Offline P2P">
+        <span id="connStatusDot" class="w-2 h-2 rounded-full bg-emerald-500 ring-1.5 ring-emerald-200"></span>
         <svg class="w-3.5 h-3.5 text-walnut-800 sm:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M5 12.55a11 11 0 0 1 14.08 0" />
           <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
           <line x1="12" y1="20" x2="12.01" y2="20" />
         </svg>
-        <span id="connStatusLabel" class="hidden sm:inline">Mode / P2P</span>
+        <span id="connStatusLabel" class="hidden sm:inline">P2P</span>
       </button>
 
-      <button id="btnToggleAudio" type="button" class="android-btn shrink-0 p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gradient-to-b from-white to-parchment-200 text-walnut-800 border border-parchment-400 shadow-[0_2px_0_#C4A67C] sm:shadow-[0_3px_0_#C4A67C]" aria-label="Toggle Sound" title="Toggle Web Audio Synth">
+      <button id="btnPlayImmersive" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 h-7 sm:h-7.5 px-2 rounded-lg text-[10.5px] sm:text-[11px] font-extrabold bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white border border-teal-800 shadow-[0_1.5px_0_#115E59] active:translate-y-0.5 active:shadow-none" aria-label="Play in fullscreen immersive mode" title="Play Fullscreen (Distraction-Free Immersive Mode)">
+        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+        </svg>
+        <span class="hidden sm:inline font-black tracking-wide">Fullscreen</span>
+      </button>
+
+      <button id="btnToggleAudio" type="button" class="android-btn shrink-0 w-7 h-7 sm:w-7.5 sm:h-7.5 flex items-center justify-center rounded-lg bg-gradient-to-b from-white to-parchment-200 hover:from-white hover:to-parchment-100 text-walnut-800 border border-parchment-400 shadow-[0_1.5px_0_#C4A67C] active:translate-y-0.5" aria-label="Toggle Sound" title="Toggle Sound">
         <svg id="iconAudioOn" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
           <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
@@ -720,11 +720,11 @@
         </svg>
       </button>
 
-      <button id="btnToggleTopBars" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-xs font-extrabold bg-gradient-to-b from-amber-100 to-parchment-300 hover:from-white hover:to-parchment-200 text-walnut-900 border border-parchment-400 shadow-[0_2px_0_#B8976C] sm:shadow-[0_3px_0_#B8976C]" aria-label="Collapse or Expand Game &amp; Config Bars" title="Collapse / Expand Game &amp; Configuration Bars">
-        <svg id="iconBarsCollapse" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-walnut-900 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <button id="btnToggleTopBars" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 h-7 sm:h-7.5 px-2 rounded-lg text-[10.5px] sm:text-[11px] font-bold bg-gradient-to-b from-amber-100 to-parchment-300 hover:from-white hover:to-parchment-200 text-walnut-900 border border-parchment-400 shadow-[0_1.5px_0_#B8976C] active:translate-y-0.5" aria-label="Collapse or Expand Game &amp; Config Bars" title="Collapse / Expand Game &amp; Configuration Bars">
+        <svg id="iconBarsCollapse" class="w-3.5 h-3.5 text-walnut-900 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="18 15 12 9 6 15" />
         </svg>
-        <span id="lblBarsToggle" class="hidden md:inline text-[11px]">Hide Bars</span>
+        <span id="lblBarsToggle" class="hidden md:inline text-[10px]">Hide Bars</span>
       </button>
     </div>
   </header>
@@ -14747,7 +14747,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=29148c8639').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=cbbb4dff7b').catch(() => {});
         });
       }
 
