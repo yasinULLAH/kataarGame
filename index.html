@@ -1185,18 +1185,22 @@
             </p>
           </div>
 
-          <div class="flex items-center justify-center gap-1 p-1 bg-parchment-200/90 rounded-2xl border border-parchment-300 text-[11px] font-black">
-            <button id="btnMenuModeAI" type="button" class="flex-1 py-1 px-2 rounded-xl transition-all" title="Play vs Built-in Grandmaster AI">
-              🤖 Solo vs AI
+          <div class="grid grid-cols-4 gap-1.5 p-1.5 bg-parchment-200/90 rounded-2xl border border-parchment-300 shadow-inner">
+            <button id="btnMenuModeAI" type="button" class="android-btn flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl transition-all" title="Play vs Built-in Grandmaster AI">
+              <span class="text-base sm:text-lg leading-none">🤖</span>
+              <span class="text-[10px] sm:text-[11px] font-extrabold leading-tight whitespace-nowrap">Solo vs AI</span>
             </button>
-            <button id="btnMenuModeAIvAI" type="button" class="flex-1 py-1 px-2 rounded-xl transition-all" title="Watch AI vs AI Automatic Match">
-              🤖⚔️🤖 AI vs AI
+            <button id="btnMenuModeAIvAI" type="button" class="android-btn flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl transition-all" title="Watch AI vs AI Automatic Match">
+              <span class="text-sm sm:text-base leading-none tracking-tighter whitespace-nowrap">🤖⚔️🤖</span>
+              <span class="text-[10px] sm:text-[11px] font-extrabold leading-tight whitespace-nowrap">AI vs AI</span>
             </button>
-            <button id="btnMenuMode2P" type="button" class="flex-1 py-1 px-2 rounded-xl transition-all" title="Local Pass &amp; Play 2-Player">
-              👥 2-Player
+            <button id="btnMenuMode2P" type="button" class="android-btn flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl transition-all" title="Local Pass &amp; Play 2-Player">
+              <span class="text-base sm:text-lg leading-none">👥</span>
+              <span class="text-[10px] sm:text-[11px] font-extrabold leading-tight whitespace-nowrap">2-Player</span>
             </button>
-            <button id="btnMenuModePuter" type="button" class="flex-1 py-1 px-2 rounded-xl transition-all" title="Play with Cloud Puter AI">
-              🧠 Real AI
+            <button id="btnMenuModePuter" type="button" class="android-btn flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl transition-all" title="Play with Cloud Puter AI">
+              <span class="text-base sm:text-lg leading-none">🧠</span>
+              <span class="text-[10px] sm:text-[11px] font-extrabold leading-tight whitespace-nowrap">Real AI</span>
             </button>
           </div>
 
@@ -15038,17 +15042,18 @@
           if (btnReplay) btnReplay.classList.toggle('hidden', !GameState.isStarted && !hasMoves);
           if (btnExit) btnExit.classList.toggle('hidden', !GameState.isStarted);
 
-          const activeModeClass = 'bg-teal-600 text-white shadow';
-          const idleModeClass = 'text-walnut-700 hover:text-walnut-900 hover:bg-parchment-300/60';
+          const baseModeBtnClass = 'android-btn flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-xl transition-all';
+          const activeModeClass = 'bg-gradient-to-b from-teal-500 to-teal-700 text-white shadow-md ring-1 ring-teal-900/25';
+          const idleModeClass = 'bg-white/60 text-walnut-800 hover:text-walnut-900 hover:bg-white border border-parchment-300/80';
           const isPuter = Boolean(GameState.usePuterAI);
           const isAIvAI = Boolean(GameState.vsAI && GameState.aiVsAi);
           const isAI = GameState.vsAI && !isAIvAI && !isPuter;
           const is2P = !GameState.vsAI && !isPuter;
 
-          if (btnModeAI) btnModeAI.className = `flex-1 py-1 px-2 rounded-xl transition-all ${isAI ? activeModeClass : idleModeClass}`;
-          if (btnModeAIvAI) btnModeAIvAI.className = `flex-1 py-1 px-2 rounded-xl transition-all ${isAIvAI ? activeModeClass : idleModeClass}`;
-          if (btnMode2P) btnMode2P.className = `flex-1 py-1 px-2 rounded-xl transition-all ${is2P ? activeModeClass : idleModeClass}`;
-          if (btnModePuter) btnModePuter.className = `flex-1 py-1 px-2 rounded-xl transition-all ${isPuter ? activeModeClass : idleModeClass}`;
+          if (btnModeAI) btnModeAI.className = `${baseModeBtnClass} ${isAI ? activeModeClass : idleModeClass}`;
+          if (btnModeAIvAI) btnModeAIvAI.className = `${baseModeBtnClass} ${isAIvAI ? activeModeClass : idleModeClass}`;
+          if (btnMode2P) btnMode2P.className = `${baseModeBtnClass} ${is2P ? activeModeClass : idleModeClass}`;
+          if (btnModePuter) btnModePuter.className = `${baseModeBtnClass} ${isPuter ? activeModeClass : idleModeClass}`;
 
           if (headerPauseLbl) {
             headerPauseLbl.textContent = (!GameState.isStarted || GameState.isPaused || this.isOpen) ? 'Play' : 'Pause';
