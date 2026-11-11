@@ -550,6 +550,14 @@
     #immersiveHud.zen-mode .imm-dock {
       display: none !important;
     }
+    body.replay-mode #immDock,
+    body.replay-mode #immEndChain {
+      display: none !important;
+    }
+    body.replay-mode #immersiveHud.is-dimmed .imm-top {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
     @keyframes scanLaser {
       0%, 100% { transform: translateY(-80px); opacity: 0.35; }
       50% { transform: translateY(80px); opacity: 1; }
@@ -1107,7 +1115,10 @@
         </div>
 
         <div id="victoryInspectBar" class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-30 bg-walnut-900/95 border-2 border-amber-400 rounded-2xl px-3 py-2 shadow-2xl flex items-center gap-2 text-xs text-white backdrop-blur-md">
-          <span id="victoryInspectLabel" class="font-extrabold text-amber-300 truncate max-w-[160px] sm:max-w-[240px]">Match Finished</span>
+          <span id="victoryInspectLabel" class="font-extrabold text-amber-300 truncate max-w-[130px] sm:max-w-[220px]">Match Finished</span>
+          <button id="btnInspectWatchReplay" type="button" class="android-btn px-2.5 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold shadow shrink-0">
+            🎬 Replay
+          </button>
           <button id="btnReopenVictoryModal" type="button" class="android-btn px-2.5 py-1 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-black shadow shrink-0">
             🏆 Results
           </button>
@@ -1414,6 +1425,59 @@
         </svg>
         <span>Zen</span>
       </button>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- FULLSCREEN MATCH REPLAY PLAYER OVERLAY                                -->
+  <!-- ===================================================================== -->
+  <div id="replayControllerBar" class="hidden fixed inset-x-0 bottom-0 z-40 px-2.5 sm:px-4 pb-[calc(env(safe-area-inset-bottom,0px)+10px)] pt-2 pointer-events-none flex justify-center">
+    <div class="pointer-events-auto w-full max-w-2xl bg-walnut-900/95 border-2 border-amber-400/90 rounded-2xl p-2.5 sm:p-3.5 shadow-[0_12px_36px_rgba(0,0,0,0.75)] backdrop-blur-md text-white space-y-2">
+      <div class="flex items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-2 min-w-0">
+          <span id="replayStatusBadge" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500 text-walnut-900 font-black text-[10px] tracking-wider uppercase shrink-0">
+            <span id="replayStatusDot" class="w-2 h-2 rounded-full bg-walnut-900 animate-ping"></span>
+            <span id="replayStatusText">Playing</span>
+          </span>
+          <span id="replayMoveLabel" class="font-mono font-bold text-amber-200 truncate text-[11px] sm:text-xs">Initial Board Setup</span>
+        </div>
+        <span id="replayFrameCount" class="font-mono text-[11px] sm:text-xs font-extrabold text-parchment-200 bg-white/10 px-2 py-0.5 rounded-lg border border-white/15 shrink-0">0 / 0</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <input id="rngReplayScrubber" type="range" min="0" max="1" step="1" value="0" class="w-full accent-amber-400 cursor-pointer h-1.5 bg-white/20 rounded-lg" aria-label="Replay timeline scrubber" />
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 pt-0.5">
+        <div class="flex items-center gap-1 sm:gap-1.5">
+          <button id="btnReplayFirst" type="button" class="android-btn w-8 h-8 sm:w-9 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-xs font-black" title="Jump to Start (Home)" aria-label="First move">⏮</button>
+          <button id="btnReplayPrev" type="button" class="android-btn w-8 h-8 sm:w-9 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-xs font-black" title="Previous Move (←)" aria-label="Previous move">⏪</button>
+          <button id="btnReplayPlayPause" type="button" class="android-btn h-8 px-3 sm:px-4 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 font-black text-xs shadow flex items-center justify-center gap-1" title="Play / Pause (Space)">
+            <span id="iconReplayPlayPause">⏸</span>
+            <span id="lblReplayPlayPause">Pause</span>
+          </button>
+          <button id="btnReplayStop" type="button" class="android-btn w-8 h-8 sm:w-9 sm:h-8 rounded-xl bg-rose-600/80 hover:bg-rose-600 border border-rose-400/40 flex items-center justify-center text-xs font-black text-white" title="Stop &amp; Reset to Start" aria-label="Stop replay">⏹</button>
+          <button id="btnReplayNext" type="button" class="android-btn w-8 h-8 sm:w-9 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-xs font-black" title="Next Move (→)" aria-label="Next move">⏩</button>
+          <button id="btnReplayLast" type="button" class="android-btn w-8 h-8 sm:w-9 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-xs font-black" title="Jump to Final Result (End)" aria-label="Last move">⏭</button>
+        </div>
+
+        <div class="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/15">
+          <button type="button" data-replay-speed="0.5" class="replay-speed-btn android-btn px-1.5 sm:px-2 py-1 rounded-lg text-[10px] font-mono font-extrabold text-parchment-200 hover:bg-white/10">0.5×</button>
+          <button type="button" data-replay-speed="1" class="replay-speed-btn android-btn px-1.5 sm:px-2 py-1 rounded-lg text-[10px] font-mono font-extrabold bg-teal-600 text-white shadow">1×</button>
+          <button type="button" data-replay-speed="2" class="replay-speed-btn android-btn px-1.5 sm:px-2 py-1 rounded-lg text-[10px] font-mono font-extrabold text-parchment-200 hover:bg-white/10">2×</button>
+          <button type="button" data-replay-speed="4" class="replay-speed-btn android-btn px-1.5 sm:px-2 py-1 rounded-lg text-[10px] font-mono font-extrabold text-parchment-200 hover:bg-white/10">4×</button>
+        </div>
+
+        <div class="flex items-center gap-1.5 ml-auto sm:ml-0">
+          <button id="btnReplayFlip" type="button" class="android-btn h-8 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-extrabold flex items-center gap-1" title="Rotate Board Perspective">
+            <span>🔄</span>
+          </button>
+          <button id="btnReplayExit" type="button" class="android-btn h-8 px-3 rounded-xl bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white border border-teal-300/40 text-[11px] font-black shadow flex items-center gap-1" title="Exit Replay &amp; Return to Match Results">
+            <span>🏆</span>
+            <span>Results</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2435,7 +2499,11 @@
         🧠 <span id="victoryAIBrainText">Adaptive AI Brain: 0 matches learned</span>
       </div>
 
-      <div class="space-y-1.5 pt-0.5">
+      <div class="space-y-2 pt-0.5">
+        <button id="btnVictoryWatchReplay" type="button" class="android-btn w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-teal-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-extrabold text-xs sm:text-sm shadow-[0_3px_0_#115E59] flex items-center justify-center gap-2 border border-teal-300/40">
+          <span>🎬</span>
+          <span>Watch Fullscreen Match Replay</span>
+        </button>
         <div class="flex gap-2">
           <button id="btnVictoryPlayAgain" type="button" class="android-btn flex-1 py-2.5 rounded-2xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-xs sm:text-sm shadow-[0_3px_0_#B45309]">
             Play Rematch
@@ -3062,6 +3130,7 @@
         winReason: '',
         history: [],
         moveLog: [],
+        replayFrames: [],
         sessionStats: { p1Wins: 0, p2Wins: 0, draws: 0 },
         timeLeft: 0,
         timerInterval: null,
@@ -4287,6 +4356,9 @@
           showBoardToast('🛡️ Only the host can start a rematch online — request sent to Player 1.');
           return;
         }
+        if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
+          ReplayManager.close(false);
+        }
         cancelGraceTimer(false);
         hideFanoronaChoiceBar();
         buildDynamicBoardGraph();
@@ -4492,6 +4564,19 @@
         document.getElementById('modalVictory').classList.remove('flex');
         const inspectBar = document.getElementById('victoryInspectBar');
         if (inspectBar) inspectBar.classList.add('hidden');
+
+        GameState.replayFrames = [{
+          step: 0,
+          label: 'Initial Board Setup',
+          board: [...GameState.board],
+          kings: [...GameState.kings],
+          reserves: { ...GameState.reserves },
+          capturedBy: { ...GameState.capturedBy },
+          currentTurn: GameState.currentTurn,
+          lastMove: null,
+          lastFormedMill: null,
+          gomokuWinningLine: null
+        }];
 
         resetTurnTimer();
         resetMatchTimer();
@@ -5443,8 +5528,25 @@
 
       function appendMoveLog(entryText) {
         const moveNum = GameState.moveLog.length + 1;
-        GameState.moveLog.push(`${moveNum}. ${entryText}`);
-        if (GameState.moveLog.length > 60) GameState.moveLog.shift();
+        const fullLabel = `${moveNum}. ${entryText}`;
+        GameState.moveLog.push(fullLabel);
+        if (GameState.moveLog.length > 500) GameState.moveLog.shift();
+        if (!Array.isArray(GameState.replayFrames)) GameState.replayFrames = [];
+        GameState.replayFrames.push({
+          step: GameState.replayFrames.length,
+          label: fullLabel,
+          board: [...GameState.board],
+          kings: [...GameState.kings],
+          reserves: { ...GameState.reserves },
+          capturedBy: { ...GameState.capturedBy },
+          currentTurn: GameState.currentTurn,
+          lastMove: GameState.lastMove ? {
+            ...GameState.lastMove,
+            capturedIds: Array.isArray(GameState.lastMove.capturedIds) ? [...GameState.lastMove.capturedIds] : undefined
+          } : null,
+          lastFormedMill: GameState.lastFormedMill ? [...GameState.lastFormedMill] : null,
+          gomokuWinningLine: GameState.gomokuWinningLine ? [...GameState.gomokuWinningLine] : null
+        });
         updateMoveLogUI();
       }
 
@@ -9076,6 +9178,10 @@
       let aiTurnTimeoutId = null;
 
       function getMoveAnimDuration(isJump = false) {
+        if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
+          const replayBase = Math.max(55, Math.round(300 / (ReplayManager.speed || 1)));
+          return isJump ? Math.round(replayBase * 1.35) : replayBase;
+        }
         const preset = GameState.moveSpeedPreset || 'default';
         let base = 175;
         if (preset === 'slow') base = 450;
@@ -9393,7 +9499,9 @@
           const isZen = hud && hud.classList.contains('zen-mode');
           const isCollapsed = dock && dock.classList.contains('is-collapsed');
           const isBottomDock = dock && (dock.classList.contains('dock-bottom') || (!dock.classList.contains('dock-left') && !dock.classList.contains('dock-right') && window.innerWidth < 860));
-          if (!isZen) {
+          if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
+            availH -= 175;
+          } else if (!isZen) {
             availH -= isBottomDock ? (isCollapsed ? 76 : 126) : 78;
             if (!isBottomDock && !isCollapsed) {
               availW -= 88;
@@ -10167,6 +10275,10 @@
        * 9. TOUCH / POINTER INPUT FOR ALL GAME FAMILIES
        * ------------------------------------------------------------------- */
       function handleBoardTap(clientX, clientY) {
+        if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
+          ReplayManager.togglePlayPause();
+          return;
+        }
         if (!ProfileManager.hasProfile()) {
           ProfileManager.save({ name: 'Player 1', title: 'Sardar', avatar: '👑', p2Name: 'Player 2' });
         }
@@ -11146,6 +11258,18 @@
           } else {
             vBanner.classList.add('hidden');
           }
+        }
+
+        if (Array.isArray(GameState.replayFrames) && GameState.replayFrames.length > 0) {
+          const lastFrame = GameState.replayFrames[GameState.replayFrames.length - 1];
+          if (GameState.lastFormedMill) lastFrame.lastFormedMill = [...GameState.lastFormedMill];
+          if (GameState.gomokuWinningLine) lastFrame.gomokuWinningLine = [...GameState.gomokuWinningLine];
+        }
+
+        const btnWatchReplay = document.getElementById('btnVictoryWatchReplay');
+        if (btnWatchReplay) {
+          const hasReplay = Array.isArray(GameState.replayFrames) && GameState.replayFrames.length > 1;
+          btnWatchReplay.classList.toggle('hidden', !hasReplay);
         }
 
         const inspectBar = document.getElementById('victoryInspectBar');
@@ -14103,6 +14227,384 @@
         });
       }
 
+      const ReplayManager = {
+        active: false,
+        playing: false,
+        speed: 1,
+        currentIndex: 0,
+        timerId: null,
+        finalSnapshot: null,
+
+        startFullscreenReplay() {
+          if (!Array.isArray(GameState.replayFrames) || GameState.replayFrames.length < 2) {
+            SoundEngine.invalid();
+            showBoardToast('No moves recorded to replay yet!');
+            return;
+          }
+
+          if (!this.active) {
+            this.finalSnapshot = {
+              board: [...GameState.board],
+              kings: [...GameState.kings],
+              reserves: { ...GameState.reserves },
+              capturedBy: { ...GameState.capturedBy },
+              currentTurn: GameState.currentTurn,
+              lastMove: GameState.lastMove ? { ...GameState.lastMove } : null,
+              lastFormedMill: GameState.lastFormedMill ? [...GameState.lastFormedMill] : null,
+              gomokuWinningLine: GameState.gomokuWinningLine ? [...GameState.gomokuWinningLine] : null,
+              gameOver: GameState.gameOver,
+              winner: GameState.winner,
+              winReason: GameState.winReason
+            };
+          }
+
+          this.active = true;
+          this.playing = false;
+          document.body.classList.add('replay-mode');
+
+          const modalVictory = document.getElementById('modalVictory');
+          if (modalVictory) {
+            modalVictory.classList.add('hidden');
+            modalVictory.classList.remove('flex');
+          }
+          const inspectBar = document.getElementById('victoryInspectBar');
+          if (inspectBar) inspectBar.classList.add('hidden');
+
+          const bar = document.getElementById('replayControllerBar');
+          if (bar) bar.classList.remove('hidden');
+
+          const scrubber = document.getElementById('rngReplayScrubber');
+          if (scrubber) {
+            scrubber.min = '0';
+            scrubber.max = String(GameState.replayFrames.length - 1);
+            scrubber.value = '0';
+          }
+
+          Immersive.enter();
+          this.seekTo(0, false);
+          resizeCanvas();
+          showBoardToast('🎬 Fullscreen Replay Started — Use controls below or Spacebar to Play/Pause');
+
+          setTimeout(() => {
+            if (this.active) this.play();
+          }, 350);
+        },
+
+        seekTo(index, animate = true) {
+          if (!Array.isArray(GameState.replayFrames) || GameState.replayFrames.length === 0) return;
+          const maxIdx = GameState.replayFrames.length - 1;
+          const clamped = Math.max(0, Math.min(maxIdx, index));
+          const prevIdx = this.currentIndex;
+          this.currentIndex = clamped;
+
+          const frame = GameState.replayFrames[clamped];
+          if (!frame) return;
+
+          GameState.board = [...frame.board];
+          GameState.kings = [...frame.kings];
+          GameState.reserves = { ...frame.reserves };
+          GameState.capturedBy = { ...frame.capturedBy };
+          GameState.currentTurn = frame.currentTurn;
+          GameState.selectedNode = null;
+          GameState.chainJumpingNode = null;
+          GameState.morrisPendingRemove = false;
+          GameState.lastMove = frame.lastMove ? { ...frame.lastMove } : null;
+          GameState.lastFormedMill = frame.lastFormedMill ? [...frame.lastFormedMill] : null;
+          GameState.gomokuWinningLine = frame.gomokuWinningLine ? [...frame.gomokuWinningLine] : null;
+          VisualFX.hintHighlight = null;
+
+          if (animate && clamped === prevIdx + 1 && frame.lastMove) {
+            const lm = frame.lastMove;
+            if (lm.from !== null && lm.from !== undefined && lm.from >= 0 && lm.to !== null && lm.to !== undefined && lm.to >= 0) {
+              const fromNode = Nodes[lm.from];
+              const toNode = Nodes[lm.to];
+              if (fromNode && toNode) {
+                VisualFX.startPieceTween(fromNode, toNode, lm.player, lm.type === 'jump');
+              }
+            } else if (lm.type === 'drop' && lm.to !== null && lm.to !== undefined && lm.to >= 0) {
+              VisualFX.spawnPulseRing(lm.to, lm.player === 1 ? '#0D9488' : '#E11D48');
+            }
+
+            if (Array.isArray(lm.capturedIds) && lm.capturedIds.length > 0) {
+              const victimPlayer = lm.player === 1 ? 2 : 1;
+              for (const cid of lm.capturedIds) {
+                if (Nodes[cid]) {
+                  VisualFX.spawnCaptureBurst(Nodes[cid].x, Nodes[cid].y, victimPlayer);
+                }
+              }
+              SoundEngine.capture(lm.capturedIds.length);
+            } else {
+              SoundEngine.move();
+            }
+          } else {
+            VisualFX.movingPiece = null;
+          }
+
+          updateHUD();
+          this.syncControlsUI();
+          requestRender();
+        },
+
+        getStepIntervalMs() {
+          return Math.max(220, Math.round(920 / (this.speed || 1)));
+        },
+
+        scheduleNextStep() {
+          if (this.timerId) {
+            clearTimeout(this.timerId);
+            this.timerId = null;
+          }
+          if (!this.active || !this.playing) return;
+          this.timerId = setTimeout(() => {
+            this.timerId = null;
+            if (!this.active || !this.playing) return;
+            if (this.currentIndex < GameState.replayFrames.length - 1) {
+              this.seekTo(this.currentIndex + 1, true);
+              if (this.currentIndex >= GameState.replayFrames.length - 1) {
+                this.playing = false;
+                SoundEngine.victory();
+                this.syncControlsUI();
+              } else {
+                this.scheduleNextStep();
+              }
+            } else {
+              this.playing = false;
+              this.syncControlsUI();
+            }
+          }, this.getStepIntervalMs());
+        },
+
+        play() {
+          if (!this.active) return;
+          if (this.currentIndex >= GameState.replayFrames.length - 1) {
+            this.seekTo(0, false);
+          }
+          this.playing = true;
+          this.syncControlsUI();
+          this.scheduleNextStep();
+        },
+
+        pause() {
+          this.playing = false;
+          if (this.timerId) {
+            clearTimeout(this.timerId);
+            this.timerId = null;
+          }
+          this.syncControlsUI();
+        },
+
+        stop() {
+          this.pause();
+          this.seekTo(0, false);
+          const statusTxt = document.getElementById('replayStatusText');
+          const statusDot = document.getElementById('replayStatusDot');
+          const statusBadge = document.getElementById('replayStatusBadge');
+          if (statusTxt) statusTxt.textContent = 'Stopped';
+          if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-white';
+          if (statusBadge) statusBadge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-600 text-white font-black text-[10px] tracking-wider uppercase shrink-0';
+        },
+
+        togglePlayPause() {
+          if (!this.active) return;
+          SoundEngine.select();
+          if (this.playing) this.pause();
+          else this.play();
+        },
+
+        stepPrev() {
+          if (!this.active) return;
+          this.pause();
+          SoundEngine.select();
+          this.seekTo(this.currentIndex - 1, false);
+        },
+
+        stepNext() {
+          if (!this.active) return;
+          this.pause();
+          this.seekTo(this.currentIndex + 1, true);
+        },
+
+        setSpeed(newSpeed) {
+          const sp = Number(newSpeed) || 1;
+          this.speed = sp;
+          SoundEngine.select();
+          this.syncControlsUI();
+          if (this.playing) {
+            this.scheduleNextStep();
+          }
+        },
+
+        syncControlsUI() {
+          const total = Math.max(0, (GameState.replayFrames ? GameState.replayFrames.length : 1) - 1);
+          const frame = (GameState.replayFrames && GameState.replayFrames[this.currentIndex]) || null;
+
+          const scrubber = document.getElementById('rngReplayScrubber');
+          if (scrubber) {
+            scrubber.max = String(total);
+            scrubber.value = String(this.currentIndex);
+          }
+
+          const countEl = document.getElementById('replayFrameCount');
+          if (countEl) countEl.textContent = `Move ${this.currentIndex} / ${total}`;
+
+          const lblMove = document.getElementById('replayMoveLabel');
+          if (lblMove && frame) lblMove.textContent = frame.label || 'Initial Board Setup';
+
+          const iconPP = document.getElementById('iconReplayPlayPause');
+          const lblPP = document.getElementById('lblReplayPlayPause');
+          const isAtEnd = this.currentIndex >= total;
+          if (iconPP) iconPP.textContent = this.playing ? '⏸' : (isAtEnd ? '↺' : '▶');
+          if (lblPP) lblPP.textContent = this.playing ? 'Pause' : (isAtEnd ? 'Replay' : 'Play');
+
+          const statusTxt = document.getElementById('replayStatusText');
+          const statusDot = document.getElementById('replayStatusDot');
+          const statusBadge = document.getElementById('replayStatusBadge');
+          if (statusTxt && statusDot && statusBadge) {
+            if (this.playing) {
+              statusTxt.textContent = `Playing ${this.speed}×`;
+              statusDot.className = 'w-2 h-2 rounded-full bg-walnut-900 animate-ping';
+              statusBadge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-400 text-walnut-900 font-black text-[10px] tracking-wider uppercase shrink-0';
+            } else if (isAtEnd) {
+              statusTxt.textContent = 'Finished';
+              statusDot.className = 'w-2 h-2 rounded-full bg-emerald-200';
+              statusBadge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-600 text-white font-black text-[10px] tracking-wider uppercase shrink-0';
+            } else {
+              statusTxt.textContent = 'Paused';
+              statusDot.className = 'w-2 h-2 rounded-full bg-amber-300';
+              statusBadge.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/15 text-amber-200 font-black text-[10px] tracking-wider uppercase shrink-0';
+            }
+          }
+
+          const immTurnText = document.getElementById('immTurnText');
+          if (immTurnText && frame) {
+            immTurnText.textContent = `🎬 Replay (${this.currentIndex}/${total}) • ${frame.label}`;
+          }
+
+          document.querySelectorAll('.replay-speed-btn').forEach((btn) => {
+            const s = Number(btn.getAttribute('data-replay-speed'));
+            if (s === this.speed) {
+              btn.className = 'replay-speed-btn android-btn px-1.5 sm:px-2 py-1 rounded-lg text-[10px] font-mono font-extrabold bg-teal-600 text-white shadow';
+            } else {
+              btn.className = 'replay-speed-btn android-btn px-1.5 sm:px-2 py-1 rounded-lg text-[10px] font-mono font-extrabold text-parchment-200 hover:bg-white/10';
+            }
+          });
+        },
+
+        close(reopenVictory = true) {
+          if (!this.active) return;
+          this.pause();
+          this.active = false;
+          document.body.classList.remove('replay-mode');
+
+          const bar = document.getElementById('replayControllerBar');
+          if (bar) bar.classList.add('hidden');
+
+          if (this.finalSnapshot) {
+            GameState.board = [...this.finalSnapshot.board];
+            GameState.kings = [...this.finalSnapshot.kings];
+            GameState.reserves = { ...this.finalSnapshot.reserves };
+            GameState.capturedBy = { ...this.finalSnapshot.capturedBy };
+            GameState.currentTurn = this.finalSnapshot.currentTurn;
+            GameState.lastMove = this.finalSnapshot.lastMove ? { ...this.finalSnapshot.lastMove } : null;
+            GameState.lastFormedMill = this.finalSnapshot.lastFormedMill ? [...this.finalSnapshot.lastFormedMill] : null;
+            GameState.gomokuWinningLine = this.finalSnapshot.gomokuWinningLine ? [...this.finalSnapshot.gomokuWinningLine] : null;
+            GameState.gameOver = this.finalSnapshot.gameOver;
+            GameState.winner = this.finalSnapshot.winner;
+            GameState.winReason = this.finalSnapshot.winReason;
+            this.finalSnapshot = null;
+          }
+
+          VisualFX.movingPiece = null;
+          if (Immersive.active) {
+            Immersive.exit();
+          } else {
+            resizeCanvas();
+          }
+          updateHUD();
+          requestRender();
+          if (reopenVictory && GameState.gameOver) {
+            showVictoryModal(true);
+          }
+        }
+      };
+
+      const btnVictoryWatchReplay = document.getElementById('btnVictoryWatchReplay');
+      if (btnVictoryWatchReplay) {
+        btnVictoryWatchReplay.addEventListener('click', () => {
+          SoundEngine.select();
+          ReplayManager.startFullscreenReplay();
+        });
+      }
+
+      const btnInspectWatchReplay = document.getElementById('btnInspectWatchReplay');
+      if (btnInspectWatchReplay) {
+        btnInspectWatchReplay.addEventListener('click', () => {
+          SoundEngine.select();
+          ReplayManager.startFullscreenReplay();
+        });
+      }
+
+      const btnReplayPlayPause = document.getElementById('btnReplayPlayPause');
+      if (btnReplayPlayPause) {
+        btnReplayPlayPause.addEventListener('click', () => ReplayManager.togglePlayPause());
+      }
+      const btnReplayStop = document.getElementById('btnReplayStop');
+      if (btnReplayStop) {
+        btnReplayStop.addEventListener('click', () => {
+          SoundEngine.select();
+          ReplayManager.stop();
+        });
+      }
+      const btnReplayFirst = document.getElementById('btnReplayFirst');
+      if (btnReplayFirst) {
+        btnReplayFirst.addEventListener('click', () => {
+          SoundEngine.select();
+          ReplayManager.pause();
+          ReplayManager.seekTo(0, false);
+        });
+      }
+      const btnReplayPrev = document.getElementById('btnReplayPrev');
+      if (btnReplayPrev) {
+        btnReplayPrev.addEventListener('click', () => ReplayManager.stepPrev());
+      }
+      const btnReplayNext = document.getElementById('btnReplayNext');
+      if (btnReplayNext) {
+        btnReplayNext.addEventListener('click', () => ReplayManager.stepNext());
+      }
+      const btnReplayLast = document.getElementById('btnReplayLast');
+      if (btnReplayLast) {
+        btnReplayLast.addEventListener('click', () => {
+          SoundEngine.select();
+          ReplayManager.pause();
+          ReplayManager.seekTo((GameState.replayFrames ? GameState.replayFrames.length : 1) - 1, false);
+        });
+      }
+      const rngReplayScrubber = document.getElementById('rngReplayScrubber');
+      if (rngReplayScrubber) {
+        rngReplayScrubber.addEventListener('input', (e) => {
+          ReplayManager.pause();
+          ReplayManager.seekTo(parseInt(e.target.value, 10) || 0, false);
+        });
+      }
+      document.querySelectorAll('.replay-speed-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          ReplayManager.setSpeed(btn.getAttribute('data-replay-speed'));
+        });
+      });
+      const btnReplayFlip = document.getElementById('btnReplayFlip');
+      if (btnReplayFlip) {
+        btnReplayFlip.addEventListener('click', () => {
+          document.getElementById('btnFlipBoard').click();
+        });
+      }
+      const btnReplayExit = document.getElementById('btnReplayExit');
+      if (btnReplayExit) {
+        btnReplayExit.addEventListener('click', () => {
+          SoundEngine.select();
+          ReplayManager.close(true);
+        });
+      }
+
       const tabPassPlay = document.getElementById('tabModePassPlay');
       const tabWebRTC = document.getElementById('tabModeWebRTC');
       const tabGlobal = document.getElementById('tabModeGlobal');
@@ -15282,7 +15784,13 @@
       });
 
       document.getElementById('btnPlayImmersive').addEventListener('click', () => Immersive.enter());
-      document.getElementById('btnExitImmersive').addEventListener('click', () => Immersive.exit());
+      document.getElementById('btnExitImmersive').addEventListener('click', () => {
+        if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
+          ReplayManager.close(true);
+        } else {
+          Immersive.exit();
+        }
+      });
 
       document.getElementById('immEndChain').addEventListener('click', () => {
         document.getElementById('btnEndChainTurn').click();
@@ -15873,6 +16381,28 @@
 
       document.addEventListener('keydown', (event) => {
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+        if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
+          if (event.key === ' ' || event.code === 'KeyP') {
+            event.preventDefault();
+            ReplayManager.togglePlayPause();
+            return;
+          }
+          if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            ReplayManager.stepPrev();
+            return;
+          }
+          if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            ReplayManager.stepNext();
+            return;
+          }
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            ReplayManager.close(true);
+            return;
+          }
+        }
         if (event.key === ' ' || event.code === 'KeyP') {
           event.preventDefault();
           MainMenu.togglePause();
@@ -15950,7 +16480,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=6e5f71f973', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=9c52a5dbbc', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {

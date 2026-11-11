@@ -12,7 +12,7 @@
  * when offline and caused the old "libraries not loaded" bug.
  */
 
-const CACHE_NAME = 'katar-offline-6e5f71f973';
+const CACHE_NAME = 'katar-offline-9c52a5dbbc';
 const OFFLINE_URL = './offline.html';
 
 const PRECACHE_ASSETS = [
@@ -38,6 +38,7 @@ const PRECACHE_ASSETS = [
   "./mqtt.min.js",
   "./offline.html",
   "./pako.min.js",
+  "./patch.json",
   "./peerjs.min.js",
   "./qrcode.min.js",
   "./tailwind.min.js",
