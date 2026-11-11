@@ -1227,15 +1227,18 @@
             </button>
           </div>
 
-          <div class="flex items-center gap-2 pt-0.5">
-            <button id="btnMenuReplay" type="button" class="android-btn flex-1 py-2 rounded-xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400 shadow-[0_2px_0_#B8976C] flex items-center justify-center gap-1.5" title="Restart match from move 1">
-              <span>🔄</span> <span>Restart / Replay</span>
+          <div class="flex items-center gap-1.5 sm:gap-2 pt-0.5">
+            <button id="btnMenuReplay" type="button" class="android-btn flex-1 py-2 px-2 rounded-xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400 shadow-[0_2px_0_#B8976C] flex items-center justify-center gap-1" title="Restart match from move 1">
+              <span>🔄</span> <span>Restart</span>
             </button>
-            <button id="btnMenuRules" type="button" class="android-btn px-3 py-2 rounded-xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400 shadow-[0_2px_0_#B8976C] flex items-center justify-center gap-1" title="Customize Grid, Bead Count &amp; Rules">
-              <span>⚙️</span> <span>Settings</span>
+            <button id="btnMenuSavedReplays" type="button" class="android-btn flex-1 py-2 px-2 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-950 font-extrabold text-xs border border-indigo-300 shadow-[0_2px_0_#6366F1] flex items-center justify-center gap-1" title="View &amp; Replay Saved Matches from History">
+              <span>🎬</span> <span>Replays</span> <span id="badgeMenuReplayCount" class="text-[10px] font-mono bg-indigo-600 text-white px-1.5 py-0.2 rounded-full">0</span>
             </button>
-            <button id="btnMenuExitStandby" type="button" class="hidden android-btn px-3 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-900 font-extrabold text-xs border border-rose-300 shadow-[0_2px_0_#FDA4AF] flex items-center justify-center gap-1" title="Abandon match and return to Main Menu">
-              <span>🏠</span> <span>Menu</span>
+            <button id="btnMenuRules" type="button" class="android-btn px-2.5 py-2 rounded-xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400 shadow-[0_2px_0_#B8976C] flex items-center justify-center gap-1" title="Customize Grid, Bead Count &amp; Rules">
+              <span>⚙️</span> <span class="hidden xs:inline sm:inline">Settings</span>
+            </button>
+            <button id="btnMenuExitStandby" type="button" class="hidden android-btn px-2.5 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-900 font-extrabold text-xs border border-rose-300 shadow-[0_2px_0_#FDA4AF] flex items-center justify-center gap-1" title="Abandon match and return to Main Menu">
+              <span>🏠</span>
             </button>
           </div>
 
@@ -1431,51 +1434,51 @@
   <!-- ===================================================================== -->
   <!-- FULLSCREEN MATCH REPLAY PLAYER OVERLAY                                -->
   <!-- ===================================================================== -->
-  <div id="replayControllerBar" class="hidden fixed inset-x-0 bottom-0 z-40 px-2.5 sm:px-4 pb-[calc(env(safe-area-inset-bottom,0px)+10px)] pt-2 pointer-events-none flex justify-center">
-    <div class="pointer-events-auto w-full max-w-2xl bg-walnut-900/95 border-2 border-amber-400/90 rounded-2xl p-2.5 sm:p-3.5 shadow-[0_12px_36px_rgba(0,0,0,0.75)] backdrop-blur-md text-white space-y-2">
-      <div class="flex items-center justify-between gap-2 text-xs">
-        <div class="flex items-center gap-2 min-w-0">
-          <span id="replayStatusBadge" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500 text-walnut-900 font-black text-[10px] tracking-wider uppercase shrink-0">
-            <span id="replayStatusDot" class="w-2 h-2 rounded-full bg-walnut-900 animate-ping"></span>
+  <div id="replayControllerBar" class="hidden fixed inset-x-0 bottom-0 z-40 px-2 sm:px-4 pb-[calc(env(safe-area-inset-bottom,0px)+6px)] pt-1 pointer-events-none flex justify-center">
+    <div class="pointer-events-auto w-full max-w-2xl bg-walnut-900/95 border-2 border-amber-400/90 rounded-2xl px-2.5 py-2 sm:p-3 shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-md text-white space-y-1.5">
+      <div class="flex items-center justify-between gap-1.5 text-xs">
+        <div class="flex items-center gap-1.5 min-w-0 flex-1">
+          <span id="replayStatusBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500 text-walnut-900 font-black text-[9.5px] sm:text-[10px] tracking-wider uppercase shrink-0">
+            <span id="replayStatusDot" class="w-1.5 h-1.5 rounded-full bg-walnut-900 animate-ping"></span>
             <span id="replayStatusText">Playing</span>
           </span>
-          <span id="replayMoveLabel" class="font-mono font-bold text-amber-200 truncate text-[11px] sm:text-xs">Initial Board Setup</span>
+          <span id="replayMoveLabel" class="font-mono font-bold text-amber-200 truncate text-[10.5px] sm:text-xs">Initial Board Setup</span>
         </div>
-        <span id="replayFrameCount" class="font-mono text-[11px] sm:text-xs font-extrabold text-parchment-200 bg-white/10 px-2 py-0.5 rounded-lg border border-white/15 shrink-0">0 / 0</span>
+        <div class="flex items-center gap-1 shrink-0">
+          <span id="replayFrameCount" class="font-mono text-[10px] sm:text-xs font-extrabold text-parchment-200 bg-white/10 px-1.5 py-0.5 rounded-lg border border-white/15">0 / 0</span>
+          <button id="btnReplayFlip" type="button" class="android-btn h-6 sm:h-7 px-1.5 sm:px-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-[10px] font-extrabold flex items-center justify-center" title="Rotate Board Perspective">🔄</button>
+          <button id="btnReplayCollapseBody" type="button" class="android-btn h-6 sm:h-7 px-1.5 sm:px-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-[10px] font-extrabold flex items-center justify-center" title="Minimize / Expand Replay Controls">▼</button>
+          <button id="btnReplayExit" type="button" class="android-btn h-6 sm:h-7 px-2 sm:px-2.5 rounded-lg bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white border border-teal-300/40 text-[10px] sm:text-[11px] font-black shadow flex items-center gap-1" title="Exit Replay">
+            <span>✕</span>
+            <span>Exit</span>
+          </button>
+        </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <input id="rngReplayScrubber" type="range" min="0" max="1" step="1" value="0" class="w-full accent-amber-400 cursor-pointer h-1.5 bg-white/20 rounded-lg" aria-label="Replay timeline scrubber" />
-      </div>
-
-      <div class="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 pt-0.5">
-        <div class="flex items-center gap-1 sm:gap-1.5">
-          <button id="btnReplayFirst" type="button" class="android-btn w-8 h-8 sm:w-9 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-xs font-black" title="Jump to Start (Home)" aria-label="First move">⏮</button>
-          <button id="btnReplayPrev" type="button" class="android-btn w-8 h-8 sm:w-9 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-xs font-black" title="Previous Move (←)" aria-label="Previous move">⏪</button>
-          <button id="btnReplayPlayPause" type="button" class="android-btn h-8 px-3 sm:px-4 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 font-black text-xs shadow flex items-center justify-center gap-1" title="Play / Pause (Space)">
-            <span id="iconReplayPlayPause">⏸</span>
-            <span id="lblReplayPlayPause">Pause</span>
-          </button>
-          <button id="btnReplayStop" type="button" class="android-btn w-8 h-8 sm:w-9 sm:h-8 rounded-xl bg-rose-600/80 hover:bg-rose-600 border border-rose-400/40 flex items-center justify-center text-xs font-black text-white" title="Stop &amp; Reset to Start" aria-label="Stop replay">⏹</button>
-          <button id="btnReplayNext" type="button" class="android-btn w-8 h-8 sm:w-9 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-xs font-black" title="Next Move (→)" aria-label="Next move">⏩</button>
-          <button id="btnReplayLast" type="button" class="android-btn w-8 h-8 sm:w-9 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-xs font-black" title="Jump to Final Result (End)" aria-label="Last move">⏭</button>
+      <div id="replayControlsBody" class="space-y-1.5">
+        <div class="flex items-center gap-2">
+          <input id="rngReplayScrubber" type="range" min="0" max="1" step="1" value="0" class="w-full accent-amber-400 cursor-pointer h-1.5 bg-white/20 rounded-lg" aria-label="Replay timeline scrubber" />
         </div>
 
-        <div class="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/15">
-          <button type="button" data-replay-speed="0.5" class="replay-speed-btn android-btn px-1.5 sm:px-2 py-1 rounded-lg text-[10px] font-mono font-extrabold text-parchment-200 hover:bg-white/10">0.5×</button>
-          <button type="button" data-replay-speed="1" class="replay-speed-btn android-btn px-1.5 sm:px-2 py-1 rounded-lg text-[10px] font-mono font-extrabold bg-teal-600 text-white shadow">1×</button>
-          <button type="button" data-replay-speed="2" class="replay-speed-btn android-btn px-1.5 sm:px-2 py-1 rounded-lg text-[10px] font-mono font-extrabold text-parchment-200 hover:bg-white/10">2×</button>
-          <button type="button" data-replay-speed="4" class="replay-speed-btn android-btn px-1.5 sm:px-2 py-1 rounded-lg text-[10px] font-mono font-extrabold text-parchment-200 hover:bg-white/10">4×</button>
-        </div>
+        <div class="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
+          <div class="flex items-center gap-1 shrink-0">
+            <button id="btnReplayFirst" type="button" class="android-btn w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-[11px] sm:text-xs font-black" title="Jump to Start (Home)" aria-label="First move">⏮</button>
+            <button id="btnReplayPrev" type="button" class="android-btn w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-[11px] sm:text-xs font-black" title="Previous Move (←)" aria-label="Previous move">⏪</button>
+            <button id="btnReplayPlayPause" type="button" class="android-btn h-7 sm:h-8 px-2.5 sm:px-3.5 rounded-lg sm:rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 font-black text-[11px] sm:text-xs shadow flex items-center justify-center gap-1" title="Play / Pause (Space)">
+              <span id="iconReplayPlayPause">⏸</span>
+              <span id="lblReplayPlayPause">Pause</span>
+            </button>
+            <button id="btnReplayStop" type="button" class="android-btn w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-rose-600/80 hover:bg-rose-600 border border-rose-400/40 flex items-center justify-center text-[11px] sm:text-xs font-black text-white" title="Stop &amp; Reset to Start" aria-label="Stop replay">⏹</button>
+            <button id="btnReplayNext" type="button" class="android-btn w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-[11px] sm:text-xs font-black" title="Next Move (→)" aria-label="Next move">⏩</button>
+            <button id="btnReplayLast" type="button" class="android-btn w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-[11px] sm:text-xs font-black" title="Jump to Final Result (End)" aria-label="Last move">⏭</button>
+          </div>
 
-        <div class="flex items-center gap-1.5 ml-auto sm:ml-0">
-          <button id="btnReplayFlip" type="button" class="android-btn h-8 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] font-extrabold flex items-center gap-1" title="Rotate Board Perspective">
-            <span>🔄</span>
-          </button>
-          <button id="btnReplayExit" type="button" class="android-btn h-8 px-3 rounded-xl bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white border border-teal-300/40 text-[11px] font-black shadow flex items-center gap-1" title="Exit Replay &amp; Return to Match Results">
-            <span>🏆</span>
-            <span>Results</span>
-          </button>
+          <div class="flex items-center gap-0.5 sm:gap-1 bg-black/40 p-0.5 sm:p-1 rounded-lg sm:rounded-xl border border-white/15 shrink-0">
+            <button type="button" data-replay-speed="0.5" class="replay-speed-btn android-btn px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[9.5px] sm:text-[10px] font-mono font-extrabold text-parchment-200 hover:bg-white/10">0.5×</button>
+            <button type="button" data-replay-speed="1" class="replay-speed-btn android-btn px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[9.5px] sm:text-[10px] font-mono font-extrabold bg-teal-600 text-white shadow">1×</button>
+            <button type="button" data-replay-speed="2" class="replay-speed-btn android-btn px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[9.5px] sm:text-[10px] font-mono font-extrabold text-parchment-200 hover:bg-white/10">2×</button>
+            <button type="button" data-replay-speed="4" class="replay-speed-btn android-btn px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-[9.5px] sm:text-[10px] font-mono font-extrabold text-parchment-200 hover:bg-white/10">4×</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2563,6 +2566,16 @@
               Match ready — make a move to record history.
             </div>
           </div>
+
+          <div class="pt-2 border-t border-parchment-200 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-900">🎬 Saved Match Replays (Tap to Watch Fullscreen)</span>
+              <button id="btnClearSavedReplaysEnc" type="button" class="android-btn text-[10px] font-bold text-rose-700 hover:underline">Clear History</button>
+            </div>
+            <div id="savedReplaysListEnc" class="space-y-1.5 max-h-44 overflow-y-auto custom-scroll pr-0.5">
+              <div class="text-[11px] text-walnut-500 italic py-2 text-center">Finished matches are automatically saved here for fullscreen replay.</div>
+            </div>
+          </div>
         </div>
 
         <!-- Quick Game Launch Cards -->
@@ -2734,6 +2747,16 @@
                 <div class="text-[10px] font-bold text-rose-800">Beads Eaten</div>
                 <div id="careerBeadsEaten" class="font-mono text-sm font-black text-rose-600">0</div>
               </div>
+            </div>
+          </div>
+
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <span class="font-extrabold text-walnut-900 uppercase tracking-wider text-[11px]">🎬 Saved Match History &amp; Replays</span>
+              <button id="btnClearSavedReplaysProf" type="button" class="android-btn text-[10px] font-bold text-rose-700 hover:underline">Clear All</button>
+            </div>
+            <div id="savedReplaysListProfile" class="space-y-1.5 max-h-48 overflow-y-auto custom-scroll pr-0.5">
+              <div class="text-[11px] text-walnut-500 italic py-2 text-center">No completed matches saved yet — finish a match to watch its replay anytime!</div>
             </div>
           </div>
         </div>
@@ -5090,6 +5113,9 @@
 
         openModal(isFirstTimeOnboarding = false) {
           this.syncHeaderAndFormUI();
+          if (typeof MatchHistoryManager !== 'undefined') {
+            MatchHistoryManager.renderLists();
+          }
           const modal = document.getElementById('modalProfile');
           const btnClose = document.getElementById('btnCloseProfileModal');
           const banner = document.getElementById('firstTimeWelcomeBanner');
@@ -5159,6 +5185,7 @@
               disconnectGraceSeconds: GameState.disconnectGraceSeconds
             },
             trustedPeers: WebRTCManager.getTrustedPeers(),
+            matchHistory: typeof MatchHistoryManager !== 'undefined' ? MatchHistoryManager.getAll() : [],
             stashedMatch: (() => {
               try {
                 const s = SafeStorage.getItem('katar_stashed_match_v1');
@@ -5220,6 +5247,9 @@
           if (Array.isArray(bundle.trustedPeers)) {
             SafeStorage.setItem('katar_trusted_peers_v1', JSON.stringify(bundle.trustedPeers));
             WebRTCManager.renderTrustedPeersUI();
+          }
+          if (Array.isArray(bundle.matchHistory) && typeof MatchHistoryManager !== 'undefined') {
+            MatchHistoryManager.restoreAll(bundle.matchHistory);
           }
           if (bundle.stashedMatch) {
             SafeStorage.setItem('katar_stashed_match_v1', JSON.stringify(bundle.stashedMatch));
@@ -5515,6 +5545,184 @@
         }
       }
 
+      const MatchHistoryManager = {
+        storageKey: 'katar_match_history_replays_v1',
+        maxSavedMatches: 25,
+
+        getAll() {
+          try {
+            const raw = SafeStorage.getItem(this.storageKey);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (e) {
+            return [];
+          }
+        },
+
+        saveAll(list) {
+          try {
+            const trimmed = Array.isArray(list) ? list.slice(0, this.maxSavedMatches) : [];
+            SafeStorage.setItem(this.storageKey, JSON.stringify(trimmed));
+          } catch (e) {}
+          this.renderLists();
+        },
+
+        restoreAll(list) {
+          if (!Array.isArray(list)) return;
+          this.saveAll(list);
+        },
+
+        saveCompletedMatch(winner) {
+          if (!Array.isArray(GameState.replayFrames) || GameState.replayFrames.length < 2) return;
+          const lastFrame = GameState.replayFrames[GameState.replayFrames.length - 1];
+          if (GameState.lastFormedMill) lastFrame.lastFormedMill = [...GameState.lastFormedMill];
+          if (GameState.gomokuWinningLine) lastFrame.gomokuWinningLine = [...GameState.gomokuWinningLine];
+
+          const [p1Title, p2Title] = getThemePlayerNames();
+          const presetLabels = {
+            '6x6': '6×6 Katar',
+            'navakankari_9': 'Navakankari 9',
+            'navakankari_12': '12-Men Katar Mill',
+            'three_morris': 'Teen Guti 3v3',
+            'six_morris': 'Chhah Guti 6v6',
+            'bagh_chal': 'Bagh-Chal',
+            'aadu_puli': 'Aadu Puli Attam',
+            'lau_kata_kati': 'Lau Kata Kati',
+            'pretwa': 'Pretwa Circular',
+            'fanorona_5x5': 'Fanorona 5×5',
+            'fanorona_5x9': 'Fanorona 5×9',
+            'seega_5x5': 'Seega 5×5',
+            'dama_8x8': 'Dama 8×8 Kings',
+            'gomoku_9x9': 'Gomoku 9×9',
+            '37_sholo': '37-Pt Sholo Guti',
+            '6x7': '6×7 Maidaan',
+            '5x5': '5×5 Baro Guti',
+            '5x7': '5×7 Extended',
+            '7x7': '7×7 Grand',
+            '8x8': '8×8 Commander',
+            '4x4': '4×4 Blitz'
+          };
+          const entry = {
+            id: 'M-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+            savedAt: Date.now(),
+            gameTitle: presetLabels[GameState.gridPreset] || `${GameState.rows}×${GameState.cols} Katar`,
+            gameFamily: GameState.gameFamily,
+            morrisVariant: GameState.morrisVariant,
+            morrisDiagonals: Boolean(GameState.morrisDiagonals),
+            gridPreset: GameState.gridPreset,
+            rows: GameState.rows,
+            cols: GameState.cols,
+            hasTriangularCamps: Boolean(GameState.hasTriangularCamps),
+            diagonalMode: GameState.diagonalMode,
+            piecesPerPlayer: GameState.piecesPerPlayer,
+            tigerCaptureTarget: GameState.tigerCaptureTarget,
+            p1Name: p1Title,
+            p2Name: p2Title,
+            winner: winner,
+            winReason: GameState.winReason || '',
+            capturedBy: { ...GameState.capturedBy },
+            movesCount: Math.max(1, GameState.replayFrames.length - 1),
+            frames: GameState.replayFrames.map((f) => ({
+              step: f.step,
+              label: f.label,
+              board: [...f.board],
+              kings: [...f.kings],
+              reserves: { ...f.reserves },
+              capturedBy: { ...f.capturedBy },
+              currentTurn: f.currentTurn,
+              lastMove: f.lastMove ? { ...f.lastMove } : null,
+              lastFormedMill: f.lastFormedMill ? [...f.lastFormedMill] : null,
+              gomokuWinningLine: f.gomokuWinningLine ? [...f.gomokuWinningLine] : null
+            }))
+          };
+
+          const list = this.getAll();
+          list.unshift(entry);
+          this.saveAll(list);
+        },
+
+        deleteMatch(matchId) {
+          const list = this.getAll().filter((m) => m && m.id !== matchId);
+          this.saveAll(list);
+        },
+
+        clearAll() {
+          this.saveAll([]);
+        },
+
+        renderLists() {
+          const list = this.getAll();
+          const badgeMenu = document.getElementById('badgeMenuReplayCount');
+          if (badgeMenu) badgeMenu.textContent = String(list.length);
+
+          const containers = [
+            { el: document.getElementById('savedReplaysListProfile'), sourceModal: 'modalProfile' },
+            { el: document.getElementById('savedReplaysListEnc'), sourceModal: 'modalEncyclopedia' }
+          ];
+
+          for (const { el, sourceModal } of containers) {
+            if (!el) continue;
+            if (list.length === 0) {
+              el.innerHTML = '<div class="text-[11px] text-walnut-500 italic py-2 text-center">No completed matches saved yet — finish a match to watch its replay anytime!</div>';
+              continue;
+            }
+            el.innerHTML = list.map((m) => {
+              const dateObj = new Date(m.savedAt || Date.now());
+              const dateStr = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              const isP1Win = m.winner === 1;
+              const isP2Win = m.winner === 2;
+              const badgeCls = isP1Win
+                ? 'bg-teal-100 text-teal-900 border-teal-300'
+                : (isP2Win ? 'bg-rose-100 text-rose-900 border-rose-300' : 'bg-amber-100 text-amber-900 border-amber-300');
+              const outcomeTxt = isP1Win
+                ? `🏆 ${m.p1Name || 'P1'} Won`
+                : (isP2Win ? `🏅 ${m.p2Name || 'P2'} Won` : '🤝 Draw');
+              const scoreTxt = `${(m.capturedBy && m.capturedBy[1]) || 0} - ${(m.capturedBy && m.capturedBy[2]) || 0}`;
+              return `
+                <div class="flex items-center justify-between gap-2 bg-parchment-100/90 hover:bg-parchment-200/70 border border-parchment-300 rounded-xl px-2.5 py-1.5 transition-colors">
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span class="text-[9.5px] font-extrabold px-1.5 py-0.5 rounded-md border ${badgeCls}">${outcomeTxt}</span>
+                      <span class="text-[11px] font-extrabold text-walnut-900 truncate">${m.gameTitle || 'Katar'}</span>
+                      <span class="text-[10px] font-mono font-bold text-walnut-600">(${scoreTxt})</span>
+                    </div>
+                    <div class="text-[10px] text-walnut-600 truncate mt-0.5">
+                      ${m.p1Name || 'P1'} vs ${m.p2Name || 'P2'} • <strong>${m.movesCount || 0} moves</strong> • ${dateStr}
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1 shrink-0">
+                    <button type="button" data-watch-match-id="${m.id}" data-source-modal="${sourceModal}" class="btn-watch-saved-replay android-btn px-2.5 py-1 rounded-lg bg-gradient-to-b from-indigo-500 to-indigo-700 hover:from-indigo-400 hover:to-indigo-600 text-white text-[10px] font-extrabold shadow flex items-center gap-1">
+                      <span>🎬</span><span>Replay</span>
+                    </button>
+                    <button type="button" data-del-match-id="${m.id}" class="btn-del-saved-replay android-btn w-6 h-6 rounded-lg bg-white hover:bg-rose-50 text-walnut-500 hover:text-rose-700 border border-parchment-300 flex items-center justify-center text-[10px] font-bold" title="Delete Saved Replay">✕</button>
+                  </div>
+                </div>
+              `;
+            }).join('');
+
+            el.querySelectorAll('.btn-watch-saved-replay').forEach((btn) => {
+              btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-watch-match-id');
+                const src = btn.getAttribute('data-source-modal');
+                SoundEngine.select();
+                ReplayManager.playSavedMatchById(id, src);
+              });
+            });
+
+            el.querySelectorAll('.btn-del-saved-replay').forEach((btn) => {
+              btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.getAttribute('data-del-match-id');
+                SoundEngine.select();
+                this.deleteMatch(id);
+                showBoardToast('Removed match replay from history');
+              });
+            });
+          }
+        }
+      };
+
       function recordSessionOutcome(winner) {
         if (winner === 1) GameState.sessionStats.p1Wins++;
         else if (winner === 2) GameState.sessionStats.p2Wins++;
@@ -5523,6 +5731,7 @@
           MorrisLearner.onMatchEnd(winner);
         }
         ProfileManager.recordMatchResult(winner);
+        MatchHistoryManager.saveCompletedMatch(winner);
         updateMoveLogUI();
       }
 
@@ -9493,18 +9702,29 @@
         // Reserve safe clearance in immersive mode so #immTopBar and #immDock NEVER overlap the board
         let availW = rect.width - 8;
         let availH = rect.height - 8;
-        if (isImmersive) {
-          const hud = document.getElementById('immersiveHud');
-          const dock = document.getElementById('immDock');
-          const isZen = hud && hud.classList.contains('zen-mode');
-          const isCollapsed = dock && dock.classList.contains('is-collapsed');
-          const isBottomDock = dock && (dock.classList.contains('dock-bottom') || (!dock.classList.contains('dock-left') && !dock.classList.contains('dock-right') && window.innerWidth < 860));
-          if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
-            availH -= 175;
-          } else if (!isZen) {
-            availH -= isBottomDock ? (isCollapsed ? 76 : 126) : 78;
-            if (!isBottomDock && !isCollapsed) {
-              availW -= 88;
+        if (isImmersive && typeof ReplayManager !== 'undefined' && ReplayManager.active) {
+          const topBarEl = document.getElementById('immTopBar');
+          const replayBarEl = document.getElementById('replayControllerBar');
+          const topH = (topBarEl && topBarEl.offsetHeight > 0) ? topBarEl.offsetHeight : 82;
+          const botH = (replayBarEl && !replayBarEl.classList.contains('hidden') && replayBarEl.offsetHeight > 0) ? replayBarEl.offsetHeight : 118;
+          wrapper.style.paddingTop = `${topH + 4}px`;
+          wrapper.style.paddingBottom = `${botH + 4}px`;
+          availH = rect.height - topH - botH - 16;
+          availW = rect.width - 12;
+        } else {
+          wrapper.style.paddingTop = '';
+          wrapper.style.paddingBottom = '';
+          if (isImmersive) {
+            const hud = document.getElementById('immersiveHud');
+            const dock = document.getElementById('immDock');
+            const isZen = hud && hud.classList.contains('zen-mode');
+            const isCollapsed = dock && dock.classList.contains('is-collapsed');
+            const isBottomDock = dock && (dock.classList.contains('dock-bottom') || (!dock.classList.contains('dock-left') && !dock.classList.contains('dock-right') && window.innerWidth < 860));
+            if (!isZen) {
+              availH -= isBottomDock ? (isCollapsed ? 76 : 126) : 78;
+              if (!isBottomDock && !isCollapsed) {
+                availW -= 88;
+              }
             }
           }
         }
@@ -14234,28 +14454,104 @@
         currentIndex: 0,
         timerId: null,
         finalSnapshot: null,
+        sourceModalId: null,
+        wasMainMenuOpen: false,
 
-        startFullscreenReplay() {
+        captureLiveSnapshot() {
+          return {
+            gameFamily: GameState.gameFamily,
+            morrisVariant: GameState.morrisVariant,
+            morrisDiagonals: GameState.morrisDiagonals,
+            gridPreset: GameState.gridPreset,
+            rows: GameState.rows,
+            cols: GameState.cols,
+            hasTriangularCamps: GameState.hasTriangularCamps,
+            diagonalMode: GameState.diagonalMode,
+            piecesPerPlayer: GameState.piecesPerPlayer,
+            tigerCaptureTarget: GameState.tigerCaptureTarget,
+            board: [...GameState.board],
+            kings: [...GameState.kings],
+            reserves: { ...GameState.reserves },
+            capturedBy: { ...GameState.capturedBy },
+            currentTurn: GameState.currentTurn,
+            lastMove: GameState.lastMove ? { ...GameState.lastMove } : null,
+            lastFormedMill: GameState.lastFormedMill ? [...GameState.lastFormedMill] : null,
+            gomokuWinningLine: GameState.gomokuWinningLine ? [...GameState.gomokuWinningLine] : null,
+            gameOver: GameState.gameOver,
+            winner: GameState.winner,
+            winReason: GameState.winReason,
+            isStarted: GameState.isStarted,
+            isPaused: GameState.isPaused,
+            replayFrames: Array.isArray(GameState.replayFrames) ? [...GameState.replayFrames] : []
+          };
+        },
+
+        playSavedMatchById(matchId, sourceModalId = null) {
+          const list = MatchHistoryManager.getAll();
+          const found = list.find((m) => m && m.id === matchId);
+          if (!found || !Array.isArray(found.frames) || found.frames.length < 2) {
+            SoundEngine.invalid();
+            showBoardToast('Saved replay data not found.');
+            return;
+          }
+
+          if (!this.active) {
+            this.finalSnapshot = this.captureLiveSnapshot();
+            this.sourceModalId = sourceModalId;
+            this.wasMainMenuOpen = Boolean(typeof MainMenu !== 'undefined' && MainMenu.isOpen);
+          }
+
+          ['modalProfile', 'modalEncyclopedia', 'modalVictory'].forEach((id) => {
+            const m = document.getElementById(id);
+            if (m) {
+              m.classList.add('hidden');
+              m.classList.remove('flex');
+            }
+          });
+          if (typeof MainMenu !== 'undefined' && MainMenu.isOpen) {
+            const ov = document.getElementById('mainMenuOverlay');
+            if (ov) {
+              ov.classList.add('hidden');
+              ov.classList.remove('flex');
+            }
+          }
+
+          GameState.gameFamily = found.gameFamily || 'leap';
+          GameState.morrisVariant = found.morrisVariant || 'nine';
+          GameState.morrisDiagonals = Boolean(found.morrisDiagonals);
+          GameState.gridPreset = found.gridPreset || '6x6';
+          GameState.rows = found.rows || 6;
+          GameState.cols = found.cols || 6;
+          GameState.hasTriangularCamps = Boolean(found.hasTriangularCamps);
+          GameState.diagonalMode = found.diagonalMode || 'full';
+          GameState.piecesPerPlayer = found.piecesPerPlayer || 18;
+          GameState.tigerCaptureTarget = found.tigerCaptureTarget || 5;
+          GameState.replayFrames = found.frames.map((f) => ({
+            ...f,
+            board: [...f.board],
+            kings: [...f.kings],
+            reserves: { ...f.reserves },
+            capturedBy: { ...f.capturedBy },
+            lastMove: f.lastMove ? { ...f.lastMove } : null,
+            lastFormedMill: f.lastFormedMill ? [...f.lastFormedMill] : null,
+            gomokuWinningLine: f.gomokuWinningLine ? [...f.gomokuWinningLine] : null
+          }));
+
+          buildDynamicBoardGraph();
+          this.startFullscreenReplay(true);
+        },
+
+        startFullscreenReplay(fromSavedHistory = false) {
           if (!Array.isArray(GameState.replayFrames) || GameState.replayFrames.length < 2) {
             SoundEngine.invalid();
             showBoardToast('No moves recorded to replay yet!');
             return;
           }
 
-          if (!this.active) {
-            this.finalSnapshot = {
-              board: [...GameState.board],
-              kings: [...GameState.kings],
-              reserves: { ...GameState.reserves },
-              capturedBy: { ...GameState.capturedBy },
-              currentTurn: GameState.currentTurn,
-              lastMove: GameState.lastMove ? { ...GameState.lastMove } : null,
-              lastFormedMill: GameState.lastFormedMill ? [...GameState.lastFormedMill] : null,
-              gomokuWinningLine: GameState.gomokuWinningLine ? [...GameState.gomokuWinningLine] : null,
-              gameOver: GameState.gameOver,
-              winner: GameState.winner,
-              winReason: GameState.winReason
-            };
+          if (!this.active && !fromSavedHistory) {
+            this.finalSnapshot = this.captureLiveSnapshot();
+            this.sourceModalId = 'modalVictory';
+            this.wasMainMenuOpen = false;
           }
 
           this.active = true;
@@ -14272,6 +14568,10 @@
 
           const bar = document.getElementById('replayControllerBar');
           if (bar) bar.classList.remove('hidden');
+          const bodyEl = document.getElementById('replayControlsBody');
+          const btnCol = document.getElementById('btnReplayCollapseBody');
+          if (bodyEl) bodyEl.classList.remove('hidden');
+          if (btnCol) btnCol.textContent = '▼';
 
           const scrubber = document.getElementById('rngReplayScrubber');
           if (scrubber) {
@@ -14282,8 +14582,8 @@
 
           Immersive.enter();
           this.seekTo(0, false);
-          resizeCanvas();
-          showBoardToast('🎬 Fullscreen Replay Started — Use controls below or Spacebar to Play/Pause');
+          [10, 60, 180, 320].forEach((ms) => setTimeout(resizeCanvas, ms));
+          showBoardToast('🎬 Fullscreen Replay — Use controls below to Play, Pause, Stop or Change Speed');
 
           setTimeout(() => {
             if (this.active) this.play();
@@ -14499,19 +14799,50 @@
           const bar = document.getElementById('replayControllerBar');
           if (bar) bar.classList.add('hidden');
 
+          const returnModalId = this.sourceModalId;
+          const restoreMainMenu = this.wasMainMenuOpen;
+          this.sourceModalId = null;
+          this.wasMainMenuOpen = false;
+
           if (this.finalSnapshot) {
-            GameState.board = [...this.finalSnapshot.board];
-            GameState.kings = [...this.finalSnapshot.kings];
-            GameState.reserves = { ...this.finalSnapshot.reserves };
-            GameState.capturedBy = { ...this.finalSnapshot.capturedBy };
-            GameState.currentTurn = this.finalSnapshot.currentTurn;
-            GameState.lastMove = this.finalSnapshot.lastMove ? { ...this.finalSnapshot.lastMove } : null;
-            GameState.lastFormedMill = this.finalSnapshot.lastFormedMill ? [...this.finalSnapshot.lastFormedMill] : null;
-            GameState.gomokuWinningLine = this.finalSnapshot.gomokuWinningLine ? [...this.finalSnapshot.gomokuWinningLine] : null;
-            GameState.gameOver = this.finalSnapshot.gameOver;
-            GameState.winner = this.finalSnapshot.winner;
-            GameState.winReason = this.finalSnapshot.winReason;
+            const snap = this.finalSnapshot;
             this.finalSnapshot = null;
+            const topologyChanged = (
+              snap.gameFamily !== GameState.gameFamily ||
+              snap.gridPreset !== GameState.gridPreset ||
+              snap.morrisDiagonals !== GameState.morrisDiagonals ||
+              snap.rows !== GameState.rows ||
+              snap.cols !== GameState.cols ||
+              snap.hasTriangularCamps !== GameState.hasTriangularCamps ||
+              snap.diagonalMode !== GameState.diagonalMode
+            );
+            GameState.gameFamily = snap.gameFamily;
+            GameState.morrisVariant = snap.morrisVariant;
+            GameState.morrisDiagonals = snap.morrisDiagonals;
+            GameState.gridPreset = snap.gridPreset;
+            GameState.rows = snap.rows;
+            GameState.cols = snap.cols;
+            GameState.hasTriangularCamps = snap.hasTriangularCamps;
+            GameState.diagonalMode = snap.diagonalMode;
+            GameState.piecesPerPlayer = snap.piecesPerPlayer;
+            GameState.tigerCaptureTarget = snap.tigerCaptureTarget;
+            if (topologyChanged) {
+              buildDynamicBoardGraph();
+            }
+            GameState.board = [...snap.board];
+            GameState.kings = [...snap.kings];
+            GameState.reserves = { ...snap.reserves };
+            GameState.capturedBy = { ...snap.capturedBy };
+            GameState.currentTurn = snap.currentTurn;
+            GameState.lastMove = snap.lastMove ? { ...snap.lastMove } : null;
+            GameState.lastFormedMill = snap.lastFormedMill ? [...snap.lastFormedMill] : null;
+            GameState.gomokuWinningLine = snap.gomokuWinningLine ? [...snap.gomokuWinningLine] : null;
+            GameState.gameOver = snap.gameOver;
+            GameState.winner = snap.winner;
+            GameState.winReason = snap.winReason;
+            GameState.isStarted = snap.isStarted;
+            GameState.isPaused = snap.isPaused;
+            GameState.replayFrames = snap.replayFrames;
           }
 
           VisualFX.movingPiece = null;
@@ -14520,10 +14851,23 @@
           } else {
             resizeCanvas();
           }
+          syncSettingsControlsFromState();
           updateHUD();
           requestRender();
-          if (reopenVictory && GameState.gameOver) {
-            showVictoryModal(true);
+
+          if (restoreMainMenu && typeof MainMenu !== 'undefined') {
+            MainMenu.syncUI();
+          }
+          if (reopenVictory) {
+            if (returnModalId === 'modalProfile' || returnModalId === 'modalEncyclopedia') {
+              const m = document.getElementById(returnModalId);
+              if (m) {
+                m.classList.remove('hidden');
+                m.classList.add('flex');
+              }
+            } else if (GameState.gameOver) {
+              showVictoryModal(true);
+            }
           }
         }
       };
@@ -14597,11 +14941,51 @@
           document.getElementById('btnFlipBoard').click();
         });
       }
+      const btnReplayCollapseBody = document.getElementById('btnReplayCollapseBody');
+      if (btnReplayCollapseBody) {
+        btnReplayCollapseBody.addEventListener('click', () => {
+          SoundEngine.select();
+          const bodyEl = document.getElementById('replayControlsBody');
+          if (bodyEl) {
+            const hidden = bodyEl.classList.toggle('hidden');
+            btnReplayCollapseBody.textContent = hidden ? '▲' : '▼';
+            setTimeout(resizeCanvas, 30);
+          }
+        });
+      }
       const btnReplayExit = document.getElementById('btnReplayExit');
       if (btnReplayExit) {
         btnReplayExit.addEventListener('click', () => {
           SoundEngine.select();
           ReplayManager.close(true);
+        });
+      }
+      const btnMenuSavedReplays = document.getElementById('btnMenuSavedReplays');
+      if (btnMenuSavedReplays) {
+        btnMenuSavedReplays.addEventListener('click', () => {
+          SoundEngine.select();
+          MatchHistoryManager.renderLists();
+          const modalEnc = document.getElementById('modalEncyclopedia');
+          if (modalEnc) {
+            modalEnc.classList.remove('hidden');
+            modalEnc.classList.add('flex');
+          }
+        });
+      }
+      const btnClearReplaysEnc = document.getElementById('btnClearSavedReplaysEnc');
+      if (btnClearReplaysEnc) {
+        btnClearReplaysEnc.addEventListener('click', () => {
+          SoundEngine.select();
+          MatchHistoryManager.clearAll();
+          showBoardToast('Cleared saved match replays history');
+        });
+      }
+      const btnClearReplaysProf = document.getElementById('btnClearSavedReplaysProf');
+      if (btnClearReplaysProf) {
+        btnClearReplaysProf.addEventListener('click', () => {
+          SoundEngine.select();
+          MatchHistoryManager.clearAll();
+          showBoardToast('Cleared saved match replays history');
         });
       }
 
@@ -16346,6 +16730,7 @@
         btnOpenEnc.addEventListener('click', () => {
           SoundEngine.select();
           updateMoveLogUI();
+          MatchHistoryManager.renderLists();
           modalEnc.classList.remove('hidden');
           modalEnc.classList.add('flex');
         });
@@ -16480,7 +16865,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=9c52a5dbbc', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=8e0c40dbcb', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
@@ -17017,6 +17402,7 @@
         if (!hasExistingProfile) {
           ProfileManager.save({ name: 'Player 1', title: 'Sardar', avatar: '👑', p2Name: 'Player 2' });
         }
+        MatchHistoryManager.renderLists();
         PuterAIManager.load();
         PuterAIManager.refreshQuotaFromPuter(true);
         if (inviteRoom) {
