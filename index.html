@@ -4148,7 +4148,12 @@
        * ------------------------------------------------------------------- */
       function applyGridPresetConfig(preset) {
         GameState.gridPreset = preset;
-        GameState.aiPlayerRole = 2;
+        if (GameState.aiVsAi) {
+          GameState.vsAI = true;
+          GameState.aiPlayerRole = GameState.currentTurn || 1;
+        } else {
+          GameState.aiPlayerRole = 2;
+        }
 
         if (preset === 'three_morris') {
           GameState.gameFamily = 'morris';
@@ -4382,6 +4387,11 @@
         if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
           ReplayManager.close(false);
         }
+        if (aiTurnTimeoutId) {
+          clearTimeout(aiTurnTimeoutId);
+          aiTurnTimeoutId = null;
+        }
+        GameState.puterAIThinking = false;
         cancelGraceTimer(false);
         hideFanoronaChoiceBar();
         buildDynamicBoardGraph();
@@ -4405,6 +4415,11 @@
           GameState.currentTurn = Math.random() < 0.5 ? 1 : 2;
         } else {
           GameState.currentTurn = 1;
+        }
+
+        if (GameState.aiVsAi) {
+          GameState.vsAI = true;
+          GameState.aiPlayerRole = GameState.currentTurn;
         }
 
         GameState.selectedNode = null;
@@ -5469,8 +5484,9 @@
             isAwayGrace: Boolean(isAwayGrace),
             absentPlayer: absentPlayer || null,
             vsAI: GameState.vsAI,
+            aiVsAi: GameState.aiVsAi,
             aiDifficulty: GameState.aiDifficulty,
-            aiPlayerRole: GameState.aiPlayerRole,
+            aiPlayerRole: GameState.aiVsAi ? GameState.currentTurn : GameState.aiPlayerRole,
             online: (GameState.mode === 'webrtc') ? {
               roomCode: WebRTCManager.roomCode || null,
               role: GameState.localPlayerRole || null,
@@ -5493,9 +5509,14 @@
           const snap = JSON.parse(raw);
           if (!snap || !snap.state || snap.state.gameOver) return false;
           if (snap.vsAI !== undefined) GameState.vsAI = Boolean(snap.vsAI);
+          if (snap.aiVsAi !== undefined) GameState.aiVsAi = Boolean(snap.aiVsAi);
           if (snap.aiDifficulty) GameState.aiDifficulty = snap.aiDifficulty;
           if (snap.aiPlayerRole) GameState.aiPlayerRole = snap.aiPlayerRole;
           applyRemoteGameState(snap.state);
+          if (GameState.aiVsAi) {
+            GameState.vsAI = true;
+            GameState.aiPlayerRole = GameState.currentTurn;
+          }
 
           const online = snap.online;
           if (online && online.roomCode && (online.role === 1 || online.role === 2)) {
@@ -5536,7 +5557,7 @@
             showBoardToast('Previous offline match restored locally — continue here or re-link via QR.');
           }
 
-          if (GameState.isStarted && !GameState.isPaused && !GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
+          if (GameState.isStarted && !GameState.isPaused && !GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || GameState.currentTurn === GameState.aiPlayerRole)) {
             scheduleAITurn(480);
           }
           return true;
@@ -6060,7 +6081,7 @@
                 });
               }
 
-              if (GameState.mode === 'pass_play' && GameState.vsAI && player === GameState.aiPlayerRole) {
+              if (GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || player === GameState.aiPlayerRole)) {
                 scheduleAITurn(460);
               }
               return;
@@ -6083,7 +6104,7 @@
                 });
               }
 
-              if (GameState.mode === 'pass_play' && GameState.vsAI && player === GameState.aiPlayerRole) {
+              if (GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || player === GameState.aiPlayerRole)) {
                 scheduleAITurn(320);
               }
               return;
@@ -6137,7 +6158,7 @@
                 });
               }
 
-              if (GameState.mode === 'pass_play' && GameState.vsAI && player === GameState.aiPlayerRole) {
+              if (GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || player === GameState.aiPlayerRole)) {
                 scheduleAITurn(460);
               }
               return;
@@ -6169,7 +6190,7 @@
             if (!isRemote && WebRTCManager.isConnected()) {
               WebRTCManager.send({ type: 'MOVE_ACTION', action, continueChain: true, state: serializeGameState() });
             }
-            if (GameState.mode === 'pass_play' && GameState.vsAI && player === GameState.aiPlayerRole) {
+            if (GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || player === GameState.aiPlayerRole)) {
               scheduleAITurn(380);
             }
             return;
@@ -6299,7 +6320,7 @@
                 });
               }
 
-              if (GameState.mode === 'pass_play' && GameState.vsAI && player === GameState.aiPlayerRole) {
+              if (GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || player === GameState.aiPlayerRole)) {
                 scheduleAITurn(440);
               }
               return;
@@ -10517,8 +10538,8 @@
           return;
         }
 
-        if (GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
-          showBoardToast("Wait for AI's move...");
+        if (GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || GameState.currentTurn === GameState.aiPlayerRole)) {
+          showBoardToast(GameState.aiVsAi ? '🤖⚔️🤖 AI vs AI match in progress...' : "Wait for AI's move...");
           return;
         }
 
@@ -14287,6 +14308,7 @@
         document.getElementById('modalRules').classList.add('hidden');
         document.getElementById('modalRules').classList.remove('flex');
         initMatch(true);
+        MainMenu.play();
         showBoardToast(`Match started: ${Nodes.length} nodes (${GameState.piecesPerPlayer}v${GameState.piecesPerPlayer} Beads)`);
         Immersive.enter();
       });
@@ -15076,8 +15098,10 @@
       btnOppHuman.addEventListener('click', () => {
         GameState.vsAI = false;
         GameState.aiVsAi = false;
+        savePersistentPrefs();
         syncSettingsControlsFromState();
         updateHUD();
+        if (typeof MainMenu !== 'undefined') MainMenu.syncUI();
         WebRTCManager.updateConnectionUI('idle', 'Pass & Play Ready', '2-Player Local Mode');
       });
 
@@ -15085,8 +15109,10 @@
         GameState.vsAI = true;
         GameState.aiVsAi = false;
         GameState.aiPlayerRole = 2;
+        savePersistentPrefs();
         syncSettingsControlsFromState();
         updateHUD();
+        if (typeof MainMenu !== 'undefined') MainMenu.syncUI();
         WebRTCManager.updateConnectionUI('idle', 'Tactical AI Ready', 'Single-Player vs AI Mode');
         if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
           scheduleAITurn(400);
@@ -15098,8 +15124,10 @@
           GameState.vsAI = true;
           GameState.aiVsAi = true;
           GameState.aiPlayerRole = GameState.currentTurn;
+          savePersistentPrefs();
           syncSettingsControlsFromState();
           updateHUD();
+          if (typeof MainMenu !== 'undefined') MainMenu.syncUI();
           WebRTCManager.updateConnectionUI('idle', 'AI vs AI Ready', 'Automatic AI vs AI Spectate Mode');
           if (!GameState.gameOver) {
             scheduleAITurn(400);
@@ -15123,6 +15151,7 @@
         GameState.aiPlayerRole = 2;
         GameState.usePuterAI = false;
         GameState.localPlayerRole = null;
+        savePersistentPrefs();
         SoundEngine.select();
         syncSettingsControlsFromState();
         updateHUD();
@@ -15143,6 +15172,7 @@
           GameState.aiVsAi = true;
           GameState.aiPlayerRole = GameState.currentTurn;
           GameState.localPlayerRole = null;
+          savePersistentPrefs();
           SoundEngine.select();
           syncSettingsControlsFromState();
           updateHUD();
@@ -15307,6 +15337,7 @@
         GameState.vsAI = false;
         GameState.aiVsAi = false;
         GameState.localPlayerRole = null;
+        savePersistentPrefs();
         SoundEngine.select();
         syncSettingsControlsFromState();
         updateHUD();
@@ -15352,11 +15383,15 @@
           const diff = chip.getAttribute('data-ai-diff');
           GameState.aiDifficulty = diff;
           GameState.vsAI = true;
+          if (GameState.aiVsAi) {
+            GameState.aiPlayerRole = GameState.currentTurn;
+          }
+          savePersistentPrefs();
           SoundEngine.select();
           syncSettingsControlsFromState();
           updateHUD();
           showBoardToast(`AI Difficulty set to ${getAILabel()}`);
-          if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
+          if ((GameState.aiVsAi || GameState.currentTurn === GameState.aiPlayerRole) && !GameState.gameOver) {
             scheduleAITurn(380);
           }
         });
@@ -15798,19 +15833,38 @@
         getVariantMeta(preset) {
           const map = {
             '6x6': { title: '6×6 Katar Classic', subtitle: '36 Nodes • 18v18 Beads • Pashtun War Game', icon: '👑' },
-            '6x6_diagonal': { title: '6×6 Diagonal Lines', subtitle: 'Diagonal Tracks • Aggressive Capture Paths', icon: '⚡' },
-            '8x8': { title: '8×8 Grand Katar', subtitle: '64 Nodes • 32v32 Beads • Extended Strategy', icon: '🏰' },
-            'alquerque': { title: 'Alquerque Ancient 5×5', subtitle: 'Historical 12v12 Ancestor of Draughts & Katar', icon: '🏛️' },
-            'morris9': { title: '9 Men’s Morris', subtitle: 'Mill Formation & Capture Strategy', icon: '⚔️' },
-            'morris12': { title: '12 Men’s Morris', subtitle: 'Classic Mill Game with Diagonal Junctions', icon: '🛡️' }
+            'navakankari_9': { title: 'Navakankari (9 Men’s Morris)', subtitle: '24 Nodes • 9v9 Beads • Form 3-in-a-Row Katar', icon: '⭐' },
+            'navakankari_12': { title: '12-Men’s Katar Mill', subtitle: '24 Nodes with Corner Diagonals • 12v12 Beads', icon: '⭐' },
+            'three_morris': { title: 'Teen Guti (3 Men’s Morris)', subtitle: '9 Nodes • 3v3 Fast Tactical Mill Game', icon: '🎯' },
+            'six_morris': { title: 'Chhah Guti (6 Men’s Morris)', subtitle: '16 Nodes • 6v6 Concentric Square Mill', icon: '🎯' },
+            'bagh_chal': { title: 'Bagh-Chal (Tigers vs Goats)', subtitle: '4 Corner Tigers vs 20 Goats • Asymmetric Hunt', icon: '🐯' },
+            'aadu_puli': { title: 'Aadu Puli Attam', subtitle: '3 Tigers vs 15 Goats • South Asian Triangle Grid', icon: '🐐' },
+            'lau_kata_kati': { title: 'Lau Kata Kati (Butterfly)', subtitle: '19-Node Double Triangle • 9v9 Leap War Game', icon: '🦋' },
+            'pretwa': { title: 'Pretwa (Circular Katar)', subtitle: '19-Node Concentric Rings & Spokes • 9v9 Beads', icon: '☸️' },
+            'fanorona_5x5': { title: 'Fanorona 5×5', subtitle: '12v12 Approach & Withdrawal Line Captures', icon: '⚔️' },
+            'fanorona_5x9': { title: 'Fanorona 5×9 Grand', subtitle: '22v22 Grand Lattice • Approach & Withdrawal', icon: '⚔️' },
+            'seega_5x5': { title: 'Seega 5×5 Custodian', subtitle: '12v12 2-Bead Drop & Orthogonal Sandwich Capture', icon: '🛡️' },
+            'dama_8x8': { title: 'Dama / Draughts 8×8', subtitle: '64 Nodes • 24v24 Beads with Flying King Promotion', icon: '👑' },
+            'gomoku_9x9': { title: 'Gomoku 9×9 (Five-in-a-Row)', subtitle: '81 Intersections • Align 5 Stones in a Row to Win', icon: '⚫' },
+            '37_sholo': { title: '37-Point Sholo Guti', subtitle: '5×5 Alquerque + 2 Triangular Camps • 16v16 Beads', icon: '🏕️' },
+            '6x7': { title: '6×7 Maidaan Extended', subtitle: '42 Nodes • 18v18 On-Board Tactical Battlefield', icon: '🛡️' },
+            '5x5': { title: '5×5 Baro Guti / Alquerque', subtitle: '25 Nodes • 12v12 Classic Leap-and-Capture', icon: '🏛️' },
+            '5x7': { title: '5×7 Extended Battlefield', subtitle: '35 Nodes • 15v15 Beads • Wide Flanking Grid', icon: '⚔️' },
+            '7x7': { title: '7×7 Grand Jirga Grid', subtitle: '49 Nodes • 24v24 Beads • Deep Strategic War', icon: '🏰' },
+            '8x8': { title: '8×8 Commander Grid', subtitle: '64 Nodes • 24v24 Beads • Grand Scale Battle', icon: '🏰' },
+            '4x4': { title: '4×4 Blitz Skirmish', subtitle: '16 Nodes • 6v6 Beads • Lightning Fast Duel', icon: '⚡' }
           };
-          return map[preset] || { title: 'Katar Board Battle', subtitle: 'Traditional Pashtun Tactical Strategy', icon: '👑' };
+          return map[preset] || { title: `${GameState.rows}×${GameState.cols} Katar Battle`, subtitle: `${Nodes.length} Nodes • ${GameState.piecesPerPlayer}v${GameState.piecesPerPlayer} Beads`, icon: '👑' };
         },
 
         openStandby() {
           GameState.isStarted = false;
           GameState.isPaused = false;
           this.isOpen = true;
+          if (GameState.aiVsAi) {
+            GameState.vsAI = true;
+            GameState.aiPlayerRole = GameState.currentTurn;
+          }
           this.syncUI();
         },
 
@@ -15831,10 +15885,14 @@
           }
           GameState.isPaused = false;
           this.isOpen = false;
+          if (GameState.aiVsAi) {
+            GameState.vsAI = true;
+            GameState.aiPlayerRole = GameState.currentTurn;
+          }
           this.syncUI();
           resetTurnTimer();
           resetMatchTimer();
-          if (GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
+          if (GameState.vsAI && (GameState.aiVsAi || GameState.currentTurn === GameState.aiPlayerRole) && !GameState.gameOver) {
             scheduleAITurn(300);
           }
         },
@@ -15843,12 +15901,17 @@
           GameState.isStarted = true;
           GameState.isPaused = false;
           this.isOpen = false;
+          if (GameState.aiVsAi) {
+            GameState.vsAI = true;
+            GameState.aiPlayerRole = GameState.currentTurn;
+          }
           this.syncUI();
+          updateHUD();
           resetTurnTimer();
           resetMatchTimer();
           SoundEngine.matchStart();
-          showBoardToast('⚔️ Match Started! Make your move.');
-          if (GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
+          showBoardToast(GameState.aiVsAi ? '🤖⚔️🤖 AI vs AI Match Started!' : '⚔️ Match Started! Make your move.');
+          if (GameState.vsAI && (GameState.aiVsAi || GameState.currentTurn === GameState.aiPlayerRole) && !GameState.gameOver) {
             scheduleAITurn(300);
           }
         },
@@ -16013,6 +16076,7 @@
           GameState.aiPlayerRole = 2;
           GameState.usePuterAI = false;
           GameState.localPlayerRole = null;
+          savePersistentPrefs();
           SoundEngine.select();
           syncSettingsControlsFromState();
           updateHUD();
@@ -16025,8 +16089,10 @@
         btnMenuModeAIvAI.addEventListener('click', () => {
           GameState.vsAI = true;
           GameState.aiVsAi = true;
+          GameState.usePuterAI = false;
           GameState.aiPlayerRole = GameState.currentTurn;
           GameState.localPlayerRole = null;
+          savePersistentPrefs();
           SoundEngine.select();
           syncSettingsControlsFromState();
           updateHUD();
@@ -16041,6 +16107,7 @@
           GameState.aiVsAi = false;
           GameState.usePuterAI = false;
           GameState.localPlayerRole = null;
+          savePersistentPrefs();
           SoundEngine.select();
           syncSettingsControlsFromState();
           updateHUD();
@@ -16052,8 +16119,11 @@
       if (btnMenuModePuter) {
         btnMenuModePuter.addEventListener('click', () => {
           GameState.vsAI = true;
+          GameState.aiVsAi = false;
+          GameState.aiPlayerRole = 2;
           GameState.usePuterAI = true;
           GameState.localPlayerRole = null;
+          savePersistentPrefs();
           SoundEngine.select();
           PuterAIManager.refreshQuotaFromPuter(true);
           syncSettingsControlsFromState();
@@ -16865,7 +16935,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=8e0c40dbcb', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=cf319de090', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
