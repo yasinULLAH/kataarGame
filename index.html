@@ -4860,17 +4860,13 @@
         },
 
         getP1DisplayName(suffix) {
-          if (this.hasProfile()) {
-            return `${this.data.avatar} ${this.data.name} (${suffix})`;
-          }
-          return `Player 1 (${suffix})`;
+          const base = this.hasProfile() ? `${this.data.avatar} ${this.data.name}` : 'Player 1';
+          return suffix ? `${base} (${suffix})` : base;
         },
 
         getP2DisplayName(suffix) {
-          if (this.hasProfile() && this.data.p2Name && this.data.p2Name !== 'Player 2') {
-            return `${this.data.p2Name} (${suffix})`;
-          }
-          return `Player 2 (${suffix})`;
+          const base = (this.hasProfile() && this.data.p2Name && this.data.p2Name !== 'Player 2') ? this.data.p2Name : 'Player 2';
+          return suffix ? `${base} (${suffix})` : base;
         },
 
         syncHeaderAndFormUI() {
@@ -10371,10 +10367,7 @@
             p2IsAI ? `${aiTag} (Tigers 🐯)` : ProfileManager.getP2DisplayName('Tigers 🐯')
           ];
         }
-        if (GameState.pieceTheme === 'classic') return [ProfileManager.getP1DisplayName('Cobalt'), GameState.vsAI ? `${aiTag} (Ruby)` : ProfileManager.getP2DisplayName('Ruby')];
-        if (GameState.pieceTheme === 'jade_gold') return [ProfileManager.getP1DisplayName('Jade'), GameState.vsAI ? `${aiTag} (Gold)` : ProfileManager.getP2DisplayName('Gold')];
-        if (GameState.pieceTheme === 'ivory_onyx') return [ProfileManager.getP1DisplayName('Ivory'), GameState.vsAI ? `${aiTag} (Onyx)` : ProfileManager.getP2DisplayName('Onyx')];
-        return [ProfileManager.getP1DisplayName('Feroza'), GameState.vsAI ? `${aiTag} (Sang)` : ProfileManager.getP2DisplayName('Sang')];
+        return [ProfileManager.getP1DisplayName(), GameState.vsAI ? aiTag : ProfileManager.getP2DisplayName()];
       }
 
       function getWinCaptureTargetForPlayer(player) {
@@ -15258,7 +15251,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=44f30f47ba', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=b84fa4496d', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
