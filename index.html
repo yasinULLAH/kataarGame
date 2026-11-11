@@ -2399,6 +2399,9 @@
           <div id="victoryP2Score" class="text-base font-extrabold font-mono text-rose-600 mt-0.5">11 / 18</div>
         </div>
       </div>
+      <div id="victoryAIBrainBanner" class="hidden bg-rose-50 border border-rose-200 rounded-2xl p-2.5 text-center text-[11px] font-bold text-rose-900 shadow-sm">
+        🧠 <span id="victoryAIBrainText">Adaptive AI Brain: 0 matches learned</span>
+      </div>
       <div class="text-[11px] font-bold text-walnut-700">
         Created by Yasin Ullah • Dedicated to Muhib Ullah ❤️<br />
         <span class="text-[9px] font-semibold text-walnut-500">© 2026 Yasin Ullah. All rights reserved.</span>
@@ -2838,10 +2841,13 @@
               <div id="puterStatSessionCalls" class="font-mono text-sm font-black text-amber-800 mt-0.5">0 calls</div>
               <div id="puterStatAvgLatency" class="text-[10px] font-mono text-walnut-600">Avg: — ms</div>
             </div>
-            <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
-              <div class="text-[10px] font-bold text-walnut-600">Adaptive AI Brain</div>
-              <div id="aiBrainGamesLearned" class="font-mono text-sm font-black text-rose-700 mt-0.5">0 learned</div>
-              <div id="aiBrainPatternsCount" class="text-[10px] font-mono text-walnut-600">12 Archetypes × 8 Sym</div>
+            <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5 flex flex-col justify-between">
+              <div>
+                <div class="text-[10px] font-bold text-walnut-600">Adaptive AI Brain</div>
+                <div id="aiBrainGamesLearned" class="font-mono text-sm font-black text-rose-700 mt-0.5">0 matches • Lv 1</div>
+                <div id="aiBrainPatternsCount" class="text-[10px] font-mono text-walnut-600">0 fixes • 0 weights</div>
+              </div>
+              <button id="btnResetAIBrainMemory" type="button" class="android-btn self-start text-[9px] text-rose-700 hover:text-rose-900 underline font-semibold mt-1">Reset AI Memory</button>
             </div>
           </div>
 
@@ -5598,6 +5604,9 @@
 
         // CASE 1: GOMOKU (Pure 5-in-a-Row Placement on 9x9 Grid)
         if (GameState.gameFamily === 'gomoku') {
+          if (GameState.vsAI && player !== GameState.aiPlayerRole && typeof MorrisLearner !== 'undefined') {
+            MorrisLearner.recordHumanAction(GameState.board, action, player);
+          }
           GameState.board[action.to] = player;
           GameState.reserves[player] = Math.max(0, (GameState.reserves[player] || 0) - 1);
           GameState.lastMove = { from: null, to: action.to, player, type: 'drop' };
@@ -5789,6 +5798,9 @@
 
         // CASE 3: SEEGA DROP PHASE (2 beads per turn leaving center open)
         if (GameState.gameFamily === 'seega' && action.type === 'drop') {
+          if (GameState.vsAI && player !== GameState.aiPlayerRole && typeof MorrisLearner !== 'undefined') {
+            MorrisLearner.recordHumanAction(GameState.board, action, player);
+          }
           GameState.board[action.to] = player;
           GameState.reserves[player] = Math.max(0, GameState.reserves[player] - 1);
           GameState.seegaDropsRemaining = Math.max(0, (GameState.seegaDropsRemaining || 2) - 1);
@@ -5817,6 +5829,9 @@
 
         // CASE 4: TIGER & GOAT GOAT DROP PHASE
         if (GameState.gameFamily === 'tiger_goat' && action.type === 'drop') {
+          if (GameState.vsAI && player !== GameState.aiPlayerRole && typeof MorrisLearner !== 'undefined') {
+            MorrisLearner.recordHumanAction(GameState.board, action, player);
+          }
           GameState.board[action.to] = 1; // Goats are always Player 1
           GameState.reserves[1] = Math.max(0, GameState.reserves[1] - 1);
           GameState.lastMove = { from: null, to: action.to, player: 1, type: 'drop' };
@@ -5864,6 +5879,10 @@
               const capNode = Nodes[capId];
               VisualFX.spawnCaptureBurst(capNode.x, capNode.y, opponent);
             }
+          }
+          if (GameState.vsAI && player !== GameState.aiPlayerRole && typeof MorrisLearner !== 'undefined') {
+            MorrisLearner.onHumanCapturedAiBead(capturedList.length || 1);
+            MorrisLearner.recordHumanAction(GameState.board, action, player);
           }
           GameState.chainCount++;
           SoundEngine.capture(GameState.chainCount);
@@ -5930,6 +5949,9 @@
             LoopTracker.recordAction(player, action, GameState.board, GameState.reserves, GameState.kings, true);
           }
         } else {
+          if (GameState.vsAI && player !== GameState.aiPlayerRole && typeof MorrisLearner !== 'undefined') {
+            MorrisLearner.recordHumanAction(GameState.board, action, player);
+          }
           SoundEngine.move();
           appendMoveLog(`P${player} moved ${fromNode.label || (action.from + 1)} → ${toNode.label || (action.to + 1)}`);
           tryDeployReserve(player);
@@ -6358,13 +6380,15 @@
       ];
 
       const MorrisLearner = {
-        storageKey: 'katar_morris_brain_v2',
+        storageKey: 'katar_ai_brain_v3',
         table: new Map(),
+        blunderKeys: new Set(),
         episode: [],
         loaded: false,
         gamesLearned: 0,
         mistakesCorrected: 0,
         archetypeStats: {},
+        gameFamilyStats: {},
         lastArchetypeId: null,
         lastSymmetryIdx: -1,
         activeArchetypeId: 'iron_cross_bastion',
@@ -6372,13 +6396,44 @@
         recentFormationSignatures: [],
         tabooFormationSignatures: new Set(),
         humanNodeFreq: new Array(24).fill(0),
+        humanPresetFreq: {},
         currentDropSequence: [],
+        permCache: {},
+
+        getGridPermutations(preset, R, C, tfList) {
+          if (this.permCache[preset]) return this.permCache[preset];
+          if (!Nodes || Nodes.length === 0) return null;
+          const coordMap = new Map();
+          for (let i = 0; i < Nodes.length; i++) {
+            coordMap.set(`${Math.round(Nodes[i].r)},${Math.round(Nodes[i].c)}`, i);
+          }
+          const validPerms = [];
+          for (const tf of tfList) {
+            const p = new Array(Nodes.length);
+            let ok = true;
+            for (let i = 0; i < Nodes.length; i++) {
+              const [nr, nc] = tf(Math.round(Nodes[i].r), Math.round(Nodes[i].c));
+              const m = coordMap.get(`${nr},${nc}`);
+              if (m === undefined) { ok = false; break; }
+              p[i] = m;
+            }
+            if (ok) validPerms.push(p);
+          }
+          if (validPerms.length === 0) {
+            validPerms.push(Array.from({ length: Nodes.length }, (_, i) => i));
+          }
+          this.permCache[preset] = validPerms;
+          return validPerms;
+        },
 
         load() {
           if (this.loaded) return;
           this.loaded = true;
           try {
-            const raw = SafeStorage.getItem(this.storageKey);
+            let raw = SafeStorage.getItem(this.storageKey);
+            if (!raw) {
+              raw = SafeStorage.getItem('katar_morris_brain_v2');
+            }
             if (!raw) return;
             const data = JSON.parse(raw);
             if (data && typeof data === 'object') {
@@ -6389,19 +6444,26 @@
                   }
                 }
               }
+              if (Array.isArray(data.blunderKeys)) {
+                this.blunderKeys = new Set(data.blunderKeys);
+              }
               this.gamesLearned = Number(data.gamesLearned) || 0;
               this.mistakesCorrected = Number(data.mistakesCorrected) || 0;
               this.archetypeStats = data.archetypeStats || {};
+              this.gameFamilyStats = data.gameFamilyStats || {};
               this.lastArchetypeId = data.lastArchetypeId || null;
               this.lastSymmetryIdx = typeof data.lastSymmetryIdx === 'number' ? data.lastSymmetryIdx : -1;
               if (Array.isArray(data.recentFormationSignatures)) {
-                this.recentFormationSignatures = data.recentFormationSignatures.slice(-10);
+                this.recentFormationSignatures = data.recentFormationSignatures.slice(-12);
               }
               if (Array.isArray(data.tabooFormationSignatures)) {
-                this.tabooFormationSignatures = new Set(data.tabooFormationSignatures.slice(-30));
+                this.tabooFormationSignatures = new Set(data.tabooFormationSignatures.slice(-40));
               }
               if (Array.isArray(data.humanNodeFreq) && data.humanNodeFreq.length === 24) {
                 this.humanNodeFreq = data.humanNodeFreq.map((n) => Number(n) || 0);
+              }
+              if (data.humanPresetFreq && typeof data.humanPresetFreq === 'object') {
+                this.humanPresetFreq = data.humanPresetFreq;
               }
             }
           } catch (e) {}
@@ -6409,32 +6471,63 @@
 
         save() {
           try {
-            if (this.table.size > 3200) {
+            if (this.table.size > 8000) {
               const sorted = Array.from(this.table.entries())
                 .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-                .slice(0, 2400);
+                .slice(0, 5000);
               this.table = new Map(sorted);
             }
             const payload = {
               entries: Array.from(this.table.entries()),
+              blunderKeys: Array.from(this.blunderKeys).slice(-400),
               gamesLearned: this.gamesLearned,
               mistakesCorrected: this.mistakesCorrected,
               archetypeStats: this.archetypeStats,
+              gameFamilyStats: this.gameFamilyStats,
               lastArchetypeId: this.lastArchetypeId,
               lastSymmetryIdx: this.lastSymmetryIdx,
-              recentFormationSignatures: this.recentFormationSignatures.slice(-10),
-              tabooFormationSignatures: Array.from(this.tabooFormationSignatures).slice(-30),
-              humanNodeFreq: this.humanNodeFreq
+              recentFormationSignatures: this.recentFormationSignatures.slice(-12),
+              tabooFormationSignatures: Array.from(this.tabooFormationSignatures).slice(-40),
+              humanNodeFreq: this.humanNodeFreq,
+              humanPresetFreq: this.humanPresetFreq
             };
             SafeStorage.setItem(this.storageKey, JSON.stringify(payload));
           } catch (e) {}
+        },
+
+        resetBrain() {
+          this.table.clear();
+          this.blunderKeys.clear();
+          this.episode = [];
+          this.currentDropSequence = [];
+          this.gamesLearned = 0;
+          this.mistakesCorrected = 0;
+          this.archetypeStats = {};
+          this.gameFamilyStats = {};
+          this.lastArchetypeId = null;
+          this.lastSymmetryIdx = -1;
+          this.tabooFormationSignatures.clear();
+          this.recentFormationSignatures = [];
+          this.humanNodeFreq = new Array(24).fill(0);
+          this.humanPresetFreq = {};
+          SafeStorage.removeItem(this.storageKey);
+          SafeStorage.removeItem('katar_morris_brain_v2');
+          this.save();
+        },
+
+        getIntelligenceLevel() {
+          const pts = (this.gamesLearned * 2) + (this.mistakesCorrected * 3);
+          if (pts >= 120) return { level: 5, title: 'Supreme Overlord AI', depthBonus: 2, bonusFactor: 3.5 };
+          if (pts >= 60) return { level: 4, title: 'Apex Grandmaster', depthBonus: 2, bonusFactor: 3.0 };
+          if (pts >= 25) return { level: 3, title: 'Strategic Master', depthBonus: 1, bonusFactor: 2.5 };
+          if (pts >= 10) return { level: 2, title: 'Tactical Veteran', depthBonus: 1, bonusFactor: 2.0 };
+          return { level: 1, title: 'Apprentice Khan', depthBonus: 0, bonusFactor: 1.5 };
         },
 
         onMatchStart() {
           this.load();
           this.episode = [];
           this.currentDropSequence = [];
-          // Select a fresh, non-repeating Grandmaster Archetype + Symmetry for this match
           const candidates = [];
           for (const arch of GRANDMASTER_MORRIS_ARCHETYPES) {
             const st = this.archetypeStats[arch.id] || { wins: 0, losses: 0, draws: 0, plays: 0 };
@@ -6450,7 +6543,6 @@
           candidates.sort((a, b) => b.score - a.score);
           const chosenArch = candidates[0].arch;
 
-          // Pick a symmetry (0..7) different from lastSymmetryIdx and avoiding taboo formation signatures
           const symOrder = [0, 1, 2, 3, 4, 5, 6, 7].sort(() => Math.random() - 0.5);
           let chosenSym = symOrder[0];
           for (const s of symOrder) {
@@ -6481,35 +6573,115 @@
         recordHumanAction(board, action, humanP) {
           this.load();
           if (!action) return;
-          if (action.type === 'drop' && action.to >= 0 && action.to < 24) {
-            this.humanNodeFreq[action.to] = (this.humanNodeFreq[action.to] || 0) + 1;
+          if (action.to >= 0) {
+            if (GameState.gameFamily === 'morris' && action.to < 24) {
+              this.humanNodeFreq[action.to] = (this.humanNodeFreq[action.to] || 0) + 1;
+            }
+            const preset = GameState.gridPreset || 'custom';
+            if (!this.humanPresetFreq[preset]) this.humanPresetFreq[preset] = {};
+            this.humanPresetFreq[preset][action.to] = (this.humanPresetFreq[preset][action.to] || 0) + 1;
           }
         },
 
-        makeStateKey(board, action, aiP, resAi, resHuman) {
-          const canon = MorrisSymmetry.canonicalizeStateAndAction(board, action, aiP);
-          const modeTag = GameState.morrisDropOrder === 'all_at_once' ? 'A' : (GameState.morrisDropMillRule === 'forbid_mill' ? 'F' : 'S');
+        makeStateKey(board, action, aiP, resAi = 0, resHuman = 0) {
+          if (GameState.gameFamily === 'morris' && board.length === 24) {
+            const canon = MorrisSymmetry.canonicalizeStateAndAction(board, action, aiP);
+            const modeTag = GameState.morrisDropOrder === 'all_at_once' ? 'A' : (GameState.morrisDropMillRule === 'forbid_mill' ? 'F' : 'S');
+            const phaseTag = (resAi > 0 || resHuman > 0) ? `D${resAi}_${resHuman}` : 'M';
+            return {
+              fullKey: `${modeTag}:${phaseTag}:${canon.stateKey}|${canon.actionKey}`,
+              stateOnlyKey: `${modeTag}:${phaseTag}:${canon.stateKey}`
+            };
+          }
+
+          const R = GameState.rows || 1;
+          const C = GameState.cols || 1;
+          const isSquare = (R === C);
+          const tfList = [
+            (r, c) => [r, c],
+            (r, c) => [r, C - 1 - c],
+            (r, c) => [R - 1 - r, c],
+            (r, c) => [R - 1 - r, C - 1 - c]
+          ];
+          if (isSquare) {
+            tfList.push(
+              (r, c) => [c, r],
+              (r, c) => [c, R - 1 - r],
+              (r, c) => [C - 1 - c, r],
+              (r, c) => [C - 1 - c, R - 1 - r]
+            );
+          }
+          const perms = this.getGridPermutations(GameState.gridPreset, R, C, tfList) || [[...Array(board.length).keys()]];
+
+          let bestBoardStr = null;
+          let bestActStr = '';
+          const hasKings = Boolean(GameState.kings && GameState.kings.length === board.length);
+
+          for (let s = 0; s < perms.length; s++) {
+            const perm = perms[s];
+            const inv = new Array(board.length);
+            for (let i = 0; i < board.length; i++) inv[perm[i]] = i;
+            let bStr = '';
+            for (let j = 0; j < board.length; j++) {
+              const v = board[inv[j]];
+              if (v === 0) bStr += '0';
+              else if (v === aiP) bStr += (hasKings && GameState.kings[inv[j]] ? 'K' : 'A');
+              else bStr += (hasKings && GameState.kings[inv[j]] ? 'k' : 'H');
+            }
+            let aStr = '';
+            if (action) {
+              if (action.type === 'drop') aStr = `d:${perm[action.to]}`;
+              else if (action.type === 'step') aStr = `s:${perm[action.from]}>${perm[action.to]}`;
+              else if (action.type === 'jump') aStr = `j:${perm[action.from]}>${perm[action.to]}`;
+              else if (action.type === 'remove_opponent') aStr = `r:${perm[action.capturedId]}`;
+            }
+            if (bestBoardStr === null || bStr < bestBoardStr || (bStr === bestBoardStr && aStr < bestActStr)) {
+              bestBoardStr = bStr;
+              bestActStr = aStr;
+            }
+          }
+
+          const famTag = GameState.gameFamily || 'g';
+          const presetTag = GameState.gridPreset || 'p';
           const phaseTag = (resAi > 0 || resHuman > 0) ? `D${resAi}_${resHuman}` : 'M';
           return {
-            fullKey: `${modeTag}:${phaseTag}:${canon.stateKey}|${canon.actionKey}`,
-            stateOnlyKey: `${modeTag}:${phaseTag}:${canon.stateKey}`
+            fullKey: `${famTag}:${presetTag}:${phaseTag}:${bestBoardStr}|${bestActStr}`,
+            stateOnlyKey: `${famTag}:${presetTag}:${phaseTag}:${bestBoardStr}`
           };
         },
 
-        getBonus(board, action, aiP, resAi, resHuman) {
+        getBonus(board, action, aiP, resAi = 0, resHuman = 0) {
           this.load();
           const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
           return this.table.get(fullKey) || 0;
         },
 
-        recordStep(board, action, aiP, resAi, resHuman) {
+        isBlunder(board, action, aiP, resAi = 0, resHuman = 0) {
+          this.load();
+          const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
+          if (this.blunderKeys.has(fullKey)) return true;
+          const w = this.table.get(fullKey) || 0;
+          return w <= -6500;
+        },
+
+        getHardestBonus(board, action, aiP, resAi = 0, resHuman = 0) {
+          this.load();
+          const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
+          if (this.blunderKeys.has(fullKey)) return -350000;
+          const w = this.table.get(fullKey) || 0;
+          if (w <= -6500) return -350000;
+          const lvl = this.getIntelligenceLevel();
+          return Math.round(w * lvl.bonusFactor);
+        },
+
+        recordStep(board, action, aiP, resAi = 0, resHuman = 0) {
           this.load();
           if (!action) return;
           if (action.type === 'drop') {
             this.currentDropSequence.push(action.to);
           }
           const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
-          this.episode.push(fullKey);
+          this.episode.push({ fullKey, action, board: [...board], aiP, resAi, resHuman });
           if (this.episode.length > 90) this.episode.shift();
         },
 
@@ -6520,19 +6692,25 @@
           else this.table.set(fullKey, next);
         },
 
-        onHumanCapturedAiBead() {
+        onHumanCapturedAiBead(count = 1) {
           this.load();
-          this.mistakesCorrected++;
+          this.mistakesCorrected += count;
           if (this.episode.length === 0) return;
           const lastIdx = this.episode.length - 1;
-          this.adjustWeight(this.episode[lastIdx], -14000);
-          if (lastIdx >= 1) this.adjustWeight(this.episode[lastIdx - 1], -7500);
-          if (lastIdx >= 2) this.adjustWeight(this.episode[lastIdx - 2], -3800);
+          const lastMove = this.episode[lastIdx];
+          this.blunderKeys.add(lastMove.fullKey);
+          this.adjustWeight(lastMove.fullKey, -19000 * count);
+          if (lastIdx >= 1) {
+            this.adjustWeight(this.episode[lastIdx - 1].fullKey, -8500 * count);
+          }
+          if (lastIdx >= 2) {
+            this.adjustWeight(this.episode[lastIdx - 2].fullKey, -4000 * count);
+          }
           this.save();
         },
 
         onMatchEnd(winner) {
-          if (GameState.gameFamily !== 'morris' || !GameState.vsAI) {
+          if (!GameState.vsAI) {
             this.episode = [];
             return;
           }
@@ -6540,39 +6718,69 @@
           const aiP = GameState.aiPlayerRole || 2;
           this.gamesLearned++;
 
+          const fam = GameState.gameFamily || 'general';
+          if (!this.gameFamilyStats[fam]) this.gameFamilyStats[fam] = { wins: 0, losses: 0, draws: 0, plays: 0 };
+          this.gameFamilyStats[fam].plays++;
+
           const archId = this.activeArchetypeId || 'iron_cross_bastion';
           const st = this.archetypeStats[archId] || { wins: 0, losses: 0, draws: 0, plays: 0, lastOutcome: 'none' };
           st.plays++;
+
           if (winner === aiP) {
             st.wins++;
             st.lastOutcome = 'win';
+            this.gameFamilyStats[fam].wins++;
+            if (this.episode.length > 0) {
+              let discount = 1.0;
+              for (let i = this.episode.length - 1; i >= 0; i--) {
+                const stepDelta = Math.round(14000 * discount);
+                if (Math.abs(stepDelta) >= 100) {
+                  this.adjustWeight(this.episode[i].fullKey, stepDelta);
+                }
+                discount *= 0.88;
+              }
+            }
           } else if (winner === 0 || winner === null) {
             st.draws++;
             st.lastOutcome = 'draw';
+            this.gameFamilyStats[fam].draws++;
+            if (this.episode.length > 0) {
+              for (let i = this.episode.length - 1; i >= 0; i--) {
+                this.adjustWeight(this.episode[i].fullKey, 1800);
+              }
+            }
           } else {
             st.losses++;
             st.lastOutcome = 'loss';
+            this.gameFamilyStats[fam].losses++;
             this.mistakesCorrected++;
-            // Mark this exact archetype+symmetry and drop bitmask as taboo so AI immediately changes strategy next match!
             this.tabooFormationSignatures.add(`${archId}@${this.activeSymmetryIdx}`);
             if (this.currentDropSequence.length > 0) {
               const sortedDrops = [...this.currentDropSequence].sort((a, b) => a - b).join(',');
               this.tabooFormationSignatures.add(`DROP:${sortedDrops}`);
             }
-          }
-          this.archetypeStats[archId] = st;
-
-          if (this.episode.length > 0) {
-            const baseDelta = winner === aiP ? 9500 : (winner === 0 ? 1200 : -18500);
-            let discount = 1.0;
-            for (let i = this.episode.length - 1; i >= 0; i--) {
-              const stepDelta = Math.round(baseDelta * discount);
-              if (Math.abs(stepDelta) >= 100) {
-                this.adjustWeight(this.episode[i], stepDelta);
+            if (this.episode.length > 0) {
+              const lastIdx = this.episode.length - 1;
+              this.blunderKeys.add(this.episode[lastIdx].fullKey);
+              this.adjustWeight(this.episode[lastIdx].fullKey, -32000);
+              if (lastIdx >= 1) {
+                this.blunderKeys.add(this.episode[lastIdx - 1].fullKey);
+                this.adjustWeight(this.episode[lastIdx - 1].fullKey, -22000);
               }
-              discount *= 0.9;
+              if (lastIdx >= 2) {
+                this.adjustWeight(this.episode[lastIdx - 2].fullKey, -14000);
+              }
+              let discount = 0.85;
+              for (let i = lastIdx - 3; i >= 0; i--) {
+                const stepDelta = Math.round(-10000 * discount);
+                if (Math.abs(stepDelta) >= 100) {
+                  this.adjustWeight(this.episode[i].fullKey, stepDelta);
+                }
+                discount *= 0.86;
+              }
             }
           }
+          this.archetypeStats[archId] = st;
           this.episode = [];
           this.currentDropSequence = [];
           this.save();
@@ -7197,7 +7405,9 @@
                 seenKeys.add(key);
                 const stepMove = { from: -1, to: nid, type: 'drop' };
                 const firstMv = state.firstMove || stepMove;
-                const stepLearned = MorrisLearner.getBonus(state.board, stepMove, aiP, resAi - step, resHuman);
+                const stepLearned = (diff === 'hardest')
+                  ? MorrisLearner.getHardestBonus(state.board, stepMove, aiP, resAi - step, resHuman)
+                  : MorrisLearner.getBonus(state.board, stepMove, aiP, resAi - step, resHuman);
                 const newLearnedSum = state.learnedSum + stepLearned * (step === 0 ? 2.5 : 1.2);
                 const jitter = (diff === 'medium' ? (Math.random() * 1400 - 700) : (Math.random() * 240 - 120));
                 const sc = evaluateAllAtOnceBoard(nb, aiP, humanP, remAfter, resHuman) + newLearnedSum + jitter;
@@ -7245,7 +7455,9 @@
 
         const scored = [];
         for (const m of allSteps) {
-          const learned = MorrisLearner.getBonus(board, m, aiP, resAi, resHuman) * 2.5;
+          const learned = (diff === 'hardest')
+            ? MorrisLearner.getHardestBonus(board, m, aiP, resAi, resHuman)
+            : MorrisLearner.getBonus(board, m, aiP, resAi, resHuman) * 2.5;
           const s1 = scoreMorrisPlacement(m.to, board, aiP, humanP, isAllAtOnce, resAi, resHuman) + learned;
           scored.push({ move: m, score: s1 });
         }
@@ -7718,7 +7930,9 @@
             const simBoard = [...GameState.board];
             simBoard[cid] = 0;
             const remAct = { type: 'remove_opponent', capturedId: cid };
-            const learned = MorrisLearner.getBonus(GameState.board, remAct, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
+            const learned = (diff === 'hardest')
+              ? MorrisLearner.getHardestBonus(GameState.board, remAct, aiP, GameState.reserves[aiP], GameState.reserves[humanP])
+              : MorrisLearner.getBonus(GameState.board, remAct, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
             const immediateScore = scoreMorrisRemovalTarget(cid, GameState.board, aiP, humanP, GameState.reserves[1], GameState.reserves[2]);
             const nextTurn = (GameState.morrisDropOrder === 'all_at_once' && GameState.reserves[aiP] > 0) ? aiP : humanP;
             const futureVal = minimaxMorris(
@@ -7801,12 +8015,13 @@
 
         if (MorrisTT.size > 120000) MorrisTT.clear();
         morrisSearchAborted = false;
+        const intel = MorrisLearner.getIntelligenceLevel();
         const isDropPhase = (allSteps[0].type === 'drop');
-        const timeBudgetMs = diff === 'hardest' ? (isDropPhase ? 380 : 540) : 280;
+        const timeBudgetMs = diff === 'hardest' ? (isDropPhase ? 420 : (560 + intel.depthBonus * 120)) : 280;
         morrisSearchDeadline = performance.now() + timeBudgetMs;
 
-        const maxDepth = diff === 'hardest' ? (isDropPhase ? 6 : 9) : (isDropPhase ? 4 : 6);
-        const rootPool = orderedMoves.slice(0, Math.min(isDropPhase ? 14 : 20, orderedMoves.length));
+        const maxDepth = diff === 'hardest' ? (isDropPhase ? 6 : (9 + intel.depthBonus)) : (isDropPhase ? 4 : 6);
+        const rootPool = orderedMoves.slice(0, Math.min(isDropPhase ? 14 : (20 + intel.depthBonus * 2), orderedMoves.length));
         let bestMove = rootPool[0];
         let latestScores = new Map();
 
@@ -7820,7 +8035,9 @@
           for (const mv of rootPool) {
             const states = expandMorrisMoveStates(GameState.board, GameState.reserves[1], GameState.reserves[2], mv, aiP, aiP, humanP, 3);
             let bestBranchVal = -Infinity;
-            const learnedBias = MorrisLearner.getBonus(GameState.board, mv, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
+            const learnedBias = (diff === 'hardest')
+              ? MorrisLearner.getHardestBonus(GameState.board, mv, aiP, GameState.reserves[aiP], GameState.reserves[humanP])
+              : MorrisLearner.getBonus(GameState.board, mv, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
             const placementBias = isDropPhase
               ? scoreMorrisPlacement(mv.to, GameState.board, aiP, humanP, false, GameState.reserves[aiP], GameState.reserves[humanP]) * 0.08
               : 0;
@@ -7976,7 +8193,10 @@
           const centerBonus = Math.max(0, 6 - Math.hypot(n.r - midR, n.c - midC)) * 2.5;
           const off = scorePointForPlayer(m.to, aiP);
           const def = scorePointForPlayer(m.to, humanP) * defMult;
-          let val = off + def + centerBonus + Math.random() * 0.8;
+          const learned = isHardest
+            ? MorrisLearner.getHardestBonus(GameState.board, m, aiP, 0, 0)
+            : MorrisLearner.getBonus(GameState.board, m, aiP, 0, 0);
+          let val = off + def + centerBonus + learned + Math.random() * 0.8;
           if (off >= 600000) val += 2000000;
           else if (def >= 500000) val += 1000000;
           if (val > bestVal) {
@@ -7984,6 +8204,7 @@
             bestMove = m;
           }
         }
+        MorrisLearner.recordStep(GameState.board, bestMove, aiP, 0, 0);
         executeAction(bestMove, false);
       }
 
@@ -8010,12 +8231,16 @@
                 if (sim[nb] === 0) liberties++;
               }
               const trapPenalty = liberties <= 1 ? -120 : 0;
-              const score = nextJumps * 45 + mobility * 8 + liberties * 14 + Adjacency[j.to].size * 4 + trapPenalty + Math.random();
+              const learned = (diff === 'hardest')
+                ? MorrisLearner.getHardestBonus(GameState.board, j, 2, GameState.reserves[1], GameState.reserves[2])
+                : MorrisLearner.getBonus(GameState.board, j, 2, GameState.reserves[1], GameState.reserves[2]);
+              const score = nextJumps * 45 + mobility * 8 + liberties * 14 + Adjacency[j.to].size * 4 + trapPenalty + learned + Math.random();
               if (score > bestScore) {
                 bestScore = score;
                 bestJump = j;
               }
             }
+            MorrisLearner.recordStep(GameState.board, bestJump, 2, GameState.reserves[1], GameState.reserves[2]);
             executeAction(bestJump, false);
             return;
           }
@@ -8037,12 +8262,16 @@
             const trapPenalty = liberties <= 1 ? -160 : 0;
             const centerDist = Math.hypot(Nodes[s.to].r - 2, Nodes[s.to].c - 2);
             const loopInfo = LoopTracker.evaluateLoopPenalty(s, GameState.board, sim, 2, GameState.reserves[1], GameState.reserves[2], false);
-            const score = nextJ.length * 60 + nextS.length * 9 + liberties * 18 + (4 - centerDist) * 8 + trapPenalty - loopInfo.penalty * 0.05 + Math.random() * 1.5;
+            const learned = (diff === 'hardest')
+              ? MorrisLearner.getHardestBonus(GameState.board, s, 2, GameState.reserves[1], GameState.reserves[2])
+              : MorrisLearner.getBonus(GameState.board, s, 2, GameState.reserves[1], GameState.reserves[2]);
+            const score = nextJ.length * 60 + nextS.length * 9 + liberties * 18 + (4 - centerDist) * 8 + trapPenalty + learned - loopInfo.penalty * 0.05 + Math.random() * 1.5;
             if (score > bestScore) {
               bestScore = score;
               bestStep = s;
             }
           }
+          MorrisLearner.recordStep(GameState.board, bestStep, 2, GameState.reserves[1], GameState.reserves[2]);
           executeAction(bestStep, false);
           return;
         }
@@ -8057,6 +8286,7 @@
           sim[m.to] = 1;
           const tigerMoves = getAllLegalActionsForPlayer(2, sim, GameState.reserves);
           if (tigerMoves.total === 0) {
+            MorrisLearner.recordStep(GameState.board, m, 1, GameState.reserves[1], GameState.reserves[2]);
             executeAction(m, false);
             return;
           }
@@ -8071,12 +8301,16 @@
             ? LoopTracker.evaluateLoopPenalty(m, GameState.board, sim, 1, GameState.reserves[1], GameState.reserves[2], false)
             : { penalty: 0 };
           const trapBonus = (24 - tigerMoves.total) * (diff === 'hardest' ? 65 : 18);
-          const score = trapBonus - dangerPenalty + blockBonus + clusterBonus + Adjacency[m.to].size * 3 - loopInfo.penalty * 0.1 + Math.random() * 1.5;
+          const learned = (diff === 'hardest')
+            ? MorrisLearner.getHardestBonus(GameState.board, m, 1, GameState.reserves[1], GameState.reserves[2])
+            : MorrisLearner.getBonus(GameState.board, m, 1, GameState.reserves[1], GameState.reserves[2]);
+          const score = trapBonus - dangerPenalty + blockBonus + clusterBonus + Adjacency[m.to].size * 3 + learned - loopInfo.penalty * 0.1 + Math.random() * 1.5;
           if (score > bestScore) {
             bestScore = score;
             bestAct = m;
           }
         }
+        MorrisLearner.recordStep(GameState.board, bestAct, 1, GameState.reserves[1], GameState.reserves[2]);
         executeAction(bestAct, false);
       }
 
@@ -8133,7 +8367,10 @@
         for (const m of moves) {
           if (m.type === 'jump') {
             const capCount = m.capturedIds ? m.capturedIds.length : 1;
-            scored.push({ move: m, priority: 30000 + capCount * 8000 });
+            const learned = (GameState.aiDifficulty === 'hardest')
+              ? MorrisLearner.getHardestBonus(board, m, player, GameState.reserves[1], GameState.reserves[2]) * 0.1
+              : MorrisLearner.getBonus(board, m, player, GameState.reserves[1], GameState.reserves[2]) * 0.05;
+            scored.push({ move: m, priority: 30000 + capCount * 8000 + learned });
           } else {
             const sim = [...board];
             if (m.from >= 0) sim[m.from] = 0;
@@ -8151,7 +8388,10 @@
               const li = LoopTracker.evaluateLoopPenalty(m, board, sim, player, GameState.reserves[1], GameState.reserves[2], false);
               loopPen = li.penalty - li.breakthroughBonus;
             }
-            const prio = jumpThreatBonus + centerBonus - dangerPenalty - hangingPenalty - loopPen;
+            const learned = (GameState.aiDifficulty === 'hardest')
+              ? MorrisLearner.getHardestBonus(board, m, player, GameState.reserves[1], GameState.reserves[2]) * 0.1
+              : MorrisLearner.getBonus(board, m, player, GameState.reserves[1], GameState.reserves[2]) * 0.05;
+            const prio = jumpThreatBonus + centerBonus - dangerPenalty - hangingPenalty - loopPen + learned;
             scored.push({ move: m, priority: prio });
           }
         }
@@ -8611,8 +8851,9 @@
           setTxt('puterStatAvgLatency', this.sessionCalls > 0 ? `Avg: ${Math.round(this.totalLatencyMs / this.sessionCalls)} ms` : 'Avg: — ms');
 
           MorrisLearner.load();
-          setTxt('aiBrainGamesLearned', `${MorrisLearner.gamesLearned} games`);
-          setTxt('aiBrainPatternsCount', `${MorrisLearner.mistakesCorrected} fixes • ${MorrisLearner.activeArchetypeId.replace(/_/g, ' ')}`);
+          const info = MorrisLearner.getIntelligenceLevel();
+          setTxt('aiBrainGamesLearned', `${MorrisLearner.gamesLearned} matches • Lv ${info.level} (${info.title})`);
+          setTxt('aiBrainPatternsCount', `${MorrisLearner.mistakesCorrected} mistakes fixed • ${MorrisLearner.table.size} neural weights`);
           setTxt('puterLastThoughtText', this.lastThought);
 
           const authLine = document.getElementById('puterAuthAccountLine');
@@ -8673,9 +8914,7 @@
           }
 
           if (candidateList.length <= 1 && localBest) {
-            if (GameState.gameFamily === 'morris') {
-              MorrisLearner.recordStep(GameState.board, localBest, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
-            }
+            MorrisLearner.recordStep(GameState.board, localBest, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
             executeAction(localBest, false);
             return;
           }
@@ -8780,9 +9019,7 @@
           }
 
           if (GameState.gameOver || GameState.currentTurn !== aiP) return;
-          if (GameState.gameFamily === 'morris') {
-            MorrisLearner.recordStep(GameState.board, chosenAction, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
-          }
+          MorrisLearner.recordStep(GameState.board, chosenAction, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
           executeAction(chosenAction, false);
         }
       };
@@ -8906,16 +9143,23 @@
               else if (GameState.board[nb] === (aiP === 1 ? 2 : 1)) oppAdj++;
             }
             sc += friendlyAdj * 220 - oppAdj * 90;
+            const learned = (GameState.aiDifficulty === 'hardest')
+              ? MorrisLearner.getHardestBonus(GameState.board, m, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1])
+              : MorrisLearner.getBonus(GameState.board, m, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
+            sc += learned;
             return { move: m, score: sc };
           });
           scoredDrops.sort((a, b) => b.score - a.score);
+          let chosen = scoredDrops[0].move;
           if (GameState.aiDifficulty === 'easy') {
-            executeAction(allSteps[Math.floor(Math.random() * allSteps.length)], false);
+            chosen = allSteps[Math.floor(Math.random() * allSteps.length)];
           } else {
             const topScore = scoredDrops[0].score;
             const elite = scoredDrops.filter((x) => x.score >= topScore - 40);
-            executeAction(elite[Math.floor(Math.random() * elite.length)].move, false);
+            chosen = elite[Math.floor(Math.random() * elite.length)].move;
           }
+          MorrisLearner.recordStep(GameState.board, chosen, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
+          executeAction(chosen, false);
           return;
         }
 
@@ -8977,10 +9221,12 @@
           return;
         }
 
-        const searchDepth = diff === 'hardest' ? 6 : 3;
+        const isHardest = (diff === 'hardest');
+        const intel = MorrisLearner.getIntelligenceLevel();
+        const searchDepth = isHardest ? (6 + (intel.depthBonus || 0)) : 3;
         const candidatePool = allJumps.length > 0
           ? [...allJumps, ...((GameState.mandatoryCapture === 'forced' || GameState.gameFamily === 'fanorona') ? [] : orderGeneralMoves(allSteps, GameState.board, aiP, true).slice(0, 10))]
-          : orderGeneralMoves(allSteps, GameState.board, aiP, true).slice(0, 20);
+          : orderGeneralMoves(allSteps, GameState.board, aiP, true).slice(0, isHardest ? 22 : 20);
 
         let bestAction = normalizeDualActionForAI(candidatePool[0]);
         let bestVal = -Infinity;
@@ -8993,7 +9239,10 @@
           const loopInfo = act.type === 'step'
             ? LoopTracker.evaluateLoopPenalty(act, GameState.board, nextBoard, aiP, GameState.reserves[1], GameState.reserves[2], false)
             : { penalty: 0, breakthroughBonus: 0 };
-          const val = capBonus - loopInfo.penalty * 0.1 + loopInfo.breakthroughBonus * 0.1 + minimaxAlphaBeta(
+          const learnedVal = isHardest
+            ? MorrisLearner.getHardestBonus(GameState.board, act, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1])
+            : MorrisLearner.getBonus(GameState.board, act, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
+          const val = capBonus + learnedVal - loopInfo.penalty * 0.1 + loopInfo.breakthroughBonus * 0.1 + minimaxAlphaBeta(
             nextBoard,
             searchDepth - 1,
             -Infinity,
@@ -9010,6 +9259,7 @@
           }
         }
 
+        MorrisLearner.recordStep(GameState.board, bestAction, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
         executeAction(bestAction, false);
       }
 
@@ -10460,6 +10710,10 @@
               ? 'ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-rose-800 border border-rose-300'
               : 'ai-diff-chip android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-700 border border-parchment-300';
           }
+          if (d === 'hardest') {
+            const lvl = MorrisLearner.getIntelligenceLevel();
+            chip.title = `Hardest AI • Lv ${lvl.level} (${lvl.title}) • ${MorrisLearner.gamesLearned} Learned • ${MorrisLearner.mistakesCorrected} Fixes`;
+          }
         });
 
         const btnChain = document.getElementById('btnToggleChainRule');
@@ -10496,7 +10750,13 @@
           const shortM = m.replace('-latest', '');
           return `Real AI • ${shortM}`;
         }
-        const map = { easy: 'Easy AI', medium: 'Medium AI', hard: 'Hard AI', hardest: 'Khan AI (Hardest)' };
+        const lvl = MorrisLearner.getIntelligenceLevel();
+        const map = {
+          easy: 'Easy AI',
+          medium: 'Medium AI',
+          hard: 'Hard AI',
+          hardest: `Khan AI Lv ${lvl.level} (${lvl.title})`
+        };
         return map[GameState.aiDifficulty] || 'Tactical AI';
       }
 
@@ -10759,6 +11019,18 @@
         document.getElementById('victoryReason').textContent = GameState.winReason;
         document.getElementById('victoryP1Score').textContent = `${GameState.capturedBy[1]} / ${winCapP1}`;
         document.getElementById('victoryP2Score').textContent = `${GameState.capturedBy[2]} / ${winCapP2}`;
+
+        const vBanner = document.getElementById('victoryAIBrainBanner');
+        const vText = document.getElementById('victoryAIBrainText');
+        if (vBanner && vText) {
+          if (GameState.vsAI) {
+            const lvl = MorrisLearner.getIntelligenceLevel();
+            vBanner.classList.remove('hidden');
+            vText.textContent = `Adaptive AI Brain: Lv ${lvl.level} (${lvl.title}) • ${MorrisLearner.gamesLearned} matches learned • ${MorrisLearner.mistakesCorrected} mistakes corrected`;
+          } else {
+            vBanner.classList.add('hidden');
+          }
+        }
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -13964,6 +14236,18 @@
         });
       }
 
+      const btnResetBrain = document.getElementById('btnResetAIBrainMemory');
+      if (btnResetBrain) {
+        btnResetBrain.addEventListener('click', () => {
+          SoundEngine.select();
+          MorrisLearner.resetBrain();
+          PuterAIManager.syncModalUI();
+          syncSettingsControlsFromState();
+          updateHUD();
+          showBoardToast('Adaptive AI memory reset to factory defaults.');
+        });
+      }
+
       document.getElementById('btnMainMode2P').addEventListener('click', () => {
         forfeitAndDetachOnline('switched to local 2P mode');
         WebRTCManager.cleanup();
@@ -15499,7 +15783,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=217b077a14', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=db5ba61a80', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
