@@ -1,7 +1,8 @@
 {
   "name": "Katar & Navakankari — Royal Board Game",
   "short_name": "Katar Game",
-  "description": "Royal traditional 2-in-1 strategy board game: Katar and Navakankari with offline 2-phone QR multiplayer.",
+  "description": "Royal traditional 2-in-1 strategy board game: Katar and Navakankari with offline 2-phone QR multiplayer. © 2026 Yasin Ullah. All rights reserved.",
+  "lang": "en",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

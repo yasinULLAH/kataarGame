@@ -2003,6 +2003,22 @@
           <span class="text-xs font-mono font-extrabold px-2.5 py-1 rounded-xl bg-white border border-amber-300 text-amber-900">2-in-1 Royal Edition</span>
         </div>
 
+        <!-- Copyright, ownership and license (also visible inside the APK) -->
+        <details class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5 text-[10px] leading-relaxed text-walnut-700">
+          <summary class="cursor-pointer font-extrabold text-walnut-900">© Copyright, Ownership &amp; License</summary>
+          <p class="mt-1.5">
+            Copyright © 2026 <strong>Yasin Ullah</strong>. All rights reserved.
+            This game — including its source code, game logic, AI engine, board design,
+            artwork, text, audio, and branding — is the exclusive property of Yasin Ullah.
+            Copying, modifying, publishing, distributing, selling, or reusing any part
+            without prior written permission is strictly prohibited. Any use permitted in
+            writing must display clear attribution:
+            <strong>“Katar &amp; Navakankari Game © 2026 Yasin Ullah”</strong> —
+            <span class="font-mono break-all">https://github.com/yasinULLAH/kataarGame</span>.
+            Bundled third-party libraries remain under their own licenses.
+          </p>
+        </details>
+
         <!-- QUICK SHORTCUT BAR -->
         <div class="grid grid-cols-3 gap-2 bg-parchment-200 p-2 rounded-2xl border border-parchment-300">
           <button id="btnToggleChainRule" type="button" class="android-btn py-2 px-2 rounded-xl bg-teal-600 text-white text-xs font-extrabold truncate shadow-sm">
@@ -15242,7 +15258,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=f975d79ce8', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=44f30f47ba', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
