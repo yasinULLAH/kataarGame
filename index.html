@@ -1106,6 +1106,16 @@
           Leap Capture!
         </div>
 
+        <div id="victoryInspectBar" class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-30 bg-walnut-900/95 border-2 border-amber-400 rounded-2xl px-3 py-2 shadow-2xl flex items-center gap-2 text-xs text-white backdrop-blur-md">
+          <span id="victoryInspectLabel" class="font-extrabold text-amber-300 truncate max-w-[160px] sm:max-w-[240px]">Match Finished</span>
+          <button id="btnReopenVictoryModal" type="button" class="android-btn px-2.5 py-1 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-black shadow shrink-0">
+            🏆 Results
+          </button>
+          <button id="btnInspectPlayAgain" type="button" class="android-btn px-2.5 py-1 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold shadow shrink-0">
+            🔄 Rematch
+          </button>
+        </div>
+
         <!-- Fanorona Approach vs Withdrawal Interactive Selector -->
         <div id="fanoronaChoiceBar" class="hidden absolute bottom-4 left-1/2 -translate-x-1/2 z-20 bg-walnut-900/95 border-2 border-amber-400 rounded-2xl px-3 py-2 shadow-2xl flex items-center gap-2 text-xs text-white">
           <span class="font-extrabold text-amber-300 whitespace-nowrap">Choose Capture:</span>
@@ -2372,50 +2382,65 @@
   <!-- ===================================================================== -->
   <!-- MODAL 3: VICTORY / GAME OVER OVERLAY                                  -->
   <!-- ===================================================================== -->
-  <div id="modalVictory" class="fixed inset-0 z-50 bg-walnut-900/70 backdrop-blur-md hidden items-center justify-center p-4">
-    <div class="w-full max-w-sm bg-parchment-50 border-4 border-amber-500 rounded-3xl p-6 text-center shadow-2xl space-y-4 text-walnut-900">
-      <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 border-2 border-amber-600 flex items-center justify-center shadow-md">
-        <svg class="w-9 h-9 text-walnut-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-          <path d="M4 22h16" />
-          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-          <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-        </svg>
+  <div id="modalVictory" class="fixed inset-0 z-50 bg-walnut-900/65 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="w-full max-w-md bg-parchment-50 border-4 border-amber-500 rounded-3xl p-4 sm:p-5 text-center shadow-2xl space-y-3 text-walnut-900 my-auto max-h-[94vh] overflow-y-auto custom-scroll">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 text-left min-w-0">
+          <div class="w-11 h-11 shrink-0 rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 border-2 border-amber-600 flex items-center justify-center shadow-md">
+            <svg class="w-6 h-6 text-walnut-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+              <path d="M4 22h16" />
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <div class="text-[10px] font-extrabold uppercase tracking-widest text-amber-700">Royal Result • سوبہ</div>
+            <h2 id="victoryHeadline" class="font-display text-base sm:text-lg font-extrabold text-walnut-900 truncate">Player 1 Wins!</h2>
+            <p id="victoryReason" class="text-[11px] font-semibold text-walnut-600 leading-snug">Captured all opponent pieces.</p>
+          </div>
+        </div>
+        <button id="btnVictoryInspectBoard" type="button" class="android-btn shrink-0 px-2.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-[11px] shadow flex items-center gap-1" title="Hide dialog to inspect the live board">
+          <span>👁️</span><span>Board</span>
+        </button>
       </div>
-      <div>
-        <div class="text-xs font-extrabold uppercase tracking-widest text-amber-700">Royal Victory • سوبہ</div>
-        <h2 id="victoryHeadline" class="font-display text-xl font-extrabold text-walnut-900 mt-1">Player 1 Wins!</h2>
-        <p id="victoryReason" class="text-xs font-semibold text-walnut-600 mt-1">Captured all opponent pieces.</p>
+
+      <div class="bg-walnut-900/95 border-2 border-amber-500/80 rounded-2xl p-2 shadow-inner space-y-1.5">
+        <div class="flex items-center justify-between px-1 text-[10px] font-bold text-amber-200">
+          <span>📸 Final Board Snapshot</span>
+          <span id="victoryLastMoveBadge" class="font-mono text-amber-300 truncate max-w-[200px]">Last move highlighted</span>
+        </div>
+        <img id="victoryBoardSnapshot" alt="Final Board Snapshot" class="w-48 h-48 sm:w-56 sm:h-56 mx-auto rounded-xl border border-amber-400/50 object-contain bg-parchment-100 shadow-md" />
+        <div id="victoryRecentMovesList" class="text-[10px] font-mono text-parchment-200 bg-black/35 rounded-xl px-2.5 py-1.5 text-left max-h-16 overflow-y-auto custom-scroll"></div>
       </div>
-      <div class="grid grid-cols-2 gap-2 bg-white rounded-2xl p-3 border-2 border-parchment-300 text-xs shadow-inner">
+
+      <div class="grid grid-cols-2 gap-2 bg-white rounded-2xl p-2.5 border-2 border-parchment-300 text-xs shadow-inner">
         <div>
-          <div class="text-walnut-600 font-bold">P1 Eaten</div>
-          <div id="victoryP1Score" class="text-base font-extrabold font-mono text-teal-700 mt-0.5">18 / 18</div>
+          <div class="text-walnut-600 font-bold text-[11px]">P1 Eaten</div>
+          <div id="victoryP1Score" class="text-sm sm:text-base font-extrabold font-mono text-teal-700">18 / 18</div>
         </div>
         <div>
-          <div class="text-walnut-600 font-bold">P2 Eaten</div>
-          <div id="victoryP2Score" class="text-base font-extrabold font-mono text-rose-600 mt-0.5">11 / 18</div>
+          <div class="text-walnut-600 font-bold text-[11px]">P2 Eaten</div>
+          <div id="victoryP2Score" class="text-sm sm:text-base font-extrabold font-mono text-rose-600">11 / 18</div>
         </div>
       </div>
-      <div id="victoryAIBrainBanner" class="hidden bg-rose-50 border border-rose-200 rounded-2xl p-2.5 text-center text-[11px] font-bold text-rose-900 shadow-sm">
+
+      <div id="victoryAIBrainBanner" class="hidden bg-rose-50 border border-rose-200 rounded-2xl p-2 text-center text-[10.5px] font-bold text-rose-900 shadow-sm">
         🧠 <span id="victoryAIBrainText">Adaptive AI Brain: 0 matches learned</span>
       </div>
-      <div class="text-[11px] font-bold text-walnut-700">
-        Created by Yasin Ullah • Dedicated to Muhib Ullah ❤️<br />
-        <span class="text-[9px] font-semibold text-walnut-500">© 2026 Yasin Ullah. All rights reserved.</span>
-      </div>
-      <div class="space-y-2">
+
+      <div class="space-y-1.5 pt-0.5">
         <div class="flex gap-2">
-          <button id="btnVictoryPlayAgain" type="button" class="android-btn flex-1 py-3 rounded-2xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-sm shadow-[0_4px_0_#B45309]">
+          <button id="btnVictoryPlayAgain" type="button" class="android-btn flex-1 py-2.5 rounded-2xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-xs sm:text-sm shadow-[0_3px_0_#B45309]">
             Play Rematch
           </button>
-          <button id="btnVictoryChangeGrid" type="button" class="android-btn px-4 py-3 rounded-2xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400">
+          <button id="btnVictoryChangeGrid" type="button" class="android-btn px-3.5 py-2.5 rounded-2xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400">
             Change Grid
           </button>
         </div>
-        <button id="btnVictoryExitToMenu" type="button" class="android-btn w-full py-2.5 rounded-xl bg-parchment-200 hover:bg-parchment-300 text-walnut-800 font-extrabold text-xs border border-parchment-400 shadow-[0_1.5px_0_#B8976C] flex items-center justify-center gap-1.5">
+        <button id="btnVictoryExitToMenu" type="button" class="android-btn w-full py-2 rounded-xl bg-parchment-200 hover:bg-parchment-300 text-walnut-800 font-extrabold text-xs border border-parchment-400 shadow-[0_1.5px_0_#B8976C] flex items-center justify-center gap-1.5">
           <span>🏠</span> <span>Exit to Main Menu</span>
         </button>
       </div>
@@ -4455,8 +4480,14 @@
           WebRTCManager.updateConnectionUI('idle', 'Pass & Play Ready', 'Local single-device match');
         }
 
+        if (victoryModalDelayTimer) {
+          clearTimeout(victoryModalDelayTimer);
+          victoryModalDelayTimer = null;
+        }
         document.getElementById('modalVictory').classList.add('hidden');
         document.getElementById('modalVictory').classList.remove('flex');
+        const inspectBar = document.getElementById('victoryInspectBar');
+        if (inspectBar) inspectBar.classList.add('hidden');
 
         resetTurnTimer();
         resetMatchTimer();
@@ -5644,6 +5675,13 @@
             GameState.board[remId] = 0;
             GameState.capturedBy[player]++;
             GameState.morrisPendingRemove = false;
+            GameState.lastMove = {
+              from: GameState.lastMove ? GameState.lastMove.from : null,
+              to: GameState.lastMove ? GameState.lastMove.to : null,
+              player,
+              type: 'remove_opponent',
+              capturedIds: [remId]
+            };
             if (GameState.vsAI && player !== GameState.aiPlayerRole && typeof MorrisLearner !== 'undefined') {
               MorrisLearner.onHumanCapturedAiBead();
             }
@@ -5871,6 +5909,13 @@
             ? action.capturedIds
             : (action.capturedId !== undefined ? [action.capturedId] : []);
 
+          GameState.lastMove = {
+            from: action.from,
+            to: action.to,
+            player,
+            type: 'jump',
+            capturedIds: [...capturedList]
+          };
           for (const capId of capturedList) {
             if (GameState.board[capId] === opponent) {
               GameState.board[capId] = 0;
@@ -9767,22 +9812,55 @@
             ctx.beginPath();
             ctx.moveTo(fromNode.x, fromNode.y);
             ctx.lineTo(toNode.x, toNode.y);
-            ctx.strokeStyle = 'rgba(245, 158, 11, 0.72)';
-            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.85)';
+            ctx.lineWidth = 3.5;
             ctx.setLineDash([6, 5]);
             ctx.stroke();
 
-            const arrowT = 0.65;
+            const angle = Math.atan2(toNode.y - fromNode.y, toNode.x - fromNode.x);
+            const arrowT = 0.62;
             const ax = fromNode.x + (toNode.x - fromNode.x) * arrowT;
             const ay = fromNode.y + (toNode.y - fromNode.y) * arrowT;
+            const headLen = Math.max(7, pieceRadius * 0.45);
             ctx.setLineDash([]);
             ctx.beginPath();
-            ctx.arc(ax, ay, 4, 0, Math.PI * 2);
+            ctx.moveTo(ax + Math.cos(angle) * headLen * 0.5, ay + Math.sin(angle) * headLen * 0.5);
+            ctx.lineTo(ax - headLen * Math.cos(angle - Math.PI / 6), ay - headLen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(ax - headLen * Math.cos(angle + Math.PI / 6), ay - headLen * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
             ctx.fillStyle = '#F59E0B';
             ctx.shadowColor = '#F59E0B';
             ctx.shadowBlur = 6;
             ctx.fill();
             ctx.restore();
+          }
+
+          if (Array.isArray(lm.capturedIds) && lm.capturedIds.length > 0) {
+            for (const cid of lm.capturedIds) {
+              const capNode = Nodes[cid];
+              if (!capNode) continue;
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(capNode.x, capNode.y, pieceRadius * 0.82, 0, Math.PI * 2);
+              ctx.fillStyle = 'rgba(225, 29, 72, 0.18)';
+              ctx.fill();
+              ctx.strokeStyle = '#E11D48';
+              ctx.lineWidth = 2.4;
+              ctx.setLineDash([3, 3]);
+              ctx.stroke();
+
+              ctx.setLineDash([]);
+              const xr = pieceRadius * 0.36;
+              ctx.beginPath();
+              ctx.moveTo(capNode.x - xr, capNode.y - xr);
+              ctx.lineTo(capNode.x + xr, capNode.y + xr);
+              ctx.moveTo(capNode.x + xr, capNode.y - xr);
+              ctx.lineTo(capNode.x - xr, capNode.y + xr);
+              ctx.strokeStyle = '#E11D48';
+              ctx.lineWidth = 2.6;
+              ctx.stroke();
+              ctx.restore();
+            }
           }
         }
 
@@ -11007,18 +11085,52 @@
         updateImmersiveHUD();
       }
 
-      function showVictoryModal() {
+      let victoryModalDelayTimer = null;
+
+      function populateAndOpenVictoryModal() {
         const modal = document.getElementById('modalVictory');
         const [p1Title, p2Title] = getThemePlayerNames();
         const winCapP1 = getWinCaptureTargetForPlayer(1);
         const winCapP2 = getWinCaptureTargetForPlayer(2);
 
-        document.getElementById('victoryHeadline').textContent = GameState.winner === 1
+        const headlineTxt = GameState.winner === 1
           ? `${p1Title} Wins!`
           : (GameState.winner === 2 ? `${p2Title} Wins!` : 'Match Drawn!');
+        document.getElementById('victoryHeadline').textContent = headlineTxt;
         document.getElementById('victoryReason').textContent = GameState.winReason;
         document.getElementById('victoryP1Score').textContent = `${GameState.capturedBy[1]} / ${winCapP1}`;
         document.getElementById('victoryP2Score').textContent = `${GameState.capturedBy[2]} / ${winCapP2}`;
+
+        const inspectLbl = document.getElementById('victoryInspectLabel');
+        if (inspectLbl) inspectLbl.textContent = headlineTxt;
+
+        const savedMoving = VisualFX.movingPiece;
+        VisualFX.movingPiece = null;
+        renderBoardFrame(performance.now());
+        const snapImg = document.getElementById('victoryBoardSnapshot');
+        if (snapImg && canvas) {
+          try {
+            snapImg.src = canvas.toDataURL('image/png');
+          } catch (e) {}
+        }
+        VisualFX.movingPiece = savedMoving;
+
+        const lastMoveBadge = document.getElementById('victoryLastMoveBadge');
+        if (lastMoveBadge) {
+          const lastEntry = GameState.moveLog.length > 0
+            ? GameState.moveLog[GameState.moveLog.length - 1]
+            : 'Final board state';
+          lastMoveBadge.textContent = lastEntry;
+        }
+
+        const recentMovesEl = document.getElementById('victoryRecentMovesList');
+        if (recentMovesEl) {
+          const recent = GameState.moveLog.slice(-4);
+          recentMovesEl.innerHTML = recent.length > 0
+            ? recent.map((m, idx) => `<div class="${idx === recent.length - 1 ? 'text-amber-300 font-extrabold' : 'opacity-80'}">${idx === recent.length - 1 ? '★ ' : ''}${m}</div>`).join('')
+            : '<div>No moves recorded.</div>';
+          recentMovesEl.scrollTop = recentMovesEl.scrollHeight;
+        }
 
         const vBanner = document.getElementById('victoryAIBrainBanner');
         const vText = document.getElementById('victoryAIBrainText');
@@ -11032,8 +11144,29 @@
           }
         }
 
+        const inspectBar = document.getElementById('victoryInspectBar');
+        if (inspectBar) inspectBar.classList.add('hidden');
+
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+      }
+
+      function showVictoryModal(immediate = false) {
+        if (victoryModalDelayTimer) {
+          clearTimeout(victoryModalDelayTimer);
+          victoryModalDelayTimer = null;
+        }
+        if (immediate) {
+          populateAndOpenVictoryModal();
+          return;
+        }
+        const animWait = VisualFX.movingPiece ? (VisualFX.movingPiece.duration + 380) : 650;
+        victoryModalDelayTimer = setTimeout(() => {
+          victoryModalDelayTimer = null;
+          if (GameState.gameOver) {
+            populateAndOpenVictoryModal();
+          }
+        }, animWait);
       }
 
       function serializeGameState() {
@@ -13933,7 +14066,36 @@
           SoundEngine.select();
           document.getElementById('modalVictory').classList.add('hidden');
           document.getElementById('modalVictory').classList.remove('flex');
+          const inspectBar = document.getElementById('victoryInspectBar');
+          if (inspectBar) inspectBar.classList.add('hidden');
           MainMenu.exitToStandby();
+        });
+      }
+
+      const btnInspectBoard = document.getElementById('btnVictoryInspectBoard');
+      if (btnInspectBoard) {
+        btnInspectBoard.addEventListener('click', () => {
+          SoundEngine.select();
+          document.getElementById('modalVictory').classList.add('hidden');
+          document.getElementById('modalVictory').classList.remove('flex');
+          const inspectBar = document.getElementById('victoryInspectBar');
+          if (inspectBar) inspectBar.classList.remove('hidden');
+          requestRender();
+        });
+      }
+
+      const btnReopenVictory = document.getElementById('btnReopenVictoryModal');
+      if (btnReopenVictory) {
+        btnReopenVictory.addEventListener('click', () => {
+          SoundEngine.select();
+          showVictoryModal(true);
+        });
+      }
+
+      const btnInspectRematch = document.getElementById('btnInspectPlayAgain');
+      if (btnInspectRematch) {
+        btnInspectRematch.addEventListener('click', () => {
+          document.getElementById('btnVictoryPlayAgain').click();
         });
       }
 
@@ -15783,7 +15945,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=db5ba61a80', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=6e5f71f973', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
