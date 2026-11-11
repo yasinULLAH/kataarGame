@@ -16,13 +16,28 @@ SOURCE_LOGO_PATH = r"C:\Users\Yasin\Downloads\Yasin Soft\logo.png"
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 VERSION = "2.0.0"
 
-EXCLUDE_DIRS = {".git", "__pycache__", ".vscode", ".idea", ".gemini", "node_modules"}
+EXCLUDE_DIRS = {".git", "__pycache__", ".vscode", ".idea", ".gemini", "node_modules", "android", "www", "dist", "build", "out"}
 EXCLUDE_EXTS = {".py", ".pyw", ".pyc", ".txt", ".md", ".log", ".bak", ".zip", ".gz", ".tar"}
 EXCLUDE_NAMES = {
     "sw.js",
+    "sw-template.js",
+    "prepare-www.js",
+    "package.json",
+    "package-lock.json",
+    "capacitor.config.json",
+    "LICENSE",
     ".gitattributes",
     "update_pwa.py",
     os.path.basename(__file__)
+}
+
+# Only actual web/PWA assets are precached. Source code, Gradle/Android
+# files, docs, and build tooling must never end up in the service worker list.
+ALLOWED_EXTS = {
+    ".html", ".htm", ".css", ".js", ".json", ".webmanifest",
+    ".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp",
+    ".woff2", ".woff", ".ttf", ".otf",
+    ".mp3", ".wav", ".ogg", ".webm", ".mp4"
 }
 
 def log(msg):
@@ -101,7 +116,7 @@ def discover_assets():
             if f in EXCLUDE_NAMES:
                 continue
             ext = os.path.splitext(f)[1].lower()
-            if ext in EXCLUDE_EXTS:
+            if ext not in ALLOWED_EXTS:
                 continue
             full_path = os.path.join(root, f)
             rel_path = os.path.relpath(full_path, PROJECT_DIR).replace("\\", "/")
@@ -183,90 +198,27 @@ def create_manifest(html_files):
 
 def create_service_worker(assets, version_hash):
     sw_path = os.path.join(PROJECT_DIR, "sw.js")
-    cache_name = f"pwa-cache-{version_hash}"
-    assets_js = json.dumps(assets, indent=2)
-    sw_code = f"""const CACHE_NAME = '{cache_name}';
-const ASSETS = {assets_js};
+    template_path = os.path.join(PROJECT_DIR, "sw-template.js")
 
-self.addEventListener('install', (e) => {{
-  e.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((c) => Promise.allSettled(ASSETS.map((url) => c.add(url))))
-      .then(() => self.skipWaiting())
-  );
-}});
+    if not os.path.isfile(template_path):
+        log("Service worker template missing: sw-template.js (sw.js was not regenerated).")
+        return
 
-self.addEventListener('activate', (e) => {{
-  e.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
-}});
+    # The app shell and offline page are mandatory for offline boot.
+    ordered = list(assets)
+    for required in ("./", "./index.html", "./offline.html"):
+        if required not in ordered:
+            ordered.insert(0, required)
 
-self.addEventListener('fetch', (e) => {{
-  const req = e.request;
-  if (req.method !== 'GET') return;
-  if (!req.url.startsWith('http')) return;
-  if (req.cache === 'only-if-cached' && req.mode !== 'same-origin') return;
+    cache_name = f"katar-offline-{version_hash}"
+    assets_js = json.dumps(ordered, indent=2)
 
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
-  if (url.pathname.endsWith('/sw.js')) return;
+    with open(template_path, "r", encoding="utf-8") as f:
+        sw_code = f.read()
 
-  if (req.mode === 'navigate') {{
-    e.respondWith(
-      fetch(req)
-        .then((res) => {{
-          if (res && res.status === 200) {{
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {{}});
-          }}
-          return res;
-        }})
-        .catch(() =>
-          caches.match(req, {{ ignoreSearch: true }})
-            .then((cached) => cached || caches.match('./index.html', {{ ignoreSearch: true }}))
-            .then((cached) => cached || caches.match('./', {{ ignoreSearch: true }}))
-            .then((cached) => cached || caches.match('./offline.html', {{ ignoreSearch: true }}))
-            .then((cached) => cached || new Response('Offline', {{ status: 503, headers: {{ 'Content-Type': 'text/plain' }} }}))
-        )
-    );
-    return;
-  }}
+    sw_code = sw_code.replace("__CACHE_NAME__", cache_name, 1)
+    sw_code = sw_code.replace("__ASSETS__", assets_js, 1)
 
-  e.respondWith(
-    caches.match(req, {{ ignoreSearch: true }}).then((cached) => {{
-      if (cached) {{
-        fetch(req)
-          .then((res) => {{
-            if (res && res.status === 200) {{
-              const copy = res.clone();
-              caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {{}});
-            }}
-          }})
-          .catch(() => {{}});
-        return cached;
-      }}
-      return fetch(req)
-        .then((res) => {{
-          if (res && res.status === 200) {{
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {{}});
-          }}
-          return res;
-        }})
-        .catch(() => caches.match(req, {{ ignoreSearch: true }}))
-        .then((finalRes) => {{
-          if (finalRes) return finalRes;
-          return new Response('', {{ status: 408, statusText: 'Offline' }});
-        }});
-    }}).catch(() => {{
-      return caches.match(req, {{ ignoreSearch: true }}).then((r) => r || new Response('', {{ status: 408 }}));
-    }})
-  );
-}});
-"""
     with open(sw_path, "w", encoding="utf-8", newline="\n") as f:
         f.write(sw_code)
 

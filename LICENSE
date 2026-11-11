@@ -1,0 +1,111 @@
+KATAR (قطار) & NAVAKANKARI (نوکنکری) — ROYAL BOARD GAME
+PROPRIETARY SOFTWARE LICENSE AND COPYRIGHT NOTICE
+
+Copyright © 2026 Yasin Ullah (Bannu Software Solutions).
+All Rights Reserved.
+
+Author: Yasin Ullah
+Project: https://github.com/yasinULLAH/kataarGame
+Contact for permissions: WhatsApp +92 336 1593533
+
+======================================================================
+1. OWNERSHIP
+======================================================================
+
+This software, game, and all associated materials — including but not
+limited to the source code, game logic, rules engine, AI engine, board
+and piece designs, visual artwork, icons, logos, user interface, text,
+documentation, audio, and branding (collectively, "the Work") — are the
+exclusive intellectual property of Yasin Ullah and are protected by
+copyright and other applicable laws.
+
+======================================================================
+2. NO LICENSE GRANTED
+======================================================================
+
+No license, right, title, or interest in the Work is granted to any
+person or entity, whether express, implied, by estoppel, or otherwise,
+except by a separate written agreement signed by Yasin Ullah.
+
+======================================================================
+3. STRICTLY PROHIBITED USES
+======================================================================
+
+Without prior written permission from Yasin Ullah, you may NOT:
+
+  a) copy, reproduce, mirror, clone, or archive the Work or any part of it;
+  b) modify, adapt, translate, alter, or create derivative works from it;
+  c) merge, incorporate, embed, or reuse it in any other software,
+     website, application, game, product, or service;
+  d) publish, upload, post, distribute, share, transmit, or make it
+     available to the public in any form or through any medium;
+  e) sell, rent, lease, sublicense, assign, monetize, or otherwise
+     commercially exploit it;
+  f) decompile, disassemble, reverse engineer, or attempt to derive the
+     source code, algorithms, AI logic, or design;
+  g) remove, obscure, alter, or bypass any copyright, ownership,
+     attribution, or license notice;
+  h) use the name "Katar & Navakankari", the author's name, the logo, or
+     any branding in a way that suggests endorsement, affiliation, or
+     authorship without written permission.
+
+======================================================================
+4. ATTRIBUTION (ONLY WHEN PERMISSION IS GRANTED)
+======================================================================
+
+If Yasin Ullah grants written permission for a specific use, that use
+must display clear and visible attribution in the following form:
+
+    "Katar & Navakankari Game © 2026 Yasin Ullah"
+    https://github.com/yasinULLAH/kataarGame
+
+The attribution must not be hidden, minimized, or removed, and it must
+not imply that the Work is licensed to anyone else.
+
+======================================================================
+5. THIRD-PARTY COMPONENTS
+======================================================================
+
+The Work bundles or uses certain third-party open-source libraries and
+fonts. Those components remain the property of their respective owners
+and are governed by their own licenses, as listed in
+THIRD-PARTY-NOTICES.md. Nothing in this license claims ownership of
+those third-party components or restricts rights granted by their
+licenses.
+
+======================================================================
+6. NOTE ON EARLIER RELEASES
+======================================================================
+
+Copies and releases of this project that were published before this
+notice and that explicitly carried another license (for example, MIT)
+remain governed by the license stated in those releases. This license
+applies to this version and to all subsequent versions. A prior grant
+is not revoked retroactively.
+
+======================================================================
+7. TERMINATION AND ENFORCEMENT
+======================================================================
+
+Any use of the Work outside the terms of this license immediately and
+automatically terminates any permission you may have received. Yasin
+Ullah reserves the right to pursue all available legal and equitable
+remedies for unauthorized copying, modification, distribution, or
+reuse, including injunctive relief and damages.
+
+======================================================================
+8. DISCLAIMER OF WARRANTY
+======================================================================
+
+THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM,
+DAMAGES, OR OTHER LIABILITY ARISING FROM, OUT OF, OR IN CONNECTION WITH
+THE WORK OR THE USE OR OTHER DEALINGS IN THE WORK.
+
+======================================================================
+
+For permission requests, collaboration, or licensing inquiries,
+contact Yasin Ullah via WhatsApp +92 336 1593533 or open an issue at
+https://github.com/yasinULLAH/kataarGame

@@ -1,3 +1,9 @@
+/*
+ * Katar (قطار) & Navakankari — Web Asset Builder
+ * Copyright © 2026 Yasin Ullah. All Rights Reserved.
+ * Unauthorized copying, modification or reuse is strictly prohibited.
+ * See LICENSE for full terms.
+ */
 const fs = require('fs');
 const path = require('path');
 
@@ -27,7 +33,8 @@ const ignoredFiles = new Set([
   'package.json',
   'package-lock.json',
   'capacitor.config.json',
-  'prepare-www.js'
+  'prepare-www.js',
+  'sw-template.js'
 ]);
 
 const allowedExtensions = new Set([

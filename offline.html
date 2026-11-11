@@ -1,10 +1,53 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Offline</title>  <link rel="manifest" href="manifest.webmanifest">
+<!DOCTYPE html>
+<!--
+  Katar (قطار) & Navakankari — Offline Fallback
+  Copyright © 2026 Yasin Ullah. All Rights Reserved.
+  Unauthorized copying, modification or reuse is strictly prohibited.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Yasin Ullah">
+  <meta name="copyright" content="Copyright © 2026 Yasin Ullah. All rights reserved.">
+  <title>Katar Game — Offline</title>
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-</head><body><h1>You are offline.</h1>  <script>
+  <style>
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 24px; box-sizing: border-box;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: #3F2D1E; background: #FDFBF7; text-align: center;
+    }
+    .card {
+      max-width: 420px; padding: 28px 24px; border-radius: 20px;
+      background: #FFFDF9; border: 1px solid #E7D6BF;
+      box-shadow: 0 10px 30px rgba(63, 45, 30, 0.12);
+    }
+    h1 { margin: 0 0 8px; font-size: 20px; }
+    p { margin: 0 0 16px; font-size: 14px; line-height: 1.5; color: #6B5540; }
+    button {
+      padding: 10px 22px; border: 0; border-radius: 12px; cursor: pointer;
+      font-size: 14px; font-weight: 700; color: #fff; background: #0D9488;
+    }
+    small { display: block; margin-top: 18px; font-size: 10px; color: #9A8268; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>You are offline</h1>
+    <p>The complete game is stored on this device. Reopen the installed Katar app to keep playing, or reconnect once so the offline files can finish updating.</p>
+    <button type="button" onclick="location.reload()">Try Again</button>
+    <small>Katar &amp; Navakankari © 2026 Yasin Ullah. All rights reserved.</small>
+  </main>
+  <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('./sw.js?v=23884c4dda').catch(function() {});
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./sw.js?v=f975d79ce8', { scope: './' }).catch(function () {});
       });
     }
   </script>
-</body></html>
+</body>
+</html>

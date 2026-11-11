@@ -1,9 +1,31 @@
 <!DOCTYPE html>
+<!--
+  Katar (قطار) & Navakankari — Royal Board Game
+  Copyright © 2026 Yasin Ullah. All Rights Reserved.
+
+  This game — including its source code, game logic, board design, artwork,
+  text, audio, and branding — is the exclusive property of Yasin Ullah.
+
+  Copying, reproducing, modifying, merging, publishing, distributing,
+  sublicensing, selling, or reusing any part of this work, in source or
+  compiled form, is strictly prohibited without prior written permission
+  from the author.
+
+  Attribution (only where written permission has been granted) must read:
+  "Katar & Navakankari Game © 2026 Yasin Ullah"
+  https://github.com/yasinULLAH/kataarGame
+
+  Third-party libraries bundled with this game remain under their own
+  licenses. See LICENSE and THIRD-PARTY-NOTICES.md for details.
+-->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#F5EBDC" />
+  <meta name="author" content="Yasin Ullah" />
+  <meta name="copyright" content="Copyright © 2026 Yasin Ullah. All rights reserved." />
+  <meta name="description" content="Katar & Navakankari — a royal 2-in-1 traditional strategy board game by Yasin Ullah, with offline 2-phone QR multiplayer. Copyright © 2026 Yasin Ullah. All rights reserved." />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Katar Game" />
@@ -48,14 +70,55 @@
       }
     })();
   </script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-  <script src="https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js"></script>
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-  <script src="https://js.puter.com/v2/"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" />
+  <link rel="stylesheet" href="fonts.css" />
+  <!--
+    All runtime libraries are bundled locally on purpose.
+    Loading them from a CDN breaks this game after the browser/PWA/WebView
+    cache expires while offline. Do not replace these with CDN URLs.
+  -->
+  <script src="tailwind.min.js"></script>
+  <script src="pako.min.js"></script>
+  <script src="qrcode.min.js"></script>
+  <script src="jsqr.min.js"></script>
+  <script src="mqtt.min.js"></script>
+  <script src="peerjs.min.js"></script>
+  <script>
+    /*
+     * Puter.js is an optional cloud-AI SDK and requires the internet.
+     * It is loaded asynchronously only while online so that it can never
+     * block or break offline play. The built-in Grandmaster AI is offline.
+     */
+    (function () {
+      function loadPuterSdk() {
+        if (window.puter || !navigator.onLine) return;
+        var existing = document.querySelector('script[data-puter-sdk]');
+        if (existing) return;
+        var s = document.createElement('script');
+        s.src = 'https://js.puter.com/v2/';
+        s.async = true;
+        s.defer = true;
+        s.setAttribute('data-puter-sdk', 'true');
+        s.onload = function () {
+          try {
+            if (window.PuterAIManager && typeof PuterAIManager.refreshQuotaFromPuter === 'function') {
+              PuterAIManager.refreshQuotaFromPuter(true);
+            }
+          } catch (e) {}
+        };
+        s.onerror = function () {};
+        document.head.appendChild(s);
+      }
+      function scheduleLoad() {
+        if ('requestIdleCallback' in window) requestIdleCallback(loadPuterSdk, { timeout: 4000 });
+        else setTimeout(loadPuterSdk, 1200);
+      }
+      if (navigator.onLine) {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scheduleLoad, { once: true });
+        else scheduleLoad();
+      }
+      window.addEventListener('online', scheduleLoad);
+    })();
+  </script>
   <script>
     if (typeof tailwind !== 'undefined') tailwind.config = {
       theme: {
@@ -1144,6 +1207,8 @@
               <span>🏠</span> <span>Menu</span>
             </button>
           </div>
+
+          <p class="text-center text-[9px] font-semibold text-walnut-500 pt-0.5">© 2026 Yasin Ullah. All rights reserved.</p>
         </div>
       </div>
     </section>
@@ -1220,7 +1285,8 @@
       </div>
 
       <div class="hidden lg:block text-center text-[10px] font-bold text-walnut-700 bg-parchment-100/90 border border-parchment-300 rounded-xl py-1 px-2 shadow-sm">
-        Crafted by <strong class="text-walnut-900">Yasin Ullah</strong> • Dedicated to my little brother <strong class="text-teal-800">Muhib Ullah</strong> ❤️
+        Crafted by <strong class="text-walnut-900">Yasin Ullah</strong> • Dedicated to my little brother <strong class="text-teal-800">Muhib Ullah</strong> ❤️<br />
+        <span class="text-[9px] font-semibold text-walnut-600">© 2026 Yasin Ullah. All rights reserved. Unauthorized copying, modification or reuse is prohibited.</span>
       </div>
     </section>
   </main>
@@ -1932,6 +1998,7 @@
           <div>
             <div class="text-xs font-extrabold text-walnut-900">Created by Yasin Ullah</div>
             <div class="text-[11px] font-semibold text-teal-800">Dedicated with love to my little brother Muhib Ullah ❤️</div>
+            <div class="text-[9px] font-semibold text-walnut-600 mt-0.5">© 2026 Yasin Ullah. All rights reserved. Copying, modification or reuse without written permission is strictly prohibited.</div>
           </div>
           <span class="text-xs font-mono font-extrabold px-2.5 py-1 rounded-xl bg-white border border-amber-300 text-amber-900">2-in-1 Royal Edition</span>
         </div>
@@ -2274,7 +2341,8 @@
         </div>
       </div>
       <div class="text-[11px] font-bold text-walnut-700">
-        Created by Yasin Ullah • Dedicated to Muhib Ullah ❤️
+        Created by Yasin Ullah • Dedicated to Muhib Ullah ❤️<br />
+        <span class="text-[9px] font-semibold text-walnut-500">© 2026 Yasin Ullah. All rights reserved.</span>
       </div>
       <div class="space-y-2">
         <div class="flex gap-2">
@@ -15174,8 +15242,12 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=23884c4dda').catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=f975d79ce8', { scope: './' }).catch(() => {});
         });
+        // Ask the browser/WebView not to evict the offline game cache under storage pressure.
+        if (navigator.storage && typeof navigator.storage.persist === 'function') {
+          navigator.storage.persist().catch(() => {});
+        }
       }
 
       let deferredInstallPrompt = null;

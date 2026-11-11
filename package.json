@@ -1,7 +1,8 @@
 {
   "name": "kataargame",
   "version": "1.0.0",
-  "description": "Katar & Navakankari — Royal Board Game",
+  "private": true,
+  "description": "Katar & Navakankari — Royal Board Game. Copyright © 2026 Yasin Ullah. All rights reserved.",
   "main": "prepare-www.js",
   "scripts": {
     "prepare-www": "node prepare-www.js",
@@ -11,8 +12,12 @@
     "type": "git",
     "url": "git+https://github.com/yasinULLAH/kataarGame.git"
   },
-  "author": "Yasin Ullah",
-  "license": "MIT",
+  "author": {
+    "name": "Yasin Ullah",
+    "url": "https://github.com/yasinULLAH/kataarGame"
+  },
+  "copyright": "Copyright © 2026 Yasin Ullah. All rights reserved.",
+  "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "@capacitor/android": "^6.2.0",
     "@capacitor/cli": "^6.2.0",

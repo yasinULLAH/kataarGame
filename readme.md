@@ -1,11 +1,33 @@
 # 👑 Katar (قطار) & Navakankari (نوکنکری) — Royal Board Game Studio
 ### *Ancient Pashtun & South Asian Strategic Tabletop Games on Modern Web Architecture*
 
-[License: MIT](https://www.google.com/search?q=LICENSE)
+[License: Proprietary — All Rights Reserved](LICENSE)
 [](index.html)
 [](index.html)
 [](index.html)
 [](index.html)
+
+---
+
+### © Copyright & Ownership
+
+**Copyright © 2026 Yasin Ullah. All Rights Reserved.**
+
+This game — including its source code, game logic, AI engine, board design,
+artwork, text, audio, and branding — is the exclusive property of
+**Yasin Ullah**.
+
+Copying, reproducing, modifying, merging, publishing, distributing,
+sublicensing, selling, or reusing any part of this work is **strictly
+prohibited** without prior written permission from the author.
+
+Attribution, only where written permission has been granted, must read:
+
+> **Katar & Navakankari Game © 2026 Yasin Ullah**
+> https://github.com/yasinULLAH/kataarGame
+
+See [`LICENSE`](LICENSE) for the complete terms and
+[`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) for bundled library licenses.
 
 ---
 

@@ -1,96 +1,22 @@
-const CACHE_NAME = 'pwa-cache-23884c4dda';
-const ASSETS = [
-  "./.gitignore",
-  "./android/.gitignore",
-  "./android/app/.gitignore",
-  "./android/app/build.gradle",
-  "./android/app/build/.npmkeep",
-  "./android/app/capacitor.build.gradle",
-  "./android/app/proguard-rules.pro",
-  "./android/app/src/androidTest/java/com/getcapacitor/myapp/ExampleInstrumentedTest.java",
-  "./android/app/src/main/AndroidManifest.xml",
-  "./android/app/src/main/assets/capacitor.config.json",
-  "./android/app/src/main/assets/capacitor.plugins.json",
-  "./android/app/src/main/assets/public/cordova.js",
-  "./android/app/src/main/assets/public/cordova_plugins.js",
-  "./android/app/src/main/assets/public/favicon.ico",
-  "./android/app/src/main/assets/public/fonts.css",
-  "./android/app/src/main/assets/public/fonts/cinzel.woff2",
-  "./android/app/src/main/assets/public/fonts/inter.woff2",
-  "./android/app/src/main/assets/public/fonts/jetbrains-mono.woff2",
-  "./android/app/src/main/assets/public/icon-128.png",
-  "./android/app/src/main/assets/public/icon-144.png",
-  "./android/app/src/main/assets/public/icon-152.png",
-  "./android/app/src/main/assets/public/icon-192.png",
-  "./android/app/src/main/assets/public/icon-384.png",
-  "./android/app/src/main/assets/public/icon-512.png",
-  "./android/app/src/main/assets/public/icon-72.png",
-  "./android/app/src/main/assets/public/icon-96.png",
-  "./android/app/src/main/assets/public/icon.svg",
-  "./android/app/src/main/assets/public/index.html",
-  "./android/app/src/main/assets/public/jsqr.min.js",
-  "./android/app/src/main/assets/public/logo.png",
-  "./android/app/src/main/assets/public/manifest.webmanifest",
-  "./android/app/src/main/assets/public/mqtt.min.js",
-  "./android/app/src/main/assets/public/offline.html",
-  "./android/app/src/main/assets/public/pako.min.js",
-  "./android/app/src/main/assets/public/peerjs.min.js",
-  "./android/app/src/main/assets/public/qrcode.min.js",
-  "./android/app/src/main/assets/public/tailwind.min.js",
-  "./android/app/src/main/assets/public/version.json",
-  "./android/app/src/main/java/com/yasin/katargame/MainActivity.java",
-  "./android/app/src/main/res/drawable-land-hdpi/splash.png",
-  "./android/app/src/main/res/drawable-land-mdpi/splash.png",
-  "./android/app/src/main/res/drawable-land-xhdpi/splash.png",
-  "./android/app/src/main/res/drawable-land-xxhdpi/splash.png",
-  "./android/app/src/main/res/drawable-land-xxxhdpi/splash.png",
-  "./android/app/src/main/res/drawable-port-hdpi/splash.png",
-  "./android/app/src/main/res/drawable-port-mdpi/splash.png",
-  "./android/app/src/main/res/drawable-port-xhdpi/splash.png",
-  "./android/app/src/main/res/drawable-port-xxhdpi/splash.png",
-  "./android/app/src/main/res/drawable-port-xxxhdpi/splash.png",
-  "./android/app/src/main/res/drawable-v24/ic_launcher_foreground.xml",
-  "./android/app/src/main/res/drawable/ic_launcher_background.xml",
-  "./android/app/src/main/res/drawable/splash.png",
-  "./android/app/src/main/res/layout/activity_main.xml",
-  "./android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
-  "./android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
-  "./android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
-  "./android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png",
-  "./android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png",
-  "./android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
-  "./android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png",
-  "./android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png",
-  "./android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
-  "./android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png",
-  "./android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png",
-  "./android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
-  "./android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png",
-  "./android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png",
-  "./android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
-  "./android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png",
-  "./android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png",
-  "./android/app/src/main/res/values/ic_launcher_background.xml",
-  "./android/app/src/main/res/values/strings.xml",
-  "./android/app/src/main/res/values/styles.xml",
-  "./android/app/src/main/res/xml/config.xml",
-  "./android/app/src/main/res/xml/file_paths.xml",
-  "./android/app/src/test/java/com/getcapacitor/myapp/ExampleUnitTest.java",
-  "./android/build.gradle",
-  "./android/capacitor-cordova-android-plugins/build.gradle",
-  "./android/capacitor-cordova-android-plugins/cordova.variables.gradle",
-  "./android/capacitor-cordova-android-plugins/src/main/AndroidManifest.xml",
-  "./android/capacitor-cordova-android-plugins/src/main/java/.gitkeep",
-  "./android/capacitor-cordova-android-plugins/src/main/res/.gitkeep",
-  "./android/capacitor.settings.gradle",
-  "./android/gradle.properties",
-  "./android/gradle/wrapper/gradle-wrapper.jar",
-  "./android/gradle/wrapper/gradle-wrapper.properties",
-  "./android/gradlew",
-  "./android/gradlew.bat",
-  "./android/settings.gradle",
-  "./android/variables.gradle",
-  "./capacitor.config.json",
+/*
+ * Katar (قطار) & Navakankari — Offline Service Worker (generated from sw-template.js)
+ * Copyright © 2026 Yasin Ullah. All Rights Reserved.
+ *
+ * This template is consumed by "build pwa make html app offline and installable...pyw".
+ * The generated file is sw.js. The cache name and the list of local web assets
+ * are injected by the build script.
+ *
+ * IMPORTANT:
+ * Every runtime library is served from this origin and precached.
+ * Never add a cross-origin CDN dependency: those requests are unavailable
+ * when offline and caused the old "libraries not loaded" bug.
+ */
+
+const CACHE_NAME = 'katar-offline-f975d79ce8';
+const OFFLINE_URL = './offline.html';
+
+const PRECACHE_ASSETS = [
+  "./",
   "./favicon.ico",
   "./fonts.css",
   "./fonts/cinzel.woff2",
@@ -111,116 +37,156 @@ const ASSETS = [
   "./manifest.webmanifest",
   "./mqtt.min.js",
   "./offline.html",
-  "./package-lock.json",
-  "./package.json",
   "./pako.min.js",
   "./peerjs.min.js",
-  "./prepare-www.js",
   "./qrcode.min.js",
   "./tailwind.min.js",
-  "./version.json",
-  "./www/favicon.ico",
-  "./www/fonts.css",
-  "./www/fonts/cinzel.woff2",
-  "./www/fonts/inter.woff2",
-  "./www/fonts/jetbrains-mono.woff2",
-  "./www/icon-128.png",
-  "./www/icon-144.png",
-  "./www/icon-152.png",
-  "./www/icon-192.png",
-  "./www/icon-384.png",
-  "./www/icon-512.png",
-  "./www/icon-72.png",
-  "./www/icon-96.png",
-  "./www/icon.svg",
-  "./www/index.html",
-  "./www/jsqr.min.js",
-  "./www/logo.png",
-  "./www/manifest.webmanifest",
-  "./www/mqtt.min.js",
-  "./www/offline.html",
-  "./www/pako.min.js",
-  "./www/peerjs.min.js",
-  "./www/qrcode.min.js",
-  "./www/tailwind.min.js",
-  "./www/version.json"
+  "./version.json"
 ];
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((c) => Promise.allSettled(ASSETS.map((url) => c.add(url))))
-      .then(() => self.skipWaiting())
-  );
+self.addEventListener('install', (event) => {
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+
+    await Promise.all(PRECACHE_ASSETS.map(async (asset) => {
+      try {
+        const request = new Request(asset, { cache: 'reload' });
+        const response = await fetch(request);
+        if (response && response.ok) {
+          await cache.put(asset, response);
+        }
+      } catch (error) {
+        /* A single optional asset must never abort the whole offline install. */
+      }
+    }));
+
+    const appShell =
+      (await cache.match('./index.html', { ignoreSearch: true })) ||
+      (await cache.match('./', { ignoreSearch: true }));
+
+    if (!appShell) {
+      /* Refuse to activate a cache that cannot boot the game offline. */
+      throw new Error('Offline install failed: app shell was not cached.');
+    }
+
+    await self.skipWaiting();
+  })());
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => {
+      if (key === CACHE_NAME) return undefined;
+      if (key.startsWith('katar-offline-') || key.startsWith('pwa-cache-')) {
+        return caches.delete(key);
+      }
+      return undefined;
+    }));
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener('fetch', (e) => {
-  const req = e.request;
-  if (req.method !== 'GET') return;
-  if (!req.url.startsWith('http')) return;
-  if (req.cache === 'only-if-cached' && req.mode !== 'same-origin') return;
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
-  if (url.pathname.endsWith('/sw.js')) return;
-
-  if (req.mode === 'navigate') {
-    e.respondWith(
-      fetch(req)
-        .then((res) => {
-          if (res && res.status === 200) {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {});
-          }
-          return res;
-        })
-        .catch(() =>
-          caches.match(req, { ignoreSearch: true })
-            .then((cached) => cached || caches.match('./index.html', { ignoreSearch: true }))
-            .then((cached) => cached || caches.match('./', { ignoreSearch: true }))
-            .then((cached) => cached || caches.match('./offline.html', { ignoreSearch: true }))
-            .then((cached) => cached || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } }))
-        )
+function fetchWithTimeout(request, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Network timeout')), timeoutMs);
+    fetch(request).then(
+      (response) => {
+        clearTimeout(timer);
+        resolve(response);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
     );
+  });
+}
+
+async function handleNavigation(request) {
+  const cache = await caches.open(CACHE_NAME);
+
+  try {
+    /* Network-first so online visitors always get the newest build. */
+    const response = await fetchWithTimeout(request, 4500);
+    if (response && response.ok) {
+      /* Store the app shell under one stable key (ignore ?join=ROOM queries). */
+      cache.put('./index.html', response.clone()).catch(() => {});
+      return response;
+    }
+    throw new Error('Bad navigation response');
+  } catch (error) {
+    /* Offline / flaky network: serve the complete cached app. */
+    const cached =
+      (await cache.match(request, { ignoreSearch: true })) ||
+      (await cache.match('./index.html', { ignoreSearch: true })) ||
+      (await cache.match('./', { ignoreSearch: true })) ||
+      (await cache.match(OFFLINE_URL, { ignoreSearch: true }));
+
+    if (cached) return cached;
+
+    return new Response('Offline', {
+      status: 503,
+      statusText: 'Offline',
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    });
+  }
+}
+
+async function handleAsset(request) {
+  const cache = await caches.open(CACHE_NAME);
+
+  /* Cache-first: local libraries and fonts are already fully precached. */
+  const cached = await cache.match(request, { ignoreSearch: true });
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(request);
+    if (response && response.ok && response.type === 'basic') {
+      cache.put(request, response.clone()).catch(() => {});
+    }
+    return response;
+  } catch (error) {
+    const fallback = await cache.match(request, { ignoreSearch: true });
+    if (fallback) return fallback;
+
+    const accept = request.headers.get('accept') || '';
+    if (accept.includes('text/html')) {
+      const offlinePage = await cache.match(OFFLINE_URL, { ignoreSearch: true });
+      if (offlinePage) return offlinePage;
+    }
+
+    return new Response('', { status: 408, statusText: 'Offline' });
+  }
+}
+
+self.addEventListener('fetch', (event) => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+
+  let url;
+  try {
+    url = new URL(request.url);
+  } catch (error) {
     return;
   }
 
-  e.respondWith(
-    caches.match(req, { ignoreSearch: true }).then((cached) => {
-      if (cached) {
-        fetch(req)
-          .then((res) => {
-            if (res && res.status === 200) {
-              const copy = res.clone();
-              caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {});
-            }
-          })
-          .catch(() => {});
-        return cached;
-      }
-      return fetch(req)
-        .then((res) => {
-          if (res && res.status === 200) {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {});
-          }
-          return res;
-        })
-        .catch(() => caches.match(req, { ignoreSearch: true }))
-        .then((finalRes) => {
-          if (finalRes) return finalRes;
-          return new Response('', { status: 408, statusText: 'Offline' });
-        });
-    }).catch(() => {
-      return caches.match(req, { ignoreSearch: true }).then((r) => r || new Response('', { status: 408 }));
-    })
-  );
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
+  /* Leave cross-origin requests (Puter AI, MQTT brokers, PeerJS) to the browser. */
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.endsWith('/sw.js')) return;
+
+  if (request.mode === 'navigate') {
+    event.respondWith(handleNavigation(request));
+    return;
+  }
+
+  event.respondWith(handleAsset(request));
 });
