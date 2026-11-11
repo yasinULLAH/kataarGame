@@ -909,6 +909,9 @@
       <button id="btnMainModeAI" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1" title="Solo vs Built-in Grandmaster AI">
         <span>🤖</span><span class="hidden sm:inline">Solo vs AI</span>
       </button>
+      <button id="btnMainModeAIvAI" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1" title="Watch AI vs AI Automatic Battle">
+        <span>🤖⚔️🤖</span><span class="hidden sm:inline">AI vs AI</span>
+      </button>
       <button id="btnMainModePuterAI" type="button" class="android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-indigo-900 border border-indigo-300 flex items-center gap-1" title="Play with Real Cloud AI (Puter.js: Fast/Cheap on Easy &amp; Medium, Deep Reasoning on Hard &amp; Hardest)">
         <span>🧠</span><span class="hidden sm:inline">Play with Real AI</span>
       </button>
@@ -1175,6 +1178,9 @@
           <div class="flex items-center justify-center gap-1 p-1 bg-parchment-200/90 rounded-2xl border border-parchment-300 text-[11px] font-black">
             <button id="btnMenuModeAI" type="button" class="flex-1 py-1 px-2 rounded-xl transition-all" title="Play vs Built-in Grandmaster AI">
               🤖 Solo vs AI
+            </button>
+            <button id="btnMenuModeAIvAI" type="button" class="flex-1 py-1 px-2 rounded-xl transition-all" title="Watch AI vs AI Automatic Match">
+              🤖⚔️🤖 AI vs AI
             </button>
             <button id="btnMenuMode2P" type="button" class="flex-1 py-1 px-2 rounded-xl transition-all" title="Local Pass &amp; Play 2-Player">
               👥 2-Player
@@ -1472,6 +1478,7 @@
               <div class="flex items-center gap-1.5 bg-parchment-100 p-1 rounded-xl border border-parchment-300">
                 <button id="btnOpponentHuman" type="button" class="android-btn px-2.5 py-1 rounded-lg text-xs font-bold text-walnut-700">2P Human</button>
                 <button id="btnOpponentAI" type="button" class="android-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-teal-600 text-white shadow-sm">Tactical AI</button>
+                <button id="btnOpponentAIvAI" type="button" class="android-btn px-2.5 py-1 rounded-lg text-xs font-bold text-walnut-700">AI vs AI</button>
               </div>
             </div>
 
@@ -2265,7 +2272,43 @@
             </div>
           </div>
         </div>
+        <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-teal-800">Movement &amp; AI Pacing Speed</h3>
+            <span id="lblActiveSpeedBadge" class="text-[10px] font-mono font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md">Default Fast</span>
+          </div>
 
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="selMoveSpeedPreset" class="block text-xs font-extrabold text-walnut-900 mb-1">Speed Preset</label>
+              <select id="selMoveSpeedPreset" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
+                <option value="default" selected>⚡ Default Fast (Current Speed • 0.48s AI / 0.18s Slide)</option>
+                <option value="slow">🐢 Slow &amp; Relaxed (1.10s AI / 0.45s Slide)</option>
+                <option value="dramatic">🎭 Dramatic &amp; Cinematic (1.90s AI / 0.80s Slide)</option>
+                <option value="slowest">🐌 Slowest / Study Mode (3.00s AI / 1.25s Slide)</option>
+                <option value="custom">🎛️ Custom Time (Set Exact Timing Below)</option>
+              </select>
+            </div>
+
+            <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-walnut-700 font-bold">AI Turn Delay:</span>
+                <strong id="valCustomAiDelay" class="font-mono text-teal-800">0.48s (480ms)</strong>
+              </div>
+              <input id="rngCustomAiDelay" type="range" min="100" max="5000" step="50" value="480" class="w-full accent-teal-600 cursor-pointer" />
+              <div class="flex justify-between text-[10px] text-walnut-600 font-mono mt-0.5"><span>0.1s</span><span>2.5s</span><span>5.0s</span></div>
+            </div>
+          </div>
+
+          <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-walnut-700 font-bold">Bead Slide / Jump Animation Duration:</span>
+              <strong id="valCustomAnimSpeed" class="font-mono text-amber-800">0.18s (175ms)</strong>
+            </div>
+            <input id="rngCustomAnimSpeed" type="range" min="80" max="2500" step="15" value="175" class="w-full accent-amber-600 cursor-pointer" />
+            <div class="flex justify-between text-[10px] text-walnut-600 font-mono mt-0.5"><span>0.08s (Fast)</span><span>1.0s (Dramatic)</span><span>2.5s (Slowest)</span></div>
+          </div>
+        </div>
         <!-- SECTION 4: VISUAL THEMES, LABELS & HAPTICS -->
         <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
           <h3 class="text-xs font-extrabold uppercase tracking-wider text-walnut-700">4. Tabletop Surface, Piece Jewels &amp; Labels</h3>
@@ -2956,6 +2999,10 @@
         damaKingMode: 'flying',
         aiDifficulty: 'medium',
         aiPlayerRole: 2,
+        aiVsAi: false,
+        moveSpeedPreset: 'default',
+        customAiDelayMs: 480,
+        customAnimDurationMs: 175,
         usePuterAI: false,
         puterAIThinking: false,
 
@@ -4425,8 +4472,12 @@
           }
         }
 
-        if (GameState.isStarted && !GameState.isPaused && !GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
-          setTimeout(runAITurn, 480);
+        if (GameState.aiVsAi) {
+          GameState.vsAI = true;
+          GameState.aiPlayerRole = GameState.currentTurn;
+        }
+        if (GameState.isStarted && !GameState.isPaused && !GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || GameState.currentTurn === GameState.aiPlayerRole)) {
+          scheduleAITurn(480);
         }
       }
 
@@ -5192,7 +5243,11 @@
             showGuides: GameState.showGuides,
             aiDifficulty: GameState.aiDifficulty,
             vsAI: GameState.vsAI,
+            aiVsAi: GameState.aiVsAi,
             aiPlayerRole: GameState.aiPlayerRole,
+            moveSpeedPreset: GameState.moveSpeedPreset,
+            customAiDelayMs: GameState.customAiDelayMs,
+            customAnimDurationMs: GameState.customAnimDurationMs,
             autoRotate: GameState.autoRotate,
             lockSettingsMidGame: GameState.lockSettingsMidGame
           };
@@ -5233,7 +5288,11 @@
           if (p.showGuides !== undefined) GameState.showGuides = Boolean(p.showGuides);
           if (p.aiDifficulty) GameState.aiDifficulty = p.aiDifficulty;
           if (p.vsAI !== undefined) GameState.vsAI = Boolean(p.vsAI);
+          if (p.aiVsAi !== undefined) GameState.aiVsAi = Boolean(p.aiVsAi);
           if (p.aiPlayerRole) GameState.aiPlayerRole = p.aiPlayerRole;
+          if (p.moveSpeedPreset) GameState.moveSpeedPreset = p.moveSpeedPreset;
+          if (p.customAiDelayMs) GameState.customAiDelayMs = Number(p.customAiDelayMs) || 480;
+          if (p.customAnimDurationMs) GameState.customAnimDurationMs = Number(p.customAnimDurationMs) || 175;
           if (p.autoRotate !== undefined) GameState.autoRotate = Boolean(p.autoRotate);
           if (p.lockSettingsMidGame !== undefined) GameState.lockSettingsMidGame = Boolean(p.lockSettingsMidGame);
           return true;
@@ -5322,7 +5381,7 @@
           }
 
           if (GameState.isStarted && !GameState.isPaused && !GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
-            setTimeout(runAITurn, 480);
+            scheduleAITurn(480);
           }
           return true;
         } catch (err) {
@@ -5640,7 +5699,7 @@
               }
 
               if (GameState.mode === 'pass_play' && GameState.vsAI && player === GameState.aiPlayerRole) {
-                setTimeout(runAITurn, 460);
+                scheduleAITurn(460);
               }
               return;
             }
@@ -5663,7 +5722,7 @@
               }
 
               if (GameState.mode === 'pass_play' && GameState.vsAI && player === GameState.aiPlayerRole) {
-                setTimeout(runAITurn, 320);
+                scheduleAITurn(320);
               }
               return;
             }
@@ -5717,7 +5776,7 @@
               }
 
               if (GameState.mode === 'pass_play' && GameState.vsAI && player === GameState.aiPlayerRole) {
-                setTimeout(runAITurn, 460);
+                scheduleAITurn(460);
               }
               return;
             }
@@ -5746,7 +5805,7 @@
               WebRTCManager.send({ type: 'MOVE_ACTION', action, continueChain: true, state: serializeGameState() });
             }
             if (GameState.mode === 'pass_play' && GameState.vsAI && player === GameState.aiPlayerRole) {
-              setTimeout(runAITurn, 380);
+              scheduleAITurn(380);
             }
             return;
           }
@@ -5862,7 +5921,7 @@
               }
 
               if (GameState.mode === 'pass_play' && GameState.vsAI && player === GameState.aiPlayerRole) {
-                setTimeout(runAITurn, 440);
+                scheduleAITurn(440);
               }
               return;
             }
@@ -6022,8 +6081,12 @@
           });
         }
 
-        if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
-          setTimeout(runAITurn, 480);
+        if (GameState.aiVsAi) {
+          GameState.vsAI = true;
+          GameState.aiPlayerRole = GameState.currentTurn;
+        }
+        if (!GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || GameState.currentTurn === GameState.aiPlayerRole)) {
+          scheduleAITurn(480);
         }
       }
 
@@ -8724,7 +8787,61 @@
         }
       };
 
+      let aiTurnTimeoutId = null;
+
+      function getMoveAnimDuration(isJump = false) {
+        const preset = GameState.moveSpeedPreset || 'default';
+        let base = 175;
+        if (preset === 'slow') base = 450;
+        else if (preset === 'dramatic') base = 800;
+        else if (preset === 'slowest') base = 1250;
+        else if (preset === 'custom') base = Math.max(80, Number(GameState.customAnimDurationMs) || 175);
+        return isJump ? Math.round(base * 1.42) : base;
+      }
+
+      function getAITurnDelay(defaultMs = 480) {
+        const preset = GameState.moveSpeedPreset || 'default';
+        let delay = defaultMs;
+        if (preset === 'slow') delay = 1100;
+        else if (preset === 'dramatic') delay = 1900;
+        else if (preset === 'slowest') delay = 3000;
+        else if (preset === 'custom') delay = Math.max(100, Number(GameState.customAiDelayMs) || 480);
+        if (preset !== 'default' && defaultMs < 400) {
+          delay = Math.round(delay * 0.8);
+        }
+        if (VisualFX && VisualFX.movingPiece) {
+          const elapsed = performance.now() - VisualFX.movingPiece.startTime;
+          const rem = Math.max(0, VisualFX.movingPiece.duration - elapsed);
+          if (preset !== 'default') {
+            delay = Math.max(delay, Math.round(rem + 140));
+          }
+        }
+        return delay;
+      }
+
+      function scheduleAITurn(defaultMs = 480) {
+        if (aiTurnTimeoutId) {
+          clearTimeout(aiTurnTimeoutId);
+          aiTurnTimeoutId = null;
+        }
+        if (GameState.aiVsAi) {
+          GameState.vsAI = true;
+          GameState.aiPlayerRole = GameState.currentTurn;
+        }
+        if (GameState.gameOver || !GameState.isStarted || GameState.isPaused) return;
+        if (GameState.mode !== 'pass_play' || !GameState.vsAI) return;
+        if (!GameState.aiVsAi && GameState.currentTurn !== GameState.aiPlayerRole) return;
+        aiTurnTimeoutId = setTimeout(() => {
+          aiTurnTimeoutId = null;
+          runAITurn();
+        }, getAITurnDelay(defaultMs));
+      }
+
       function runAITurn() {
+        if (GameState.aiVsAi) {
+          GameState.vsAI = true;
+          GameState.aiPlayerRole = GameState.currentTurn;
+        }
         const aiP = GameState.aiPlayerRole || 2;
         if (GameState.gameOver || GameState.currentTurn !== aiP || !GameState.vsAI) return;
         if (!GameState.isStarted || GameState.isPaused) return;
@@ -8919,7 +9036,7 @@
             toId: toNode.id,
             isJump,
             startTime: performance.now(),
-            duration: isJump ? 250 : 175
+            duration: getMoveAnimDuration(isJump)
           };
           requestRender();
         },
@@ -10268,24 +10385,51 @@
           }
         }
 
+        const selSpeed = document.getElementById('selMoveSpeedPreset');
+        if (selSpeed) selSpeed.value = GameState.moveSpeedPreset || 'default';
+        const rngAiDelay = document.getElementById('rngCustomAiDelay');
+        const valAiDelay = document.getElementById('valCustomAiDelay');
+        const rngAnimSpd = document.getElementById('rngCustomAnimSpeed');
+        const valAnimSpd = document.getElementById('valCustomAnimSpeed');
+        const badgeSpd = document.getElementById('lblActiveSpeedBadge');
+        const effAiMs = getAITurnDelay(480);
+        const effAnimMs = getMoveAnimDuration(false);
+        if (rngAiDelay) rngAiDelay.value = String(effAiMs);
+        if (valAiDelay) valAiDelay.textContent = `${(effAiMs / 1000).toFixed(2)}s (${effAiMs}ms)`;
+        if (rngAnimSpd) rngAnimSpd.value = String(effAnimMs);
+        if (valAnimSpd) valAnimSpd.textContent = `${(effAnimMs / 1000).toFixed(2)}s (${effAnimMs}ms)`;
+        if (badgeSpd) {
+          const spdNames = { default: 'Default Fast', slow: 'Slow & Relaxed', dramatic: 'Dramatic', slowest: 'Slowest', custom: 'Custom Time' };
+          badgeSpd.textContent = spdNames[GameState.moveSpeedPreset] || 'Default Fast';
+        }
+
         const btnMainAI = document.getElementById('btnMainModeAI');
+        const btnMainAIvAI = document.getElementById('btnMainModeAIvAI');
         const btnMainPuter = document.getElementById('btnMainModePuterAI');
         const btnMain2P = document.getElementById('btnMainMode2P');
         const diffGroup = document.getElementById('mainAIDiffGroup');
+        const idleBtnCls = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1';
+        const actTealCls = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1';
         if (btnMainAI && btnMain2P) {
           if (GameState.vsAI && GameState.mode === 'pass_play') {
-            if (GameState.usePuterAI) {
-              btnMainAI.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1';
-              if (btnMainPuter) btnMainPuter.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-indigo-600 text-white shadow-sm flex items-center gap-1';
+            if (GameState.aiVsAi) {
+              btnMainAI.className = idleBtnCls;
+              if (btnMainAIvAI) btnMainAIvAI.className = actTealCls;
             } else {
-              btnMainAI.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1';
-              if (btnMainPuter) btnMainPuter.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-indigo-900 border border-indigo-300 flex items-center gap-1';
+              btnMainAI.className = GameState.usePuterAI ? idleBtnCls : actTealCls;
+              if (btnMainAIvAI) btnMainAIvAI.className = idleBtnCls;
             }
-            btnMain2P.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1';
+            if (btnMainPuter) {
+              btnMainPuter.className = GameState.usePuterAI
+                ? 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-indigo-600 text-white shadow-sm flex items-center gap-1'
+                : 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-indigo-900 border border-indigo-300 flex items-center gap-1';
+            }
+            btnMain2P.className = idleBtnCls;
             if (diffGroup) diffGroup.classList.remove('opacity-40', 'pointer-events-none');
           } else {
-            btnMain2P.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm flex items-center gap-1';
-            btnMainAI.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-walnut-800 border border-parchment-300 flex items-center gap-1';
+            btnMain2P.className = actTealCls;
+            btnMainAI.className = idleBtnCls;
+            if (btnMainAIvAI) btnMainAIvAI.className = idleBtnCls;
             if (btnMainPuter) btnMainPuter.className = 'android-btn px-2 py-0.5 rounded-lg text-[11px] font-bold bg-white text-indigo-900 border border-indigo-300 flex items-center gap-1';
             if (diffGroup) diffGroup.classList.add('opacity-40', 'pointer-events-none');
           }
@@ -10296,14 +10440,13 @@
 
         const btnModalHuman = document.getElementById('btnOpponentHuman');
         const btnModalAI = document.getElementById('btnOpponentAI');
+        const btnModalAIvAI = document.getElementById('btnOpponentAIvAI');
         if (btnModalHuman && btnModalAI) {
-          if (GameState.vsAI) {
-            btnModalAI.className = 'android-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-teal-600 text-white shadow-sm';
-            btnModalHuman.className = 'android-btn px-2.5 py-1 rounded-lg text-xs font-bold text-walnut-700';
-          } else {
-            btnModalHuman.className = 'android-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-teal-600 text-white shadow-sm';
-            btnModalAI.className = 'android-btn px-2.5 py-1 rounded-lg text-xs font-bold text-walnut-700';
-          }
+          const actMod = 'android-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-teal-600 text-white shadow-sm';
+          const idlMod = 'android-btn px-2.5 py-1 rounded-lg text-xs font-bold text-walnut-700';
+          btnModalHuman.className = !GameState.vsAI ? actMod : idlMod;
+          btnModalAI.className = (GameState.vsAI && !GameState.aiVsAi) ? actMod : idlMod;
+          if (btnModalAIvAI) btnModalAIvAI.className = (GameState.vsAI && GameState.aiVsAi) ? actMod : idlMod;
         }
 
         document.querySelectorAll('.ai-diff-chip').forEach((chip) => {
@@ -10359,6 +10502,12 @@
 
       function getThemePlayerNames() {
         const aiTag = getAILabel();
+        if (GameState.aiVsAi) {
+          if (GameState.gameFamily === 'tiger_goat') {
+            return [`🤖 ${aiTag} 1 (Goats 🐐)`, `🤖 ${aiTag} 2 (Tigers 🐯)`];
+          }
+          return [`🤖 ${aiTag} 1`, `🤖 ${aiTag} 2`];
+        }
         if (GameState.gameFamily === 'tiger_goat') {
           const p1IsAI = GameState.vsAI && GameState.aiPlayerRole === 1;
           const p2IsAI = GameState.vsAI && GameState.aiPlayerRole === 2;
@@ -13441,7 +13590,7 @@
         updateHUD();
         requestRender();
         if (GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
-          setTimeout(runAITurn, 420);
+          scheduleAITurn(420);
         }
       });
 
@@ -13599,20 +13748,40 @@
 
       const btnOppHuman = document.getElementById('btnOpponentHuman');
       const btnOppAI = document.getElementById('btnOpponentAI');
+      const btnOppAIvAI = document.getElementById('btnOpponentAIvAI');
       btnOppHuman.addEventListener('click', () => {
         GameState.vsAI = false;
+        GameState.aiVsAi = false;
         syncSettingsControlsFromState();
+        updateHUD();
         WebRTCManager.updateConnectionUI('idle', 'Pass & Play Ready', '2-Player Local Mode');
       });
 
       btnOppAI.addEventListener('click', () => {
         GameState.vsAI = true;
+        GameState.aiVsAi = false;
+        GameState.aiPlayerRole = 2;
         syncSettingsControlsFromState();
+        updateHUD();
         WebRTCManager.updateConnectionUI('idle', 'Tactical AI Ready', 'Single-Player vs AI Mode');
         if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
-          setTimeout(runAITurn, 400);
+          scheduleAITurn(400);
         }
       });
+
+      if (btnOppAIvAI) {
+        btnOppAIvAI.addEventListener('click', () => {
+          GameState.vsAI = true;
+          GameState.aiVsAi = true;
+          GameState.aiPlayerRole = GameState.currentTurn;
+          syncSettingsControlsFromState();
+          updateHUD();
+          WebRTCManager.updateConnectionUI('idle', 'AI vs AI Ready', 'Automatic AI vs AI Spectate Mode');
+          if (!GameState.gameOver) {
+            scheduleAITurn(400);
+          }
+        });
+      }
 
       document.getElementById('selAIDifficulty').addEventListener('change', (e) => {
         GameState.aiDifficulty = e.target.value;
@@ -13626,16 +13795,40 @@
         WebRTCManager.cleanup();
         GameState.mode = 'pass_play';
         GameState.vsAI = true;
+        GameState.aiVsAi = false;
+        GameState.aiPlayerRole = 2;
         GameState.usePuterAI = false;
         GameState.localPlayerRole = null;
         SoundEngine.select();
         syncSettingsControlsFromState();
         updateHUD();
+        if (typeof MainMenu !== 'undefined') MainMenu.syncUI();
         showBoardToast(`Solo Mode: Playing vs Built-in ${getAILabel()}`);
         if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
-          setTimeout(runAITurn, 380);
+          scheduleAITurn(380);
         }
       });
+
+      const btnMainAIvAI = document.getElementById('btnMainModeAIvAI');
+      if (btnMainAIvAI) {
+        btnMainAIvAI.addEventListener('click', () => {
+          forfeitAndDetachOnline('switched to AI vs AI mode');
+          WebRTCManager.cleanup();
+          GameState.mode = 'pass_play';
+          GameState.vsAI = true;
+          GameState.aiVsAi = true;
+          GameState.aiPlayerRole = GameState.currentTurn;
+          GameState.localPlayerRole = null;
+          SoundEngine.select();
+          syncSettingsControlsFromState();
+          updateHUD();
+          if (typeof MainMenu !== 'undefined') MainMenu.syncUI();
+          showBoardToast(`🤖⚔️🤖 AI vs AI Mode: Watching ${getAILabel()} battle!`);
+          if (!GameState.gameOver) {
+            scheduleAITurn(380);
+          }
+        });
+      }
 
       const btnMainModePuter = document.getElementById('btnMainModePuterAI');
       if (btnMainModePuter) {
@@ -13657,7 +13850,7 @@
             showBoardToast(`🤖 Switched to Built-in Grandmaster AI`);
           }
           if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
-            setTimeout(runAITurn, 380);
+            scheduleAITurn(380);
           }
         });
       }
@@ -13699,7 +13892,7 @@
           updateHUD();
           showBoardToast('🤖 Built-in Grandmaster AI Active');
           if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
-            setTimeout(runAITurn, 360);
+            scheduleAITurn(360);
           }
         });
       }
@@ -13716,7 +13909,7 @@
           const mod = PuterAIManager.getModelForDifficulty(GameState.aiDifficulty).primary;
           showBoardToast(`🧠 Real AI (Puter) Active — Model: ${mod}`);
           if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
-            setTimeout(runAITurn, 360);
+            scheduleAITurn(360);
           }
         });
       }
@@ -13776,12 +13969,47 @@
         WebRTCManager.cleanup();
         GameState.mode = 'pass_play';
         GameState.vsAI = false;
+        GameState.aiVsAi = false;
         GameState.localPlayerRole = null;
         SoundEngine.select();
         syncSettingsControlsFromState();
         updateHUD();
+        if (typeof MainMenu !== 'undefined') MainMenu.syncUI();
         showBoardToast('2-Player Local Pass & Play Mode');
       });
+
+      const selMoveSpeed = document.getElementById('selMoveSpeedPreset');
+      if (selMoveSpeed) {
+        selMoveSpeed.addEventListener('change', (e) => {
+          GameState.moveSpeedPreset = e.target.value || 'default';
+          GameState.customAiDelayMs = getAITurnDelay(480);
+          GameState.customAnimDurationMs = getMoveAnimDuration(false);
+          SoundEngine.select();
+          syncSettingsControlsFromState();
+          savePersistentPrefs();
+          showBoardToast(`Movement & AI Pacing: ${selMoveSpeed.options[selMoveSpeed.selectedIndex].text.split('(')[0].trim()}`);
+        });
+      }
+
+      const rngAiDelayEl = document.getElementById('rngCustomAiDelay');
+      if (rngAiDelayEl) {
+        rngAiDelayEl.addEventListener('input', (e) => {
+          GameState.moveSpeedPreset = 'custom';
+          GameState.customAiDelayMs = parseInt(e.target.value, 10) || 480;
+          syncSettingsControlsFromState();
+          savePersistentPrefs();
+        });
+      }
+
+      const rngAnimSpdEl = document.getElementById('rngCustomAnimSpeed');
+      if (rngAnimSpdEl) {
+        rngAnimSpdEl.addEventListener('input', (e) => {
+          GameState.moveSpeedPreset = 'custom';
+          GameState.customAnimDurationMs = parseInt(e.target.value, 10) || 175;
+          syncSettingsControlsFromState();
+          savePersistentPrefs();
+        });
+      }
 
       document.querySelectorAll('.ai-diff-chip').forEach((chip) => {
         chip.addEventListener('click', () => {
@@ -13793,7 +14021,7 @@
           updateHUD();
           showBoardToast(`AI Difficulty set to ${getAILabel()}`);
           if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
-            setTimeout(runAITurn, 380);
+            scheduleAITurn(380);
           }
         });
       });
@@ -14271,7 +14499,7 @@
           resetTurnTimer();
           resetMatchTimer();
           if (GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
-            setTimeout(runAITurn, 300);
+            scheduleAITurn(300);
           }
         },
 
@@ -14285,7 +14513,7 @@
           SoundEngine.matchStart();
           showBoardToast('⚔️ Match Started! Make your move.');
           if (GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
-            setTimeout(runAITurn, 300);
+            scheduleAITurn(300);
           }
         },
 
@@ -14323,6 +14551,7 @@
           const btnReplay = document.getElementById('btnMenuReplay');
           const btnExit = document.getElementById('btnMenuExitStandby');
           const btnModeAI = document.getElementById('btnMenuModeAI');
+          const btnModeAIvAI = document.getElementById('btnMenuModeAIvAI');
           const btnMode2P = document.getElementById('btnMenuMode2P');
           const btnModePuter = document.getElementById('btnMenuModePuter');
           const headerPauseLbl = document.getElementById('lblHeaderPause');
@@ -14366,10 +14595,12 @@
           const activeModeClass = 'bg-teal-600 text-white shadow';
           const idleModeClass = 'text-walnut-700 hover:text-walnut-900 hover:bg-parchment-300/60';
           const isPuter = Boolean(GameState.usePuterAI);
-          const isAI = GameState.vsAI && !isPuter;
+          const isAIvAI = Boolean(GameState.vsAI && GameState.aiVsAi);
+          const isAI = GameState.vsAI && !isAIvAI && !isPuter;
           const is2P = !GameState.vsAI && !isPuter;
 
           if (btnModeAI) btnModeAI.className = `flex-1 py-1 px-2 rounded-xl transition-all ${isAI ? activeModeClass : idleModeClass}`;
+          if (btnModeAIvAI) btnModeAIvAI.className = `flex-1 py-1 px-2 rounded-xl transition-all ${isAIvAI ? activeModeClass : idleModeClass}`;
           if (btnMode2P) btnMode2P.className = `flex-1 py-1 px-2 rounded-xl transition-all ${is2P ? activeModeClass : idleModeClass}`;
           if (btnModePuter) btnModePuter.className = `flex-1 py-1 px-2 rounded-xl transition-all ${isPuter ? activeModeClass : idleModeClass}`;
 
@@ -14441,7 +14672,23 @@
       if (btnMenuModeAI) {
         btnMenuModeAI.addEventListener('click', () => {
           GameState.vsAI = true;
+          GameState.aiVsAi = false;
+          GameState.aiPlayerRole = 2;
           GameState.usePuterAI = false;
+          GameState.localPlayerRole = null;
+          SoundEngine.select();
+          syncSettingsControlsFromState();
+          updateHUD();
+          MainMenu.syncUI();
+        });
+      }
+
+      const btnMenuModeAIvAI = document.getElementById('btnMenuModeAIvAI');
+      if (btnMenuModeAIvAI) {
+        btnMenuModeAIvAI.addEventListener('click', () => {
+          GameState.vsAI = true;
+          GameState.aiVsAi = true;
+          GameState.aiPlayerRole = GameState.currentTurn;
           GameState.localPlayerRole = null;
           SoundEngine.select();
           syncSettingsControlsFromState();
@@ -14454,6 +14701,7 @@
       if (btnMenuMode2P) {
         btnMenuMode2P.addEventListener('click', () => {
           GameState.vsAI = false;
+          GameState.aiVsAi = false;
           GameState.usePuterAI = false;
           GameState.localPlayerRole = null;
           SoundEngine.select();
@@ -14764,7 +15012,7 @@
               : '🐐 You are now playing as Goats (P1) vs AI Tigers!'
           );
           if (!GameState.gameOver && GameState.currentTurn === GameState.aiPlayerRole) {
-            setTimeout(runAITurn, 420);
+            scheduleAITurn(420);
           }
         });
       }
@@ -14860,7 +15108,7 @@
           updateHUD();
           showBoardToast('👋 Player returned in time! Match resumed.');
           if (GameState.isStarted && !GameState.isPaused && !GameState.gameOver && GameState.mode === 'pass_play' && GameState.vsAI && GameState.currentTurn === GameState.aiPlayerRole) {
-            setTimeout(runAITurn, 420);
+            scheduleAITurn(420);
           }
         });
       }
@@ -15251,7 +15499,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=b84fa4496d', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=217b077a14', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
