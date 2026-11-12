@@ -854,7 +854,7 @@
       ⭐ Navakankari (Nine Men's Morris • 9 Beads)
     </button>
     <button type="button" data-grid-preset="navakankari_12" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 bg-white text-walnut-800 border border-parchment-300">
-      ⭐ 12-Men's Katar Mill (Diagonal • 12 Beads)
+      ⭐ 12-Men's Katar Mill (Diagonal • 10 Beads)
     </button>
     <button type="button" data-grid-preset="three_morris" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 bg-white text-walnut-800 border border-parchment-300">
       🎯 Teen Guti (Three Men's Morris • 3v3)
@@ -2164,7 +2164,7 @@
               <select id="selGridPreset" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
                 <option value="6x6" selected>6×6 Katar Classic (36 Nodes • 18 Beads)</option>
                 <option value="navakankari_9">⭐ Navakankari / Nine Men's Morris (24 Nodes • 9 Beads)</option>
-                <option value="navakankari_12">⭐ 12-Men's Katar Mill with Diagonals (24 Nodes • 12 Beads)</option>
+                <option value="navakankari_12">⭐ 12-Men's Katar Mill with Diagonals (24 Nodes • 10 Beads)</option>
                 <option value="three_morris">🎯 Teen Guti / Three Men's Morris (9 Nodes • 3v3 Beads)</option>
                 <option value="six_morris">🎯 Chhah Guti / Six Men's Morris (16 Nodes • 6v6 Beads)</option>
                 <option value="bagh_chal">🐯 Bagh-Chal / Sher-Bakar (5×5 Alquerque • 4 Tigers vs 20 Goats)</option>
@@ -4233,7 +4233,7 @@
           GameState.rows = 7;
           GameState.cols = 7;
           GameState.hasTriangularCamps = false;
-          GameState.piecesPerPlayer = 12;
+          GameState.piecesPerPlayer = 10;
         } else if (preset === 'bagh_chal') {
           GameState.gameFamily = 'tiger_goat';
           GameState.rows = 5;
@@ -4390,7 +4390,7 @@
         if (GameState.gameFamily === 'morris') {
           if (GameState.gridPreset === 'three_morris') return 3;
           if (GameState.gridPreset === 'six_morris') return 6;
-          return GameState.morrisDiagonals ? 12 : 9;
+          return GameState.morrisDiagonals ? 10 : 9;
         }
         if (GameState.gameFamily === 'tiger_goat') {
           return GameState.gridPreset === 'aadu_puli' ? 15 : 20;
@@ -18916,7 +18916,7 @@
           const map = {
             '6x6': { title: '6×6 Katar Classic', subtitle: '36 Nodes • 18v18 Beads • Pashtun War Game', icon: '👑' },
             'navakankari_9': { title: 'Navakankari (9 Men’s Morris)', subtitle: '24 Nodes • 9v9 Beads • Form 3-in-a-Row Katar', icon: '⭐' },
-            'navakankari_12': { title: '12-Men’s Katar Mill', subtitle: '24 Nodes with Corner Diagonals • 12v12 Beads', icon: '⭐' },
+            'navakankari_12': { title: '12-Men’s Katar Mill', subtitle: '24 Nodes with Corner Diagonals • 10v10 Beads', icon: '⭐' },
             'three_morris': { title: 'Teen Guti (3 Men’s Morris)', subtitle: '9 Nodes • 3v3 Fast Tactical Mill Game', icon: '🎯' },
             'six_morris': { title: 'Chhah Guti (6 Men’s Morris)', subtitle: '16 Nodes • 6v6 Concentric Square Mill', icon: '🎯' },
             'bagh_chal': { title: 'Bagh-Chal (Tigers vs Goats)', subtitle: '4 Corner Tigers vs 20 Goats • Asymmetric Hunt', icon: '🐯' },
@@ -20353,7 +20353,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=cf2fcb75fe', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=be9badb822', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {

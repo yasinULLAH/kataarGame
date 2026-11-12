@@ -4492,7 +4492,10 @@
         VisualFX.hintHighlight = null;
 
         if (GameState.gameFamily === 'morris') {
-          const maxCap = GameState.gridPreset === 'three_morris' ? 3 : (GameState.gridPreset === 'six_morris' ? 6 : 12);
+          if (GameState.gridPreset === 'navakankari_12' && GameState.piecesPerPlayer >= 12) {
+            GameState.piecesPerPlayer = 10;
+          }
+          const maxCap = GameState.gridPreset === 'three_morris' ? 3 : (GameState.gridPreset === 'six_morris' ? 6 : 11);
           const maxMorrisPieces = Math.min(maxCap, Math.max(3, GameState.piecesPerPlayer));
           GameState.piecesPerPlayer = maxMorrisPieces;
           GameState.reserves = { 1: maxMorrisPieces, 2: maxMorrisPieces };
@@ -5490,7 +5493,9 @@
           if (p.diagonalMode) GameState.diagonalMode = p.diagonalMode;
           if (p.openCenterMode) GameState.openCenterMode = p.openCenterMode;
           if (p.reserveMode) GameState.reserveMode = p.reserveMode;
-          if (p.piecesPerPlayer) GameState.piecesPerPlayer = p.piecesPerPlayer;
+          if (p.piecesPerPlayer) {
+            GameState.piecesPerPlayer = (p.gridPreset === 'navakankari_12' && p.piecesPerPlayer >= 12) ? 10 : p.piecesPerPlayer;
+          }
           if (p.chainRule) GameState.chainRule = p.chainRule;
           if (p.mandatoryCapture) GameState.mandatoryCapture = p.mandatoryCapture;
           if (p.stepDirection) GameState.stepDirection = p.stepDirection;
@@ -16930,7 +16935,7 @@
       });
 
       document.getElementById('btnBeadsPlus').addEventListener('click', () => {
-        const maxB = GameState.gameFamily === 'morris' ? 12 : (GameState.gameFamily === 'tiger_goat' ? 25 : 36);
+        const maxB = GameState.gameFamily === 'morris' ? 11 : (GameState.gameFamily === 'tiger_goat' ? 25 : 36);
         if (GameState.piecesPerPlayer < maxB) {
           SoundEngine.select();
           guardMidGameAction(`Change Count to ${GameState.piecesPerPlayer + 1}`, () => {
@@ -20353,7 +20358,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=be9badb822', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=8009ed26ab', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
