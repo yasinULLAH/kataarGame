@@ -740,6 +740,23 @@
       flex-shrink: 0;
     }
 
+    #menuQuickConfigSlot #quickConfigStrip {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+    }
+
+    #menuQuickConfigSlot #quickConfigStrip > div:not(.hidden) {
+      flex-wrap: wrap;
+    }
+
+    #menuQuickConfigSlot #quickConfigStrip button span.hidden,
+    #menuQuickConfigSlot #lblBeadStepperTitle span.hidden {
+      display: inline !important;
+    }
+
     /* Always-On Pro Game Mode: no play/pause/exit/away clutter buttons */
     #btnTriggerAwayGrace,
     #btnResumeStashedMatch,
@@ -1023,7 +1040,8 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-1.5 shrink-0 pl-2 border-l border-parchment-300">
+    <div id="modeBarQuickConfigDock" class="shrink-0 pl-2 border-l border-parchment-300">
+      <div id="quickConfigStrip" class="flex items-center gap-1.5 shrink-0">
       <div id="mainCaptureRuleGroup" class="flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
         <button id="btnQuickMultiEat" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm" title="Allow eating multiple beads in a single turn (chain jumps)">
           ⚡ Multi-Eat
@@ -1127,6 +1145,7 @@
       <button id="btnResumeStashedMatch" type="button" class="hidden android-btn px-2 py-0.5 rounded-lg text-[10px] font-extrabold bg-amber-500 text-walnut-900 border border-amber-700 shadow-sm" title="Resume previously paused/stashed match">
         📂 Resume Saved
       </button>
+      </div>
     </div>
   </div>
 
@@ -1395,7 +1414,7 @@
               <button type="button" data-menu-cat="all" class="menu-cat-tab android-btn py-1 px-1.5 rounded-lg text-[10px] font-extrabold whitespace-nowrap truncate">✨ All</button>
             </div>
 
-            <div id="menuQuickGameStrip" class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 content-start flex-1 lg:max-h-[255px] lg:overflow-y-auto custom-scroll pr-0.5">
+            <div id="menuQuickGameStrip" class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 content-start flex-1 lg:max-h-[195px] lg:overflow-y-auto custom-scroll pr-0.5">
               <button type="button" data-menu-preset="6x6" data-menu-cat="leap" class="menu-game-chip android-btn px-2 py-1 rounded-xl text-left flex items-center justify-between gap-1 text-[10.5px] font-extrabold"><span class="truncate">👑 6×6 Katar</span><span class="text-[9px] font-mono opacity-75 shrink-0">36N</span></button>
               <button type="button" data-menu-preset="atharah_guti" data-menu-cat="leap" class="menu-game-chip android-btn px-2 py-1 rounded-xl text-left flex items-center justify-between gap-1 text-[10.5px] font-extrabold"><span class="truncate">🏕️ Atharah Guti</span><span class="text-[9px] font-mono opacity-75 shrink-0">49N</span></button>
               <button type="button" data-menu-preset="gol_ekuish" data-menu-cat="leap" class="menu-game-chip android-btn px-2 py-1 rounded-xl text-left flex items-center justify-between gap-1 text-[10.5px] font-extrabold"><span class="truncate">☸️ Gol Ekuish</span><span class="text-[9px] font-mono opacity-75 shrink-0">33N</span></button>
@@ -1437,6 +1456,14 @@
               <button type="button" data-menu-preset="pente" data-menu-cat="gomoku" class="menu-game-chip android-btn px-2 py-1 rounded-xl text-left flex items-center justify-between gap-1 text-[10.5px] font-extrabold"><span class="truncate">🔥 Pente</span><span class="text-[9px] font-mono opacity-75 shrink-0">11×11</span></button>
               <button type="button" data-menu-preset="yavalath" data-menu-cat="gomoku" class="menu-game-chip android-btn px-2 py-1 rounded-xl text-left flex items-center justify-between gap-1 text-[10.5px] font-extrabold"><span class="truncate">⭕ Yavalath</span><span class="text-[9px] font-mono opacity-75 shrink-0">Hex61</span></button>
               <button type="button" data-menu-preset="connect6" data-menu-cat="gomoku" class="menu-game-chip android-btn px-2 py-1 rounded-xl text-left flex items-center justify-between gap-1 text-[10.5px] font-extrabold"><span class="truncate">⚡ Connect6</span><span class="text-[9px] font-mono opacity-75 shrink-0">6-Row</span></button>
+            </div>
+
+            <div id="menuQuickConfigHost" class="mt-auto pt-2 border-t border-parchment-200/90 space-y-1">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider text-walnut-700">Quick Rules &amp; Setup</span>
+                <span class="text-[9px] font-semibold text-walnut-500">Live Game Options</span>
+              </div>
+              <div id="menuQuickConfigSlot" class="flex flex-wrap items-center gap-1"></div>
             </div>
           </div>
 
@@ -14518,6 +14545,9 @@
         if (btnLock) {
           setResponsiveBtnIconText(btnLock, GameState.lockSettingsMidGame ? '🔒' : '🔓', GameState.lockSettingsMidGame ? 'Locked' : 'Unlocked');
         }
+        if (typeof MainMenu !== 'undefined' && MainMenu.isOpen && !MainMenu._inSync) {
+          MainMenu.syncUI();
+        }
       }
 
       function syncSettingsControlsFromState() {
@@ -21256,6 +21286,18 @@
             }
           }
           document.body.classList.toggle('menu-open', Boolean(this.isOpen));
+          this._inSync = true;
+          const quickConfigStrip = document.getElementById('quickConfigStrip');
+          const menuConfigSlot = document.getElementById('menuQuickConfigSlot');
+          const modeBarDock = document.getElementById('modeBarQuickConfigDock');
+          if (quickConfigStrip) {
+            const targetHost = this.isOpen ? menuConfigSlot : modeBarDock;
+            if (targetHost && quickConfigStrip.parentElement !== targetHost) {
+              targetHost.appendChild(quickConfigStrip);
+            }
+          }
+          if (typeof updateContextualModeBar === 'function') updateContextualModeBar();
+          this._inSync = false;
           if (wasMenuOpen !== Boolean(this.isOpen)) {
             setTimeout(resizeCanvas, 0);
           }
@@ -21387,8 +21429,8 @@
           const gameStrip = document.getElementById('menuQuickGameStrip');
           if (gameStrip) {
             gameStrip.className = activeCat === 'all'
-              ? 'grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1 content-start flex-1 lg:max-h-[255px] lg:overflow-y-auto custom-scroll pr-0.5'
-              : 'grid grid-cols-2 sm:grid-cols-3 gap-1.5 content-start flex-1 lg:max-h-[255px] lg:overflow-y-auto custom-scroll pr-0.5';
+              ? 'grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1 content-start flex-1 lg:max-h-[195px] lg:overflow-y-auto custom-scroll pr-0.5'
+              : 'grid grid-cols-2 sm:grid-cols-3 gap-1.5 content-start flex-1 lg:max-h-[195px] lg:overflow-y-auto custom-scroll pr-0.5';
           }
 
           let visibleCount = 0;
@@ -22680,7 +22722,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=40a7cb5e0a', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=b5e0dc0a77', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
