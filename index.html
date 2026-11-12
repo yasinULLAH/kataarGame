@@ -3785,7 +3785,7 @@
         return null;
       }
 
-      function getLegalActionsForPiece(fromId, board = GameState.board, kings = GameState.kings) {
+      function getLegalActionsForPiece(fromId, board = GameState.board, kings = GameState.kings, chainCtx = null) {
         const piece = board[fromId];
         if (!piece) return { steps: [], jumps: [] };
 
@@ -3856,13 +3856,13 @@
             if (board[toId] !== 0) continue;
 
             // During a chain turn, cannot revisit an already visited node or move in the same direction
-            if (GameState.chainJumpingNode === fromId && board === GameState.board) {
-              if (GameState.fanoronaVisitedNodes && GameState.fanoronaVisitedNodes.includes(toId)) continue;
-              if (GameState.fanoronaLastDir) {
-                const dr = Math.sign(Nodes[toId].r - fromNode.r);
-                const dc = Math.sign(Nodes[toId].c - fromNode.c);
-                if (dr === GameState.fanoronaLastDir.dr && dc === GameState.fanoronaLastDir.dc) continue;
-              }
+            const activeVisited = chainCtx ? chainCtx.visitedNodes : ((GameState.chainJumpingNode === fromId && board === GameState.board) ? GameState.fanoronaVisitedNodes : null);
+            const activeLastDir = chainCtx ? chainCtx.lastDir : ((GameState.chainJumpingNode === fromId && board === GameState.board) ? GameState.fanoronaLastDir : null);
+            if (activeVisited && activeVisited.includes(toId)) continue;
+            if (activeLastDir) {
+              const dr = Math.sign(Nodes[toId].r - fromNode.r);
+              const dc = Math.sign(Nodes[toId].c - fromNode.c);
+              if (dr === activeLastDir.dr && dc === activeLastDir.dc) continue;
             }
 
             const approachIds = traceContiguousLine(fromId, toId, opponent, board);
@@ -7096,7 +7096,7 @@
             return;
           }
           this.load();
-          const aiP = GameState.aiPlayerRole || 2;
+          const aiP = (GameState.aiVsAi && (winner === 1 || winner === 2)) ? winner : (GameState.aiPlayerRole || 2);
           this.gamesLearned++;
 
           const fam = GameState.gameFamily || 'general';
@@ -7112,13 +7112,23 @@
             st.lastOutcome = 'win';
             this.gameFamilyStats[fam].wins++;
             if (this.episode.length > 0) {
-              let discount = 1.0;
+              let discountWin = 1.0;
+              let discountLoss = 1.0;
               for (let i = this.episode.length - 1; i >= 0; i--) {
-                const stepDelta = Math.round(14000 * discount);
-                if (Math.abs(stepDelta) >= 100) {
-                  this.adjustWeight(this.episode[i].fullKey, stepDelta);
+                const ep = this.episode[i];
+                if (!ep.aiP || ep.aiP === winner) {
+                  const stepDelta = Math.round(14000 * discountWin);
+                  if (Math.abs(stepDelta) >= 100) {
+                    this.adjustWeight(ep.fullKey, stepDelta);
+                  }
+                  discountWin *= 0.88;
+                } else if (GameState.aiVsAi) {
+                  const penDelta = Math.round(-12000 * discountLoss);
+                  if (Math.abs(penDelta) >= 100) {
+                    this.adjustWeight(ep.fullKey, penDelta);
+                  }
+                  discountLoss *= 0.86;
                 }
-                discount *= 0.88;
               }
             }
           } else if (winner === 0 || winner === null) {
@@ -8511,386 +8521,1656 @@
         executeAction(result.bestAction, false);
       }
 
-      function runGomokuAI() {
-        const aiP = GameState.aiPlayerRole || 2;
-        const humanP = aiP === 1 ? 2 : 1;
-        const { allSteps } = getAllLegalActionsForPlayer(aiP);
-        if (allSteps.length === 0) return;
+      /* ===================================================================
+       * GRANDMASTER MULTI-GAME AI ENGINE (GOMOKU, TIGER/GOAT, KATAR, DAMA, FANORONA, SEEGA)
+       * =================================================================== */
+      let _cachedCollinearRef = null;
+      let JumpRaysOverNode = [];
+      let GeneralTT = new Map();
+      let generalSearchDeadline = 0;
+      let generalSearchAborted = false;
 
-        if (GameState.aiDifficulty === 'easy' && Math.random() < 0.45) {
-          executeAction(allSteps[Math.floor(Math.random() * allSteps.length)], false);
-          return;
+      function ensureJumpRaysCache() {
+        if (_cachedCollinearRef === CollinearJumps && JumpRaysOverNode.length === Nodes.length) {
+          return JumpRaysOverNode;
+        }
+        _cachedCollinearRef = CollinearJumps;
+        JumpRaysOverNode = Array.from({ length: Nodes.length }, () => []);
+        for (let u = 0; u < CollinearJumps.length; u++) {
+          const list = CollinearJumps[u] || [];
+          for (const cand of list) {
+            if (cand && cand.over >= 0 && cand.over < Nodes.length) {
+              JumpRaysOverNode[cand.over].push({ from: u, to: cand.to });
+            }
+          }
+        }
+        return JumpRaysOverNode;
+      }
+
+      function normalizeDualActionForAI(act) {
+        if (act && act.captureMode === 'both') {
+          const app = act.approachIds || [];
+          const wit = act.withdrawalIds || [];
+          const useApp = app.length >= wit.length;
+          const chosen = useApp ? app : wit;
+          return {
+            ...act,
+            captureMode: useApp ? 'approach' : 'withdrawal',
+            capturedIds: chosen,
+            capturedId: chosen[0]
+          };
+        }
+        return act;
+      }
+
+      function expandDualJumpsList(jumps) {
+        if (!jumps || jumps.length === 0) return [];
+        const out = [];
+        for (const j of jumps) {
+          if (j.captureMode === 'both' && j.approachIds && j.withdrawalIds) {
+            out.push({
+              ...j,
+              captureMode: 'approach',
+              capturedIds: j.approachIds,
+              capturedId: j.approachIds[0]
+            });
+            out.push({
+              ...j,
+              captureMode: 'withdrawal',
+              capturedIds: j.withdrawalIds,
+              capturedId: j.withdrawalIds[0]
+            });
+          } else {
+            out.push(j);
+          }
+        }
+        return out;
+      }
+
+      function computeGeneralHashKey(board, kings, r1, r2, turnPlayer) {
+        let s = `${turnPlayer}:${r1}:${r2}:`;
+        for (let i = 0; i < board.length; i++) {
+          const v = board[i];
+          if (v === 0) s += '0';
+          else if (kings && kings[i]) s += (v === 1 ? 'A' : 'B');
+          else s += v;
+        }
+        return s;
+      }
+
+      /* -------------------------------------------------------------------
+       * 7A. GOMOKU GRANDMASTER ENGINE (THREAT-SPACE + ALPHA-BETA MINIMAX)
+       * ------------------------------------------------------------------- */
+      function evaluateGomokuPointAt(board, nodeId, targetP, R, C) {
+        const n = Nodes[nodeId];
+        if (!n) return { score: 0, winning: false, openFours: 0, halfFours: 0, openThrees: 0 };
+        const r0 = Math.round(n.r);
+        const c0 = Math.round(n.c);
+        const axes = [[0, 1], [1, 0], [1, 1], [1, -1]];
+        let score = 0;
+        let winning = false;
+        let openFours = 0;
+        let halfFours = 0;
+        let openThrees = 0;
+
+        for (const [dr, dc] of axes) {
+          let posCount = 0;
+          let posOpen = 0;
+          let posGapCount = 0;
+          let posGapOpen = 0;
+          let gapUsedPos = false;
+
+          for (let s = 1; s <= 5; s++) {
+            const nr = r0 + dr * s, nc = c0 + dc * s;
+            if (nr < 0 || nr >= R || nc < 0 || nc >= C) break;
+            const v = board[nr * C + nc];
+            if (v === targetP) {
+              if (!gapUsedPos) posCount++;
+              posGapCount++;
+            } else if (v === 0) {
+              if (!gapUsedPos) {
+                posOpen = 1;
+                gapUsedPos = true;
+              } else {
+                posGapOpen = 1;
+                break;
+              }
+            } else {
+              break;
+            }
+          }
+
+          let negCount = 0;
+          let negOpen = 0;
+          let negGapCount = 0;
+          let negGapOpen = 0;
+          let gapUsedNeg = false;
+
+          for (let s = 1; s <= 5; s++) {
+            const nr = r0 - dr * s, nc = c0 - dc * s;
+            if (nr < 0 || nr >= R || nc < 0 || nc >= C) break;
+            const v = board[nr * C + nc];
+            if (v === targetP) {
+              if (!gapUsedNeg) negCount++;
+              negGapCount++;
+            } else if (v === 0) {
+              if (!gapUsedNeg) {
+                negOpen = 1;
+                gapUsedNeg = true;
+              } else {
+                negGapOpen = 1;
+                break;
+              }
+            } else {
+              break;
+            }
+          }
+
+          const contiguous = 1 + posCount + negCount;
+          const openEnds = posOpen + negOpen;
+          const splitPos = 1 + posGapCount + negCount;
+          const splitNeg = 1 + posCount + negGapCount;
+          const bestSplit = Math.max(splitPos, splitNeg);
+          const splitOpenEnds = splitPos >= splitNeg ? (posGapOpen + negOpen) : (posOpen + negGapOpen);
+
+          if (contiguous >= 5) {
+            winning = true;
+            score += 2500000;
+          } else if (contiguous === 4 && openEnds === 2) {
+            openFours++;
+            score += 360000;
+          } else if (contiguous === 4 && openEnds === 1) {
+            halfFours++;
+            score += 65000;
+          } else if (bestSplit >= 4) {
+            halfFours++;
+            score += 54000;
+          } else if (contiguous === 3 && openEnds === 2) {
+            openThrees++;
+            score += 42000;
+          } else if (bestSplit === 3 && splitOpenEnds === 2) {
+            openThrees++;
+            score += 32000;
+          } else if (contiguous === 3 && openEnds === 1) {
+            score += 3600;
+          } else if (contiguous === 2 && openEnds === 2) {
+            score += 1450;
+          } else if (bestSplit === 2 && splitOpenEnds === 2) {
+            score += 850;
+          } else if (contiguous === 2 && openEnds === 1) {
+            score += 240;
+          } else if (contiguous === 1 && openEnds === 2) {
+            score += 65;
+          }
         }
 
-        const R = GameState.rows;
-        const C = GameState.cols;
+        if (openFours >= 1 || halfFours >= 2 || (halfFours >= 1 && openThrees >= 1)) {
+          score += 280000;
+        } else if (openThrees >= 2) {
+          score += 190000;
+        }
+
+        return { score, winning, openFours, halfFours, openThrees };
+      }
+
+      function getGomokuCandidateMoves(board, R, C) {
+        const occupied = [];
+        for (let i = 0; i < board.length; i++) {
+          if (board[i] !== 0) occupied.push(i);
+        }
+        if (occupied.length === 0) {
+          const midId = Math.floor(R / 2) * C + Math.floor(C / 2);
+          return [midId];
+        }
+        const candSet = new Set();
+        const radius = occupied.length <= 4 ? 2 : 2;
+        for (const idx of occupied) {
+          const r0 = Math.floor(idx / C);
+          const c0 = idx % C;
+          for (let dr = -radius; dr <= radius; dr++) {
+            for (let dc = -radius; dc <= radius; dc++) {
+              if (dr === 0 && dc === 0) continue;
+              const nr = r0 + dr, nc = c0 + dc;
+              if (nr >= 0 && nr < R && nc >= 0 && nc < C) {
+                const nIdx = nr * C + nc;
+                if (board[nIdx] === 0) candSet.add(nIdx);
+              }
+            }
+          }
+        }
+        if (candSet.size === 0) {
+          for (let i = 0; i < board.length; i++) {
+            if (board[i] === 0) candSet.add(i);
+          }
+        }
+        return Array.from(candSet);
+      }
+
+      function evaluateGomokuBoardStatic(board, turnPlayer, aiP, humanP, R, C) {
+        const cands = getGomokuCandidateMoves(board, R, C);
+        let bestAiThreat = 0;
+        let bestHmThreat = 0;
+        let sumAi = 0;
+        let sumHm = 0;
+        for (const cid of cands) {
+          const aEv = evaluateGomokuPointAt(board, cid, aiP, R, C);
+          const hEv = evaluateGomokuPointAt(board, cid, humanP, R, C);
+          if (aEv.score > bestAiThreat) bestAiThreat = aEv.score;
+          if (hEv.score > bestHmThreat) bestHmThreat = hEv.score;
+          sumAi += aEv.score * 0.18;
+          sumHm += hEv.score * 0.18;
+        }
+        if (turnPlayer === aiP) {
+          return (bestAiThreat * 1.25 + sumAi) - (bestHmThreat * 0.95 + sumHm);
+        }
+        return (bestAiThreat * 0.95 + sumAi) - (bestHmThreat * 1.25 + sumHm);
+      }
+
+      function minimaxGomoku(board, depth, alpha, beta, turnPlayer, aiP, humanP, R, C) {
+        if (generalSearchDeadline && performance.now() > generalSearchDeadline) {
+          generalSearchAborted = true;
+          return evaluateGomokuBoardStatic(board, turnPlayer, aiP, humanP, R, C);
+        }
+        if (depth <= 0) {
+          return evaluateGomokuBoardStatic(board, turnPlayer, aiP, humanP, R, C);
+        }
+
+        const opp = turnPlayer === 1 ? 2 : 1;
+        const rawCands = getGomokuCandidateMoves(board, R, C);
         const midR = (R - 1) / 2;
         const midC = (C - 1) / 2;
-        const axes = [[0, 1], [1, 0], [1, 1], [1, -1]];
 
-        function scorePointForPlayer(nodeId, targetP) {
-          const n = Nodes[nodeId];
-          const r0 = Math.round(n.r);
-          const c0 = Math.round(n.c);
-          let totalScore = 0;
-          let activeThreatLines = 0;
-
-          for (const [dr, dc] of axes) {
-            let count = 1;
-            let openEnds = 0;
-            for (let s = 1; s < 5; s++) {
-              const nr = r0 + dr * s, nc = c0 + dc * s;
-              if (nr < 0 || nr >= R || nc < 0 || nc >= C) break;
-              const v = GameState.board[nr * C + nc];
-              if (v === targetP) count++;
-              else { if (v === 0) openEnds++; break; }
-            }
-            for (let s = 1; s < 5; s++) {
-              const nr = r0 - dr * s, nc = c0 - dc * s;
-              if (nr < 0 || nr >= R || nc < 0 || nc >= C) break;
-              const v = GameState.board[nr * C + nc];
-              if (v === targetP) count++;
-              else { if (v === 0) openEnds++; break; }
-            }
-            if (count >= 5) totalScore += 600000;
-            else if (count === 4 && openEnds === 2) { totalScore += 180000; activeThreatLines += 2; }
-            else if (count === 4 && openEnds === 1) { totalScore += 45000; activeThreatLines += 1; }
-            else if (count === 3 && openEnds === 2) { totalScore += 38000; activeThreatLines += 1; }
-            else if (count === 3 && openEnds === 1) totalScore += 1500;
-            else if (count === 2 && openEnds === 2) totalScore += 400;
-            else if (count === 2 && openEnds === 1) totalScore += 50;
+        const scored = [];
+        for (const cid of rawCands) {
+          const myEv = evaluateGomokuPointAt(board, cid, turnPlayer, R, C);
+          if (myEv.winning) {
+            return turnPlayer === aiP ? (1900000 + depth * 10000) : (-1900000 - depth * 10000);
           }
-          if (activeThreatLines >= 2) totalScore += 95000;
-          return totalScore;
+          const oppEv = evaluateGomokuPointAt(board, cid, opp, R, C);
+          const n = Nodes[cid];
+          const centerBias = Math.max(0, 6 - Math.hypot(n.r - midR, n.c - midC)) * 18;
+          scored.push({
+            cid,
+            prio: myEv.score * 1.15 + oppEv.score * 1.05 + centerBias
+          });
         }
 
-        const isHardest = (GameState.aiDifficulty === 'hardest');
-        const defMult = isHardest ? 1.35 : 1.08;
-        let bestMove = allSteps[0];
-        let bestVal = -Infinity;
+        if (scored.length === 0) return 0;
+        scored.sort((a, b) => b.prio - a.prio);
+        const branchLimit = depth >= 4 ? 9 : (depth === 3 ? 10 : 12);
+        const pool = scored.slice(0, branchLimit);
 
-        for (const m of allSteps) {
-          const n = Nodes[m.to];
-          const centerBonus = Math.max(0, 6 - Math.hypot(n.r - midR, n.c - midC)) * 2.5;
-          const off = scorePointForPlayer(m.to, aiP);
-          const def = scorePointForPlayer(m.to, humanP) * defMult;
-          const learned = isHardest
-            ? MorrisLearner.getHardestBonus(GameState.board, m, aiP, 0, 0)
-            : MorrisLearner.getBonus(GameState.board, m, aiP, 0, 0);
-          let val = off + def + centerBonus + learned + Math.random() * 0.8;
-          if (off >= 600000) val += 2000000;
-          else if (def >= 500000) val += 1000000;
-          if (val > bestVal) {
-            bestVal = val;
-            bestMove = m;
+        const isMax = (turnPlayer === aiP);
+        let bestVal = isMax ? -Infinity : Infinity;
+
+        for (const item of pool) {
+          board[item.cid] = turnPlayer;
+          const ev = minimaxGomoku(board, depth - 1, alpha, beta, opp, aiP, humanP, R, C);
+          board[item.cid] = 0;
+          if (generalSearchAborted) return bestVal === -Infinity || bestVal === Infinity ? ev : bestVal;
+
+          if (isMax) {
+            if (ev > bestVal) bestVal = ev;
+            if (bestVal > alpha) alpha = bestVal;
+          } else {
+            if (ev < bestVal) bestVal = ev;
+            if (bestVal < beta) beta = bestVal;
+          }
+          if (beta <= alpha) break;
+        }
+        return bestVal;
+      }
+
+      function computeBestGomokuAction(aiP = (GameState.aiPlayerRole || 2)) {
+        const humanP = aiP === 1 ? 2 : 1;
+        const diff = GameState.aiDifficulty;
+        const R = GameState.rows;
+        const C = GameState.cols;
+        const board = GameState.board;
+        const { allSteps } = getAllLegalActionsForPlayer(aiP);
+        if (allSteps.length === 0) return null;
+
+        const cands = getGomokuCandidateMoves(board, R, C);
+        const midR = (R - 1) / 2;
+        const midC = (C - 1) / 2;
+
+        const ranked = [];
+        let immediateWinMove = null;
+        let urgentBlockMove = null;
+        let bestUrgentBlockScore = -Infinity;
+
+        for (const cid of cands) {
+          const moveObj = { from: -1, to: cid, type: 'drop' };
+          const offEv = evaluateGomokuPointAt(board, cid, aiP, R, C);
+          const defEv = evaluateGomokuPointAt(board, cid, humanP, R, C);
+          const n = Nodes[cid];
+          const centerBonus = Math.max(0, 6 - Math.hypot(n.r - midR, n.c - midC)) * 35;
+          const learned = (diff === 'hardest')
+            ? MorrisLearner.getHardestBonus(board, moveObj, aiP, 0, 0)
+            : MorrisLearner.getBonus(board, moveObj, aiP, 0, 0);
+
+          if (offEv.winning) {
+            immediateWinMove = moveObj;
+          }
+          if (defEv.winning && defEv.score + offEv.score > bestUrgentBlockScore) {
+            bestUrgentBlockScore = defEv.score + offEv.score;
+            urgentBlockMove = moveObj;
+          }
+
+          const staticVal = offEv.score * 1.18 + defEv.score * 1.24 + centerBonus + learned;
+          ranked.push({ action: moveObj, score: Math.round(staticVal), offEv, defEv });
+        }
+
+        ranked.sort((a, b) => b.score - a.score);
+
+        if (immediateWinMove) {
+          return { bestAction: immediateWinMove, ranked };
+        }
+        if (urgentBlockMove && diff !== 'easy') {
+          return { bestAction: urgentBlockMove, ranked };
+        }
+        if (diff === 'easy') {
+          const pool = ranked.slice(0, Math.min(5, ranked.length));
+          return { bestAction: pool[Math.floor(Math.random() * pool.length)].action, ranked };
+        }
+
+        const searchPool = ranked.slice(0, diff === 'hardest' ? 12 : (diff === 'hard' ? 10 : 7));
+        const maxDepth = diff === 'hardest' ? 5 : (diff === 'hard' ? 4 : 2);
+        generalSearchAborted = false;
+        generalSearchDeadline = performance.now() + (diff === 'hardest' ? 340 : 180);
+
+        const simBoard = [...board];
+        let bestMove = searchPool[0].action;
+
+        for (let d = 2; d <= maxDepth; d++) {
+          let iterBestMove = searchPool[0].action;
+          let iterBestVal = -Infinity;
+          let alpha = -Infinity;
+          const beta = Infinity;
+
+          for (const item of searchPool) {
+            const cid = item.action.to;
+            simBoard[cid] = aiP;
+            const mmVal = minimaxGomoku(simBoard, d - 1, alpha, beta, humanP, aiP, humanP, R, C);
+            simBoard[cid] = 0;
+            if (generalSearchAborted) break;
+            const combined = mmVal + item.score * 0.15;
+            item.searchScore = Math.round(combined);
+            if (combined > iterBestVal) {
+              iterBestVal = combined;
+              iterBestMove = item.action;
+            }
+            if (combined > alpha) alpha = combined;
+          }
+
+          if (!generalSearchAborted) {
+            bestMove = iterBestMove;
+            searchPool.sort((a, b) => (b.searchScore || b.score) - (a.searchScore || a.score));
+            if (iterBestVal >= 1500000) break;
+          } else {
+            break;
           }
         }
-        MorrisLearner.recordStep(GameState.board, bestMove, aiP, 0, 0);
-        executeAction(bestMove, false);
+
+        return { bestAction: bestMove, ranked: searchPool };
+      }
+
+      function runGomokuAI() {
+        const aiP = GameState.aiPlayerRole || 2;
+        const res = computeBestGomokuAction(aiP);
+        if (!res || !res.bestAction) return;
+        MorrisLearner.recordStep(GameState.board, res.bestAction, aiP, 0, 0);
+        executeAction(res.bestAction, false);
+      }
+
+      /* -------------------------------------------------------------------
+       * 7B. TIGER & GOAT GRANDMASTER ENGINE (BAGH-CHAL & AADU PULI ATTAM)
+       * ------------------------------------------------------------------- */
+      function expandTigerChainJumps(board, fromId) {
+        const results = [];
+        function dfs(curBoard, curNode, firstAction, totalEaten, visitedPath) {
+          const { jumps } = getLegalActionsForPiece(curNode, curBoard);
+          if (jumps.length === 0 || GameState.chainRule === 'single_only' || visitedPath.length >= 6) {
+            results.push({ board: curBoard, firstAction, totalEaten, endNode: curNode });
+            return;
+          }
+          for (const j of jumps) {
+            const nb = [...curBoard];
+            nb[curNode] = 0;
+            nb[j.capturedId] = 0;
+            nb[j.to] = 2;
+            dfs(nb, j.to, firstAction, totalEaten + 1, [...visitedPath, j.to]);
+          }
+        }
+        const { jumps: rootJumps } = getLegalActionsForPiece(fromId, board);
+        for (const rj of rootJumps) {
+          const nb = [...board];
+          nb[fromId] = 0;
+          nb[rj.capturedId] = 0;
+          nb[rj.to] = 2;
+          if (GameState.chainRule === 'single_only') {
+            results.push({ board: nb, firstAction: rj, totalEaten: 1, endNode: rj.to });
+          } else {
+            dfs(nb, rj.to, rj, 1, [fromId, rj.to]);
+          }
+        }
+        return results;
+      }
+
+      function evaluateTigerGoatState(board, goatReserves, goatsEaten, turnPlayer, aiP) {
+        ensureJumpRaysCache();
+        const targetEat = GameState.tigerCaptureTarget || 5;
+        if (goatsEaten >= targetEat) {
+          return aiP === 2 ? 180000 : -180000;
+        }
+
+        const tigerSteps = [];
+        const tigerJumps = [];
+        const tigerNodes = [];
+        const goatNodes = [];
+
+        for (let i = 0; i < Nodes.length; i++) {
+          if (board[i] === 2) {
+            tigerNodes.push(i);
+            const { steps, jumps } = getLegalActionsForPiece(i, board);
+            tigerSteps.push(...steps);
+            tigerJumps.push(...jumps);
+          } else if (board[i] === 1) {
+            goatNodes.push(i);
+          }
+        }
+
+        const totalTigerMoves = tigerSteps.length + tigerJumps.length;
+        if (totalTigerMoves === 0) {
+          return aiP === 1 ? 180000 : -180000;
+        }
+
+        // Score from Tigers' perspective (Player 2), then flip sign if aiP === 1
+        let tigerScore = goatsEaten * 22000;
+        if (goatsEaten === targetEat - 1) tigerScore += 14000;
+
+        const threatenedGoats = new Set();
+        const landingSquares = new Set();
+        for (const j of tigerJumps) {
+          threatenedGoats.add(j.capturedId);
+          landingSquares.add(j.to);
+        }
+
+        if (turnPlayer === 2) {
+          if (threatenedGoats.size >= 1) {
+            tigerScore += 16500 + threatenedGoats.size * 3500;
+          }
+        } else {
+          // Goats' turn: if 2+ distinct Goats are threatened at different landing nodes, Goats cannot save both!
+          if (threatenedGoats.size >= 2 && landingSquares.size >= 2) {
+            tigerScore += 14500;
+          } else if (threatenedGoats.size === 1) {
+            tigerScore += 3200;
+          }
+        }
+
+        // Individual Tiger liberties & hub control
+        let trappedTigers = 0;
+        let restrictedTigers = 0;
+        for (const tId of tigerNodes) {
+          const deg = Adjacency[tId] ? Adjacency[tId].size : 3;
+          tigerScore += deg * 140;
+          let lib = 0;
+          for (const nb of Adjacency[tId]) {
+            if (board[nb] === 0) lib++;
+          }
+          if (lib === 0 && !tigerJumps.some((j) => j.from === tId)) {
+            trappedTigers++;
+            tigerScore -= 6800;
+          } else if (lib === 1) {
+            restrictedTigers++;
+            tigerScore -= 2100;
+          } else {
+            tigerScore += lib * 480;
+          }
+        }
+
+        if (trappedTigers >= tigerNodes.length - 1) {
+          tigerScore -= 18000;
+        }
+        tigerScore += tigerSteps.length * 340;
+
+        // Goat phalanx solidarity & safe nodes
+        let solidGoats = 0;
+        let exposedGoatAxes = 0;
+        for (const gId of goatNodes) {
+          const rays = JumpRaysOverNode[gId] || [];
+          let vulnerableAxis = false;
+          for (const ray of rays) {
+            const vFrom = board[ray.from];
+            const vTo = board[ray.to];
+            if (vFrom === 0 && vTo === 0) {
+              vulnerableAxis = true;
+              // Check if a Tiger can reach ray.from in 1 step
+              for (const nb of Adjacency[ray.from]) {
+                if (board[nb] === 2) {
+                  exposedGoatAxes++;
+                  break;
+                }
+              }
+            }
+          }
+          if (!vulnerableAxis) {
+            solidGoats++;
+          }
+        }
+
+        tigerScore -= solidGoats * 520;
+        tigerScore += exposedGoatAxes * 950;
+
+        return aiP === 2 ? tigerScore : -tigerScore;
+      }
+
+      function minimaxTigerGoat(board, goatRes, goatsEaten, depth, alpha, beta, turnPlayer, aiP) {
+        if (generalSearchDeadline && performance.now() > generalSearchDeadline) {
+          generalSearchAborted = true;
+          return evaluateTigerGoatState(board, goatRes, goatsEaten, turnPlayer, aiP);
+        }
+
+        const targetEat = GameState.tigerCaptureTarget || 5;
+        if (goatsEaten >= targetEat) {
+          return aiP === 2 ? (180000 + depth * 500) : (-180000 - depth * 500);
+        }
+
+        if (depth <= 0) {
+          return evaluateTigerGoatState(board, goatRes, goatsEaten, turnPlayer, aiP);
+        }
+
+        const opp = turnPlayer === 1 ? 2 : 1;
+        const isMax = (turnPlayer === aiP);
+
+        if (turnPlayer === 2) {
+          // Tigers' turn: collect chain jumps and steps
+          const jumpBranches = [];
+          const stepMoves = [];
+          for (let i = 0; i < Nodes.length; i++) {
+            if (board[i] === 2) {
+              const chains = expandTigerChainJumps(board, i);
+              jumpBranches.push(...chains);
+              const { steps } = getLegalActionsForPiece(i, board);
+              stepMoves.push(...steps);
+            }
+          }
+          if (jumpBranches.length === 0 && stepMoves.length === 0) {
+            return aiP === 1 ? (180000 + depth * 500) : (-180000 - depth * 500);
+          }
+
+          const candidates = [];
+          for (const jb of jumpBranches) {
+            candidates.push({
+              board: jb.board,
+              eaten: goatsEaten + jb.totalEaten,
+              res: goatRes,
+              prio: 40000 + jb.totalEaten * 18000 + (Adjacency[jb.endNode] ? Adjacency[jb.endNode].size * 100 : 0)
+            });
+          }
+          if (GameState.mandatoryCapture !== 'forced' || jumpBranches.length === 0) {
+            for (const s of stepMoves) {
+              const nb = [...board];
+              nb[s.from] = 0;
+              nb[s.to] = 2;
+              const nextJ = getLegalActionsForPiece(s.to, nb).jumps.length;
+              const deg = Adjacency[s.to] ? Adjacency[s.to].size : 2;
+              candidates.push({
+                board: nb,
+                eaten: goatsEaten,
+                res: goatRes,
+                prio: nextJ * 5500 + deg * 180
+              });
+            }
+          }
+          candidates.sort((a, b) => b.prio - a.prio);
+          const pool = candidates.slice(0, depth >= 4 ? 10 : 14);
+          let bestVal = isMax ? -Infinity : Infinity;
+
+          for (const c of pool) {
+            const ev = minimaxTigerGoat(c.board, c.res, c.eaten, depth - 1, alpha, beta, 1, aiP);
+            if (generalSearchAborted) return bestVal === -Infinity || bestVal === Infinity ? ev : bestVal;
+            if (isMax) {
+              if (ev > bestVal) bestVal = ev;
+              if (bestVal > alpha) alpha = bestVal;
+            } else {
+              if (ev < bestVal) bestVal = ev;
+              if (bestVal < beta) beta = bestVal;
+            }
+            if (beta <= alpha) break;
+          }
+          return bestVal;
+        } else {
+          // Goats' turn (Player 1): drops if goatRes > 0, else steps
+          const resObj = { 1: goatRes, 2: 0 };
+          const { allSteps } = getAllLegalActionsForPlayer(1, board, resObj);
+          if (allSteps.length === 0) {
+            return aiP === 2 ? (175000 + depth * 400) : (-175000 - depth * 400);
+          }
+
+          // Quick score & order Goat moves
+          const scored = [];
+          for (const m of allSteps) {
+            const nb = [...board];
+            if (m.type === 'step') nb[m.from] = 0;
+            nb[m.to] = 1;
+            let prio = 0;
+            // Check if this move leaves any Goat immediately jumpable
+            let jumpsAllowed = 0;
+            let tSteps = 0;
+            for (let i = 0; i < Nodes.length; i++) {
+              if (nb[i] === 2) {
+                const { steps, jumps } = getLegalActionsForPiece(i, nb);
+                jumpsAllowed += jumps.length;
+                tSteps += steps.length;
+              }
+            }
+            if (jumpsAllowed === 0 && tSteps === 0) {
+              return aiP === 1 ? (180000 + depth * 500) : (-180000 - depth * 500);
+            }
+            prio -= jumpsAllowed * 16000;
+            prio -= tSteps * 280;
+            for (const adj of Adjacency[m.to]) {
+              if (nb[adj] === 1) prio += 160;
+            }
+            scored.push({ board: nb, res: Math.max(0, goatRes - (m.type === 'drop' ? 1 : 0)), prio });
+          }
+          scored.sort((a, b) => b.prio - a.prio);
+          const pool = scored.slice(0, depth >= 4 ? 10 : 13);
+          let bestVal = isMax ? -Infinity : Infinity;
+
+          for (const c of pool) {
+            const ev = minimaxTigerGoat(c.board, c.res, goatsEaten, depth - 1, alpha, beta, 2, aiP);
+            if (generalSearchAborted) return bestVal === -Infinity || bestVal === Infinity ? ev : bestVal;
+            if (isMax) {
+              if (ev > bestVal) bestVal = ev;
+              if (bestVal > alpha) alpha = bestVal;
+            } else {
+              if (ev < bestVal) bestVal = ev;
+              if (bestVal < beta) beta = bestVal;
+            }
+            if (beta <= alpha) break;
+          }
+          return bestVal;
+        }
+      }
+
+      function computeBestTigerGoatAction(aiP = (GameState.aiPlayerRole || 2)) {
+        const diff = GameState.aiDifficulty;
+        const board = GameState.board;
+        const goatRes = GameState.reserves[1] || 0;
+        const goatsEaten = GameState.capturedBy[2] || 0;
+        const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(aiP);
+        if (total === 0) return null;
+
+        const rawMoves = (aiP === 2 && allJumps.length > 0 && GameState.mandatoryCapture === 'forced')
+          ? allJumps
+          : [...allJumps, ...allSteps];
+
+        if (diff === 'easy') {
+          if (allJumps.length > 0 && Math.random() < 0.75) {
+            return { bestAction: allJumps[Math.floor(Math.random() * allJumps.length)], ranked: allJumps.map((m) => ({ action: m, score: 100 })) };
+          }
+          const pick = rawMoves[Math.floor(Math.random() * rawMoves.length)];
+          return { bestAction: pick, ranked: rawMoves.map((m) => ({ action: m, score: 50 })) };
+        }
+
+        const rootCandidates = [];
+        if (aiP === 2) {
+          for (let i = 0; i < Nodes.length; i++) {
+            if (board[i] === 2) {
+              const chains = expandTigerChainJumps(board, i);
+              for (const ch of chains) {
+                rootCandidates.push({
+                  action: ch.firstAction,
+                  boardAfter: ch.board,
+                  resAfter: goatRes,
+                  eatenAfter: goatsEaten + ch.totalEaten,
+                  isJump: true
+                });
+              }
+            }
+          }
+          if (GameState.mandatoryCapture !== 'forced' || rootCandidates.length === 0) {
+            for (const s of allSteps) {
+              const nb = [...board];
+              nb[s.from] = 0;
+              nb[s.to] = 2;
+              rootCandidates.push({
+                action: s,
+                boardAfter: nb,
+                resAfter: goatRes,
+                eatenAfter: goatsEaten,
+                isJump: false
+              });
+            }
+          }
+        } else {
+          for (const m of allSteps) {
+            const nb = [...board];
+            if (m.type === 'step') nb[m.from] = 0;
+            nb[m.to] = 1;
+            rootCandidates.push({
+              action: m,
+              boardAfter: nb,
+              resAfter: Math.max(0, goatRes - (m.type === 'drop' ? 1 : 0)),
+              eatenAfter: goatsEaten,
+              isJump: false
+            });
+          }
+        }
+
+        const opp = aiP === 1 ? 2 : 1;
+        for (const rc of rootCandidates) {
+          const stat = evaluateTigerGoatState(rc.boardAfter, rc.resAfter, rc.eatenAfter, opp, aiP);
+          const loopInfo = rc.action.type === 'step'
+            ? LoopTracker.evaluateLoopPenalty(rc.action, board, rc.boardAfter, aiP, rc.resAfter, 0, false)
+            : { penalty: 0, breakthroughBonus: 0, isForbiddenLoop: false };
+          const learned = (diff === 'hardest')
+            ? MorrisLearner.getHardestBonus(board, rc.action, aiP, goatRes, 0)
+            : MorrisLearner.getBonus(board, rc.action, aiP, goatRes, 0);
+          rc.baseScore = stat + learned - loopInfo.penalty + loopInfo.breakthroughBonus;
+          rc.isForbiddenLoop = loopInfo.isForbiddenLoop;
+        }
+
+        rootCandidates.sort((a, b) => b.baseScore - a.baseScore);
+        if (diff === 'medium') {
+          const pool = rootCandidates.slice(0, Math.min(2, rootCandidates.length));
+          const chosen = pool[Math.floor(Math.random() * pool.length)];
+          return { bestAction: chosen.action, ranked: rootCandidates.map((c) => ({ action: c.action, score: Math.round(c.baseScore) })) };
+        }
+
+        generalSearchAborted = false;
+        const intel = MorrisLearner.getIntelligenceLevel();
+        const timeBudget = diff === 'hardest' ? (GameState.aiVsAi ? 300 : 440) : 220;
+        generalSearchDeadline = performance.now() + timeBudget;
+        const maxDepth = diff === 'hardest' ? (6 + Math.min(1, intel.depthBonus)) : 4;
+        const searchPool = rootCandidates.slice(0, Math.min(16, rootCandidates.length));
+
+        let bestCand = searchPool[0];
+        for (let d = 2; d <= maxDepth; d++) {
+          let iterBest = searchPool[0];
+          let iterBestVal = -Infinity;
+          let alpha = -Infinity;
+          const beta = Infinity;
+
+          for (const rc of searchPool) {
+            if (rc.eatenAfter >= (GameState.tigerCaptureTarget || 5) && aiP === 2) {
+              rc.searchVal = 250000;
+              iterBest = rc;
+              iterBestVal = 250000;
+              break;
+            }
+            const mm = minimaxTigerGoat(rc.boardAfter, rc.resAfter, rc.eatenAfter, d - 1, alpha, beta, opp, aiP);
+            if (generalSearchAborted) break;
+            const totalVal = mm + (rc.baseScore * 0.08);
+            rc.searchVal = Math.round(totalVal);
+            if (totalVal > iterBestVal) {
+              iterBestVal = totalVal;
+              iterBest = rc;
+            }
+            if (totalVal > alpha) alpha = totalVal;
+          }
+
+          if (!generalSearchAborted) {
+            bestCand = iterBest;
+            searchPool.sort((a, b) => (b.searchVal ?? b.baseScore) - (a.searchVal ?? a.baseScore));
+            if (iterBestVal >= 170000) break;
+          } else {
+            break;
+          }
+        }
+
+        if (bestCand.isForbiddenLoop && searchPool.length > 1) {
+          const nonLoop = searchPool.find((c) => !c.isForbiddenLoop && (c.searchVal ?? c.baseScore) > -90000);
+          if (nonLoop) bestCand = nonLoop;
+        }
+
+        return {
+          bestAction: bestCand.action,
+          ranked: searchPool.map((c) => ({ action: c.action, score: Math.round(c.searchVal ?? c.baseScore) }))
+        };
       }
 
       function runTigerGoatAI() {
         const aiP = GameState.aiPlayerRole || 2;
-        const diff = GameState.aiDifficulty;
-        const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(aiP);
-        if (total === 0) return;
-
-        if (aiP === 2) {
-          if (allJumps.length > 0) {
-            let bestJump = allJumps[0];
-            let bestScore = -99999;
-            for (const j of allJumps) {
-              const sim = [...GameState.board];
-              sim[j.from] = 0;
-              sim[j.capturedId] = 0;
-              sim[j.to] = 2;
-              const nextActions = getLegalActionsForPiece(j.to, sim);
-              const nextJumps = nextActions.jumps.length;
-              const mobility = nextActions.steps.length;
-              let liberties = 0;
-              for (const nb of Adjacency[j.to]) {
-                if (sim[nb] === 0) liberties++;
-              }
-              const trapPenalty = liberties <= 1 ? -120 : 0;
-              const learned = (diff === 'hardest')
-                ? MorrisLearner.getHardestBonus(GameState.board, j, 2, GameState.reserves[1], GameState.reserves[2])
-                : MorrisLearner.getBonus(GameState.board, j, 2, GameState.reserves[1], GameState.reserves[2]);
-              const score = nextJumps * 45 + mobility * 8 + liberties * 14 + Adjacency[j.to].size * 4 + trapPenalty + learned + Math.random();
-              if (score > bestScore) {
-                bestScore = score;
-                bestJump = j;
-              }
-            }
-            MorrisLearner.recordStep(GameState.board, bestJump, 2, GameState.reserves[1], GameState.reserves[2]);
-            executeAction(bestJump, false);
-            return;
-          }
-          if (diff === 'easy') {
-            executeAction(allSteps[Math.floor(Math.random() * allSteps.length)], false);
-            return;
-          }
-          let bestStep = allSteps[0];
-          let bestScore = -99999;
-          for (const s of allSteps) {
-            const sim = [...GameState.board];
-            sim[s.from] = 0;
-            sim[s.to] = 2;
-            const { steps: nextS, jumps: nextJ } = getLegalActionsForPiece(s.to, sim);
-            let liberties = 0;
-            for (const nb of Adjacency[s.to]) {
-              if (sim[nb] === 0) liberties++;
-            }
-            const trapPenalty = liberties <= 1 ? -160 : 0;
-            const centerDist = Math.hypot(Nodes[s.to].r - 2, Nodes[s.to].c - 2);
-            const loopInfo = LoopTracker.evaluateLoopPenalty(s, GameState.board, sim, 2, GameState.reserves[1], GameState.reserves[2], false);
-            const learned = (diff === 'hardest')
-              ? MorrisLearner.getHardestBonus(GameState.board, s, 2, GameState.reserves[1], GameState.reserves[2])
-              : MorrisLearner.getBonus(GameState.board, s, 2, GameState.reserves[1], GameState.reserves[2]);
-            const score = nextJ.length * 60 + nextS.length * 9 + liberties * 18 + (4 - centerDist) * 8 + trapPenalty + learned - loopInfo.penalty * 0.05 + Math.random() * 1.5;
-            if (score > bestScore) {
-              bestScore = score;
-              bestStep = s;
-            }
-          }
-          MorrisLearner.recordStep(GameState.board, bestStep, 2, GameState.reserves[1], GameState.reserves[2]);
-          executeAction(bestStep, false);
-          return;
-        }
-
-        let bestAct = allSteps[0];
-        let bestScore = -99999;
-        const initialTigerMoves = getAllLegalActionsForPlayer(2, GameState.board, GameState.reserves);
-
-        for (const m of allSteps) {
-          const sim = [...GameState.board];
-          if (m.type === 'step') sim[m.from] = 0;
-          sim[m.to] = 1;
-          const tigerMoves = getAllLegalActionsForPlayer(2, sim, GameState.reserves);
-          if (tigerMoves.total === 0) {
-            MorrisLearner.recordStep(GameState.board, m, 1, GameState.reserves[1], GameState.reserves[2]);
-            executeAction(m, false);
-            return;
-          }
-          const jumpDiff = initialTigerMoves.allJumps.length - tigerMoves.allJumps.length;
-          const dangerPenalty = tigerMoves.allJumps.length * (diff === 'hardest' ? 2400 : 400);
-          const blockBonus = jumpDiff > 0 ? (jumpDiff * 950) : 0;
-          let clusterBonus = 0;
-          for (const nb of Adjacency[m.to]) {
-            if (sim[nb] === 1) clusterBonus += 130;
-          }
-          const loopInfo = m.type === 'step'
-            ? LoopTracker.evaluateLoopPenalty(m, GameState.board, sim, 1, GameState.reserves[1], GameState.reserves[2], false)
-            : { penalty: 0 };
-          const trapBonus = (24 - tigerMoves.total) * (diff === 'hardest' ? 65 : 18);
-          const learned = (diff === 'hardest')
-            ? MorrisLearner.getHardestBonus(GameState.board, m, 1, GameState.reserves[1], GameState.reserves[2])
-            : MorrisLearner.getBonus(GameState.board, m, 1, GameState.reserves[1], GameState.reserves[2]);
-          const score = trapBonus - dangerPenalty + blockBonus + clusterBonus + Adjacency[m.to].size * 3 + learned - loopInfo.penalty * 0.1 + Math.random() * 1.5;
-          if (score > bestScore) {
-            bestScore = score;
-            bestAct = m;
-          }
-        }
-        MorrisLearner.recordStep(GameState.board, bestAct, 1, GameState.reserves[1], GameState.reserves[2]);
-        executeAction(bestAct, false);
+        const res = computeBestTigerGoatAction(aiP);
+        if (!res || !res.bestAction) return;
+        MorrisLearner.recordStep(GameState.board, res.bestAction, aiP, GameState.reserves[1], GameState.reserves[2]);
+        executeAction(res.bestAction, false);
       }
 
-      function evaluateBoardPosition(board, reservesP1, reservesP2, aiP = (GameState.aiPlayerRole || 2)) {
-        const oppP = aiP === 1 ? 2 : 1;
-        let aiCount = aiP === 1 ? reservesP1 : reservesP2;
-        let oppCount = oppP === 1 ? reservesP1 : reservesP2;
-        let positionalScore = 0;
+      /* -------------------------------------------------------------------
+       * 7C. GENERAL GRANDMASTER ENGINE (KATAR LEAP, DAMA KINGS, FANORONA, SEEGA)
+       * ------------------------------------------------------------------- */
+      function simDeployReserveOnBoard(board, reserves, player) {
+        if (GameState.gameFamily !== 'leap') return;
+        if (!reserves || reserves[player] <= 0) return;
+        if (countEmptyNodes(board) < 5) return;
         const midR = (GameState.rows - 1) / 2;
-        const midC = (GameState.cols - 1) / 2;
+        for (let i = 0; i < Nodes.length; i++) {
+          const n = Nodes[i];
+          if (player === 1 ? n.r > midR + 0.4 : n.r < midR - 0.4) {
+            // Scan back-rank first
+          }
+        }
+        const ownHalfNodes = Nodes
+          .filter((n) => (player === 1 ? n.r > midR + 0.4 : n.r < midR - 0.4))
+          .sort((a, b) => (player === 1 ? b.r - a.r : a.r - b.r));
+        for (const n of ownHalfNodes) {
+          if (board[n.id] === 0) {
+            board[n.id] = player;
+            reserves[player]--;
+            return;
+          }
+        }
+      }
 
+      function simulateTurnOnBoard(board, action, player, kings = GameState.kings, reserves = GameState.reserves) {
+        const nextBoard = [...board];
+        const nextKings = kings ? [...kings] : new Array(Nodes.length).fill(false);
+        const nextRes = reserves ? { 1: reserves[1] || 0, 2: reserves[2] || 0 } : { 1: 0, 2: 0 };
+        const opp = player === 1 ? 2 : 1;
+
+        if (action.type === 'drop') {
+          nextBoard[action.to] = player;
+          nextRes[player] = Math.max(0, (nextRes[player] || 0) - 1);
+          return { board: nextBoard, kings: nextKings, reserves: nextRes, totalCaptured: 0, promoted: false, endNode: action.to };
+        }
+
+        const wasKing = Boolean(nextKings[action.from]);
+        nextBoard[action.from] = 0;
+        nextKings[action.from] = false;
+        nextBoard[action.to] = player;
+        nextKings[action.to] = wasKing;
+
+        let promoted = false;
+        const toNode = Nodes[action.to];
+        if ((GameState.gameFamily === 'dama' || GameState.stepDirection === 'forward_side') && !wasKing && toNode) {
+          if ((player === 1 && Math.round(toNode.r) === 0) || (player === 2 && Math.round(toNode.r) === GameState.rows - 1)) {
+            nextKings[action.to] = true;
+            promoted = true;
+          }
+        }
+
+        let totalCaptured = 0;
+        let endNode = action.to;
+
+        if (action.type === 'jump') {
+          const normAct = normalizeDualActionForAI(action);
+          const caps = (normAct.capturedIds && normAct.capturedIds.length > 0)
+            ? normAct.capturedIds
+            : (normAct.capturedId !== undefined ? [normAct.capturedId] : []);
+          for (const cid of caps) {
+            if (cid !== undefined && nextBoard[cid] === opp) {
+              nextBoard[cid] = 0;
+              nextKings[cid] = false;
+              totalCaptured++;
+            }
+          }
+          simDeployReserveOnBoard(nextBoard, nextRes, player);
+
+          if (GameState.chainRule !== 'single_only') {
+            let curNode = action.to;
+            const fanVisited = [action.from, action.to];
+            let fanLastDir = (Nodes[action.from] && Nodes[action.to]) ? {
+              dr: Math.sign(Nodes[action.to].r - Nodes[action.from].r),
+              dc: Math.sign(Nodes[action.to].c - Nodes[action.from].c)
+            } : null;
+
+            let safetyGuard = 0;
+            while (safetyGuard++ < 7) {
+              const chainCtx = GameState.gameFamily === 'fanorona'
+                ? { visitedNodes: fanVisited, lastDir: fanLastDir }
+                : null;
+              const follow = getLegalActionsForPiece(curNode, nextBoard, nextKings, chainCtx);
+              const expandedFollow = expandDualJumpsList(follow.jumps);
+              if (expandedFollow.length === 0) break;
+
+              // Pick the continuation jump that maximizes captures + subsequent chain hops
+              let bestJ = expandedFollow[0];
+              if (expandedFollow.length > 1) {
+                let bestJScore = -Infinity;
+                for (const cj of expandedFollow) {
+                  const cCount = (cj.capturedIds && cj.capturedIds.length > 0) ? cj.capturedIds.length : 1;
+                  const deg = Adjacency[cj.to] ? Adjacency[cj.to].size : 2;
+                  const sc = cCount * 150 + deg * 10;
+                  if (sc > bestJScore) {
+                    bestJScore = sc;
+                    bestJ = cj;
+                  }
+                }
+              }
+
+              const prevNode = curNode;
+              const carryKing = Boolean(nextKings[curNode]);
+              nextBoard[curNode] = 0;
+              nextKings[curNode] = false;
+              const nextCaps = (bestJ.capturedIds && bestJ.capturedIds.length > 0) ? bestJ.capturedIds : [bestJ.capturedId];
+              for (const cid of nextCaps) {
+                if (cid !== undefined && nextBoard[cid] === opp) {
+                  nextBoard[cid] = 0;
+                  nextKings[cid] = false;
+                  totalCaptured++;
+                }
+              }
+              nextBoard[bestJ.to] = player;
+              nextKings[bestJ.to] = carryKing;
+              curNode = bestJ.to;
+              endNode = curNode;
+
+              if ((GameState.gameFamily === 'dama' || GameState.stepDirection === 'forward_side') && !carryKing && Nodes[curNode]) {
+                if ((player === 1 && Math.round(Nodes[curNode].r) === 0) || (player === 2 && Math.round(Nodes[curNode].r) === GameState.rows - 1)) {
+                  nextKings[curNode] = true;
+                  promoted = true;
+                }
+              }
+              if (GameState.gameFamily === 'fanorona') {
+                fanVisited.push(curNode);
+                fanLastDir = {
+                  dr: Math.sign(Nodes[curNode].r - Nodes[prevNode].r),
+                  dc: Math.sign(Nodes[curNode].c - Nodes[prevNode].c)
+                };
+              }
+              simDeployReserveOnBoard(nextBoard, nextRes, player);
+            }
+          }
+        } else {
+          simDeployReserveOnBoard(nextBoard, nextRes, player);
+        }
+
+        return { board: nextBoard, kings: nextKings, reserves: nextRes, totalCaptured, promoted, endNode };
+      }
+
+      function evaluateBoardPosition(board, reservesP1, reservesP2, aiP = (GameState.aiPlayerRole || 2), kings = GameState.kings, turnPlayer = GameState.currentTurn) {
+        ensureJumpRaysCache();
+        const oppP = aiP === 1 ? 2 : 1;
+        const fam = GameState.gameFamily;
+        const preset = GameState.gridPreset;
+        const R = GameState.rows || 6;
+        const C = GameState.cols || 6;
+        const midR = (R - 1) / 2;
+        const midC = (C - 1) / 2;
+
+        let aiOnBoard = 0;
+        let oppOnBoard = 0;
+        let aiKings = 0;
+        let oppKings = 0;
+        const aiRes = aiP === 1 ? (reservesP1 || 0) : (reservesP2 || 0);
+        const oppRes = oppP === 1 ? (reservesP1 || 0) : (reservesP2 || 0);
+
+        const aiNodes = [];
+        const oppNodes = [];
         for (let i = 0; i < Nodes.length; i++) {
           const occ = board[i];
-          if (occ === 0) continue;
-          const n = Nodes[i];
-          const deg = Adjacency[i] ? Adjacency[i].size : 2;
-          const centerProximity = Math.max(0, 4.5 - Math.hypot(n.r - midR, n.c - midC));
-          const kingBonus = (GameState.kings && GameState.kings[i]) ? 35 : 0;
-          const nodeVal = deg * 0.75 + centerProximity * 1.5 + kingBonus;
-
           if (occ === aiP) {
-            aiCount++;
-            positionalScore += nodeVal;
+            aiOnBoard++;
+            aiNodes.push(i);
+            if (kings && kings[i]) aiKings++;
           } else if (occ === oppP) {
-            oppCount++;
-            positionalScore -= nodeVal;
+            oppOnBoard++;
+            oppNodes.push(i);
+            if (kings && kings[i]) oppKings++;
           }
         }
 
-        const loseThreshold = GameState.gameFamily === 'morris' ? 2 : 1;
-        if (oppCount <= loseThreshold) return 99999;
-        if (aiCount <= loseThreshold) return -99999;
+        const aiTotal = aiOnBoard + aiRes;
+        const oppTotal = oppOnBoard + oppRes;
 
-        const aiMoves = getAllLegalActionsForPlayer(aiP, board);
-        const oppMoves = getAllLegalActionsForPlayer(oppP, board);
+        if (oppTotal <= 1) return 190000;
+        if (aiTotal <= 1) return -190000;
 
-        if (oppMoves.total === 0) return 88888;
-        if (aiMoves.total === 0) return -88888;
+        const resObj = { 1: reservesP1 || 0, 2: reservesP2 || 0 };
+        const aiMoves = getAllLegalActionsForPlayer(aiP, board, resObj, kings);
+        const oppMoves = getAllLegalActionsForPlayer(oppP, board, resObj, kings);
 
-        const aiThreatScore = aiMoves.allJumps.length * 42;
-        const oppThreatScore = oppMoves.allJumps.length * 52;
-        const mobilityScore = (aiMoves.total - oppMoves.total) * 2.2;
-        const materialDiff = (aiCount - oppCount) * 120;
+        if (oppMoves.total === 0 && oppRes === 0) return 185000;
+        if (aiMoves.total === 0 && aiRes === 0) return -185000;
 
-        return materialDiff + positionalScore + (aiThreatScore - oppThreatScore) + mobilityScore;
+        let score = (aiTotal - oppTotal) * 2400 + (aiKings - oppKings) * 3400;
+
+        // 1. SEEGA SPECIALIZED CUSTODIAN EVALUATION
+        if (fam === 'seega') {
+          const centerId = Math.floor(Nodes.length / 2);
+          if (board[centerId] === aiP) score += 620;
+          else if (board[centerId] === oppP) score -= 620;
+
+          // Check loaded custodian jaws on every piece
+          for (let i = 0; i < Nodes.length; i++) {
+            if (i === centerId || board[i] === 0) continue;
+            const owner = board[i];
+            const enemy = owner === 1 ? 2 : 1;
+            const sign = owner === oppP ? 1 : -1; // Positive if oppP is in danger
+            const rays = JumpRaysOverNode[i] || [];
+            for (const ray of rays) {
+              if (board[ray.from] === enemy && board[ray.to] === 0) {
+                // Check if another `enemy` piece can slide into `ray.to` next turn!
+                let hasHammer = false;
+                for (const nb of Adjacency[ray.to]) {
+                  if (nb !== i && nb !== ray.from && board[nb] === enemy) {
+                    hasHammer = true;
+                    break;
+                  }
+                }
+                if (hasHammer) {
+                  score += sign * (turnPlayer === enemy ? 2600 : 1250);
+                }
+              }
+            }
+          }
+          score += (aiMoves.allJumps.length - oppMoves.allJumps.length) * 1400;
+          score += (aiMoves.total - oppMoves.total) * 85;
+          return score;
+        }
+
+        // 2. FANORONA SPECIALIZED APPROACH/WITHDRAWAL & OPPOSITION EVALUATION
+        if (fam === 'fanorona') {
+          for (const id of aiNodes) {
+            const deg = Adjacency[id] ? Adjacency[id].size : 4;
+            if (deg >= 6) score += 260; // Strong 8-way Alquerque intersection
+          }
+          for (const id of oppNodes) {
+            const deg = Adjacency[id] ? Adjacency[id].size : 4;
+            if (deg >= 6) score -= 260;
+          }
+
+          let aiJumpGain = 0;
+          for (const j of expandDualJumpsList(aiMoves.allJumps)) {
+            const cLen = j.capturedIds ? j.capturedIds.length : 1;
+            if (cLen > aiJumpGain) aiJumpGain = cLen;
+          }
+          let oppJumpGain = 0;
+          for (const j of expandDualJumpsList(oppMoves.allJumps)) {
+            const cLen = j.capturedIds ? j.capturedIds.length : 1;
+            if (cLen > oppJumpGain) oppJumpGain = cLen;
+          }
+
+          if (turnPlayer === aiP) {
+            score += aiJumpGain * 2200 + aiMoves.allJumps.length * 420;
+            score -= oppJumpGain * 950;
+          } else {
+            score -= oppJumpGain * 2200 + oppMoves.allJumps.length * 420;
+            score += aiJumpGain * 950;
+          }
+          score += (aiMoves.total - oppMoves.total) * 55;
+          return score;
+        }
+
+        // 3. LEAP KATAR & DAMA KINGS GRANDMASTER EVALUATION (PHALANX + VULNERABILITY + TOPOLOGY)
+        const threatenedAiNodes = new Set();
+        const threatenedOppNodes = new Set();
+        for (const j of aiMoves.allJumps) {
+          if (j.capturedId !== undefined) threatenedOppNodes.add(j.capturedId);
+        }
+        for (const j of oppMoves.allJumps) {
+          if (j.capturedId !== undefined) threatenedAiNodes.add(j.capturedId);
+        }
+
+        // Turn-aware capture tempo & fork threats
+        if (turnPlayer === aiP) {
+          if (threatenedOppNodes.size >= 1) {
+            score += 2400 + threatenedOppNodes.size * 850;
+          }
+          score -= threatenedAiNodes.size * 680;
+        } else {
+          if (threatenedAiNodes.size >= 1) {
+            score -= 2400 + threatenedAiNodes.size * 850;
+          }
+          // If AI threatens 2+ distinct opponent beads on opponent's turn, opponent cannot save both (FORK!)
+          if (threatenedOppNodes.size >= 2) {
+            score += 1950;
+          } else if (threatenedOppNodes.size === 1) {
+            score += 650;
+          }
+        }
+
+        // Phalanx Backing & Axis Solidarity Analysis
+        for (const id of aiNodes) {
+          const n = Nodes[id];
+          const deg = Adjacency[id] ? Adjacency[id].size : 2;
+          const isK = Boolean(kings && kings[id]);
+          const rays = JumpRaysOverNode[id] || [];
+
+          let backedAxes = 0;
+          let openVulnerableAxes = 0;
+          for (const ray of rays) {
+            const vA = board[ray.from];
+            const vB = board[ray.to];
+            if (vA === aiP || vB === aiP) {
+              backedAxes++;
+            } else if (vA === 0 && vB === 0) {
+              openVulnerableAxes++;
+            }
+          }
+
+          score += backedAxes * 115;
+          if (rays.length === 0) {
+            // Edge or corner piece that cannot be jumped at all!
+            score += 180;
+          } else if (openVulnerableAxes >= 2 && !threatenedAiNodes.has(id)) {
+            score -= openVulnerableAxes * 65;
+          }
+
+          // Topological Hub & Advancement Bonuses
+          if (preset === 'lau_kata_kati') {
+            if (id === 9) score += 480; // Central butterfly nexus
+            else if (id >= 6 && id <= 12) score += 210;
+          } else if (preset === 'pretwa') {
+            if (id === 0) score += 520; // Central wheel hub
+            else if (n.ringIdx === 0) score += 220;
+          } else if (fam === 'dama' || GameState.stepDirection === 'forward_side') {
+            if (!isK) {
+              const adv = aiP === 1 ? (R - 1 - n.r) : n.r;
+              score += adv * adv * 28;
+              // Back-rank crown guard bonus
+              if ((aiP === 1 && Math.round(n.r) === R - 1) || (aiP === 2 && Math.round(n.r) === 0)) {
+                score += 190;
+              }
+            } else {
+              score += deg * 95;
+            }
+          } else {
+            const centerProx = Math.max(0, 4.5 - Math.hypot(n.r - midR, n.c - midC));
+            score += deg * 38 + centerProx * 62;
+            // Forward pressure so AI doesn't sit passively on its home rank
+            const forwardProgress = aiP === 1 ? (R - 1 - n.r) : n.r;
+            score += forwardProgress * 28;
+          }
+        }
+
+        for (const id of oppNodes) {
+          const n = Nodes[id];
+          const deg = Adjacency[id] ? Adjacency[id].size : 2;
+          const isK = Boolean(kings && kings[id]);
+          const rays = JumpRaysOverNode[id] || [];
+
+          let backedAxes = 0;
+          let openVulnerableAxes = 0;
+          for (const ray of rays) {
+            const vA = board[ray.from];
+            const vB = board[ray.to];
+            if (vA === oppP || vB === oppP) {
+              backedAxes++;
+            } else if (vA === 0 && vB === 0) {
+              openVulnerableAxes++;
+            }
+          }
+
+          score -= backedAxes * 115;
+          if (rays.length === 0) {
+            score -= 180;
+          } else if (openVulnerableAxes >= 2 && !threatenedOppNodes.has(id)) {
+            score += openVulnerableAxes * 65;
+          }
+
+          if (preset === 'lau_kata_kati') {
+            if (id === 9) score -= 480;
+            else if (id >= 6 && id <= 12) score -= 210;
+          } else if (preset === 'pretwa') {
+            if (id === 0) score -= 520;
+            else if (n.ringIdx === 0) score -= 220;
+          } else if (fam === 'dama' || GameState.stepDirection === 'forward_side') {
+            if (!isK) {
+              const adv = oppP === 1 ? (R - 1 - n.r) : n.r;
+              score -= adv * adv * 28;
+              if ((oppP === 1 && Math.round(n.r) === R - 1) || (oppP === 2 && Math.round(n.r) === 0)) {
+                score -= 190;
+              }
+            } else {
+              score -= deg * 95;
+            }
+          } else {
+            const centerProx = Math.max(0, 4.5 - Math.hypot(n.r - midR, n.c - midC));
+            score -= deg * 38 + centerProx * 62;
+            const forwardProgress = oppP === 1 ? (R - 1 - n.r) : n.r;
+            score -= forwardProgress * 28;
+          }
+        }
+
+        // Active Engagement & Endgame Pursuit (prevents passive shuffling in AI vs AI & endgames)
+        if (aiNodes.length > 0 && oppNodes.length > 0 && (aiTotal > oppTotal || LoopTracker.nonProgressPlies >= 3 || GameState.aiVsAi)) {
+          let totalDist = 0;
+          for (const aId of aiNodes) {
+            const na = Nodes[aId];
+            let minD = Infinity;
+            for (const oId of oppNodes) {
+              const no = Nodes[oId];
+              const d = Math.hypot(na.r - no.r, na.c - no.c);
+              if (d < minD) minD = d;
+            }
+            totalDist += minD;
+          }
+          const avgDist = totalDist / aiNodes.length;
+          const engagementWeight = (aiTotal > oppTotal ? 95 : 45) + Math.min(120, LoopTracker.nonProgressPlies * 18);
+          score -= avgDist * engagementWeight;
+        }
+
+        score += (aiMoves.total - oppMoves.total) * 42;
+        return score;
       }
 
-      function orderGeneralMoves(moves, board, player, applyRootAntiLoop = false) {
+      function orderGeneralMoves(moves, board, player, applyRootAntiLoop = false, kings = GameState.kings, reserves = GameState.reserves) {
         const opp = player === 1 ? 2 : 1;
         const midR = (GameState.rows - 1) / 2;
         const midC = (GameState.cols - 1) / 2;
-        const scored = [];
-
+        const expanded = [];
         for (const m of moves) {
-          if (m.type === 'jump') {
-            const capCount = m.capturedIds ? m.capturedIds.length : 1;
-            const learned = (GameState.aiDifficulty === 'hardest')
-              ? MorrisLearner.getHardestBonus(board, m, player, GameState.reserves[1], GameState.reserves[2]) * 0.1
-              : MorrisLearner.getBonus(board, m, player, GameState.reserves[1], GameState.reserves[2]) * 0.05;
-            scored.push({ move: m, priority: 30000 + capCount * 8000 + learned });
+          if (m.captureMode === 'both' && m.approachIds && m.withdrawalIds) {
+            expanded.push({
+              ...m,
+              captureMode: 'approach',
+              capturedIds: m.approachIds,
+              capturedId: m.approachIds[0]
+            });
+            expanded.push({
+              ...m,
+              captureMode: 'withdrawal',
+              capturedIds: m.withdrawalIds,
+              capturedId: m.withdrawalIds[0]
+            });
           } else {
-            const sim = [...board];
-            if (m.from >= 0) sim[m.from] = 0;
-            sim[m.to] = player;
-            const oppReplies = getAllLegalActionsForPlayer(opp, sim);
-            const isHanging = oppReplies.allJumps.some((j) => (j.capturedIds && j.capturedIds.includes(m.to)) || j.capturedId === m.to);
-            const dangerPenalty = oppReplies.allJumps.length * 2800;
-            const hangingPenalty = isHanging ? 16000 : 0;
-            const myReplies = getAllLegalActionsForPlayer(player, sim);
-            const jumpThreatBonus = myReplies.allJumps.length * 3500;
-            const dist = Math.hypot(Nodes[m.to].r - midR, Nodes[m.to].c - midC);
-            const centerBonus = (6 - dist) * 220;
-            let loopPen = 0;
-            if (applyRootAntiLoop && m.from >= 0) {
-              const li = LoopTracker.evaluateLoopPenalty(m, board, sim, player, GameState.reserves[1], GameState.reserves[2], false);
-              loopPen = li.penalty - li.breakthroughBonus;
+            expanded.push(m);
+          }
+        }
+
+        const scored = [];
+        for (const m of expanded) {
+          const sim = simulateTurnOnBoard(board, m, player, kings, reserves);
+          const learned = (GameState.aiDifficulty === 'hardest')
+            ? MorrisLearner.getHardestBonus(board, m, player, reserves ? reserves[1] : 0, reserves ? reserves[2] : 0) * 0.12
+            : MorrisLearner.getBonus(board, m, player, reserves ? reserves[1] : 0, reserves ? reserves[2] : 0) * 0.06;
+
+          if (m.type === 'jump') {
+            const promoBonus = sim.promoted ? 6500 : 0;
+            const prio = 45000 + sim.totalCaptured * 12000 + promoBonus + learned;
+            scored.push({ move: m, sim, priority: prio, isForbiddenLoop: false });
+          } else {
+            const oppReplies = getAllLegalActionsForPlayer(opp, sim.board, sim.reserves, sim.kings);
+            const isLandingCaptured = oppReplies.allJumps.some((j) =>
+              (j.capturedIds && j.capturedIds.includes(m.to)) || j.capturedId === m.to
+            );
+            const hangingPen = isLandingCaptured ? 22000 : 0;
+            const oppJumpPen = oppReplies.allJumps.length * 4200;
+            const myNext = getAllLegalActionsForPlayer(player, sim.board, sim.reserves, sim.kings);
+            const myThreatBonus = myNext.allJumps.length * 2900;
+            const promoBonus = sim.promoted ? 8500 : 0;
+            const nTo = Nodes[m.to];
+            const distCenter = nTo ? Math.hypot(nTo.r - midR, nTo.c - midC) : 3;
+            const centerBonus = (6 - distCenter) * 180;
+
+            // Forward advancement bias so AI prefers advancing over retreating
+            let advanceBonus = 0;
+            if (m.from >= 0 && Nodes[m.from] && nTo) {
+              const dr = nTo.r - Nodes[m.from].r;
+              if (player === 1 && dr < -0.05) advanceBonus = 240;
+              else if (player === 2 && dr > 0.05) advanceBonus = 240;
+              else if ((player === 1 && dr > 0.05) || (player === 2 && dr < -0.05)) {
+                advanceBonus = -180;
+              }
             }
-            const learned = (GameState.aiDifficulty === 'hardest')
-              ? MorrisLearner.getHardestBonus(board, m, player, GameState.reserves[1], GameState.reserves[2]) * 0.1
-              : MorrisLearner.getBonus(board, m, player, GameState.reserves[1], GameState.reserves[2]) * 0.05;
-            const prio = jumpThreatBonus + centerBonus - dangerPenalty - hangingPenalty - loopPen + learned;
-            scored.push({ move: m, priority: prio });
+
+            let loopPen = 0;
+            let isForbiddenLoop = false;
+            if (applyRootAntiLoop && m.from >= 0) {
+              const li = LoopTracker.evaluateLoopPenalty(m, board, sim.board, player, sim.reserves[1], sim.reserves[2], false);
+              loopPen = li.penalty - li.breakthroughBonus;
+              isForbiddenLoop = li.isForbiddenLoop;
+            }
+
+            const prio = myThreatBonus + promoBonus + centerBonus + advanceBonus - hangingPen - oppJumpPen - loopPen + learned;
+            scored.push({ move: m, sim, priority: prio, isForbiddenLoop });
           }
         }
 
         scored.sort((a, b) => b.priority - a.priority);
+        if (applyRootAntiLoop && scored.length > 1) {
+          const nonLoop = scored.filter((s) => !s.isForbiddenLoop);
+          if (nonLoop.length > 0) {
+            const loopList = scored.filter((s) => s.isForbiddenLoop);
+            return [...nonLoop, ...loopList].map((s) => s.move);
+          }
+        }
         return scored.map((s) => s.move);
       }
 
-      function simulateTurnOnBoard(board, action, player) {
-        const nextBoard = [...board];
-        if (action.from >= 0) nextBoard[action.from] = 0;
-        nextBoard[action.to] = player;
+      function quiescenceGeneral(board, kings, reserves, qDepth, alpha, beta, turnPlayer, aiP) {
+        const standPat = evaluateBoardPosition(board, reserves[1], reserves[2], aiP, kings, turnPlayer);
+        if (qDepth <= 0 || Math.abs(standPat) >= 180000) {
+          return standPat;
+        }
+        if (generalSearchDeadline && performance.now() > generalSearchDeadline) {
+          generalSearchAborted = true;
+          return standPat;
+        }
 
-        if (action.type === 'jump') {
-          const caps = (action.capturedIds && action.capturedIds.length > 0) ? action.capturedIds : [action.capturedId];
-          for (const cid of caps) {
-            if (cid !== undefined) nextBoard[cid] = 0;
-          }
-          if (GameState.chainRule !== 'single_only') {
-            let curNode = action.to;
-            let safetyGuard = 0;
-            while (safetyGuard++ < 8) {
-              const follow = getLegalActionsForPiece(curNode, nextBoard);
-              if (follow.jumps.length === 0) break;
-              const nextJ = follow.jumps[0];
-              nextBoard[curNode] = 0;
-              const nextCaps = (nextJ.capturedIds && nextJ.capturedIds.length > 0) ? nextJ.capturedIds : [nextJ.capturedId];
-              for (const cid of nextCaps) {
-                if (cid !== undefined) nextBoard[cid] = 0;
-              }
-              nextBoard[nextJ.to] = player;
-              curNode = nextJ.to;
-            }
+        const { allJumps } = getAllLegalActionsForPlayer(turnPlayer, board, reserves, kings);
+        if (allJumps.length === 0) {
+          return standPat;
+        }
+
+        const isMax = (turnPlayer === aiP);
+        const opp = turnPlayer === 1 ? 2 : 1;
+        const forcedCapture = (GameState.mandatoryCapture === 'forced' || GameState.gameFamily === 'fanorona');
+
+        if (!forcedCapture) {
+          if (isMax) {
+            if (standPat >= beta) return beta;
+            if (standPat > alpha) alpha = standPat;
+          } else {
+            if (standPat <= alpha) return alpha;
+            if (standPat < beta) beta = standPat;
           }
         }
-        return nextBoard;
+
+        const orderedJumps = orderGeneralMoves(allJumps, board, turnPlayer, false, kings, reserves).slice(0, 6);
+        let bestVal = forcedCapture ? (isMax ? -Infinity : Infinity) : standPat;
+
+        for (const jm of orderedJumps) {
+          const sim = simulateTurnOnBoard(board, jm, turnPlayer, kings, reserves);
+          const ev = quiescenceGeneral(sim.board, sim.kings, sim.reserves, qDepth - 1, alpha, beta, opp, aiP);
+          if (generalSearchAborted) return bestVal === -Infinity || bestVal === Infinity ? ev : bestVal;
+          if (isMax) {
+            if (ev > bestVal) bestVal = ev;
+            if (bestVal > alpha) alpha = bestVal;
+          } else {
+            if (ev < bestVal) bestVal = ev;
+            if (bestVal < beta) beta = bestVal;
+          }
+          if (beta <= alpha) break;
+        }
+        return bestVal;
       }
 
-      function minimaxAlphaBeta(board, depth, alpha, beta, isAiTurn, r1, r2, aiP = (GameState.aiPlayerRole || 2)) {
-        if (depth === 0) {
-          return evaluateBoardPosition(board, r1, r2, aiP);
-        }
-
+      function minimaxAlphaBeta(board, depth, alpha, beta, isAiTurn, r1, r2, aiP = (GameState.aiPlayerRole || 2), kings = GameState.kings, pathSet = null) {
+        const reserves = { 1: r1 || 0, 2: r2 || 0 };
         const oppP = aiP === 1 ? 2 : 1;
         const currPlayer = isAiTurn ? aiP : oppP;
-        const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(currPlayer, board);
+
+        if (generalSearchDeadline && performance.now() > generalSearchDeadline) {
+          generalSearchAborted = true;
+          return evaluateBoardPosition(board, r1, r2, aiP, kings, currPlayer);
+        }
+
+        const ttKey = computeGeneralHashKey(board, kings, r1, r2, currPlayer);
+        if (pathSet && pathSet.has(ttKey)) {
+          return 0; // Contempt against repetition cycles inside search tree
+        }
+
+        if (depth <= 0) {
+          return quiescenceGeneral(board, kings, reserves, 3, alpha, beta, currPlayer, aiP);
+        }
+
+        const cached = GeneralTT.get(ttKey);
+        if (cached && cached.depth >= depth && (!pathSet || pathSet.size <= 1)) {
+          if (cached.flag === 0) return cached.val;
+          if (cached.flag === 1 && cached.val > alpha) alpha = cached.val;
+          else if (cached.flag === 2 && cached.val < beta) beta = cached.val;
+          if (alpha >= beta) return cached.val;
+        }
+
+        const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(currPlayer, board, reserves, kings);
         if (total === 0) {
-          return evaluateBoardPosition(board, r1, r2, aiP);
+          return evaluateBoardPosition(board, r1, r2, aiP, kings, currPlayer);
         }
 
-        const rawList = allJumps.length > 0 ? allJumps : allSteps;
-        const candidateMoves = orderGeneralMoves(rawList, board, currPlayer, false).slice(0, 18);
+        const forceCap = (GameState.mandatoryCapture === 'forced' || GameState.gameFamily === 'fanorona');
+        const rawList = (forceCap && allJumps.length > 0)
+          ? allJumps
+          : [...allJumps, ...allSteps];
 
-        if (isAiTurn) {
-          let maxEval = -Infinity;
-          for (const move of candidateMoves) {
-            const childBoard = simulateTurnOnBoard(board, move, aiP);
-            const ev = minimaxAlphaBeta(childBoard, depth - 1, alpha, beta, false, r1, r2, aiP);
-            if (ev > maxEval) maxEval = ev;
-            if (ev > alpha) alpha = ev;
-            if (beta <= alpha) break;
+        const maxBranch = depth >= 5 ? 11 : (depth >= 3 ? 14 : 16);
+        const candidateMoves = orderGeneralMoves(rawList, board, currPlayer, false, kings, reserves).slice(0, maxBranch);
+
+        const nextPath = new Set(pathSet || []);
+        nextPath.add(ttKey);
+
+        const alphaOrig = alpha;
+        const betaOrig = beta;
+        let bestVal = isAiTurn ? -Infinity : Infinity;
+
+        for (const move of candidateMoves) {
+          const sim = simulateTurnOnBoard(board, move, currPlayer, kings, reserves);
+          const ev = minimaxAlphaBeta(
+            sim.board,
+            depth - 1,
+            alpha,
+            beta,
+            !isAiTurn,
+            sim.reserves[1],
+            sim.reserves[2],
+            aiP,
+            sim.kings,
+            nextPath
+          );
+          if (generalSearchAborted) return bestVal === -Infinity || bestVal === Infinity ? ev : bestVal;
+
+          if (isAiTurn) {
+            if (ev > bestVal) bestVal = ev;
+            if (bestVal > alpha) alpha = bestVal;
+          } else {
+            if (ev < bestVal) bestVal = ev;
+            if (bestVal < beta) beta = bestVal;
           }
-          return maxEval;
-        } else {
-          let minEval = Infinity;
-          for (const move of candidateMoves) {
-            const childBoard = simulateTurnOnBoard(board, move, oppP);
-            const ev = minimaxAlphaBeta(childBoard, depth - 1, alpha, beta, true, r1, r2, aiP);
-            if (ev < minEval) minEval = ev;
-            if (ev < beta) beta = ev;
-            if (beta <= alpha) break;
-          }
-          return minEval;
+          if (beta <= alpha) break;
         }
+
+        if (!generalSearchAborted && GeneralTT.size < 90000 && (!pathSet || pathSet.size <= 1)) {
+          let flag = 0;
+          if (bestVal <= alphaOrig) flag = 2;
+          else if (bestVal >= betaOrig) flag = 1;
+          GeneralTT.set(ttKey, { depth, val: bestVal, flag });
+        }
+
+        return bestVal;
+      }
+
+      function chooseBestSeegaDrop(allSteps, aiP) {
+        ensureJumpRaysCache();
+        const oppP = aiP === 1 ? 2 : 1;
+        const diff = GameState.aiDifficulty;
+        const board = GameState.board;
+        const centerId = Math.floor(Nodes.length / 2);
+        const centerNeighbors = Adjacency[centerId] ? Array.from(Adjacency[centerId]) : [7, 11, 13, 17];
+
+        if (diff === 'easy') {
+          return allSteps[Math.floor(Math.random() * allSteps.length)];
+        }
+
+        const scoredDrops = allSteps.map((m) => {
+          const toId = m.to;
+          let sc = 0;
+          // 1. High priority: control the 4 orthogonal neighbors of the immune Center Sanctuary (node 12)
+          if (centerNeighbors.includes(toId)) {
+            sc += 1450;
+          }
+          const deg = Adjacency[toId] ? Adjacency[toId].size : 2;
+          sc += deg * 120;
+
+          // 2. Pre-load Custodian Jaws: if `toId -> adj -> anvil` has `board[adj] === oppP` and `board[anvil] === aiP`
+          // or `board[adj] === oppP` and `board[anvil] === 0` with another `aiP` neighbor
+          if (CollinearJumps[toId]) {
+            for (const cand of CollinearJumps[toId]) {
+              const mid = cand.over;
+              const far = cand.to;
+              if (mid === centerId) continue;
+              if (board[mid] === oppP && board[far] === aiP) {
+                sc += 1100; // Surrounds enemy bead on both sides!
+              } else if (board[mid] === oppP && board[far] === 0) {
+                sc += 680; // Sets up anvil against enemy bead!
+              } else if (board[mid] === 0 && board[far] === aiP) {
+                sc += 420; // Builds custodian net across empty square
+              }
+            }
+          }
+
+          // 3. Avoid dropping directly between two enemy beads!
+          const rays = JumpRaysOverNode[toId] || [];
+          for (const ray of rays) {
+            if (board[ray.from] === oppP && board[ray.to] === oppP) {
+              sc -= 950;
+            } else if (board[ray.from] === oppP && board[ray.to] === 0) {
+              sc -= 240;
+            }
+          }
+
+          // 4. Diagonal phalanx support with existing friendly beads
+          const nTo = Nodes[toId];
+          for (let i = 0; i < Nodes.length; i++) {
+            if (board[i] === aiP) {
+              const ni = Nodes[i];
+              if (Math.abs(nTo.r - ni.r) === 1 && Math.abs(nTo.c - ni.c) === 1) {
+                sc += 340;
+              }
+            }
+          }
+
+          const learned = (diff === 'hardest')
+            ? MorrisLearner.getHardestBonus(board, m, aiP, GameState.reserves[aiP], GameState.reserves[oppP])
+            : MorrisLearner.getBonus(board, m, aiP, GameState.reserves[aiP], GameState.reserves[oppP]);
+          sc += learned;
+          return { move: m, score: sc };
+        });
+
+        scoredDrops.sort((a, b) => b.score - a.score);
+        return scoredDrops[0].move;
       }
 
       function chooseBestContinuationJump(nodeId) {
+        const player = GameState.currentTurn;
+        const opp = player === 1 ? 2 : 1;
         const { jumps } = getLegalActionsForPiece(nodeId);
-        if (jumps.length === 0) return null;
-        const raw = jumps[0];
-        if (raw.captureMode === 'both') {
-          const useApp = raw.approachIds.length >= raw.withdrawalIds.length;
-          return {
-            ...raw,
-            captureMode: useApp ? 'approach' : 'withdrawal',
-            capturedIds: useApp ? raw.approachIds : raw.withdrawalIds,
-            capturedId: (useApp ? raw.approachIds : raw.withdrawalIds)[0]
-          };
+        const expanded = expandDualJumpsList(jumps);
+        if (expanded.length === 0) return null;
+        if (GameState.aiDifficulty === 'easy' || expanded.length === 1) {
+          return expanded[0];
         }
-        if (GameState.aiDifficulty === 'easy' || jumps.length === 1) {
-          return jumps[0];
-        }
-        let bestJ = jumps[0];
+
+        let bestJ = expanded[0];
         let bestVal = -Infinity;
-        for (const j of jumps) {
-          const sim = simulateTurnOnBoard(GameState.board, j, GameState.currentTurn);
-          const moreJumps = getLegalActionsForPiece(j.to, sim).jumps.length;
-          const capCount = (j.capturedIds ? j.capturedIds.length : 1);
-          const val = capCount * 30 + moreJumps * 25 + Adjacency[j.to].size;
-          if (val > bestVal) {
-            bestVal = val;
+        for (const j of expanded) {
+          const sim = simulateTurnOnBoard(GameState.board, j, player, GameState.kings, GameState.reserves);
+          const ev = evaluateBoardPosition(sim.board, sim.reserves[1], sim.reserves[2], player, sim.kings, opp);
+          const capBonus = sim.totalCaptured * 3200 + (sim.promoted ? 5000 : 0);
+          const total = ev + capBonus;
+          if (total > bestVal) {
+            bestVal = total;
             bestJ = j;
           }
         }
         return bestJ;
       }
 
-      function normalizeDualActionForAI(act) {
-        if (act && act.captureMode === 'both') {
-          const useApp = act.approachIds.length >= act.withdrawalIds.length;
-          return {
-            ...act,
-            captureMode: useApp ? 'approach' : 'withdrawal',
-            capturedIds: useApp ? act.approachIds : act.withdrawalIds,
-            capturedId: (useApp ? act.approachIds : act.withdrawalIds)[0]
-          };
+      function computeBestGeneralAction(aiP = (GameState.aiPlayerRole || 2)) {
+        if (GameState.gameFamily === 'morris') return computeBestLocalMorrisAction();
+        if (GameState.gameFamily === 'gomoku') return computeBestGomokuAction(aiP);
+        if (GameState.gameFamily === 'tiger_goat') return computeBestTigerGoatAction(aiP);
+
+        const oppP = aiP === 1 ? 2 : 1;
+        const diff = GameState.aiDifficulty;
+        const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(aiP);
+        if (total === 0) return null;
+
+        if (GameState.gameFamily === 'seega' && allSteps.length > 0 && allSteps[0].type === 'drop') {
+          const dropPick = chooseBestSeegaDrop(allSteps, aiP);
+          return { bestAction: dropPick, ranked: [{ action: dropPick, score: 1000 }] };
         }
-        return act;
+
+        const forceCap = (GameState.mandatoryCapture === 'forced' || GameState.gameFamily === 'fanorona');
+        const rawPool = (forceCap && allJumps.length > 0)
+          ? expandDualJumpsList(allJumps)
+          : [...expandDualJumpsList(allJumps), ...allSteps];
+
+        const orderedPool = orderGeneralMoves(rawPool, GameState.board, aiP, true, GameState.kings, GameState.reserves);
+        if (orderedPool.length === 0) return null;
+
+        if (diff === 'easy') {
+          const topEasy = orderedPool.slice(0, Math.min(5, orderedPool.length));
+          const pick = Math.random() < 0.7 ? topEasy[Math.floor(Math.random() * topEasy.length)] : orderedPool[0];
+          return { bestAction: pick, ranked: orderedPool.map((m, i) => ({ action: m, score: 500 - i * 20 })) };
+        }
+
+        if (GeneralTT.size > 90000) GeneralTT.clear();
+        generalSearchAborted = false;
+        const intel = MorrisLearner.getIntelligenceLevel();
+        const timeBudget = diff === 'hardest'
+          ? (GameState.aiVsAi ? 280 : 450)
+          : (diff === 'hard' ? 220 : 110);
+        generalSearchDeadline = performance.now() + timeBudget;
+
+        const maxDepth = diff === 'hardest'
+          ? (6 + Math.min(2, intel.depthBonus || 0))
+          : (diff === 'hard' ? 4 : 2);
+
+        const rootPool = orderedPool.slice(0, Math.min(diff === 'hardest' ? 18 : 14, orderedPool.length));
+        let bestAction = rootPool[0];
+        const scoreMap = new Map();
+
+        for (let d = 1; d <= maxDepth; d++) {
+          let iterBest = rootPool[0];
+          let iterBestVal = -Infinity;
+          let alpha = -Infinity;
+          const beta = Infinity;
+
+          for (const act of rootPool) {
+            const sim = simulateTurnOnBoard(GameState.board, act, aiP, GameState.kings, GameState.reserves);
+            const capBonus = act.type === 'jump' ? (sim.totalCaptured * 950) : 0;
+            const promoBonus = sim.promoted ? 1800 : 0;
+            const loopInfo = act.type === 'step'
+              ? LoopTracker.evaluateLoopPenalty(act, GameState.board, sim.board, aiP, sim.reserves[1], sim.reserves[2], false)
+              : { penalty: 0, breakthroughBonus: 0 };
+            const learnedVal = (diff === 'hardest')
+              ? MorrisLearner.getHardestBonus(GameState.board, act, aiP, GameState.reserves[1], GameState.reserves[2]) * 0.25
+              : MorrisLearner.getBonus(GameState.board, act, aiP, GameState.reserves[1], GameState.reserves[2]) * 0.15;
+
+            const mmVal = minimaxAlphaBeta(
+              sim.board,
+              d - 1,
+              alpha,
+              beta,
+              false,
+              sim.reserves[1],
+              sim.reserves[2],
+              aiP,
+              sim.kings,
+              new Set()
+            );
+            if (generalSearchAborted) break;
+
+            const totalVal = mmVal + capBonus + promoBonus + learnedVal - loopInfo.penalty + loopInfo.breakthroughBonus;
+            scoreMap.set(act, Math.round(totalVal));
+
+            if (totalVal > iterBestVal) {
+              iterBestVal = totalVal;
+              iterBest = act;
+            }
+            if (totalVal > alpha) alpha = totalVal;
+          }
+
+          if (!generalSearchAborted) {
+            bestAction = iterBest;
+            rootPool.sort((a, b) => (scoreMap.get(b) ?? 0) - (scoreMap.get(a) ?? 0));
+            if (iterBestVal >= 175000) break;
+          } else {
+            break;
+          }
+        }
+
+        // Opening variety in AI vs AI or opening plies when top 2 moves are virtually tied and both completely safe
+        if (GameState.moveLog.length < 4 && rootPool.length >= 2) {
+          const s0 = scoreMap.get(rootPool[0]) ?? 0;
+          const s1 = scoreMap.get(rootPool[1]) ?? -99999;
+          if (s0 - s1 <= 85 && Math.random() < 0.35) {
+            bestAction = rootPool[1];
+          }
+        }
+
+        const ranked = rootPool.map((m) => ({
+          action: m,
+          score: scoreMap.get(m) ?? 0
+        })).sort((a, b) => b.score - a.score);
+
+        return { bestAction, ranked };
       }
 
       /* -------------------------------------------------------------------
@@ -9272,27 +10552,18 @@
           let candidateList = [];
           let localBest = null;
 
-          if (GameState.gameFamily === 'morris') {
-            const res = computeBestLocalMorrisAction();
-            if (!res || !res.bestAction) {
-              fallbackFn();
-              return;
-            }
-            localBest = res.bestAction;
-            candidateList = (res.ranked || []).slice(0, 8);
-          } else {
-            const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(aiP);
-            if (total === 0) {
-              fallbackFn();
-              return;
-            }
-            const rawPool = allJumps.length > 0 ? allJumps : allSteps;
-            const ordered = GameState.gameFamily === 'gomoku'
-              ? rawPool.slice(0, 10)
-              : orderGeneralMoves(rawPool, GameState.board, aiP, true).slice(0, 8);
-            localBest = normalizeDualActionForAI(ordered[0]);
-            candidateList = ordered.map((m, idx) => ({ action: normalizeDualActionForAI(m), score: 1000 - idx * 50 }));
+          const res = (GameState.gameFamily === 'morris')
+            ? computeBestLocalMorrisAction()
+            : computeBestGeneralAction(aiP);
+          if (!res || !res.bestAction) {
+            fallbackFn();
+            return;
           }
+          localBest = normalizeDualActionForAI(res.bestAction);
+          candidateList = (res.ranked || [{ action: localBest, score: 1000 }]).slice(0, 8).map((item) => ({
+            action: normalizeDualActionForAI(item.action),
+            score: item.score
+          }));
 
           if (candidateList.length <= 1 && localBest) {
             MorrisLearner.recordStep(GameState.board, localBest, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
@@ -9513,137 +10784,9 @@
           return;
         }
 
-        const { allSteps, allJumps, total } = getAllLegalActionsForPlayer(aiP);
-        if (total === 0) return;
-
-        if (GameState.gameFamily === 'seega' && allSteps.length > 0 && allSteps[0].type === 'drop') {
-          const scoredDrops = allSteps.map((m) => {
-            let sc = 0;
-            const deg = Adjacency[m.to] ? Adjacency[m.to].size : 2;
-            sc += deg * 14;
-            let friendlyAdj = 0;
-            let oppAdj = 0;
-            for (const nb of Adjacency[m.to]) {
-              if (GameState.board[nb] === aiP) friendlyAdj++;
-              else if (GameState.board[nb] === (aiP === 1 ? 2 : 1)) oppAdj++;
-            }
-            sc += friendlyAdj * 220 - oppAdj * 90;
-            const learned = (GameState.aiDifficulty === 'hardest')
-              ? MorrisLearner.getHardestBonus(GameState.board, m, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1])
-              : MorrisLearner.getBonus(GameState.board, m, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
-            sc += learned;
-            return { move: m, score: sc };
-          });
-          scoredDrops.sort((a, b) => b.score - a.score);
-          let chosen = scoredDrops[0].move;
-          if (GameState.aiDifficulty === 'easy') {
-            chosen = allSteps[Math.floor(Math.random() * allSteps.length)];
-          } else {
-            const topScore = scoredDrops[0].score;
-            const elite = scoredDrops.filter((x) => x.score >= topScore - 40);
-            chosen = elite[Math.floor(Math.random() * elite.length)].move;
-          }
-          MorrisLearner.recordStep(GameState.board, chosen, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
-          executeAction(chosen, false);
-          return;
-        }
-
-        const diff = GameState.aiDifficulty;
-
-        if (diff === 'easy') {
-          if (allJumps.length > 0 && (GameState.mandatoryCapture === 'forced' || GameState.gameFamily === 'fanorona' || Math.random() < 0.65)) {
-            const pick = allJumps[Math.floor(Math.random() * allJumps.length)];
-            executeAction(normalizeDualActionForAI(pick), false);
-            return;
-          }
-          if (allSteps.length > 0) {
-            const pick = allSteps[Math.floor(Math.random() * allSteps.length)];
-            executeAction(pick, false);
-            return;
-          }
-          executeAction(normalizeDualActionForAI(allJumps[0]), false);
-          return;
-        }
-
-        if (diff === 'medium') {
-          if (allJumps.length > 0) {
-            let bestJump = allJumps[0];
-            let bestScore = -9999;
-            for (const rawJ of allJumps) {
-              const j = normalizeDualActionForAI(rawJ);
-              const simBoard = simulateTurnOnBoard(GameState.board, j, aiP);
-              const follow = getLegalActionsForPiece(j.to, simBoard);
-              const capCount = j.capturedIds ? j.capturedIds.length : 1;
-              const score = capCount * 22 + follow.jumps.length * 14 + Math.random() * 2;
-              if (score > bestScore) {
-                bestScore = score;
-                bestJump = j;
-              }
-            }
-            executeAction(bestJump, false);
-            return;
-          }
-
-          const midR = (GameState.rows - 1) / 2;
-          const midC = (GameState.cols - 1) / 2;
-          let bestStep = allSteps[0];
-          let bestScore = -999999;
-          for (const s of allSteps) {
-            const simBoard = [...GameState.board];
-            simBoard[s.from] = 0;
-            simBoard[s.to] = aiP;
-            const oppReplies = getAllLegalActionsForPlayer(aiP === 1 ? 2 : 1, simBoard);
-            const dangerPenalty = oppReplies.allJumps.length * 12;
-            const centerBonus = (4 - Math.abs(midR - Nodes[s.to].r)) * 1.5 + (4 - Math.abs(midC - Nodes[s.to].c)) * 1.1;
-            const loopInfo = LoopTracker.evaluateLoopPenalty(s, GameState.board, simBoard, aiP, GameState.reserves[1], GameState.reserves[2], false);
-            const score = centerBonus - dangerPenalty - loopInfo.penalty * 0.05 + loopInfo.breakthroughBonus * 0.05 + Math.random() * 2.5;
-            if (score > bestScore) {
-              bestScore = score;
-              bestStep = s;
-            }
-          }
-          executeAction(bestStep, false);
-          return;
-        }
-
-        const isHardest = (diff === 'hardest');
-        const intel = MorrisLearner.getIntelligenceLevel();
-        const searchDepth = isHardest ? (6 + (intel.depthBonus || 0)) : 3;
-        const candidatePool = allJumps.length > 0
-          ? [...allJumps, ...((GameState.mandatoryCapture === 'forced' || GameState.gameFamily === 'fanorona') ? [] : orderGeneralMoves(allSteps, GameState.board, aiP, true).slice(0, 10))]
-          : orderGeneralMoves(allSteps, GameState.board, aiP, true).slice(0, isHardest ? 22 : 20);
-
-        let bestAction = normalizeDualActionForAI(candidatePool[0]);
-        let bestVal = -Infinity;
-        const scoredActions = [];
-
-        for (const rawAct of candidatePool) {
-          const act = normalizeDualActionForAI(rawAct);
-          const nextBoard = simulateTurnOnBoard(GameState.board, act, aiP);
-          const capBonus = act.type === 'jump' ? 60 * (act.capturedIds ? act.capturedIds.length : 1) : 0;
-          const loopInfo = act.type === 'step'
-            ? LoopTracker.evaluateLoopPenalty(act, GameState.board, nextBoard, aiP, GameState.reserves[1], GameState.reserves[2], false)
-            : { penalty: 0, breakthroughBonus: 0 };
-          const learnedVal = isHardest
-            ? MorrisLearner.getHardestBonus(GameState.board, act, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1])
-            : MorrisLearner.getBonus(GameState.board, act, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
-          const val = capBonus + learnedVal - loopInfo.penalty * 0.1 + loopInfo.breakthroughBonus * 0.1 + minimaxAlphaBeta(
-            nextBoard,
-            searchDepth - 1,
-            -Infinity,
-            Infinity,
-            false,
-            GameState.reserves[1],
-            GameState.reserves[2],
-            aiP
-          );
-          scoredActions.push({ act, val });
-          if (val > bestVal) {
-            bestVal = val;
-            bestAction = act;
-          }
-        }
-
+        const res = computeBestGeneralAction(aiP);
+        if (!res || !res.bestAction) return;
+        const bestAction = normalizeDualActionForAI(res.bestAction);
         MorrisLearner.recordStep(GameState.board, bestAction, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
         executeAction(bestAction, false);
       }
@@ -14381,8 +15524,11 @@
           }
           return;
         }
+        const aiSuggested = computeBestGeneralAction(GameState.currentTurn);
         const { allSteps, allJumps } = getAllLegalActionsForPlayer(GameState.currentTurn);
-        const pick = allJumps.length > 0 ? allJumps[0] : (allSteps.length > 0 ? allSteps[0] : null);
+        const pick = (aiSuggested && aiSuggested.bestAction)
+          ? aiSuggested.bestAction
+          : (allJumps.length > 0 ? allJumps[0] : (allSteps.length > 0 ? allSteps[0] : null));
         if (!pick) {
           showBoardToast('No legal moves available!');
           return;
@@ -16935,7 +18081,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=cf319de090', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=e2223b8b31', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
