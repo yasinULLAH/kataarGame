@@ -1215,6 +1215,17 @@
             </button>
           </div>
 
+          <div id="menuOnlineRoomBanner" class="hidden items-center justify-between gap-2 px-3 py-2 rounded-2xl bg-teal-50 border-2 border-teal-400/70 text-left shadow-sm">
+            <div class="flex items-center gap-2 min-w-0">
+              <span id="menuOnlineRoomDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 animate-pulse"></span>
+              <span id="menuOnlineRoomLabel" class="text-[11px] font-extrabold text-teal-900 truncate">Room Active</span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button id="btnMenuShowOnlineRoom" type="button" class="android-btn px-2 py-1 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[10px] font-black shadow-sm">Room</button>
+              <button id="btnMenuLeaveOnlineRoom" type="button" class="android-btn px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-black shadow-sm">Close Room</button>
+            </div>
+          </div>
+
           <div class="pt-1">
             <button id="btnMenuPlay" type="button" class="android-btn w-full py-3 sm:py-3.5 rounded-2xl bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-walnut-900 font-black text-base sm:text-lg shadow-[0_4px_0_#B45309] active:translate-y-1 active:shadow-none flex items-center justify-center gap-2">
               <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5.5v13a1 1 0 0 0 1.52.86l10.2-6.5a1 1 0 0 0 0-1.72L9.52 4.64A1 1 0 0 0 8 5.5z"/></svg>
@@ -1868,6 +1879,17 @@
           </div>
 
           <div id="globalChoiceView" class="space-y-3">
+            <div id="globalActiveRoomBar" class="hidden items-center justify-between gap-2 bg-teal-50 border-2 border-teal-500 rounded-2xl p-3 shadow-sm">
+              <div class="min-w-0">
+                <div id="globalActiveRoomTitle" class="text-xs font-extrabold text-teal-950 truncate">Active Room</div>
+                <div id="globalActiveRoomSub" class="text-[11px] text-teal-800 truncate">Manage or close this room</div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button id="btnViewActiveGlobalQR" type="button" class="hidden android-btn px-2.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-[11px] font-black shadow">QR / Code</button>
+                <button id="btnLeaveActiveGlobalRoom" type="button" class="android-btn px-2.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-black shadow">✕ Close Room</button>
+              </div>
+            </div>
+
             <div class="bg-sky-50 border border-sky-300 rounded-2xl p-3 text-[11px] text-walnut-800 space-y-1">
               <div class="font-extrabold text-sky-900 flex items-center gap-1.5">
                 <span>🌍</span><span>Play with anyone, anywhere</span>
@@ -1911,11 +1933,16 @@
               </div>
             </div>
 
-            <div id="globalResumeHint" class="hidden bg-emerald-50 border border-emerald-300 rounded-2xl p-3 text-[11px] text-emerald-900 flex items-center justify-between gap-2">
+            <div id="globalResumeHint" class="hidden bg-emerald-50 border border-emerald-300 rounded-2xl p-3 text-[11px] text-emerald-900 items-center justify-between gap-2">
               <span id="globalResumeText" class="font-bold">A previous online match is saved on this device.</span>
-              <button id="btnGlobalResumeLast" type="button" class="android-btn px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black shrink-0 shadow">
-                ↻ Resume
-              </button>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button id="btnGlobalResumeLast" type="button" class="android-btn px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black shadow">
+                  ↻ Resume
+                </button>
+                <button id="btnDismissGlobalResume" type="button" class="android-btn px-2 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-walnut-700 hover:text-rose-700 border border-emerald-300 text-[11px] font-black" title="Dismiss saved room">
+                  ✕
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1950,8 +1977,8 @@
               <button id="btnGlobalReconnect" type="button" class="android-btn py-2 px-2 rounded-xl bg-parchment-100 hover:bg-parchment-200 text-walnut-800 text-xs font-bold border border-parchment-300">
                 ⚡ Refresh Room
               </button>
-              <button id="btnGlobalBackToChoice" type="button" class="android-btn py-2 px-2 rounded-xl bg-parchment-100 hover:bg-parchment-200 text-walnut-800 text-xs font-bold border border-parchment-300">
-                ← Back
+              <button id="btnGlobalBackToChoice" type="button" class="android-btn py-2 px-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-extrabold shadow">
+                ✕ Close Room
               </button>
             </div>
             <div class="flex items-center justify-center gap-2 py-1 px-3 rounded-xl bg-sky-50 border border-sky-200 text-[11px] font-bold text-sky-900">
@@ -4384,13 +4411,18 @@
       function initMatch(broadcast = false, asRemote = false) {
         if (GameState.mode === 'webrtc' && GameState.localPlayerRole === 2 && !asRemote) {
           if (WebRTCManager.isConnected()) {
-            WebRTCManager.send(WebRTCManager.roomCode
-              ? { type: 'REMATCH_REQUEST' }
-              : { type: 'REQUEST_RESYNC', reason: 'guest-initMatch' });
+            WebRTCManager.send({ type: 'REMATCH_REQUEST' });
           }
           showBoardToast('🛡️ Only the host can start a rematch online — request sent to Player 1.');
           return;
         }
+        const mvInit = document.getElementById('modalVictory');
+        if (mvInit) {
+          mvInit.classList.add('hidden');
+          mvInit.classList.remove('flex');
+        }
+        const vibInit = document.getElementById('victoryInspectBar');
+        if (vibInit) vibInit.classList.add('hidden');
         if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
           ReplayManager.close(false);
         }
@@ -4637,10 +4669,10 @@
         }
 
         if (broadcast && WebRTCManager.isConnected()) {
-          WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
           if (GameState.localPlayerRole === 1) {
             WebRTCManager.send({ type: 'RESET_MATCH' });
           }
+          WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
         }
 
         if (GameState.aiVsAi) {
@@ -4733,7 +4765,7 @@
         }, 1000);
       }
 
-      function resetMatchTimer() {
+      function resetMatchTimer(preserveTime = false) {
         if (GameState.matchTimerInterval) {
           clearInterval(GameState.matchTimerInterval);
           GameState.matchTimerInterval = null;
@@ -4746,7 +4778,9 @@
           syncImmersiveTimer();
           return;
         }
-        GameState.matchTimeLeft = GameState.matchTimerSeconds;
+        if (!preserveTime || !GameState.matchTimeLeft || GameState.matchTimeLeft <= 0 || GameState.matchTimeLeft > GameState.matchTimerSeconds) {
+          GameState.matchTimeLeft = GameState.matchTimerSeconds;
+        }
         updateMatchTimerDisplay();
 
         if (!GameState.isStarted || GameState.isPaused) return;
@@ -5160,6 +5194,7 @@
           if (modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            ensureBackGuardState();
           }
           setTimeout(() => {
             const inp = document.getElementById('inpProfileName');
@@ -5482,10 +5517,18 @@
       function saveLiveMatchSnapshot(isAwayGrace = false, absentPlayer = null) {
         savePersistentPrefs();
         try {
-          if (GameState.gameOver) {
+          const hasMoves = Boolean((GameState.moveLog && GameState.moveLog.length > 0) || (GameState.history && GameState.history.length > 0));
+          if (GameState.gameOver || !hasMoves) {
             SafeStorage.removeItem('katar_live_match_v3');
             return;
           }
+          const allowOnlineSnap = Boolean(
+            GameState.mode === 'webrtc' &&
+            WebRTCManager.roomCode &&
+            !WebRTCManager.intentionalLeave &&
+            !WebRTCManager.suppressLossGrace &&
+            hasMoves
+          );
           const snap = {
             savedAt: Date.now(),
             isAwayGrace: Boolean(isAwayGrace),
@@ -5494,8 +5537,8 @@
             aiVsAi: GameState.aiVsAi,
             aiDifficulty: GameState.aiDifficulty,
             aiPlayerRole: GameState.aiVsAi ? GameState.currentTurn : GameState.aiPlayerRole,
-            online: (GameState.mode === 'webrtc') ? {
-              roomCode: WebRTCManager.roomCode || null,
+            online: allowOnlineSnap ? {
+              roomCode: WebRTCManager.roomCode,
               role: GameState.localPlayerRole || null,
               sessionId: GameState.sessionId || null,
               transport: WebRTCManager.transport || null
@@ -5514,12 +5557,20 @@
           const raw = SafeStorage.getItem('katar_live_match_v3');
           if (!raw) return false;
           const snap = JSON.parse(raw);
-          if (!snap || !snap.state || snap.state.gameOver) return false;
+          if (!snap || !snap.state || snap.state.gameOver) {
+            SafeStorage.removeItem('katar_live_match_v3');
+            return false;
+          }
+          const snapHasMoves = Boolean(Array.isArray(snap.state.moveLog) && snap.state.moveLog.length > 0);
+          if (!snapHasMoves) {
+            SafeStorage.removeItem('katar_live_match_v3');
+            return false;
+          }
           if (snap.vsAI !== undefined) GameState.vsAI = Boolean(snap.vsAI);
           if (snap.aiVsAi !== undefined) GameState.aiVsAi = Boolean(snap.aiVsAi);
           if (snap.aiDifficulty) GameState.aiDifficulty = snap.aiDifficulty;
           if (snap.aiPlayerRole) GameState.aiPlayerRole = snap.aiPlayerRole;
-          applyRemoteGameState(snap.state);
+          applyRemoteGameState(snap.state, false);
           if (GameState.aiVsAi) {
             GameState.vsAI = true;
             GameState.aiPlayerRole = GameState.currentTurn;
@@ -5538,18 +5589,22 @@
               WebRTCManager.transport = (online.transport === 'lan-backup' || online.transport === 'mqtt-webrtc' || online.transport === 'mqtt-relay') ? online.transport : 'peerjs';
               GameState.boardFlipped = (online.role === 2);
               setTimeout(() => {
-                if (GameState.gameOver || GameState.mode !== 'webrtc') return;
+                if (GameState.gameOver || GameState.mode !== 'webrtc' || !WebRTCManager.roomCode || WebRTCManager.intentionalLeave) return;
                 showBoardToast(`↻ Restoring online room ${online.roomCode}…`);
                 if (online.role === 1) WebRTCManager.hostGlobalRoom(online.roomCode);
                 else WebRTCManager.joinGlobalRoom(online.roomCode);
               }, 700);
             } else {
-              // Too old (or an invite link is taking priority) — keep the board as a local match.
               GameState.mode = 'pass_play';
               GameState.vsAI = false;
               GameState.localPlayerRole = null;
               WebRTCManager.roomCode = '';
               WebRTCManager.transport = 'none';
+              try {
+                SafeStorage.removeItem('katar_last_room_v1');
+                snap.online = null;
+                SafeStorage.setItem('katar_live_match_v3', JSON.stringify(snap));
+              } catch (e) {}
               if (!skipOnlineAutoRejoin) {
                 showBoardToast('Saved online match is older than 15 minutes — restored locally.');
               }
@@ -12668,6 +12723,7 @@
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        ensureBackGuardState();
       }
 
       function showVictoryModal(immediate = false) {
@@ -12732,13 +12788,15 @@
           lockSettingsMidGame: GameState.lockSettingsMidGame,
           lastMove: GameState.lastMove,
           moveLog: GameState.moveLog,
+          isStarted: Boolean(GameState.isStarted),
+          isPaused: Boolean(GameState.isPaused),
           gameOver: GameState.gameOver,
           winner: GameState.winner,
           winReason: GameState.winReason
         };
       }
 
-      function applyRemoteGameState(remote) {
+      function applyRemoteGameState(remote, fromNetwork = false) {
         if (!remote) return;
         const topologyChanged = (
           remote.gameFamily !== GameState.gameFamily ||
@@ -12805,12 +12863,20 @@
         GameState.winner = remote.winner;
         GameState.winReason = remote.winReason || '';
 
+        if (remote.isStarted !== undefined) {
+          GameState.isStarted = Boolean(remote.isStarted);
+          GameState.isPaused = Boolean(remote.isPaused);
+        } else if (fromNetwork && GameState.moveLog.length > 0) {
+          GameState.isStarted = true;
+          GameState.isPaused = false;
+        }
+
         syncSettingsControlsFromState();
         resetTurnTimer();
         if (!remote.matchTimeLeft || GameState.moveLog.length === 0) {
-          resetMatchTimer();
+          resetMatchTimer(false);
         } else {
-          updateMatchTimerDisplay();
+          resetMatchTimer(true);
         }
 
         if (GameState.gameOver) {
@@ -12818,9 +12884,16 @@
         } else {
           document.getElementById('modalVictory').classList.add('hidden');
           document.getElementById('modalVictory').classList.remove('flex');
+          const inspectBar = document.getElementById('victoryInspectBar');
+          if (inspectBar) inspectBar.classList.add('hidden');
         }
         updateHUD();
         updateMoveLogUI();
+        if (fromNetwork && typeof MainMenu !== 'undefined') {
+          MainMenu.applyNetworkLifecycle(GameState.isStarted, GameState.isPaused);
+        } else if (typeof MainMenu !== 'undefined') {
+          MainMenu.syncUI();
+        }
         requestRender();
       }
 
@@ -13698,6 +13771,7 @@
           const host = document.getElementById('globalHostView');
           if (choice) choice.classList.remove('hidden');
           if (host) host.classList.add('hidden');
+          this.syncRoomActionUI();
         },
 
         showGlobalHostView() {
@@ -13706,6 +13780,7 @@
           const host = document.getElementById('globalHostView');
           if (choice) choice.classList.add('hidden');
           if (host) host.classList.remove('hidden');
+          this.syncRoomActionUI();
         },
 
         renderGlobalRoomQR() {
@@ -13777,11 +13852,108 @@
         showGlobalResumeHint() {
           const hint = document.getElementById('globalResumeHint');
           const txt = document.getElementById('globalResumeText');
+          if (!hint) return;
           let saved = '';
           try { saved = SafeStorage.getItem('katar_last_room_v1') || ''; } catch (e) {}
-          if (!hint || !saved) return;
+          if (!saved || this.roomCode || (GameState.mode === 'webrtc' && this.isConnected())) {
+            hint.classList.add('hidden');
+            hint.classList.remove('flex');
+            return;
+          }
           if (txt) txt.textContent = `Last world room: ${saved}. Resume if your friend is still waiting.`;
           hint.classList.remove('hidden');
+          hint.classList.add('flex');
+        },
+
+        syncRoomActionUI() {
+          const bar = document.getElementById('globalActiveRoomBar');
+          const title = document.getElementById('globalActiveRoomTitle');
+          const sub = document.getElementById('globalActiveRoomSub');
+          const btnQR = document.getElementById('btnViewActiveGlobalQR');
+          const inOnline = Boolean(this.roomCode || GameState.mode === 'webrtc');
+          if (bar) {
+            bar.classList.toggle('hidden', !inOnline);
+            bar.classList.toggle('flex', inOnline);
+          }
+          if (inOnline && title && sub) {
+            const role = GameState.localPlayerRole || 1;
+            if (this.roomCode) {
+              title.textContent = this.isConnected()
+                ? `🌍 Global Room ${this.roomCode} • Connected`
+                : `🌍 Global Room ${this.roomCode} • ${role === 1 ? 'Hosting' : 'Joining'}…`;
+              sub.textContent = `You are Player ${role} (${role === 1 ? 'Feroza / Teal' : 'Anar / Crimson'})`;
+            } else {
+              title.textContent = this.isConnected()
+                ? `📶 Direct P2P • Connected`
+                : `📶 P2P Session • Standby`;
+              sub.textContent = `You are Player ${role}`;
+            }
+          }
+          if (btnQR) {
+            const canShowQR = Boolean(this.roomCode && GameState.localPlayerRole === 1);
+            btnQR.classList.toggle('hidden', !canShowQR);
+          }
+          this.showGlobalResumeHint();
+          if (typeof MainMenu !== 'undefined' && typeof MainMenu.syncUI === 'function') {
+            MainMenu.syncUI();
+          }
+        },
+
+        leaveRoom(notifyPeer = true, reasonText = 'closed room') {
+          const wasConnected = this.isConnected();
+          const role = GameState.localPlayerRole;
+          this.intentionalLeave = true;
+          this.suppressLossGrace = true;
+          this.cancelAutoReconnect();
+          if (notifyPeer && wasConnected) {
+            if (isMatchActivelyInProgress() && role) {
+              this.send({
+                type: 'PEER_FORFEIT_LEAVE',
+                absentPlayer: role,
+                reason: reasonText || 'left match'
+              });
+            } else {
+              this.send({
+                type: 'ROOM_CLOSED',
+                reason: reasonText || 'closed room'
+              });
+            }
+          }
+          this.cleanup();
+          this.roomCode = '';
+          this.lastRoomCode = '';
+          this.remoteDeviceId = null;
+          this.remoteDeviceName = null;
+          this.activePeerId = null;
+          this.transport = 'none';
+          this.reconnectAttempts = 0;
+          this.roomLiveAnnounced = false;
+          try { SafeStorage.removeItem('katar_last_room_v1'); } catch (e) {}
+          try { SafeStorage.removeItem('katar_live_match_v3'); } catch (e) {}
+          const btnRec = document.getElementById('btnGraceQuickReconnect');
+          if (btnRec) btnRec.classList.add('hidden');
+          const codeLbl = document.getElementById('globalRoomCodeLabel');
+          if (codeLbl) codeLbl.textContent = '------';
+          const qrBox = document.getElementById('qrGlobalRoomBox');
+          if (qrBox) qrBox.innerHTML = '';
+          const chk = document.getElementById('globalRoomChecksum');
+          if (chk) chk.textContent = 'Room closed';
+          const inpRoom = document.getElementById('inpGlobalRoomCode');
+          if (inpRoom && !wasConnected) inpRoom.value = '';
+          GameState.mode = 'pass_play';
+          GameState.localPlayerRole = null;
+          GameState.sessionId = null;
+          GameState.boardFlipped = false;
+          cancelGraceTimer(false);
+          try { SafeStorage.removeItem('katar_live_match_v3'); } catch (e) {}
+          this.showGlobalChoiceView();
+          this.showChoiceView();
+          this.updateGlobalUI('idle', 'Not Connected', 'Host a world room or join a friend with a code / QR', 'PEERJS');
+          this.updateConnectionUI('idle', 'Pass & Play Active', 'Not in any online room');
+          this.syncRoomActionUI();
+          resizeCanvas();
+          updateHUD();
+          requestRender();
         },
 
         async hostGlobalRoom(code) {
@@ -13818,8 +13990,10 @@
           GameState.localPlayerRole = 1;
           GameState.sessionId = GameState.sessionId || ('S-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6));
           try { SafeStorage.setItem('katar_last_room_v1', room); } catch (e) {}
+          ensureBackGuardState();
           this.showGlobalHostView();
           this.renderGlobalRoomQR();
+          this.syncRoomActionUI();
           this.updateGlobalUI('connecting', `Opening room ${room}…`, 'Registering global rendezvous server', useDefaultCloud ? 'GLOBAL' : 'PEERJS');
           this.updateConnectionUI('connecting', `Hosting Global Room ${room}`, 'Waiting for Player 2 to join…');
 
@@ -13940,7 +14114,9 @@
           GameState.localPlayerRole = 2;
           GameState.sessionId = GameState.sessionId || ('S-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6));
           try { SafeStorage.setItem('katar_last_room_v1', room); } catch (e) {}
+          ensureBackGuardState();
           this.showGlobalChoiceView();
+          this.syncRoomActionUI();
           this.updateGlobalUI('connecting', `Joining ${room}…`, 'Contacting the host…', useDefaultCloud ? 'GLOBAL' : 'PEERJS');
           this.updateConnectionUI('connecting', `Joining Global Room ${room}`, 'Connecting…');
 
@@ -14231,7 +14407,10 @@
           if (this.roomCode) {
             const hint = document.getElementById('globalResumeHint');
             const txt = document.getElementById('globalResumeText');
-            if (hint) hint.classList.remove('hidden');
+            if (hint) {
+              hint.classList.remove('hidden');
+              hint.classList.add('flex');
+            }
             if (txt) txt.textContent = `Room ${this.roomCode} lost (${reason || 'network'}). Rejoining automatically…`;
           }
         },
@@ -14877,7 +15056,10 @@
           const btnRec = document.getElementById('btnGraceQuickReconnect');
           if (btnRec) btnRec.classList.add('hidden');
           const hint = document.getElementById('globalResumeHint');
-          if (hint) hint.classList.add('hidden');
+          if (hint) {
+            hint.classList.add('hidden');
+            hint.classList.remove('flex');
+          }
           resizeCanvas();
 
           this.startHeartbeat();
@@ -14933,6 +15115,9 @@
             modalConn.classList.add('hidden');
             modalConn.classList.remove('flex');
           }
+          this.showGlobalChoiceView();
+          this.showChoiceView();
+          this.syncRoomActionUI();
 
           if (GameState.localPlayerRole === 1) {
             setTimeout(() => {
@@ -15011,7 +15196,7 @@
 
           // Only meaningful gameplay / presence packets count as "the opponent is back".
           // Plain heartbeats must NOT cancel an away countdown (background tabs keep pinging).
-          const presenceTypes = ['MOVE_ACTION', 'SYNC_STATE', 'REQUEST_RESYNC', 'RESET_MATCH', 'PLAYER_RETURNED', 'HELLO_IDENTITY', 'HELLO_ACK'];
+          const presenceTypes = ['MOVE_ACTION', 'SYNC_STATE', 'REQUEST_RESYNC', 'RESET_MATCH', 'MATCH_FLOW', 'REMATCH_REQUEST', 'PLAYER_RETURNED', 'HELLO_IDENTITY', 'HELLO_ACK'];
           if (presenceTypes.includes(packet.type) && GameState.graceTimerInterval && remoteRole && GameState.graceAbsentPlayer === remoteRole) {
             cancelGraceTimer(false);
             showBoardToast('👋 Opponent is back — match resumed.');
@@ -15019,11 +15204,14 @@
 
           if (packet.type === 'MOVE_ACTION') {
             if (!packet.action) return;
-            if (!remoteRole || senderRole !== remoteRole) return; // spoofed side
+            if (!remoteRole || senderRole !== remoteRole) return;
             if (GameState.gameOver) return;
             if (GameState.currentTurn !== remoteRole) {
               this.requestResync('turn mismatch');
               return;
+            }
+            if ((!GameState.isStarted || GameState.isPaused || (typeof MainMenu !== 'undefined' && MainMenu.isOpen)) && typeof MainMenu !== 'undefined') {
+              MainMenu.applyNetworkLifecycle(true, false);
             }
             if (packet.action.type === 'end_chain') {
               if (GameState.chainJumpingNode === null) return;
@@ -15049,10 +15237,9 @@
 
           if (packet.type === 'SYNC_STATE' && packet.state) {
             if (!remoteRole) return;
-            // Host is the only authority for full state. Guests may only request it.
             if (GameState.localPlayerRole === 2 && senderRole !== 1) return;
             if (GameState.localPlayerRole === 1 && senderRole === 2) return;
-            applyRemoteGameState(packet.state);
+            applyRemoteGameState(packet.state, true);
             showBoardToast('Synced match state from host');
             return;
           }
@@ -15065,19 +15252,83 @@
           }
 
           if (packet.type === 'RESET_MATCH') {
-            if (GameState.localPlayerRole !== 1) return; // only the host can reset
+            if (GameState.localPlayerRole !== 2 || senderRole !== 1) return;
+            if (typeof ReplayManager !== 'undefined' && ReplayManager.active) ReplayManager.close(false);
+            if (aiTurnTimeoutId) {
+              clearTimeout(aiTurnTimeoutId);
+              aiTurnTimeoutId = null;
+            }
             cancelGraceTimer(false);
-            initMatch(false, true);
-            showBoardToast('Remote host restarted the match');
+            hideFanoronaChoiceBar();
+            const mv = document.getElementById('modalVictory');
+            if (mv) {
+              mv.classList.add('hidden');
+              mv.classList.remove('flex');
+            }
+            const vib = document.getElementById('victoryInspectBar');
+            if (vib) vib.classList.add('hidden');
+            GameState.history = [];
+            GameState.moveLog = [];
+            GameState.lastMove = null;
+            GameState.selectedNode = null;
+            GameState.chainJumpingNode = null;
+            GameState.chainCount = 0;
+            GameState.morrisPendingRemove = false;
+            GameState.lastFormedMill = null;
+            GameState.gameOver = false;
+            GameState.winner = null;
+            GameState.winReason = '';
+            if (typeof LoopTracker !== 'undefined') LoopTracker.reset();
+            VisualFX.particles = [];
+            VisualFX.movingPiece = null;
+            VisualFX.hintHighlight = null;
+            showBoardToast('🔁 Host restarted the match');
+            return;
+          }
+
+          if (packet.type === 'MATCH_FLOW') {
+            if (!remoteRole || senderRole !== remoteRole) return;
+            if (typeof MainMenu === 'undefined') return;
+            if (packet.action === 'play') {
+              MainMenu.play(true, false);
+              if (GameState.localPlayerRole === 1 && this.isConnected()) {
+                this.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
+              }
+            } else if (packet.action === 'resume') {
+              MainMenu.resume(true);
+              if (GameState.localPlayerRole === 1 && this.isConnected()) {
+                this.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
+              }
+            } else if (packet.action === 'pause') {
+              MainMenu.openPause(true);
+              if (GameState.localPlayerRole === 1 && this.isConnected()) {
+                this.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
+              }
+            } else if (packet.action === 'standby') {
+              if (senderRole === 1) {
+                MainMenu.openStandby(true);
+                showBoardToast('🏠 Host returned to Main Menu');
+              }
+            }
             return;
           }
 
           if (packet.type === 'REMATCH_REQUEST') {
-            if (GameState.localPlayerRole !== 1) return;
-            if (GameState.gameOver) {
-              initMatch(true);
-              showBoardToast('🔁 Opponent asked for a rematch — board reset!');
+            if (GameState.localPlayerRole !== 1 || senderRole !== 2) return;
+            if (GameState.gameOver || !isMatchActivelyInProgress()) {
+              if (typeof MainMenu !== 'undefined') MainMenu.replay();
+              else initMatch(true);
+              showBoardToast('🔁 Rematch started with Player 2!');
+            } else {
+              showBoardToast('🔁 Player 2 requested to restart — tap 🔄 Restart in menu if you agree.');
             }
+            return;
+          }
+
+          if (packet.type === 'ROOM_CLOSED') {
+            if (!remoteRole || (senderRole && senderRole !== remoteRole)) return;
+            this.leaveRoom(false, 'peer closed room');
+            showBoardToast('🚪 Opponent closed the room.');
             return;
           }
 
@@ -15099,10 +15350,19 @@
             if (!remoteRole || (packet.absentPlayer && packet.absentPlayer !== remoteRole)) return;
             this.suppressLossGrace = true;
             this.cleanup();
+            this.roomCode = '';
+            this.lastRoomCode = '';
+            this.remoteDeviceId = null;
+            this.remoteDeviceName = null;
+            try { SafeStorage.removeItem('katar_last_room_v1'); } catch (e) {}
+            try { SafeStorage.removeItem('katar_live_match_v3'); } catch (e) {}
             GameState.mode = 'pass_play';
             GameState.vsAI = true;
             GameState.localPlayerRole = null;
+            GameState.sessionId = null;
+            this.updateGlobalUI('idle', 'Not Connected', 'Opponent quit the match', 'PEERJS');
             this.updateConnectionUI('idle', 'Opponent Quit Match', 'Victory awarded by forfeit');
+            this.syncRoomActionUI();
             triggerAbandonmentForfeitWin(remoteRole, 0);
             this.suppressLossGrace = false;
             return;
@@ -15212,6 +15472,8 @@
         async generateHostOffer(isSilentAutoBus = false) {
           try {
             const pc = this.createPeerConnection();
+            this.intentionalLeave = false;
+            ensureBackGuardState();
             GameState.localPlayerRole = 1;
             const channel = pc.createDataChannel('katar-sync', { ordered: true });
             this.setupDataChannel(channel);
@@ -15245,6 +15507,8 @@
               throw new Error('Provided token is not a valid Host Offer.');
             }
             const pc = this.createPeerConnection();
+            this.intentionalLeave = false;
+            ensureBackGuardState();
             GameState.localPlayerRole = 2;
 
             pc.ondatachannel = (evt) => {
@@ -15521,6 +15785,7 @@
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        ensureBackGuardState();
 
         const video = document.getElementById('scannerVideo');
         const canvas = document.getElementById('scannerCanvas');
@@ -15798,6 +16063,7 @@
           if (preset === 'custom') {
             document.getElementById('modalRules').classList.remove('hidden');
             document.getElementById('modalRules').classList.add('flex');
+            ensureBackGuardState();
             return;
           }
           if (preset === GameState.gridPreset && !GameState.gameOver && GameState.isStarted && typeof MainMenu !== 'undefined' && !MainMenu.isOpen) {
@@ -15808,8 +16074,9 @@
             applyGridPresetConfig(preset);
             GameState.isStarted = false;
             GameState.isPaused = false;
+            if (typeof MainMenu !== 'undefined') MainMenu.isOpen = true;
             initMatch(true);
-            if (typeof MainMenu !== 'undefined') MainMenu.openStandby();
+            if (typeof MainMenu !== 'undefined') MainMenu.openStandby(true);
             showBoardToast(`Viewing ${chip.textContent.trim()} — Tap Play to start!`);
           });
         });
@@ -16081,7 +16348,13 @@
 
       document.getElementById('btnOpenConnectionModal').addEventListener('click', () => {
         SoundEngine.select();
-        if (WebRTCManager.roomCode) switchModeTab('global');
+        ensureBackGuardState();
+        if (WebRTCManager.roomCode) {
+          switchModeTab('global');
+          if (!WebRTCManager.isConnected() && GameState.localPlayerRole === 1) {
+            WebRTCManager.showGlobalHostView();
+          }
+        }
         document.getElementById('modalConnection').classList.remove('hidden');
         document.getElementById('modalConnection').classList.add('flex');
       });
@@ -16092,10 +16365,12 @@
         closeQrScanner();
         document.getElementById('modalConnection').classList.add('hidden');
         document.getElementById('modalConnection').classList.remove('flex');
+        if (typeof MainMenu !== 'undefined') MainMenu.syncUI();
       });
 
       document.getElementById('btnOpenRulesModal').addEventListener('click', () => {
         SoundEngine.select();
+        ensureBackGuardState();
         syncSettingsControlsFromState();
         document.getElementById('modalRules').classList.remove('hidden');
         document.getElementById('modalRules').classList.add('flex');
@@ -16260,8 +16535,12 @@
         SoundEngine.select();
         document.getElementById('modalRules').classList.add('hidden');
         document.getElementById('modalRules').classList.remove('flex');
-        initMatch(true);
-        MainMenu.play();
+        if (GameState.mode === 'webrtc' && GameState.localPlayerRole === 2 && WebRTCManager.isConnected()) {
+          showBoardToast('🛡️ Only the host (Player 1) can apply settings online.');
+          WebRTCManager.send({ type: 'REQUEST_RESYNC', reason: 'guest-settings' });
+          return;
+        }
+        MainMenu.replay();
         showBoardToast(`Match started: ${Nodes.length} nodes (${GameState.piecesPerPlayer}v${GameState.piecesPerPlayer} Beads)`);
         Immersive.enter();
       });
@@ -16360,26 +16639,34 @@
 
       document.getElementById('btnResetMatch').addEventListener('click', () => {
         SoundEngine.select();
+        if (GameState.mode === 'webrtc' && GameState.localPlayerRole === 2 && WebRTCManager.isConnected()) {
+          WebRTCManager.send({ type: 'REMATCH_REQUEST' });
+          showBoardToast('🔁 Restart request sent to Host...');
+          return;
+        }
         guardMidGameAction('Restart Current Match', () => {
-          initMatch(true);
-          MainMenu.play();
+          MainMenu.replay();
           showBoardToast('Match restarted!');
         });
       });
 
       document.getElementById('btnVictoryPlayAgain').addEventListener('click', () => {
         SoundEngine.select();
-        if (GameState.mode === 'webrtc' && WebRTCManager.isConnected() && GameState.localPlayerRole === 2) {
-          WebRTCManager.send({ type: 'REMATCH_REQUEST' });
-          showBoardToast('🔁 Rematch requested from Host...');
+        if (GameState.mode === 'webrtc' && GameState.localPlayerRole === 2) {
+          if (WebRTCManager.isConnected()) {
+            WebRTCManager.send({ type: 'REMATCH_REQUEST' });
+            showBoardToast('🔁 Rematch requested from Host...');
+          } else {
+            showBoardToast('🛡️ Close the room first to start a new local match.');
+          }
           return;
         }
-        initMatch(true);
-        MainMenu.play();
+        MainMenu.replay();
       });
 
       document.getElementById('btnVictoryChangeGrid').addEventListener('click', () => {
         SoundEngine.select();
+        ensureBackGuardState();
         document.getElementById('modalVictory').classList.add('hidden');
         document.getElementById('modalVictory').classList.remove('flex');
         document.getElementById('modalRules').classList.remove('hidden');
@@ -16947,6 +17234,7 @@
           if (modalEnc) {
             modalEnc.classList.remove('hidden');
             modalEnc.classList.add('flex');
+            ensureBackGuardState();
           }
         });
       }
@@ -16992,7 +17280,7 @@
         setModeTabStyle(tabGlobal, showGlobal);
         if (showGlobal) {
           WebRTCManager.applyPeerServerConfigUI();
-          WebRTCManager.showGlobalResumeHint();
+          WebRTCManager.syncRoomActionUI();
           if (!WebRTCManager.roomCode && WebRTCManager.globalView !== 'host') {
             WebRTCManager.showGlobalChoiceView();
           }
@@ -17000,6 +17288,7 @@
       }
 
       function openGlobalTab() {
+        ensureBackGuardState();
         switchModeTab('global');
         const modal = document.getElementById('modalConnection');
         if (modal) {
@@ -17008,26 +17297,9 @@
         }
       }
 
-      // Leaving an online room to start a different local mode is an explicit quit → forfeit.
       function forfeitAndDetachOnline(reasonText) {
-        if (GameState.mode !== 'webrtc') return;
-        const role = GameState.localPlayerRole;
-        if (WebRTCManager.isConnected() && role) {
-          WebRTCManager.send({
-            type: 'PEER_FORFEIT_LEAVE',
-            absentPlayer: role,
-            reason: reasonText || 'switched game mode'
-          });
-        }
-        WebRTCManager.intentionalLeave = true;
-        WebRTCManager.cleanup();
-        WebRTCManager.roomCode = '';
-        WebRTCManager.transport = 'none';
-        GameState.localPlayerRole = null;
-        GameState.sessionId = null;
-        GameState.boardFlipped = false;
-        try { SafeStorage.removeItem('katar_last_room_v1'); } catch (e) {}
-        SafeStorage.removeItem('katar_live_match_v3');
+        if (GameState.mode !== 'webrtc' && !WebRTCManager.roomCode && !WebRTCManager.isConnected()) return;
+        WebRTCManager.leaveRoom(true, reasonText || 'switched game mode');
       }
 
       tabPassPlay.addEventListener('click', () => {
@@ -17052,8 +17324,11 @@
       const btnOppAI = document.getElementById('btnOpponentAI');
       const btnOppAIvAI = document.getElementById('btnOpponentAIvAI');
       btnOppHuman.addEventListener('click', () => {
+        forfeitAndDetachOnline('switched to local 2P mode');
+        GameState.mode = 'pass_play';
         GameState.vsAI = false;
         GameState.aiVsAi = false;
+        GameState.localPlayerRole = null;
         savePersistentPrefs();
         syncSettingsControlsFromState();
         updateHUD();
@@ -17062,9 +17337,12 @@
       });
 
       btnOppAI.addEventListener('click', () => {
+        forfeitAndDetachOnline('switched to AI mode');
+        GameState.mode = 'pass_play';
         GameState.vsAI = true;
         GameState.aiVsAi = false;
         GameState.aiPlayerRole = 2;
+        GameState.localPlayerRole = null;
         savePersistentPrefs();
         syncSettingsControlsFromState();
         updateHUD();
@@ -17077,9 +17355,12 @@
 
       if (btnOppAIvAI) {
         btnOppAIvAI.addEventListener('click', () => {
+          forfeitAndDetachOnline('switched to AI vs AI mode');
+          GameState.mode = 'pass_play';
           GameState.vsAI = true;
           GameState.aiVsAi = true;
           GameState.aiPlayerRole = GameState.currentTurn;
+          GameState.localPlayerRole = null;
           savePersistentPrefs();
           syncSettingsControlsFromState();
           updateHUD();
@@ -17167,6 +17448,7 @@
 
       const openPuterModalFn = () => {
         SoundEngine.select();
+        ensureBackGuardState();
         PuterAIManager.refreshQuotaFromPuter(true);
         PuterAIManager.syncModalUI();
         const m = document.getElementById('modalPuterStats');
@@ -17526,26 +17808,54 @@
         });
       }
 
+      let pendingRoomCloseUntil = 0;
+      function handleCloseOrLeaveRoomClick() {
+        SoundEngine.select();
+        const isMidGame = isMatchActivelyInProgress();
+        const now = Date.now();
+        if (isMidGame && now > pendingRoomCloseUntil) {
+          pendingRoomCloseUntil = now + 4500;
+          showBoardToast('⚠️ Match in progress! Tap Close Room again within 4s to leave & close.');
+          return;
+        }
+        pendingRoomCloseUntil = 0;
+        const hadActiveMatch = isMatchActivelyInProgress();
+        WebRTCManager.leaveRoom(true, 'closed global room');
+        if (hadActiveMatch) {
+          initMatch(false);
+          if (typeof MainMenu !== 'undefined') MainMenu.openStandby(true);
+        }
+        showBoardToast('🚪 Room closed.');
+      }
+
       const btnGlobalBackToChoice = document.getElementById('btnGlobalBackToChoice');
       if (btnGlobalBackToChoice) {
-        btnGlobalBackToChoice.addEventListener('click', () => {
+        btnGlobalBackToChoice.addEventListener('click', handleCloseOrLeaveRoomClick);
+      }
+
+      const btnLeaveActiveGlobalRoom = document.getElementById('btnLeaveActiveGlobalRoom');
+      if (btnLeaveActiveGlobalRoom) {
+        btnLeaveActiveGlobalRoom.addEventListener('click', handleCloseOrLeaveRoomClick);
+      }
+
+      const btnViewActiveGlobalQR = document.getElementById('btnViewActiveGlobalQR');
+      if (btnViewActiveGlobalQR) {
+        btnViewActiveGlobalQR.addEventListener('click', () => {
           SoundEngine.select();
-          if (!WebRTCManager.isConnected()) {
-            if (!isMatchActivelyInProgress()) {
-              WebRTCManager.intentionalLeave = true;
-              WebRTCManager.cleanup();
-              WebRTCManager.roomCode = '';
-              WebRTCManager.transport = 'none';
-              GameState.localPlayerRole = null;
-              GameState.sessionId = null;
-              if (GameState.mode === 'webrtc') GameState.mode = 'pass_play';
-              WebRTCManager.updateGlobalUI('idle', 'Not Connected', 'Host a world room or join a friend with a code / QR', 'PEERJS');
-            } else {
-              showBoardToast('↻ Still reconnecting your match — use Away Timer → Leave to forfeit.');
-              WebRTCManager.scheduleAutoReconnect(1200);
-            }
-          }
-          WebRTCManager.showGlobalChoiceView();
+          ensureBackGuardState();
+          WebRTCManager.showGlobalHostView();
+          WebRTCManager.renderGlobalRoomQR();
+          openGlobalTab();
+        });
+      }
+
+      const btnDismissGlobalResume = document.getElementById('btnDismissGlobalResume');
+      if (btnDismissGlobalResume) {
+        btnDismissGlobalResume.addEventListener('click', () => {
+          SoundEngine.select();
+          try { SafeStorage.removeItem('katar_last_room_v1'); } catch (e) {}
+          WebRTCManager.showGlobalResumeHint();
+          showBoardToast('Dismissed previous room.');
         });
       }
 
@@ -17719,12 +18029,20 @@
 
       document.getElementById('btnHostBackToChoice').addEventListener('click', () => {
         SoundEngine.select();
-        WebRTCManager.showChoiceView();
+        if (!WebRTCManager.isConnected() && !isMatchActivelyInProgress()) {
+          WebRTCManager.leaveRoom(false, 'cancelled offline QR');
+        } else {
+          WebRTCManager.showChoiceView();
+        }
       });
 
       document.getElementById('btnGuestBackToChoice').addEventListener('click', () => {
         SoundEngine.select();
-        WebRTCManager.showChoiceView();
+        if (!WebRTCManager.isConnected() && !isMatchActivelyInProgress()) {
+          WebRTCManager.leaveRoom(false, 'cancelled offline QR');
+        } else {
+          WebRTCManager.showChoiceView();
+        }
       });
 
       document.getElementById('btnToggleManualRtc').addEventListener('click', () => {
@@ -17844,7 +18162,7 @@
           return map[preset] || { title: `${GameState.rows}×${GameState.cols} Katar Battle`, subtitle: `${Nodes.length} Nodes • ${GameState.piecesPerPlayer}v${GameState.piecesPerPlayer} Beads`, icon: '👑' };
         },
 
-        openStandby() {
+        openStandby(asRemote = false) {
           GameState.isStarted = false;
           GameState.isPaused = false;
           this.isOpen = true;
@@ -17852,22 +18170,38 @@
             GameState.vsAI = true;
             GameState.aiPlayerRole = GameState.currentTurn;
           }
+          resetTurnTimer();
+          resetMatchTimer(false);
           this.syncUI();
+          if (!asRemote && GameState.mode === 'webrtc' && WebRTCManager.isConnected() && GameState.localPlayerRole === 1) {
+            WebRTCManager.send({ type: 'MATCH_FLOW', action: 'standby' });
+          }
         },
 
-        openPause() {
+        openPause(asRemote = false) {
           if (!GameState.isStarted) {
-            this.openStandby();
-            return;
+            if (asRemote) {
+              GameState.isStarted = true;
+            } else {
+              this.openStandby(false);
+              return;
+            }
           }
           GameState.isPaused = true;
           this.isOpen = true;
+          resetTurnTimer();
+          resetMatchTimer(true);
           this.syncUI();
+          if (asRemote) {
+            showBoardToast('⏸ Opponent paused the match');
+          } else if (GameState.mode === 'webrtc' && WebRTCManager.isConnected()) {
+            WebRTCManager.send({ type: 'MATCH_FLOW', action: 'pause' });
+          }
         },
 
-        resume() {
+        resume(asRemote = false) {
           if (!GameState.isStarted) {
-            this.play();
+            this.play(asRemote);
             return;
           }
           GameState.isPaused = false;
@@ -17878,13 +18212,18 @@
           }
           this.syncUI();
           resetTurnTimer();
-          resetMatchTimer();
+          resetMatchTimer(true);
+          if (asRemote) {
+            showBoardToast('▶️ Opponent resumed the match!');
+          } else if (GameState.mode === 'webrtc' && WebRTCManager.isConnected()) {
+            WebRTCManager.send({ type: 'MATCH_FLOW', action: 'resume' });
+          }
           if (GameState.vsAI && (GameState.aiVsAi || GameState.currentTurn === GameState.aiPlayerRole) && !GameState.gameOver) {
             scheduleAITurn(300);
           }
         },
 
-        play() {
+        play(asRemote = false, forceResetBroadcast = false) {
           GameState.isStarted = true;
           GameState.isPaused = false;
           this.isOpen = false;
@@ -17895,22 +18234,96 @@
           this.syncUI();
           updateHUD();
           resetTurnTimer();
-          resetMatchTimer();
+          resetMatchTimer(!forceResetBroadcast && GameState.moveLog.length > 0);
           SoundEngine.matchStart();
-          showBoardToast(GameState.aiVsAi ? '🤖⚔️🤖 AI vs AI Match Started!' : '⚔️ Match Started! Make your move.');
+          if (asRemote) {
+            showBoardToast('⚔️ Opponent started the match!');
+          } else {
+            showBoardToast(GameState.aiVsAi ? '🤖⚔️🤖 AI vs AI Match Started!' : '⚔️ Match Started! Make your move.');
+            if (GameState.mode === 'webrtc' && WebRTCManager.isConnected()) {
+              WebRTCManager.send({ type: 'MATCH_FLOW', action: 'play' });
+              if (GameState.localPlayerRole === 1 && !forceResetBroadcast) {
+                WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
+              }
+            }
+          }
           if (GameState.vsAI && (GameState.aiVsAi || GameState.currentTurn === GameState.aiPlayerRole) && !GameState.gameOver) {
             scheduleAITurn(300);
           }
         },
 
-        replay() {
-          initMatch(true);
-          this.play();
+        applyNetworkLifecycle(started, paused) {
+          const wantStarted = Boolean(started);
+          const wantPaused = wantStarted ? Boolean(paused) : false;
+          const prevStarted = GameState.isStarted;
+          const prevPaused = GameState.isPaused;
+          const prevOpen = this.isOpen;
+
+          GameState.isStarted = wantStarted;
+          GameState.isPaused = wantPaused;
+          this.isOpen = (!wantStarted || wantPaused);
+
+          if (!this.isOpen && (prevOpen || !prevStarted || prevPaused)) {
+            if (Immersive.active) updateImmersiveHUD();
+            resetTurnTimer();
+            resetMatchTimer(true);
+            if (!prevStarted) {
+              SoundEngine.matchStart();
+              showBoardToast('⚔️ Opponent started the match!');
+            } else if (prevPaused) {
+              SoundEngine.select();
+              showBoardToast('▶️ Match resumed!');
+            }
+          } else if (this.isOpen && !prevOpen && wantStarted && wantPaused) {
+            if (aiTurnTimeoutId) {
+              clearTimeout(aiTurnTimeoutId);
+              aiTurnTimeoutId = null;
+            }
+            resetTurnTimer();
+            resetMatchTimer(true);
+            showBoardToast('⏸ Match paused by opponent');
+          } else if (!wantStarted && prevStarted) {
+            resetTurnTimer();
+            resetMatchTimer(false);
+          }
+
+          this.syncUI();
+          updateHUD();
         },
 
-        exitToStandby() {
-          initMatch(false);
-          this.openStandby();
+        replay() {
+          if (GameState.mode === 'webrtc' && GameState.localPlayerRole === 2) {
+            if (WebRTCManager.isConnected()) {
+              WebRTCManager.send({ type: 'REMATCH_REQUEST' });
+              showBoardToast('🔁 Rematch requested from Host...');
+            } else {
+              showBoardToast('🛡️ Close the room first to start a new local match.');
+            }
+            return;
+          }
+          GameState.isStarted = true;
+          GameState.isPaused = false;
+          this.isOpen = false;
+          initMatch(true);
+          this.play(false, true);
+        },
+
+        exitToStandby(asRemote = false) {
+          if (!asRemote && GameState.mode === 'webrtc' && GameState.localPlayerRole === 2 && WebRTCManager.isConnected()) {
+            this.isOpen = true;
+            this.syncUI();
+            showBoardToast('🏠 Returned to Menu — tap Close Room to leave or Restart to request rematch.');
+            return;
+          }
+          GameState.isStarted = false;
+          GameState.isPaused = false;
+          this.isOpen = true;
+          const shouldBroadcastHost = !asRemote && GameState.mode === 'webrtc' && GameState.localPlayerRole === 1 && WebRTCManager.isConnected();
+          initMatch(shouldBroadcastHost, asRemote);
+          this.openStandby(true);
+          if (shouldBroadcastHost) {
+            WebRTCManager.send({ type: 'MATCH_FLOW', action: 'standby' });
+          }
           showBoardToast('Returned to Main Menu');
         },
 
@@ -17942,6 +18355,10 @@
           const btnModePuter = document.getElementById('btnMenuModePuter');
           const headerPauseLbl = document.getElementById('lblHeaderPause');
           const headerPauseIcon = document.getElementById('iconHeaderPause');
+          const onlineBanner = document.getElementById('menuOnlineRoomBanner');
+          const onlineDot = document.getElementById('menuOnlineRoomDot');
+          const onlineLabel = document.getElementById('menuOnlineRoomLabel');
+          const btnShowOnlineRoom = document.getElementById('btnMenuShowOnlineRoom');
 
           const meta = this.getVariantMeta(GameState.gridPreset);
           if (title) title.textContent = meta.title;
@@ -17958,10 +18375,35 @@
             }
           }
 
+          const isOnline = GameState.mode === 'webrtc' || Boolean(WebRTCManager.roomCode);
+          if (onlineBanner) {
+            onlineBanner.classList.toggle('hidden', !isOnline);
+            onlineBanner.classList.toggle('flex', isOnline);
+          }
+          if (isOnline && onlineDot && onlineLabel) {
+            const linked = WebRTCManager.isConnected();
+            const role = GameState.localPlayerRole || 1;
+            const room = WebRTCManager.roomCode || '';
+            if (linked) {
+              onlineDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 animate-pulse';
+              onlineLabel.textContent = room ? `🌍 Room ${room} • Player ${role} Linked` : `📶 P2P Linked • Player ${role}`;
+            } else {
+              onlineDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0 animate-ping';
+              onlineLabel.textContent = room ? `🌍 Room ${room} • Waiting for P2` : `📶 P2P • Connecting`;
+            }
+            if (btnShowOnlineRoom) {
+              btnShowOnlineRoom.classList.toggle('hidden', !room && GameState.localPlayerRole !== 1);
+            }
+          }
+
           const isOngoing = GameState.isStarted && !GameState.gameOver;
           if (stateBadge) {
             if (!GameState.isStarted) {
-              stateBadge.textContent = 'Ready to Play';
+              if (isOnline) {
+                stateBadge.textContent = WebRTCManager.isConnected() ? `Online P${GameState.localPlayerRole || 1} Ready` : 'Room Waiting';
+              } else {
+                stateBadge.textContent = 'Ready to Play';
+              }
               stateBadge.className = 'text-[10px] sm:text-xs font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-900 border border-teal-300';
             } else if (GameState.isPaused) {
               stateBadge.textContent = 'Match Paused';
@@ -17973,6 +18415,10 @@
           }
 
           const hasMoves = Boolean((GameState.moveLog && GameState.moveLog.length > 0) || (GameState.history && GameState.history.length > 0));
+          const btnPlayLabel = document.getElementById('btnMenuPlayLabel');
+          if (btnPlayLabel) {
+            btnPlayLabel.textContent = isOnline ? 'Play Online' : 'Play Match';
+          }
           if (btnPlay) btnPlay.classList.toggle('hidden', isOngoing);
           if (btnResume) btnResume.classList.toggle('hidden', !isOngoing);
           if (btnReplay) btnReplay.classList.toggle('hidden', !GameState.isStarted && !hasMoves);
@@ -17984,7 +18430,7 @@
           const isPuter = Boolean(GameState.usePuterAI);
           const isAIvAI = Boolean(GameState.vsAI && GameState.aiVsAi);
           const isAI = GameState.vsAI && !isAIvAI && !isPuter;
-          const is2P = !GameState.vsAI && !isPuter;
+          const is2P = !isOnline && !GameState.vsAI && !isPuter;
 
           if (btnModeAI) btnModeAI.className = `${baseModeBtnClass} ${isAI ? activeModeClass : idleModeClass}`;
           if (btnModeAIvAI) btnModeAIvAI.className = `${baseModeBtnClass} ${isAIvAI ? activeModeClass : idleModeClass}`;
@@ -18039,6 +18485,7 @@
       if (btnMenuRules) {
         btnMenuRules.addEventListener('click', () => {
           SoundEngine.select();
+          ensureBackGuardState();
           const modalRules = document.getElementById('modalRules');
           if (modalRules) {
             modalRules.classList.remove('hidden');
@@ -18055,9 +18502,38 @@
         });
       }
 
+      const btnMenuShowOnlineRoom = document.getElementById('btnMenuShowOnlineRoom');
+      if (btnMenuShowOnlineRoom) {
+        btnMenuShowOnlineRoom.addEventListener('click', () => {
+          SoundEngine.select();
+          ensureBackGuardState();
+          if (WebRTCManager.roomCode) {
+            if (!WebRTCManager.isConnected() && GameState.localPlayerRole === 1) {
+              WebRTCManager.showGlobalHostView();
+              WebRTCManager.renderGlobalRoomQR();
+            }
+            openGlobalTab();
+          } else {
+            switchModeTab('offline');
+            const modalConn = document.getElementById('modalConnection');
+            if (modalConn) {
+              modalConn.classList.remove('hidden');
+              modalConn.classList.add('flex');
+            }
+          }
+        });
+      }
+
+      const btnMenuLeaveOnlineRoom = document.getElementById('btnMenuLeaveOnlineRoom');
+      if (btnMenuLeaveOnlineRoom) {
+        btnMenuLeaveOnlineRoom.addEventListener('click', handleCloseOrLeaveRoomClick);
+      }
+
       const btnMenuModeAI = document.getElementById('btnMenuModeAI');
       if (btnMenuModeAI) {
         btnMenuModeAI.addEventListener('click', () => {
+          forfeitAndDetachOnline('switched to AI mode');
+          GameState.mode = 'pass_play';
           GameState.vsAI = true;
           GameState.aiVsAi = false;
           GameState.aiPlayerRole = 2;
@@ -18074,6 +18550,8 @@
       const btnMenuModeAIvAI = document.getElementById('btnMenuModeAIvAI');
       if (btnMenuModeAIvAI) {
         btnMenuModeAIvAI.addEventListener('click', () => {
+          forfeitAndDetachOnline('switched to AI vs AI mode');
+          GameState.mode = 'pass_play';
           GameState.vsAI = true;
           GameState.aiVsAi = true;
           GameState.usePuterAI = false;
@@ -18090,6 +18568,8 @@
       const btnMenuMode2P = document.getElementById('btnMenuMode2P');
       if (btnMenuMode2P) {
         btnMenuMode2P.addEventListener('click', () => {
+          forfeitAndDetachOnline('switched to local 2P mode');
+          GameState.mode = 'pass_play';
           GameState.vsAI = false;
           GameState.aiVsAi = false;
           GameState.usePuterAI = false;
@@ -18105,6 +18585,8 @@
       const btnMenuModePuter = document.getElementById('btnMenuModePuter');
       if (btnMenuModePuter) {
         btnMenuModePuter.addEventListener('click', () => {
+          forfeitAndDetachOnline('switched to Real Puter AI mode');
+          GameState.mode = 'pass_play';
           GameState.vsAI = true;
           GameState.aiVsAi = false;
           GameState.aiPlayerRole = 2;
@@ -18521,25 +19003,9 @@
           SafeStorage.removeItem('katar_stashed_match_v1');
           try { SafeStorage.removeItem('katar_last_room_v1'); } catch (e) {}
           updateStashedMatchButtonUI();
-          if (GameState.mode === 'webrtc') {
-            // Explicit quit = immediate forfeit. Tell the opponent before tearing anything down.
-            WebRTCManager.intentionalLeave = true;
-            if (WebRTCManager.isConnected()) {
-              WebRTCManager.send({
-                type: 'PEER_FORFEIT_LEAVE',
-                absentPlayer: GameState.localPlayerRole || 1
-              });
-            }
-            WebRTCManager.cleanup();
-            WebRTCManager.roomCode = '';
-            WebRTCManager.transport = 'none';
-            GameState.mode = 'pass_play';
+          if (GameState.mode === 'webrtc' || WebRTCManager.roomCode) {
+            WebRTCManager.leaveRoom(true, 'left match');
             GameState.vsAI = true;
-            GameState.localPlayerRole = null;
-            GameState.sessionId = null;
-            GameState.boardFlipped = false;
-            WebRTCManager.updateConnectionUI('idle', 'Pass & Play Ready', 'Left P2P match');
-            WebRTCManager.showGlobalChoiceView();
           }
           cancelGraceTimer(false);
           initMatch(false);
@@ -18636,18 +19102,130 @@
         }
       });
 
-      // Mobile Back-Button / Swipe-Back Protection Guard
+      function pushBackGuardState() {
+        try {
+          window.history.pushState({ katarAppGuard: true }, '', location.pathname + (location.search || ''));
+        } catch (e) {}
+      }
+
+      function ensureBackGuardState() {
+        try {
+          if (!window.history.state || !window.history.state.katarAppGuard) {
+            pushBackGuardState();
+          }
+        } catch (e) {}
+      }
+
       try {
-        window.history.pushState({ katarAppGuard: true }, '');
+        ensureBackGuardState();
         window.addEventListener('popstate', () => {
+          const isShown = (id) => {
+            const el = document.getElementById(id);
+            return Boolean(el && !el.classList.contains('hidden'));
+          };
+
+          if (isShown('scannerModal')) {
+            closeQrScanner();
+            pushBackGuardState();
+            return;
+          }
+          if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
+            ReplayManager.close(true);
+            pushBackGuardState();
+            return;
+          }
+          if (isShown('modalMidGameGuard')) {
+            pendingGuardedCallback = null;
+            const mg = document.getElementById('modalMidGameGuard');
+            if (mg) {
+              mg.classList.add('hidden');
+              mg.classList.remove('flex');
+            }
+            pushBackGuardState();
+            return;
+          }
+          for (const mid of ['modalRules', 'modalEncyclopedia', 'modalPuterStats']) {
+            if (isShown(mid)) {
+              const el = document.getElementById(mid);
+              el.classList.add('hidden');
+              el.classList.remove('flex');
+              pushBackGuardState();
+              return;
+            }
+          }
+          if (isShown('modalProfile')) {
+            if (ProfileManager.hasProfile()) {
+              ProfileManager.closeModal();
+            } else {
+              SoundEngine.invalid();
+              showBoardToast('Please enter your Player Name and tap Save Profile first!');
+            }
+            pushBackGuardState();
+            return;
+          }
+          if (isShown('modalConnection')) {
+            const modalConn = document.getElementById('modalConnection');
+            if (isShown('panelGlobal') && (isShown('globalHostView') || (WebRTCManager.roomCode && !WebRTCManager.isConnected() && !isMatchActivelyInProgress()))) {
+              if (!WebRTCManager.isConnected() && !isMatchActivelyInProgress()) {
+                WebRTCManager.leaveRoom(true, 'closed global room');
+                showBoardToast('🚪 Room closed.');
+                pushBackGuardState();
+                return;
+              }
+              if (isShown('globalHostView')) {
+                WebRTCManager.showGlobalChoiceView();
+                pushBackGuardState();
+                return;
+              }
+            }
+            if (isShown('panelWebRTC') && (isShown('rtcHostQrView') || isShown('rtcGuestQrView'))) {
+              WebRTCManager.stopHostInlineCamera();
+              if (!WebRTCManager.isConnected() && !isMatchActivelyInProgress()) {
+                WebRTCManager.leaveRoom(false, 'cancelled offline QR');
+              } else {
+                WebRTCManager.showChoiceView();
+              }
+              pushBackGuardState();
+              return;
+            }
+            WebRTCManager.stopHostInlineCamera();
+            closeQrScanner();
+            modalConn.classList.add('hidden');
+            modalConn.classList.remove('flex');
+            if (typeof MainMenu !== 'undefined') MainMenu.syncUI();
+            pushBackGuardState();
+            return;
+          }
+          if (isShown('modalVictory')) {
+            const mv = document.getElementById('modalVictory');
+            mv.classList.add('hidden');
+            mv.classList.remove('flex');
+            const inspectBar = document.getElementById('victoryInspectBar');
+            if (inspectBar) inspectBar.classList.remove('hidden');
+            requestRender();
+            pushBackGuardState();
+            return;
+          }
           if (Immersive.active) {
             Immersive.exit();
-            window.history.pushState({ katarAppGuard: true }, '');
+            pushBackGuardState();
+            return;
+          }
+          if (typeof MainMenu !== 'undefined' && !MainMenu.isOpen && GameState.isStarted && !GameState.gameOver) {
+            MainMenu.openPause();
+            pushBackGuardState();
+            return;
+          }
+          if ((WebRTCManager.roomCode || GameState.mode === 'webrtc') && !isMatchActivelyInProgress()) {
+            WebRTCManager.leaveRoom(true, 'closed waiting room');
+            showBoardToast('🚪 Room closed.');
+            pushBackGuardState();
             return;
           }
           if (isMatchActivelyInProgress()) {
-            window.history.pushState({ katarAppGuard: true }, '');
-            showBoardToast('🛡️ Match in progress! Tap Away Timer or Save Match before exiting.');
+            pushBackGuardState();
+            const isOnline = GameState.mode === 'webrtc' || Boolean(WebRTCManager.roomCode);
+            showBoardToast(isOnline ? '🛡️ Match in progress! Tap Close Room in Menu to leave.' : '🛡️ Match in progress!');
           }
         });
       } catch (e) {}
@@ -18772,6 +19350,7 @@
             else WebRTCManager.joinGlobalRoom(WebRTCManager.roomCode);
             return;
           }
+          ensureBackGuardState();
           document.getElementById('modalConnection').classList.remove('hidden');
           document.getElementById('modalConnection').classList.add('flex');
           document.getElementById('tabModeWebRTC').click();
@@ -18779,13 +19358,13 @@
         });
       }
 
-      // Wire Encyclopedia & Move Log Modal
       const btnOpenEnc = document.getElementById('btnOpenEncyclopedia');
       const modalEnc = document.getElementById('modalEncyclopedia');
       const btnCloseEnc = document.getElementById('btnCloseEncyclopedia');
       if (btnOpenEnc && modalEnc) {
         btnOpenEnc.addEventListener('click', () => {
           SoundEngine.select();
+          ensureBackGuardState();
           updateMoveLogUI();
           MatchHistoryManager.renderLists();
           modalEnc.classList.remove('hidden');
@@ -18851,6 +19430,58 @@
           return;
         }
         if (event.key === 'Escape') {
+          const isShown = (id) => {
+            const el = document.getElementById(id);
+            return Boolean(el && !el.classList.contains('hidden'));
+          };
+          if (isShown('scannerModal')) {
+            closeQrScanner();
+            return;
+          }
+          if (isShown('modalMidGameGuard')) {
+            pendingGuardedCallback = null;
+            const mg = document.getElementById('modalMidGameGuard');
+            if (mg) {
+              mg.classList.add('hidden');
+              mg.classList.remove('flex');
+            }
+            return;
+          }
+          for (const mid of ['modalRules', 'modalEncyclopedia', 'modalPuterStats']) {
+            if (isShown(mid)) {
+              const el = document.getElementById(mid);
+              el.classList.add('hidden');
+              el.classList.remove('flex');
+              return;
+            }
+          }
+          if (isShown('modalProfile')) {
+            ProfileManager.closeModal();
+            return;
+          }
+          if (isShown('modalConnection')) {
+            if (isShown('panelGlobal') && isShown('globalHostView') && !WebRTCManager.isConnected() && !isMatchActivelyInProgress()) {
+              WebRTCManager.leaveRoom(true, 'closed global room');
+              showBoardToast('🚪 Room closed.');
+              return;
+            }
+            WebRTCManager.stopHostInlineCamera();
+            closeQrScanner();
+            const mc = document.getElementById('modalConnection');
+            mc.classList.add('hidden');
+            mc.classList.remove('flex');
+            if (typeof MainMenu !== 'undefined') MainMenu.syncUI();
+            return;
+          }
+          if (isShown('modalVictory')) {
+            const mv = document.getElementById('modalVictory');
+            mv.classList.add('hidden');
+            mv.classList.remove('flex');
+            const inspectBar = document.getElementById('victoryInspectBar');
+            if (inspectBar) inspectBar.classList.remove('hidden');
+            requestRender();
+            return;
+          }
           if (Immersive.active) {
             Immersive.exit();
             return;
@@ -18922,7 +19553,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=c0f8c3559f', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=bca9914045', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
@@ -19486,6 +20117,7 @@
           MainMenu.openStandby();
         }
         WebRTCManager.applyPeerServerConfigUI();
+        WebRTCManager.syncRoomActionUI();
         resizeCanvas();
         WifiLobby.init();
         if (!hasExistingProfile) {
@@ -19495,13 +20127,15 @@
         PuterAIManager.load();
         PuterAIManager.refreshQuotaFromPuter(true);
         if (inviteRoom) {
-          try { history.replaceState(null, '', location.pathname); } catch (e) {}
+          try { history.replaceState({ katarAppGuard: true }, '', location.pathname + (location.search || '')); } catch (e) {}
+          ensureBackGuardState();
           setTimeout(() => {
             openGlobalTab();
             showBoardToast(`🌍 Opening invite link for room ${inviteRoom}…`);
             WebRTCManager.joinGlobalRoom(inviteRoom);
           }, 900);
         } else {
+          ensureBackGuardState();
           WebRTCManager.showGlobalResumeHint();
         }
       });
