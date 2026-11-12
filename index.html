@@ -709,6 +709,10 @@
       max-width: calc(100vw - 16px);
     }
 
+    body.immersive-mode #gamePreviewBanner {
+      display: none !important;
+    }
+
     /* Always-On Pro Game Mode: no play/pause/exit/away clutter buttons */
     #btnTriggerAwayGrace,
     #btnResumeStashedMatch,
@@ -1107,8 +1111,27 @@
       </div>
     </section>
 
-    <section id="boardContainerWrapper" class="flex-1 w-full h-full flex items-center justify-center min-h-0 min-w-0 relative overflow-hidden">
-      <div id="canvasAspectBox" class="board-3d-frame relative flex items-center justify-center">
+    <section id="boardContainerWrapper" class="flex-1 w-full h-full flex flex-col items-center justify-center gap-1.5 min-h-0 min-w-0 relative overflow-hidden">
+      <div id="gamePreviewBanner" class="hidden w-full max-w-xl bg-gradient-to-r from-parchment-50 via-amber-50/95 to-parchment-50 border-2 border-amber-400 rounded-2xl px-2.5 sm:px-3.5 py-1.5 sm:py-2 shadow-md text-walnut-900 shrink-0 z-20 transition-all duration-200">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 min-w-0 flex-1">
+            <span id="previewBannerIcon" class="text-base sm:text-lg leading-none shrink-0">👑</span>
+            <span id="previewBannerTitle" class="font-display text-xs sm:text-sm font-black text-walnut-900 truncate">6×6 Katar Classic</span>
+            <span id="previewBannerType" class="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-teal-100 text-teal-900 border border-teal-300 shrink-0">Leap &amp; Capture</span>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button id="btnPreviewPlayNow" type="button" class="android-btn px-2.5 sm:px-3 py-1 rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 font-black text-[10px] sm:text-xs shadow-[0_2px_0_#B45309] flex items-center gap-1" title="Start playing this game now">
+              <span>▶</span><span>Play</span>
+            </button>
+            <button id="btnPreviewOpenMenu" type="button" class="android-btn px-2 py-1 rounded-xl bg-parchment-200 hover:bg-parchment-300 text-walnut-800 font-extrabold text-[10px] sm:text-[11px] border border-parchment-400" title="Open Game Menu">
+              ☰ Menu
+            </button>
+            <button id="btnPreviewDismiss" type="button" class="android-btn w-6 h-6 rounded-lg bg-white/80 hover:bg-rose-50 text-walnut-600 hover:text-rose-700 border border-parchment-300 flex items-center justify-center text-[10px] font-black" title="Hide info bar to maximize board">✕</button>
+          </div>
+        </div>
+        <p id="previewBannerDesc" class="text-[10px] sm:text-[11px] font-medium text-walnut-700 leading-snug mt-1">Slide 1 step along any line or leap over an adjacent enemy bead into an empty point beyond to eat it. Tap Play or tap any piece on the board to begin!</p>
+      </div>
+      <div id="canvasAspectBox" class="board-3d-frame shrink-0 relative flex items-center justify-center">
         <canvas id="katarCanvas" class="block rounded-2xl cursor-pointer"></canvas>
 
         <div id="victoryInspectBar" class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-30 bg-walnut-900/95 border-2 border-amber-400 rounded-2xl px-3 py-2 shadow-2xl flex items-center gap-2 text-xs text-white backdrop-blur-md">
@@ -1173,8 +1196,8 @@
         </div>
       </div>
 
-      <div id="mainMenuOverlay" class="absolute inset-0 z-40 flex items-center justify-center p-3 sm:p-4 bg-walnut-950/70 backdrop-blur-sm transition-opacity duration-200">
-        <div class="w-full max-w-sm sm:max-w-md bg-parchment-50 border-4 border-amber-500 rounded-3xl p-5 sm:p-6 text-center shadow-2xl text-walnut-900 space-y-3.5 relative overflow-hidden">
+      <div id="mainMenuOverlay" class="absolute inset-0 z-40 flex items-center justify-center p-3 sm:p-4 bg-walnut-950/45 backdrop-blur-[2px] transition-opacity duration-200">
+        <div class="w-full max-w-sm sm:max-w-md bg-parchment-50 border-4 border-amber-500 rounded-3xl p-4 sm:p-5 text-center shadow-2xl text-walnut-900 space-y-3 relative overflow-hidden">
           <div class="pashtun-border absolute inset-x-0 top-0 h-1.5"></div>
           
           <div class="flex items-center justify-center gap-2">
@@ -1191,6 +1214,21 @@
             <p id="menuGameSubtitle" class="text-xs sm:text-sm font-semibold text-walnut-600 mt-0.5">
               36 Nodes • 18v18 Beads • Pashtun War Game
             </p>
+          </div>
+
+          <div class="bg-white/95 border-2 border-parchment-300 rounded-2xl p-2.5 flex items-center gap-3 text-left shadow-inner">
+            <img id="menuBoardSnapshot" alt="Game Board Preview" class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border border-amber-400/70 object-contain bg-parchment-100 shrink-0 shadow-sm cursor-pointer" title="Tap to inspect full board" />
+            <div class="min-w-0 flex-1 space-y-1">
+              <div class="flex items-center justify-between gap-1">
+                <span id="menuTypeBadge" class="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 truncate">Leap &amp; Capture</span>
+                <button id="btnMenuPreviewBoard" type="button" class="android-btn px-2 py-0.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-[10px] font-extrabold shadow-sm shrink-0 flex items-center gap-1" title="Hide menu to view the actual game board">
+                  <span>👁️</span><span>View Board</span>
+                </button>
+              </div>
+              <p id="menuHowToPlay" class="text-[10px] sm:text-[11px] font-medium text-walnut-700 leading-snug">
+                Slide 1 step along any line or leap over an adjacent enemy bead into an empty point beyond to eat it.
+              </p>
+            </div>
           </div>
 
           <div class="grid grid-cols-4 gap-1.5 p-1.5 bg-parchment-200/90 rounded-2xl border border-parchment-300 shadow-inner">
@@ -11581,6 +11619,14 @@
                 availW -= 88;
               }
             }
+          } else {
+            const previewBanner = document.getElementById('gamePreviewBanner');
+            if (previewBanner && !previewBanner.classList.contains('hidden')) {
+              const bannerH = previewBanner.offsetHeight || 64;
+              if (availH - bannerH >= 200) {
+                availH -= (bannerH + 8);
+              }
+            }
           }
         }
 
@@ -12359,9 +12405,22 @@
         }
         if (GameState.gameOver) return;
         if (!GameState.isStarted) {
-          if (typeof MainMenu !== 'undefined') MainMenu.openStandby();
-          showBoardToast('Tap "Play Match" to start playing!');
-          return;
+          if (GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || GameState.currentTurn === GameState.aiPlayerRole)) {
+            if (typeof MainMenu !== 'undefined') MainMenu.play();
+            return;
+          }
+          GameState.isStarted = true;
+          GameState.isPaused = false;
+          if (typeof MainMenu !== 'undefined') {
+            MainMenu.isOpen = false;
+            MainMenu.isPreviewDismissed = true;
+            MainMenu.syncUI();
+          }
+          resetTurnTimer();
+          resetMatchTimer(false);
+          if (GameState.mode === 'webrtc' && WebRTCManager.isConnected()) {
+            WebRTCManager.send({ type: 'MATCH_FLOW', action: 'play' });
+          }
         }
         if (GameState.isPaused) {
           showBoardToast('Match is paused — tap "Resume" to continue!');
@@ -16849,10 +16908,14 @@
             applyGridPresetConfig(preset);
             GameState.isStarted = false;
             GameState.isPaused = false;
-            if (typeof MainMenu !== 'undefined') MainMenu.isOpen = true;
+            if (typeof MainMenu !== 'undefined') {
+              MainMenu.isOpen = false;
+              MainMenu.isPreviewDismissed = false;
+            }
             initMatch(true);
-            if (typeof MainMenu !== 'undefined') MainMenu.openStandby(true);
-            showBoardToast(`Viewing ${chip.textContent.trim()} — Tap Play to start!`);
+            if (typeof MainMenu !== 'undefined') MainMenu.previewBoard(true);
+            const meta = typeof MainMenu !== 'undefined' ? MainMenu.getVariantMeta(preset) : null;
+            showBoardToast(meta ? `${meta.icon} ${meta.title} (${meta.typeBadge}) — Tap board or Play to start!` : `Viewing ${chip.textContent.trim()} — Tap Play to start!`);
           });
         });
       });
@@ -18916,32 +18979,173 @@
 
       const MainMenu = {
         isOpen: false,
+        isPreviewDismissed: false,
 
         getVariantMeta(preset) {
           const map = {
-            '6x6': { title: '6×6 Katar Classic', subtitle: '36 Nodes • 18v18 Beads • Pashtun War Game', icon: '👑' },
-            'navakankari_9': { title: 'Navakankari (9 Men’s Morris)', subtitle: '24 Nodes • 9v9 Beads • Form 3-in-a-Row Katar', icon: '⭐' },
-            'navakankari_12': { title: '12-Men’s Katar Mill', subtitle: '24 Nodes with Corner Diagonals • 10v10 Beads', icon: '⭐' },
-            'three_morris': { title: 'Teen Guti (3 Men’s Morris)', subtitle: '9 Nodes • 3v3 Fast Tactical Mill Game', icon: '🎯' },
-            'six_morris': { title: 'Chhah Guti (6 Men’s Morris)', subtitle: '16 Nodes • 6v6 Concentric Square Mill', icon: '🎯' },
-            'bagh_chal': { title: 'Bagh-Chal (Tigers vs Goats)', subtitle: '4 Corner Tigers vs 20 Goats • Asymmetric Hunt', icon: '🐯' },
-            'aadu_puli': { title: 'Aadu Puli Attam', subtitle: '3 Tigers vs 15 Goats • South Asian Triangle Grid', icon: '🐐' },
-            'lau_kata_kati': { title: 'Lau Kata Kati (Butterfly)', subtitle: '19-Node Double Triangle • 9v9 Leap War Game', icon: '🦋' },
-            'pretwa': { title: 'Pretwa (Circular Katar)', subtitle: '19-Node Concentric Rings & Spokes • 9v9 Beads', icon: '☸️' },
-            'fanorona_5x5': { title: 'Fanorona 5×5', subtitle: '12v12 Approach & Withdrawal Line Captures', icon: '⚔️' },
-            'fanorona_5x9': { title: 'Fanorona 5×9 Grand', subtitle: '22v22 Grand Lattice • Approach & Withdrawal', icon: '⚔️' },
-            'seega_5x5': { title: 'Seega 5×5 Custodian', subtitle: '12v12 2-Bead Drop & Orthogonal Sandwich Capture', icon: '🛡️' },
-            'dama_8x8': { title: 'Dama / Draughts 8×8', subtitle: '64 Nodes • 24v24 Beads with Flying King Promotion', icon: '👑' },
-            'gomoku_9x9': { title: 'Gomoku 9×9 (Five-in-a-Row)', subtitle: '81 Intersections • Align 5 Stones in a Row to Win', icon: '⚫' },
-            '37_sholo': { title: '37-Point Sholo Guti', subtitle: '5×5 Alquerque + 2 Triangular Camps • 16v16 Beads', icon: '🏕️' },
-            '6x7': { title: '6×7 Maidaan Extended', subtitle: '42 Nodes • 18v18 On-Board Tactical Battlefield', icon: '🛡️' },
-            '5x5': { title: '5×5 Baro Guti / Alquerque', subtitle: '25 Nodes • 12v12 Classic Leap-and-Capture', icon: '🏛️' },
-            '5x7': { title: '5×7 Extended Battlefield', subtitle: '35 Nodes • 15v15 Beads • Wide Flanking Grid', icon: '⚔️' },
-            '7x7': { title: '7×7 Grand Jirga Grid', subtitle: '49 Nodes • 24v24 Beads • Deep Strategic War', icon: '🏰' },
-            '8x8': { title: '8×8 Commander Grid', subtitle: '64 Nodes • 24v24 Beads • Grand Scale Battle', icon: '🏰' },
-            '4x4': { title: '4×4 Blitz Skirmish', subtitle: '16 Nodes • 6v6 Beads • Lightning Fast Duel', icon: '⚡' }
+            '6x6': {
+              title: '6×6 Katar Classic',
+              subtitle: '36 Nodes • 18v18 Beads • Pashtun War Game',
+              icon: '👑',
+              typeBadge: 'Leap & Capture • Reserves',
+              howToPlay: 'Slide 1 step along any connected line or leap over an adjacent enemy bead into an empty point beyond to eat it. 2 reserve beads auto-deploy as space opens. Eat all enemy beads to win!'
+            },
+            'navakankari_9': {
+              title: 'Navakankari (9 Men’s Morris)',
+              subtitle: '24 Nodes • 9v9 Beads • Form 3-in-a-Row Katar',
+              icon: '⭐',
+              typeBadge: '3-in-a-Row Mill (Katar)',
+              howToPlay: 'Phase 1: Take turns placing 9 beads on empty points. Phase 2: Slide beads along lines to form a 3-in-a-row Katar — each Katar lets you remove 1 enemy bead! Reduce opponent to 2 beads or block them to win.'
+            },
+            'navakankari_12': {
+              title: '12-Men’s Katar Mill',
+              subtitle: '24 Nodes with Corner Diagonals • 10v10 Beads',
+              icon: '⭐',
+              typeBadge: 'Diagonal 3-in-a-Row Mill',
+              howToPlay: 'Adds 4 corner diagonal lines to the 3 concentric squares (10 beads each). Drop beads then slide along lines to form a 3-in-a-row Katar and remove an enemy bead!'
+            },
+            'three_morris': {
+              title: 'Teen Guti (3 Men’s Morris)',
+              subtitle: '9 Nodes • 3v3 Fast Tactical Mill Game',
+              icon: '🎯',
+              typeBadge: 'Fast 3×3 Mill (3v3)',
+              howToPlay: 'Drop 3 beads each on the 9-node grid, then slide along connected lines (orthogonal or diagonal) to form a 3-in-a-row Katar and capture an opponent bead!'
+            },
+            'six_morris': {
+              title: 'Chhah Guti (6 Men’s Morris)',
+              subtitle: '16 Nodes • 6v6 Concentric Square Mill',
+              icon: '🎯',
+              typeBadge: '2-Square Mill (6v6)',
+              howToPlay: '16-node concentric 2-square board with 6 beads per player. Place beads on empty points, then slide along lines to form a 3-in-a-row Katar and remove an opponent bead!'
+            },
+            'bagh_chal': {
+              title: 'Bagh-Chal (Tigers vs Goats)',
+              subtitle: '4 Corner Tigers vs 20 Goats • Asymmetric Hunt',
+              icon: '🐯',
+              typeBadge: 'Asymmetric Hunt • Tigers vs Goats',
+              howToPlay: 'Goats (P1): Drop 20 goats onto empty points, then slide along lines to surround and trap all 4 Tigers. Tigers (P2): Start on the 4 corners; slide or leap over a Goat to eat it (Eat 5 Goats to win)!'
+            },
+            'aadu_puli': {
+              title: 'Aadu Puli Attam',
+              subtitle: '3 Tigers vs 15 Goats • South Asian Triangle Grid',
+              icon: '🐐',
+              typeBadge: 'Triangle Hunt • 3 Tigers vs 15 Goats',
+              howToPlay: '23-node triangular temple grid. Goats (P1) drop 15 goats then slide to immobilize all 3 Tigers. Tigers (P2) start at the apex and leap over Goats along straight lines to eat 5 Goats!'
+            },
+            'lau_kata_kati': {
+              title: 'Lau Kata Kati (Butterfly)',
+              subtitle: '19-Node Double Triangle • 9v9 Leap War Game',
+              icon: '🦋',
+              typeBadge: 'Butterfly Grid • Leap & Capture',
+              howToPlay: '19-node double-triangle butterfly board (9v9 beads, center vertex open). Slide along straight lines or leap over an adjacent enemy bead into an empty point beyond to capture!'
+            },
+            'pretwa': {
+              title: 'Pretwa (Circular Katar)',
+              subtitle: '19-Node Concentric Rings & Spokes • 9v9 Beads',
+              icon: '☸️',
+              typeBadge: 'Circular Rings • Leap & Capture',
+              howToPlay: '19-node circular board with 3 concentric rings and 6 radial spokes (9v9 beads, center hub open). Slide or leap over enemy beads along either the circular rings or straight radial spokes!'
+            },
+            'fanorona_5x5': {
+              title: 'Fanorona 5×5',
+              subtitle: '12v12 Approach & Withdrawal Line Captures',
+              icon: '⚔️',
+              typeBadge: 'Approach & Withdrawal Capture',
+              howToPlay: 'Step 1 node toward an adjacent enemy line (Approach) or away from an adjacent enemy line (Withdrawal) to capture all contiguous enemy beads on that line! Captures are mandatory.'
+            },
+            'fanorona_5x9': {
+              title: 'Fanorona 5×9 Grand',
+              subtitle: '22v22 Grand Lattice • Approach & Withdrawal',
+              icon: '⚔️',
+              typeBadge: 'Grand Approach & Withdrawal',
+              howToPlay: 'Full 45-node Malagasy 5×9 lattice (22v22 beads). Step toward (Approach) or away from (Withdrawal) a line of enemy beads to capture the entire contiguous line at once!'
+            },
+            'seega_5x5': {
+              title: 'Seega 5×5 Custodian',
+              subtitle: '12v12 2-Bead Drop & Orthogonal Sandwich Capture',
+              icon: '🛡️',
+              typeBadge: '2-Drop & Custodian Sandwich',
+              howToPlay: 'Phase 1: Players drop 2 beads per turn onto any empty node except the center. Phase 2: Slide orthogonally to sandwich an enemy bead between two of yours to capture it (center node is safe)!'
+            },
+            'dama_8x8': {
+              title: 'Dama / Draughts 8×8',
+              subtitle: '64 Nodes • 24v24 Beads with Flying King Promotion',
+              icon: '👑',
+              typeBadge: '8×8 Draughts • Flying Kings',
+              howToPlay: 'Advance forward or sideways and leap over enemy beads to capture. Reach the far row to crown a King (♛) that can slide and jump in all directions across long lines!'
+            },
+            'gomoku_9x9': {
+              title: 'Gomoku 9×9 (Five-in-a-Row)',
+              subtitle: '81 Intersections • Align 5 Stones in a Row to Win',
+              icon: '⚫',
+              typeBadge: '5-in-a-Row Alignment',
+              howToPlay: 'Pure strategic placement on an 81-point grid (no moving or jumping). Take turns placing stones on empty intersections — first player to align 5 stones in an unbroken row wins!'
+            },
+            '37_sholo': {
+              title: '37-Point Sholo Guti',
+              subtitle: '5×5 Alquerque + 2 Triangular Camps • 16v16 Beads',
+              icon: '🏕️',
+              typeBadge: '5×5 + 2 Triangular Camps',
+              howToPlay: 'Traditional 37-node Sholo Guti board with North & South triangular camps. Slide along lines or leap over enemy beads (single or chain jumps) to capture all opponent beads!'
+            },
+            '6x7': {
+              title: '6×7 Maidaan Extended',
+              subtitle: '42 Nodes • 18v18 On-Board Tactical Battlefield',
+              icon: '🛡️',
+              typeBadge: '42-Node Open Middle Rank',
+              howToPlay: 'Extended 6×7 battlefield with all 18v18 beads starting on the board and a full 6-node open central Maidaan row. Slide along 8-way lines or leap over enemy beads to capture!'
+            },
+            '5x5': {
+              title: '5×5 Baro Guti / Alquerque',
+              subtitle: '25 Nodes • 12v12 Classic Leap-and-Capture',
+              icon: '🏛️',
+              typeBadge: '25-Node Classic Alquerque',
+              howToPlay: '12v12 beads on a 5×5 Alquerque lattice with the single center point open. Slide to adjacent empty points or leap over enemy beads to capture!'
+            },
+            '5x7': {
+              title: '5×7 Extended Battlefield',
+              subtitle: '35 Nodes • 15v15 Beads • Wide Flanking Grid',
+              icon: '⚔️',
+              typeBadge: '35-Node Extended Lattice',
+              howToPlay: '15v15 beads with an open central row and full 8-way star diagonals. Use wide flanking lines and multi-jump chains to capture opponent beads!'
+            },
+            '7x7': {
+              title: '7×7 Grand Jirga Grid',
+              subtitle: '49 Nodes • 24v24 Beads • Deep Strategic War',
+              icon: '🏰',
+              typeBadge: '49-Node Grand Strategy',
+              howToPlay: '24v24 beads on a deep 7×7 grid with the single center node open. Build supported phalanx lines and chain-jump through enemy formations!'
+            },
+            '8x8': {
+              title: '8×8 Commander Grid',
+              subtitle: '64 Nodes • 24v24 Beads • Grand Scale Battle',
+              icon: '🏰',
+              typeBadge: '64-Node Commander Grid',
+              howToPlay: 'Massive 64-intersection battlefield with 24v24 beads. Coordinate multi-jump capture chains across 8-way star lines!'
+            },
+            '4x4': {
+              title: '4×4 Blitz Skirmish',
+              subtitle: '16 Nodes • 6v6 Beads • Lightning Fast Duel',
+              icon: '⚡',
+              typeBadge: '16-Node Fast Blitz',
+              howToPlay: '6v6 beads on a compact 4×4 grid with a 4-node open center. Fast-paced tactical skirmish where every move counts!'
+            }
           };
-          return map[preset] || { title: `${GameState.rows}×${GameState.cols} Katar Battle`, subtitle: `${Nodes.length} Nodes • ${GameState.piecesPerPlayer}v${GameState.piecesPerPlayer} Beads`, icon: '👑' };
+          return map[preset] || {
+            title: `${GameState.rows}×${GameState.cols} Katar Battle`,
+            subtitle: `${Nodes.length} Nodes • ${GameState.piecesPerPlayer}v${GameState.piecesPerPlayer} Beads`,
+            icon: '👑',
+            typeBadge: 'Custom Grid • Leap & Capture',
+            howToPlay: 'Custom Katar battlefield. Slide along connected lines or leap over adjacent enemy beads into an empty point beyond to capture!'
+          };
+        },
+
+        previewBoard() {
+          this.isOpen = false;
+          this.isPreviewDismissed = false;
+          this.syncUI();
+          resizeCanvas();
+          requestRender();
         },
 
         openStandby(asRemote = false) {
@@ -19147,6 +19351,41 @@
           if (subtitle) subtitle.textContent = meta.subtitle;
           if (badgeIcon) badgeIcon.textContent = meta.icon;
 
+          const menuTypeBadge = document.getElementById('menuTypeBadge');
+          const menuHowToPlay = document.getElementById('menuHowToPlay');
+          if (menuTypeBadge) menuTypeBadge.textContent = meta.typeBadge || 'Strategy Board Game';
+          if (menuHowToPlay) menuHowToPlay.textContent = meta.howToPlay || meta.subtitle;
+
+          if (this.isOpen) {
+            const menuSnap = document.getElementById('menuBoardSnapshot');
+            if (menuSnap && canvas && Nodes.length > 0 && canvas.width > 0) {
+              try {
+                renderBoardFrame(performance.now());
+                menuSnap.src = canvas.toDataURL('image/png');
+              } catch (e) {}
+            }
+          }
+
+          const previewBanner = document.getElementById('gamePreviewBanner');
+          const showPreviewBanner = !this.isOpen && !GameState.isStarted && !GameState.gameOver && !this.isPreviewDismissed;
+          if (previewBanner) {
+            const wasHidden = previewBanner.classList.contains('hidden');
+            previewBanner.classList.toggle('hidden', !showPreviewBanner);
+            if (showPreviewBanner) {
+              const pIcon = document.getElementById('previewBannerIcon');
+              const pTitle = document.getElementById('previewBannerTitle');
+              const pType = document.getElementById('previewBannerType');
+              const pDesc = document.getElementById('previewBannerDesc');
+              if (pIcon) pIcon.textContent = meta.icon;
+              if (pTitle) pTitle.textContent = meta.title;
+              if (pType) pType.textContent = meta.typeBadge || 'Strategy Board Game';
+              if (pDesc) pDesc.textContent = meta.howToPlay || meta.subtitle;
+            }
+            if (wasHidden !== !showPreviewBanner) {
+              setTimeout(resizeCanvas, 0);
+            }
+          }
+
           if (overlay) {
             if (this.isOpen) {
               overlay.classList.remove('hidden');
@@ -19244,6 +19483,61 @@
       if (btnMenuPlay) {
         btnMenuPlay.addEventListener('click', () => {
           MainMenu.play();
+        });
+      }
+
+      const btnMenuPreviewBoard = document.getElementById('btnMenuPreviewBoard');
+      if (btnMenuPreviewBoard) {
+        btnMenuPreviewBoard.addEventListener('click', () => {
+          SoundEngine.select();
+          MainMenu.previewBoard();
+        });
+      }
+
+      const menuBoardSnapshot = document.getElementById('menuBoardSnapshot');
+      if (menuBoardSnapshot) {
+        menuBoardSnapshot.addEventListener('click', () => {
+          SoundEngine.select();
+          MainMenu.previewBoard();
+        });
+      }
+
+      const mainMenuOverlayEl = document.getElementById('mainMenuOverlay');
+      if (mainMenuOverlayEl) {
+        mainMenuOverlayEl.addEventListener('click', (e) => {
+          if (e.target === mainMenuOverlayEl) {
+            SoundEngine.select();
+            if (GameState.isStarted && GameState.isPaused) {
+              MainMenu.resume();
+            } else {
+              MainMenu.previewBoard();
+            }
+          }
+        });
+      }
+
+      const btnPreviewPlayNow = document.getElementById('btnPreviewPlayNow');
+      if (btnPreviewPlayNow) {
+        btnPreviewPlayNow.addEventListener('click', () => {
+          MainMenu.play();
+        });
+      }
+
+      const btnPreviewOpenMenu = document.getElementById('btnPreviewOpenMenu');
+      if (btnPreviewOpenMenu) {
+        btnPreviewOpenMenu.addEventListener('click', () => {
+          SoundEngine.select();
+          MainMenu.openStandby(true);
+        });
+      }
+
+      const btnPreviewDismiss = document.getElementById('btnPreviewDismiss');
+      if (btnPreviewDismiss) {
+        btnPreviewDismiss.addEventListener('click', () => {
+          SoundEngine.select();
+          MainMenu.isPreviewDismissed = true;
+          MainMenu.syncUI();
+          resizeCanvas();
         });
       }
 
@@ -20358,7 +20652,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=8009ed26ab', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=1cbedf7354', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
