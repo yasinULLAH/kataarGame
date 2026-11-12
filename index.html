@@ -2024,7 +2024,7 @@
     </div>
 
     <div class="relative w-full max-w-[280px] sm:max-w-[320px] aspect-square rounded-3xl overflow-hidden border-2 border-amber-400 shadow-[0_0_35px_rgba(245,158,11,0.35)] flex items-center justify-center bg-black my-auto">
-      <video id="scannerVideo" playsinline autoplay muted class="w-full h-full object-cover"></video>
+      <video id="scannerVideo" playsinline webkit-playsinline autoplay muted class="w-full h-full object-cover"></video>
       <canvas id="scannerCanvas" class="hidden"></canvas>
 
       <div class="pointer-events-none absolute inset-5 border-2 border-dashed border-teal-300/50 rounded-2xl flex items-center justify-center">
@@ -2042,20 +2042,27 @@
       <p id="scannerStatus" class="text-xs text-parchment-200 text-center font-medium px-4">
         Aim your camera at the QR Code on the other phone
       </p>
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center justify-center gap-2">
         <button id="btnSwitchCamera" type="button" class="android-btn px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 flex items-center gap-1.5">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 1.95.7 3.737 1.867 5.133L3 21l5.867-2.867A7.95 7.95 0 0 0 12 18c4.418 0 8-3.582 8-8z"/>
           </svg>
           <span>Flip Camera</span>
         </button>
+        <button id="btnRetryCamera" type="button" class="hidden android-btn px-3 py-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-walnut-900 text-xs font-extrabold shadow flex items-center gap-1.5">
+          <span>Retry Camera</span>
+        </button>
         <label id="btnSnapPhotoWrap" class="android-btn px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-walnut-900 text-xs font-extrabold cursor-pointer shadow flex items-center gap-1.5">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19 4h-3.17L14.4 2H9.6L8.17 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
           </svg>
-          <span>Snap Photo / Pick Image</span>
-          <input type="file" id="scannerFileInput" accept="image/*" capture="environment" class="hidden">
+          <span>Snap Photo</span>
+          <input type="file" id="scannerFileInput" accept="image/*" capture="environment" class="sr-only">
+        </label>
+        <label id="btnPickPhotoWrap" class="android-btn px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold border border-white/25 cursor-pointer flex items-center gap-1.5">
+          <span>Pick Image</span>
+          <input type="file" id="scannerGalleryInput" accept="image/*" class="sr-only">
         </label>
       </div>
     </div>
@@ -4853,7 +4860,7 @@
           if (GameState.graceTimeLeft <= 0) {
             const forfeitedPlayer = GameState.graceAbsentPlayer || targetAbsent;
             cancelGraceTimer(false);
-            if (GameState.mode === 'webrtc' && typeof navigator !== 'undefined' && navigator.onLine === false && WebRTCManager.transport === 'peerjs') {
+            if (GameState.mode === 'webrtc' && typeof navigator !== 'undefined' && navigator.onLine === false && WebRTCManager.isGlobalTransport()) {
               endOnlineMatchByDisconnect(
                 `📡 Internet was disconnected on this device and could not be restored within ${totalSecs}s — match ended without a result.`
               );
@@ -5528,7 +5535,7 @@
               if (online.sessionId) GameState.sessionId = online.sessionId;
               WebRTCManager.roomCode = online.roomCode;
               WebRTCManager.lastRoomCode = online.roomCode;
-              WebRTCManager.transport = online.transport === 'lan-backup' ? 'lan-backup' : 'peerjs';
+              WebRTCManager.transport = (online.transport === 'lan-backup' || online.transport === 'mqtt-webrtc' || online.transport === 'mqtt-relay') ? online.transport : 'peerjs';
               GameState.boardFlipped = (online.role === 2);
               setTimeout(() => {
                 if (GameState.gameOver || GameState.mode !== 'webrtc') return;
@@ -12837,12 +12844,11 @@
         activePeerName: null,
         activePin: '7860',
 
-        /* ---- Global PeerJS transport, reconnect & direct-LAN failover ---- */
-        transport: 'none',            // 'peerjs' | 'direct' | 'lan-backup' | 'none'
-        peerJS: null,                 // PeerJS Peer instance
-        peerConn: null,               // PeerJS DataConnection
+        transport: 'none',
+        peerJS: null,
+        peerConn: null,
         roomCode: '',
-        backupPC: null,               // independent LAN-only RTCPeerConnection
+        backupPC: null,
         backupDC: null,
         backupReady: false,
         backupInFlight: false,
@@ -12857,6 +12863,23 @@
         suppressLossGrace: false,
         lastRoomCode: '',
         globalView: 'choice',
+        mqttClient: null,
+        mqttTopic: '',
+        mqttBrokerIndex: 0,
+        mqttConnected: false,
+        mqttJoinTimer: null,
+        mqttFallbackTimer: null,
+        mqttJoinAttemptId: '',
+        mqttOfferPC: null,
+        mqttOfferDC: null,
+        mqttOfferAttempt: '',
+        mqttOfferPeerId: '',
+        mqttPendingCandidates: [],
+        mqttRelayActive: false,
+        peerJsLastFailedAt: 0,
+        peerJsOpened: false,
+        peerJsConnectTimer: null,
+        roomLiveAnnounced: false,
 
         initDeviceIdentity() {
           try {
@@ -13134,11 +13157,26 @@
           return cfg;
         },
 
-        buildPeerOptions() {
+        isUsingDefaultPeerServer() {
+          const cfg = this.getPeerServerConfig();
+          return !cfg.host || cfg.host === '0.peerjs.com';
+        },
+
+        isGlobalTransport(t = this.transport) {
+          return t === 'peerjs' || t === 'mqtt-webrtc' || t === 'mqtt-relay';
+        },
+
+        buildIceServers() {
           const cfg = this.getPeerServerConfig();
           const iceServers = [
             { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' }
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun.cloudflare.com:3478' },
+            {
+              urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'],
+              username: 'peerjs',
+              credential: 'peerjsp'
+            }
           ];
           if (cfg.turnUrl) {
             iceServers.push({
@@ -13147,15 +13185,495 @@
               credential: cfg.turnPass || undefined
             });
           }
+          return iceServers;
+        },
+
+        buildPeerOptions() {
+          const cfg = this.getPeerServerConfig();
           return {
             host: cfg.host || '0.peerjs.com',
             port: Number(cfg.port) || 443,
             path: cfg.path || '/',
             key: cfg.key || 'peerjs',
             secure: Boolean(cfg.secure),
-            debug: 1,
-            config: { iceServers }
+            debug: this.isUsingDefaultPeerServer() ? 0 : 1,
+            config: { iceServers: this.buildIceServers() }
           };
+        },
+
+        getGlobalMqttBrokers() {
+          return [
+            'wss://broker.emqx.io:8084/mqtt',
+            'wss://broker.hivemq.com:8884/mqtt',
+            'wss://test.mosquitto.org:8081/mqtt'
+          ];
+        },
+
+        publishGlobalMqtt(payload) {
+          if (!this.mqttClient || !this.mqttConnected || !this.mqttTopic) return false;
+          try {
+            this.mqttClient.publish(this.mqttTopic, JSON.stringify({
+              ...payload,
+              from: this.deviceId,
+              name: this.deviceName,
+              ts: Date.now()
+            }));
+            return true;
+          } catch (e) {
+            return false;
+          }
+        },
+
+        closeMqttWebRTC() {
+          if (this.mqttFallbackTimer) {
+            clearTimeout(this.mqttFallbackTimer);
+            this.mqttFallbackTimer = null;
+          }
+          try {
+            if (this.mqttOfferDC) {
+              this.mqttOfferDC.onopen = null;
+              this.mqttOfferDC.onclose = null;
+              this.mqttOfferDC.onerror = null;
+              this.mqttOfferDC.onmessage = null;
+              this.mqttOfferDC.close();
+            }
+          } catch (e) {}
+          try {
+            if (this.mqttOfferPC) {
+              this.mqttOfferPC.onicecandidate = null;
+              this.mqttOfferPC.oniceconnectionstatechange = null;
+              this.mqttOfferPC.ondatachannel = null;
+              this.mqttOfferPC.close();
+            }
+          } catch (e) {}
+          this.mqttOfferDC = null;
+          this.mqttOfferPC = null;
+          this.mqttOfferAttempt = '';
+          this.mqttOfferPeerId = '';
+          this.mqttPendingCandidates = [];
+        },
+
+        stopGlobalMqtt() {
+          if (this.mqttJoinTimer) {
+            clearInterval(this.mqttJoinTimer);
+            this.mqttJoinTimer = null;
+          }
+          this.closeMqttWebRTC();
+          const old = this.mqttClient;
+          this.mqttClient = null;
+          this.mqttConnected = false;
+          this.mqttTopic = '';
+          this.mqttRelayActive = false;
+          if (old) {
+            try {
+              if (old.removeAllListeners) old.removeAllListeners();
+              old.end(true);
+            } catch (e) {}
+          }
+        },
+
+        startGlobalMqttSignaling(room, role, delayGuestJoinMs = 0) {
+          if (typeof mqtt === 'undefined' || !room) return;
+          if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+          this.stopGlobalMqtt();
+          this.mqttTopic = 'katar_global_v2/' + room;
+          this.mqttBrokerIndex = 0;
+          const brokers = this.getGlobalMqttBrokers();
+
+          const connectBroker = (idx) => {
+            if (this.intentionalLeave || this.roomCode !== room) return;
+            const url = brokers[idx] || brokers[0];
+            let client = null;
+            let watchdog = null;
+            try {
+              client = mqtt.connect(url, {
+                keepalive: 25,
+                reconnectPeriod: 2500,
+                connectTimeout: 4500
+              });
+            } catch (e) {
+              if (idx + 1 < brokers.length) connectBroker(idx + 1);
+              return;
+            }
+            this.mqttClient = client;
+
+            watchdog = setTimeout(() => {
+              if (this.mqttClient !== client || this.mqttConnected || this.intentionalLeave) return;
+              try { client.end(true); } catch (e) {}
+              if (idx + 1 < brokers.length) {
+                this.mqttBrokerIndex = idx + 1;
+                connectBroker(idx + 1);
+              }
+            }, 4500);
+
+            client.on('connect', () => {
+              if (this.mqttClient !== client || this.intentionalLeave) {
+                clearTimeout(watchdog);
+                try { client.end(true); } catch (e) {}
+                return;
+              }
+              clearTimeout(watchdog);
+              this.mqttConnected = true;
+              client.subscribe(this.mqttTopic, () => {
+                if (this.mqttClient !== client || this.intentionalLeave) return;
+                if (role === 1) {
+                  if (!this.isConnected() && !this.peerJsOpened) {
+                    this.updateGlobalUI('waiting', `Room ${room} is live`, 'Share the code or QR with Player 2', 'CLOUD RELAY');
+                    this.updateConnectionUI('connecting', `Room ${room} Ready`, 'Waiting for Player 2 to join…');
+                    if (!this.roomLiveAnnounced) {
+                      this.roomLiveAnnounced = true;
+                      showBoardToast(`🌍 Room ${room} is live — share the code or QR.`);
+                    }
+                    this.renderGlobalRoomQR();
+                  }
+                } else if (role === 2 && !this.isConnected()) {
+                  if (delayGuestJoinMs > 0 && !this.peerJsLastFailedAt) {
+                    setTimeout(() => {
+                      if (this.mqttClient === client && !this.intentionalLeave && !this.isConnected() && !this.mqttJoinTimer && !this.mqttOfferPC && !this.mqttRelayActive) {
+                        this.sendMqttJoinRequest();
+                      }
+                    }, delayGuestJoinMs);
+                  } else {
+                    this.sendMqttJoinRequest();
+                  }
+                }
+              });
+            });
+
+            client.on('message', (_, buf) => {
+              if (this.mqttClient !== client || this.intentionalLeave) return;
+              let msg = null;
+              try {
+                msg = JSON.parse(buf.toString());
+              } catch (e) {
+                return;
+              }
+              if (!msg || msg.from === this.deviceId) return;
+              if (msg.to && msg.to !== this.deviceId) return;
+
+              if (msg.type === 'JOIN_REQ' && role === 1) {
+                this.handleMqttJoinRequest(msg);
+              } else if (msg.type === 'ROOM_FULL' && role === 2 && msg.attempt === this.mqttJoinAttemptId) {
+                if (this.mqttJoinTimer) {
+                  clearInterval(this.mqttJoinTimer);
+                  this.mqttJoinTimer = null;
+                }
+                this.updateGlobalUI('error', 'Room is full', 'Only 2 players can join this room.', 'CLOUD RELAY');
+                showBoardToast('👥 Room is already full — only 2 players can join.');
+              } else if (msg.type === 'OFFER' && role === 2) {
+                this.handleMqttOffer(msg);
+              } else if (msg.type === 'ANSWER' && role === 1) {
+                this.handleMqttAnswer(msg);
+              } else if (msg.type === 'ICE_CAND') {
+                this.handleMqttIceCandidate(msg);
+              } else if (msg.type === 'RELAY_READY' && msg.attempt) {
+                if (!this.isConnected() || this.transport === 'mqtt-relay') {
+                  if (!this.mqttRelayActive) {
+                    this.activateMqttRelay(role, msg.from, msg.attempt, false);
+                  }
+                }
+              } else if (msg.type === 'GAME_PKT' && msg.data) {
+                if (!this.isConnected() && !this.mqttRelayActive && msg.attempt) {
+                  this.activateMqttRelay(role, msg.from, msg.attempt, false);
+                }
+                if (this.mqttRelayActive && this.dc && this.dc._isMqttRelay) {
+                  let pkt = msg.data;
+                  if (typeof pkt === 'string') {
+                    try { pkt = JSON.parse(pkt); } catch (e) { return; }
+                  }
+                  this.handlePacket(pkt);
+                }
+              }
+            });
+
+            client.on('error', () => {
+              if (this.mqttClient !== client) return;
+              if (!this.mqttConnected && idx + 1 < brokers.length) {
+                clearTimeout(watchdog);
+                try { client.end(true); } catch (e) {}
+                this.mqttBrokerIndex = idx + 1;
+                connectBroker(idx + 1);
+              }
+            });
+
+            client.on('close', () => {
+              if (this.mqttClient !== client) return;
+              this.mqttConnected = false;
+            });
+          };
+
+          connectBroker(0);
+        },
+
+        sendMqttJoinRequest() {
+          if (this.intentionalLeave || this.isConnected() || !this.mqttClient || !this.mqttConnected) return;
+          if (this.mqttJoinTimer) {
+            clearInterval(this.mqttJoinTimer);
+            this.mqttJoinTimer = null;
+          }
+          const attempt = this.mqttJoinAttemptId || Math.random().toString(36).slice(2, 10);
+          this.mqttJoinAttemptId = attempt;
+          let tries = 0;
+          const sendOne = () => {
+            if (this.intentionalLeave || this.isConnected() || !this.mqttClient || !this.mqttConnected || this.mqttOfferPC) {
+              if (this.mqttJoinTimer) {
+                clearInterval(this.mqttJoinTimer);
+                this.mqttJoinTimer = null;
+              }
+              return;
+            }
+            tries++;
+            this.publishGlobalMqtt({ type: 'JOIN_REQ', attempt });
+            if (tries >= 6) {
+              clearInterval(this.mqttJoinTimer);
+              this.mqttJoinTimer = null;
+              setTimeout(() => {
+                if (!this.intentionalLeave && !this.isConnected() && !this.mqttOfferPC) {
+                  if (isMatchActivelyInProgress()) {
+                    this.updateGlobalUI('connecting', 'Host not reachable yet', 'Retrying while your return window is open…', 'CLOUD RELAY');
+                    this.scheduleAutoReconnect(4000);
+                  } else {
+                    this.updateGlobalUI('error', 'Room not found', 'Check the code, or ask the host to open the room first.', 'CLOUD RELAY');
+                    showBoardToast('Room not found — verify the code or ask the host to stay on the room screen.');
+                  }
+                }
+              }, 2600);
+            }
+          };
+          sendOne();
+          this.mqttJoinTimer = setInterval(sendOne, 2200);
+        },
+
+        async handleMqttJoinRequest(msg) {
+          if (this.intentionalLeave || !msg || !msg.from) return;
+          const sameDevice = Boolean(this.remoteDeviceId && msg.from === this.remoteDeviceId);
+          if (this.linkedPeerIsOpen() && !sameDevice) {
+            this.publishGlobalMqtt({ type: 'ROOM_FULL', to: msg.from, attempt: msg.attempt });
+            return;
+          }
+          if (this.peerConn && this.peerConn.open && sameDevice && this.transport === 'peerjs') {
+            return;
+          }
+          if (this.mqttOfferPC && this.mqttOfferAttempt === msg.attempt && this.mqttOfferPeerId === msg.from) {
+            return;
+          }
+          if (typeof RTCPeerConnection === 'undefined') {
+            this.activateMqttRelay(1, msg.from, msg.attempt, true);
+            return;
+          }
+          this.closeMqttWebRTC();
+          this.mqttOfferAttempt = msg.attempt;
+          this.mqttOfferPeerId = msg.from;
+          this.remoteDeviceId = msg.from;
+          this.remoteDeviceName = msg.name || 'Global Player';
+          this.mqttPendingCandidates = [];
+          try {
+            const pc = new RTCPeerConnection({ iceServers: this.buildIceServers() });
+            this.mqttOfferPC = pc;
+            const dc = pc.createDataChannel('katar-global', { ordered: true });
+            this.attachMqttWebRtcChannel(dc, pc, 1, msg.from, msg.attempt);
+            pc.onicecandidate = (evt) => {
+              if (evt.candidate && this.mqttOfferPC === pc) {
+                this.publishGlobalMqtt({ type: 'ICE_CAND', to: msg.from, attempt: msg.attempt, candidate: evt.candidate });
+              }
+            };
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            if (this.mqttOfferPC !== pc) return;
+            this.publishGlobalMqtt({ type: 'OFFER', to: msg.from, attempt: msg.attempt, sdp: pc.localDescription });
+            this.mqttFallbackTimer = setTimeout(() => {
+              if (this.mqttOfferPC === pc && !this.isConnected() && !this.intentionalLeave) {
+                this.activateMqttRelay(1, msg.from, msg.attempt, true);
+              }
+            }, 8000);
+          } catch (e) {
+            this.activateMqttRelay(1, msg.from, msg.attempt, true);
+          }
+        },
+
+        async handleMqttOffer(msg) {
+          if (this.intentionalLeave || !msg || !msg.sdp) return;
+          if (this.isConnected()) return;
+          if (this.mqttJoinAttemptId && msg.attempt !== this.mqttJoinAttemptId) return;
+          if (this.mqttJoinTimer) {
+            clearInterval(this.mqttJoinTimer);
+            this.mqttJoinTimer = null;
+          }
+          if (typeof RTCPeerConnection === 'undefined') {
+            this.activateMqttRelay(2, msg.from, msg.attempt, true);
+            return;
+          }
+          this.closeMqttWebRTC();
+          this.mqttOfferAttempt = msg.attempt;
+          this.mqttOfferPeerId = msg.from;
+          this.remoteDeviceId = msg.from;
+          this.remoteDeviceName = msg.name || 'Global Host';
+          this.mqttPendingCandidates = [];
+          try {
+            const pc = new RTCPeerConnection({ iceServers: this.buildIceServers() });
+            this.mqttOfferPC = pc;
+            pc.ondatachannel = (evt) => {
+              if (evt.channel && this.mqttOfferPC === pc) {
+                this.attachMqttWebRtcChannel(evt.channel, pc, 2, msg.from, msg.attempt);
+              }
+            };
+            pc.onicecandidate = (evt) => {
+              if (evt.candidate && this.mqttOfferPC === pc) {
+                this.publishGlobalMqtt({ type: 'ICE_CAND', to: msg.from, attempt: msg.attempt, candidate: evt.candidate });
+              }
+            };
+            await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+            for (const c of this.mqttPendingCandidates) {
+              try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch (e) {}
+            }
+            this.mqttPendingCandidates = [];
+            const ans = await pc.createAnswer();
+            await pc.setLocalDescription(ans);
+            if (this.mqttOfferPC !== pc) return;
+            this.publishGlobalMqtt({ type: 'ANSWER', to: msg.from, attempt: msg.attempt, sdp: pc.localDescription });
+            this.mqttFallbackTimer = setTimeout(() => {
+              if (this.mqttOfferPC === pc && !this.isConnected() && !this.intentionalLeave) {
+                this.activateMqttRelay(2, msg.from, msg.attempt, true);
+              }
+            }, 8000);
+          } catch (e) {
+            this.activateMqttRelay(2, msg.from, msg.attempt, true);
+          }
+        },
+
+        async handleMqttAnswer(msg) {
+          if (!this.mqttOfferPC || !msg || !msg.sdp) return;
+          if (msg.attempt !== this.mqttOfferAttempt) return;
+          try {
+            await this.mqttOfferPC.setRemoteDescription(new RTCSessionDescription(msg.sdp));
+            for (const c of this.mqttPendingCandidates) {
+              try { await this.mqttOfferPC.addIceCandidate(new RTCIceCandidate(c)); } catch (e) {}
+            }
+            this.mqttPendingCandidates = [];
+          } catch (e) {}
+        },
+
+        async handleMqttIceCandidate(msg) {
+          if (!msg || !msg.candidate || msg.attempt !== this.mqttOfferAttempt) return;
+          const pc = this.mqttOfferPC || this.pc;
+          if (pc && pc.remoteDescription) {
+            try { await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)); } catch (e) {}
+          } else {
+            this.mqttPendingCandidates.push(msg.candidate);
+          }
+        },
+
+        attachMqttWebRtcChannel(dc, pc, role, peerId, attempt) {
+          this.mqttOfferDC = dc;
+          dc.onclose = () => {
+            if (this.mqttOfferPC === pc && !this.isConnected() && !this.intentionalLeave) {
+              this.activateMqttRelay(role, peerId, attempt, true);
+            }
+          };
+          pc.oniceconnectionstatechange = () => {
+            const st = pc.iceConnectionState;
+            if (st === 'failed' || st === 'closed') {
+              if (this.mqttOfferPC === pc && !this.isConnected() && !this.intentionalLeave) {
+                this.activateMqttRelay(role, peerId, attempt, true);
+              } else if (this.pc === pc && this.transport === 'mqtt-webrtc') {
+                this.handleLinkLost('WebRTC ICE ' + st);
+              }
+            }
+          };
+          dc.onopen = () => {
+            if (this.intentionalLeave) {
+              try { dc.close(); pc.close(); } catch (e) {}
+              return;
+            }
+            const replacingStaleSamePeer = Boolean(peerId && this.remoteDeviceId && peerId === this.remoteDeviceId && this.transport !== 'peerjs');
+            if (this.isConnected() && this.dc !== dc && !replacingStaleSamePeer) {
+              try { dc.close(); pc.close(); } catch (e) {}
+              return;
+            }
+            if (replacingStaleSamePeer && this.dc && this.dc !== dc) {
+              this.suppressLossGrace = true;
+              this.stopHeartbeat();
+              try {
+                this.dc.onopen = null;
+                this.dc.onclose = null;
+                this.dc.onerror = null;
+                this.dc.onmessage = null;
+                this.dc.close();
+              } catch (e) {}
+              try {
+                if (this.pc && this.pc !== pc) this.pc.close();
+              } catch (e) {}
+              this.linkOpenHandledFor = null;
+              this.mqttRelayActive = false;
+              this.suppressLossGrace = false;
+            }
+            if (this.mqttFallbackTimer) {
+              clearTimeout(this.mqttFallbackTimer);
+              this.mqttFallbackTimer = null;
+            }
+            if (this.mqttJoinTimer) {
+              clearInterval(this.mqttJoinTimer);
+              this.mqttJoinTimer = null;
+            }
+            this.mqttOfferPC = null;
+            this.mqttOfferDC = null;
+            this.pc = pc;
+            this.remoteDeviceId = peerId || this.remoteDeviceId;
+            GameState.localPlayerRole = role || GameState.localPlayerRole || 2;
+            GameState.mode = 'webrtc';
+            GameState.vsAI = false;
+            this.closePeerJS();
+            this.transport = 'mqtt-webrtc';
+            this.setupDataChannel(dc);
+            setTimeout(() => {
+              if (this.transport === 'mqtt-webrtc' && this.isConnected()) {
+                this.stopGlobalMqtt();
+              }
+            }, 2200);
+          };
+        },
+
+        activateMqttRelay(role, peerId, attempt, notifyPeer = true) {
+          if (this.intentionalLeave || !this.mqttClient || !this.mqttConnected) return;
+          if (this.mqttRelayActive && this.dc && this.dc.readyState === 'open' && this.remoteDeviceId === peerId) return;
+          if (this.isConnected() && this.transport !== 'mqtt-relay' && this.remoteDeviceId !== peerId) return;
+          this.closeMqttWebRTC();
+          if (this.mqttJoinTimer) {
+            clearInterval(this.mqttJoinTimer);
+            this.mqttJoinTimer = null;
+          }
+          this.closePeerJS();
+          this.linkOpenHandledFor = null;
+          this.mqttRelayActive = true;
+          this.remoteDeviceId = peerId || this.remoteDeviceId;
+          GameState.localPlayerRole = role || GameState.localPlayerRole || 2;
+          GameState.mode = 'webrtc';
+          GameState.vsAI = false;
+          if (notifyPeer) {
+            this.publishGlobalMqtt({ type: 'RELAY_READY', to: peerId, attempt });
+          }
+          const adapter = {
+            readyState: 'open',
+            _isMqttRelay: true,
+            send: (data) => {
+              if (adapter.readyState !== 'open') return;
+              const ok = this.publishGlobalMqtt({
+                type: 'GAME_PKT',
+                to: this.remoteDeviceId,
+                attempt,
+                data
+              });
+              if (!ok && this.dc === adapter && !this.mqttClient) {
+                this.handleSendFailure(new Error('Cloud relay unavailable'));
+              }
+            },
+            close: () => {
+              adapter.readyState = 'closed';
+            }
+          };
+          this.dc = adapter;
+          this.transport = 'mqtt-relay';
+          this.handleLinkOpen('mqtt-relay');
         },
 
         updateGlobalUI(state, title, detail, badge) {
@@ -13267,8 +13785,16 @@
         },
 
         async hostGlobalRoom(code) {
-          if (typeof Peer === 'undefined') {
-            showBoardToast('PeerJS library not loaded — check peerjs.min.js');
+          if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            this.updateGlobalUI('error', 'No internet connection', 'Connect to internet for Global Play, or use 📶 Offline QR.', 'OFFLINE');
+            showBoardToast('🌐 No internet connection — use 📶 Offline QR for local hotspot play.');
+            return;
+          }
+          const useDefaultCloud = this.isUsingDefaultPeerServer();
+          const hasMqtt = typeof mqtt !== 'undefined';
+          const hasPeer = typeof Peer !== 'undefined';
+          if (!hasPeer && !hasMqtt) {
+            showBoardToast('Online signaling libraries not loaded — check peerjs.min.js / mqtt.min.js');
             return;
           }
           const room = this.normalizeRoomCode(code || this.roomCode || this.makeRoomCode()) || this.makeRoomCode();
@@ -13282,6 +13808,8 @@
           this.cleanup();
           this.intentionalLeave = false;
           this.suppressLossGrace = false;
+          this.roomLiveAnnounced = false;
+          this.peerJsOpened = false;
           this.roomCode = room;
           this.lastRoomCode = room;
           this.transport = 'peerjs';
@@ -13292,25 +13820,54 @@
           try { SafeStorage.setItem('katar_last_room_v1', room); } catch (e) {}
           this.showGlobalHostView();
           this.renderGlobalRoomQR();
-          this.updateGlobalUI('connecting', `Opening room ${room}…`, 'Registering with the PeerJS rendezvous server', 'PEERJS');
+          this.updateGlobalUI('connecting', `Opening room ${room}…`, 'Registering global rendezvous server', useDefaultCloud ? 'GLOBAL' : 'PEERJS');
           this.updateConnectionUI('connecting', `Hosting Global Room ${room}`, 'Waiting for Player 2 to join…');
+
+          if (useDefaultCloud && hasMqtt) {
+            this.startGlobalMqttSignaling(room, 1);
+          }
+
+          const shouldTryPeerJS = hasPeer && (!useDefaultCloud || (Date.now() - this.peerJsLastFailedAt > 300000));
+          if (!shouldTryPeerJS) return;
 
           try {
             const peer = new Peer(this.hostPeerId(room), this.buildPeerOptions());
             this.peerJS = peer;
+            if (useDefaultCloud && hasMqtt) {
+              if (this.peerJsConnectTimer) clearTimeout(this.peerJsConnectTimer);
+              this.peerJsConnectTimer = setTimeout(() => {
+                if (this.peerJS === peer && !this.peerJsOpened && !this.intentionalLeave) {
+                  this.peerJsLastFailedAt = Date.now();
+                  this.closePeerJS();
+                }
+              }, 6000);
+            }
 
             peer.on('open', (id) => {
+              if (this.peerJS !== peer || this.intentionalLeave) return;
+              if (this.peerJsConnectTimer) {
+                clearTimeout(this.peerJsConnectTimer);
+                this.peerJsConnectTimer = null;
+              }
+              this.peerJsOpened = true;
               this.reconnectAttempts = 0;
+              if (this.isConnected()) return;
               this.updateGlobalUI('waiting', `Room ${room} is live`, 'Share the code or QR with Player 2', 'PEERJS');
               this.updateConnectionUI('connecting', `Room ${room} Ready`, 'Waiting for Player 2 to join…');
-              showBoardToast(`🌍 Room ${room} is live — share the code or QR.`);
+              if (!this.roomLiveAnnounced) {
+                this.roomLiveAnnounced = true;
+                showBoardToast(`🌍 Room ${room} is live — share the code or QR.`);
+              }
               this.renderGlobalRoomQR();
             });
 
             peer.on('connection', (conn) => {
+              if (this.peerJS !== peer || this.intentionalLeave) {
+                try { conn.close(); } catch (e) {}
+                return;
+              }
               const incomingDevice = (conn.metadata && conn.metadata.deviceId) || null;
               const sameDevice = Boolean(incomingDevice && this.remoteDeviceId && incomingDevice === this.remoteDeviceId);
-              // A reconnect from the same device may replace a stale-but-"open" connection.
               if (this.linkedPeerIsOpen() && !sameDevice) {
                 try { conn.close(); } catch (e) {}
                 showBoardToast('👥 Room is already full — only 2 players can join.');
@@ -13320,28 +13877,42 @@
             });
 
             peer.on('disconnected', () => {
-              if (this.intentionalLeave) return;
+              if (this.peerJS !== peer || this.intentionalLeave) return;
+              if (!this.peerJsOpened) return;
+              if (this.isConnected() || this.mqttConnected) return;
               this.updateGlobalUI('error', 'Signaling server disconnected', 'Game data may still be flowing directly over WebRTC.', 'PEERJS');
-              try { peer.reconnect(); } catch (e) {}
-              this.scheduleAutoReconnect(2500);
+              this.scheduleAutoReconnect(3500);
             });
 
-            peer.on('error', (err) => this.handlePeerJSError(err, 'host', room));
+            peer.on('error', (err) => {
+              if (this.peerJS !== peer || this.intentionalLeave) return;
+              this.handlePeerJSError(err, 'host', room);
+            });
 
             peer.on('close', () => {
-              if (this.intentionalLeave) return;
+              if (this.peerJS !== peer || this.intentionalLeave || this.isConnected() || this.mqttConnected) return;
               this.updateGlobalUI('error', 'Room closed', 'Attempting to reopen the room…', 'PEERJS');
-              this.scheduleAutoReconnect(1500);
+              this.scheduleAutoReconnect(2500);
             });
           } catch (err) {
-            this.updateGlobalUI('error', 'Could not open room', (err && err.message) || 'PeerJS failed to start', 'PEERJS');
-            showBoardToast((err && err.message) || 'Could not open the global room.');
+            if (!useDefaultCloud || !this.mqttConnected) {
+              this.updateGlobalUI('error', 'Could not open room', (err && err.message) || 'PeerJS failed to start', 'PEERJS');
+              showBoardToast((err && err.message) || 'Could not open the global room.');
+            }
           }
         },
 
         async joinGlobalRoom(code) {
-          if (typeof Peer === 'undefined') {
-            showBoardToast('PeerJS library not loaded — check peerjs.min.js');
+          if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            this.updateGlobalUI('error', 'No internet connection', 'Connect to internet for Global Play, or use 📶 Offline QR.', 'OFFLINE');
+            showBoardToast('🌐 No internet connection — use 📶 Offline QR for local hotspot play.');
+            return;
+          }
+          const useDefaultCloud = this.isUsingDefaultPeerServer();
+          const hasMqtt = typeof mqtt !== 'undefined';
+          const hasPeer = typeof Peer !== 'undefined';
+          if (!hasPeer && !hasMqtt) {
+            showBoardToast('Online signaling libraries not loaded — check peerjs.min.js / mqtt.min.js');
             return;
           }
           const room = this.normalizeRoomCode(code);
@@ -13359,24 +13930,47 @@
           this.cleanup();
           this.intentionalLeave = false;
           this.suppressLossGrace = false;
+          this.peerJsOpened = false;
           this.roomCode = room;
           this.lastRoomCode = room;
           this.transport = 'peerjs';
+          this.mqttJoinAttemptId = Math.random().toString(36).slice(2, 10);
           GameState.mode = 'webrtc';
           GameState.vsAI = false;
           GameState.localPlayerRole = 2;
           GameState.sessionId = GameState.sessionId || ('S-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6));
           try { SafeStorage.setItem('katar_last_room_v1', room); } catch (e) {}
           this.showGlobalChoiceView();
-          this.updateGlobalUI('connecting', `Joining ${room}…`, 'Contacting the host through PeerJS', 'PEERJS');
-          this.updateConnectionUI('connecting', `Joining Global Room ${room}`, 'Connecting through PeerJS…');
+          this.updateGlobalUI('connecting', `Joining ${room}…`, 'Contacting the host…', useDefaultCloud ? 'GLOBAL' : 'PEERJS');
+          this.updateConnectionUI('connecting', `Joining Global Room ${room}`, 'Connecting…');
+
+          const shouldTryPeerJS = hasPeer && (!useDefaultCloud || (Date.now() - this.peerJsLastFailedAt > 300000));
+          if (useDefaultCloud && hasMqtt) {
+            this.startGlobalMqttSignaling(room, 2, shouldTryPeerJS ? 900 : 0);
+          }
+
+          if (!shouldTryPeerJS) return;
 
           try {
             const peer = new Peer(this.guestPeerId(), this.buildPeerOptions());
             this.peerJS = peer;
+            if (useDefaultCloud && hasMqtt) {
+              if (this.peerJsConnectTimer) clearTimeout(this.peerJsConnectTimer);
+              this.peerJsConnectTimer = setTimeout(() => {
+                if (this.peerJS === peer && !this.peerJsOpened && !this.intentionalLeave) {
+                  this.peerJsLastFailedAt = Date.now();
+                  this.closePeerJS();
+                }
+              }, 6000);
+            }
 
             peer.on('open', () => {
-              if (this.intentionalLeave) return;
+              if (this.peerJS !== peer || this.intentionalLeave || this.isConnected()) return;
+              if (this.peerJsConnectTimer) {
+                clearTimeout(this.peerJsConnectTimer);
+                this.peerJsConnectTimer = null;
+              }
+              this.peerJsOpened = true;
               this.reconnectAttempts = 0;
               const conn = peer.connect(this.hostPeerId(room), {
                 reliable: true,
@@ -13393,26 +13987,36 @@
             });
 
             peer.on('disconnected', () => {
-              if (this.intentionalLeave) return;
-              try { peer.reconnect(); } catch (e) {}
+              if (this.peerJS !== peer || this.intentionalLeave) return;
+              if (!this.peerJsOpened) return;
+              if (this.isConnected() || this.mqttConnected) return;
+              this.scheduleAutoReconnect(3500);
             });
 
-            peer.on('error', (err) => this.handlePeerJSError(err, 'guest', room));
+            peer.on('error', (err) => {
+              if (this.peerJS !== peer || this.intentionalLeave) return;
+              this.handlePeerJSError(err, 'guest', room);
+            });
 
             peer.on('close', () => {
-              if (this.intentionalLeave || this.isConnected()) return;
+              if (this.peerJS !== peer || this.intentionalLeave || this.isConnected() || this.mqttConnected) return;
               this.updateGlobalUI('error', 'Connection closed', 'Trying to rejoin the room…', 'PEERJS');
-              this.scheduleAutoReconnect(1800);
+              this.scheduleAutoReconnect(2500);
             });
           } catch (err) {
-            this.updateGlobalUI('error', 'Could not join room', (err && err.message) || 'PeerJS failed to start', 'PEERJS');
-            showBoardToast((err && err.message) || 'Could not join the room.');
+            if (!useDefaultCloud || !hasMqtt) {
+              this.updateGlobalUI('error', 'Could not join room', (err && err.message) || 'PeerJS failed to start', 'PEERJS');
+              showBoardToast((err && err.message) || 'Could not join the room.');
+            }
           }
         },
 
         handlePeerJSError(err, intent, room) {
           const type = (err && err.type) || 'error';
           const msg = (err && err.message) || type;
+          const useDefaultCloud = this.isUsingDefaultPeerServer();
+          const hasMqtt = typeof mqtt !== 'undefined';
+
           if (type === 'unavailable-id' && intent === 'host') {
             const midMatch = isMatchActivelyInProgress();
             if ((midMatch || this.reconnectAttempts > 0) && !this.intentionalLeave) {
@@ -13436,6 +14040,16 @@
             return;
           }
           if (type === 'peer-unavailable') {
+            if (intent === 'guest' && useDefaultCloud && hasMqtt) {
+              this.closePeerJS();
+              if (!this.mqttClient) {
+                this.startGlobalMqttSignaling(room, 2, 0);
+              } else if (this.mqttConnected) {
+                this.sendMqttJoinRequest();
+              }
+              this.updateGlobalUI('connecting', `Finding room ${room}…`, 'Checking Cloud Relay for the host…', 'CLOUD RELAY');
+              return;
+            }
             const midMatch = isMatchActivelyInProgress();
             if ((midMatch || this.reconnectAttempts > 0) && !this.intentionalLeave && this.roomCode) {
               this.updateGlobalUI('connecting', 'Host not reachable yet', 'Retrying while your return window is open…', 'PEERJS');
@@ -13450,7 +14064,23 @@
             }
             return;
           }
-          if (['network', 'server-error', 'socket-error', 'socket-closed', 'disconnected'].includes(type)) {
+          if (['network', 'server-error', 'socket-error', 'socket-closed', 'disconnected', 'ssl-unavailable'].includes(type)) {
+            this.peerJsLastFailedAt = Date.now();
+            this.closePeerJS();
+            if (useDefaultCloud && hasMqtt) {
+              if (!this.mqttClient) {
+                this.startGlobalMqttSignaling(room, intent === 'host' ? 1 : 2, 0);
+              } else if (intent === 'guest' && this.mqttConnected) {
+                this.sendMqttJoinRequest();
+              }
+              if (intent === 'host' && this.mqttConnected) {
+                this.updateGlobalUI('waiting', `Room ${room} is live`, 'Share the code or QR with Player 2', 'CLOUD RELAY');
+                this.updateConnectionUI('connecting', `Room ${room} Ready`, 'Waiting for Player 2 to join…');
+              } else {
+                this.updateGlobalUI('connecting', intent === 'host' ? `Opening room ${room}…` : `Joining ${room}…`, 'Using Cloud Relay signaling…', 'CLOUD RELAY');
+              }
+              return;
+            }
             this.updateGlobalUI('error', 'PeerJS signaling unavailable', 'Direct WebRTC gameplay may continue; reconnecting…', 'PEERJS');
             this.notifyReconnectUI('signaling server unavailable');
             this.scheduleAutoReconnect(3500);
@@ -13491,11 +14121,23 @@
           this.transport = 'peerjs';
 
           conn.on('open', () => {
+            if (this.peerConn !== conn) return;
             adapter.readyState = 'open';
+            if (this.mqttJoinTimer) {
+              clearInterval(this.mqttJoinTimer);
+              this.mqttJoinTimer = null;
+            }
+            this.closeMqttWebRTC();
             this.handleLinkOpen('peerjs');
+            setTimeout(() => {
+              if (this.transport === 'peerjs' && this.isConnected()) {
+                this.stopGlobalMqtt();
+              }
+            }, 2200);
           });
 
           conn.on('data', (data) => {
+            if (this.peerConn !== conn) return;
             let pkt = data;
             if (typeof pkt === 'string') {
               try { pkt = JSON.parse(pkt); } catch (e) { return; }
@@ -13504,15 +14146,18 @@
           });
 
           conn.on('close', () => {
+            if (this.peerConn !== conn) return;
             adapter.readyState = 'closed';
             this.handleLinkLost('PeerJS link closed');
           });
 
           conn.on('error', (err) => {
+            if (this.peerConn !== conn) return;
             this.updateGlobalUI('error', 'Data link error', (err && err.message) || 'PeerJS DataConnection error', 'PEERJS');
           });
 
           conn.on('iceStateChanged', (state) => {
+            if (this.peerConn !== conn) return;
             if (state === 'connected' || state === 'completed') {
               this.updateGlobalUI('connected', `Connected as Player ${GameState.localPlayerRole}`, 'Encrypted direct WebRTC link active', 'PEERJS');
             } else if (state === 'failed' || state === 'disconnected' || state === 'closed') {
@@ -13522,7 +14167,9 @@
 
           if (conn.open) {
             adapter.readyState = 'open';
-            setTimeout(() => this.handleLinkOpen('peerjs'), 0);
+            setTimeout(() => {
+              if (this.peerConn === conn) this.handleLinkOpen('peerjs');
+            }, 0);
           }
         },
 
@@ -13573,7 +14220,7 @@
           }
           this.reconnectAttempts++;
           const role = GameState.localPlayerRole || 1;
-          this.updateGlobalUI('connecting', 'Reconnecting…', `Room ${this.roomCode} • attempt ${this.reconnectAttempts}`, 'PEERJS');
+          this.updateGlobalUI('connecting', 'Reconnecting…', `Room ${this.roomCode} • attempt ${this.reconnectAttempts}`, 'GLOBAL');
           if (role === 1) this.hostGlobalRoom(this.roomCode);
           else this.joinGlobalRoom(this.roomCode);
         },
@@ -13591,7 +14238,7 @@
 
         onNetworkOffline() {
           if (this.backupDC && this.backupDC.readyState === 'open') {
-            if (this.transport === 'peerjs') {
+            if (this.transport === 'peerjs' || this.transport === 'mqtt-webrtc' || this.transport === 'mqtt-relay') {
               this.promoteBackupLink();
             } else {
               showBoardToast('✅ Internet lost — the direct LAN link is carrying the match.');
@@ -13607,7 +14254,8 @@
 
         onNetworkOnline() {
           if (this.intentionalLeave) return;
-          if (this.peerJS && this.peerJS.disconnected) {
+          this.peerJsLastFailedAt = 0;
+          if (this.peerJS && this.peerJS.disconnected && this.peerJsOpened && !this.peerJS.destroyed) {
             try { this.peerJS.reconnect(); } catch (e) {}
           }
           if (GameState.mode === 'webrtc' && !GameState.gameOver && !this.isConnected()) {
@@ -13617,7 +14265,7 @@
         },
 
         startLanBackup() {
-          if (this.transport !== 'peerjs') return;
+          if (this.transport !== 'peerjs' && this.transport !== 'mqtt-webrtc' && this.transport !== 'mqtt-relay') return;
           if (GameState.localPlayerRole !== 1) return;
           if (this.backupDC && this.backupDC.readyState === 'open') return;
           if (this.backupInFlight) return;
@@ -13629,7 +14277,7 @@
             const pc = new RTCPeerConnection({ iceServers: [] });
             this.backupPC = pc;
             pc.onicecandidate = (evt) => {
-              if (evt.candidate && this.transport === 'peerjs') {
+              if (evt.candidate && (this.transport === 'peerjs' || this.transport === 'mqtt-webrtc' || this.transport === 'mqtt-relay')) {
                 this.send({ type: 'LAN_BACKUP_CANDIDATE', candidate: evt.candidate });
               }
             };
@@ -13731,7 +14379,7 @@
             const pc = new RTCPeerConnection({ iceServers: [] });
             this.backupPC = pc;
             pc.onicecandidate = (evt) => {
-              if (evt.candidate && this.transport === 'peerjs') {
+              if (evt.candidate && this.isGlobalTransport()) {
                 this.send({ type: 'LAN_BACKUP_CANDIDATE', candidate: evt.candidate });
               }
             };
@@ -13798,6 +14446,10 @@
         },
 
         closePeerJS() {
+          if (this.peerJsConnectTimer) {
+            clearTimeout(this.peerJsConnectTimer);
+            this.peerJsConnectTimer = null;
+          }
           try {
             if (this.peerConn) {
               this.peerConn.removeAllListeners && this.peerConn.removeAllListeners();
@@ -13878,6 +14530,7 @@
             this.iceTimer = null;
           }
           this.closeBackupLink();
+          this.stopGlobalMqtt();
           this.closePeerJS();
           try {
             if (this.dc) {
@@ -14122,7 +14775,7 @@
             dotTop.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
             dotModal.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 shrink-0';
             const role = GameState.localPlayerRole || 1;
-            if (this.transport === 'peerjs') labelTop.textContent = `Global (P${role})`;
+            if (this.isGlobalTransport()) labelTop.textContent = `Global (P${role})`;
             else if (this.transport === 'lan-backup') labelTop.textContent = `LAN (P${role})`;
             else labelTop.textContent = `P2P (P${role})`;
           } else if (state === 'connecting') {
@@ -14174,7 +14827,7 @@
 
         setupDataChannel(channel) {
           this.dc = channel;
-          if (this.transport !== 'peerjs' && this.transport !== 'lan-backup') this.transport = 'direct';
+          if (!this.isGlobalTransport() && this.transport !== 'lan-backup') this.transport = 'direct';
 
           channel.onopen = () => {
             try { channel.readyState = 'open'; } catch (e) {}
@@ -14200,7 +14853,7 @@
           };
 
           if (channel.readyState === 'open') {
-            setTimeout(() => this.handleLinkOpen(this.transport), 0);
+            this.handleLinkOpen(this.transport);
           }
         },
 
@@ -14208,7 +14861,7 @@
           if (!this.dc || this.dc.readyState !== 'open') return;
           if (this.linkOpenHandledFor === this.dc) return;
           this.linkOpenHandledFor = this.dc;
-          this.transport = (via === 'peerjs') ? 'peerjs' : (via === 'lan-backup' ? 'lan-backup' : 'direct');
+          this.transport = (via === 'peerjs' || via === 'mqtt-webrtc' || via === 'mqtt-relay' || via === 'lan-backup') ? via : 'direct';
           this.cancelAutoReconnect();
           this.reconnectAttempts = 0;
           this.intentionalLeave = false;
@@ -14246,21 +14899,28 @@
           }
 
           const isReconnect = GameState.moveLog.length > 0 || GameState.history.length > 0;
+          let connDetail = 'Live P2P link active — device remembered for 1-tap reconnect!';
+          if (this.transport === 'peerjs' || this.transport === 'mqtt-webrtc') {
+            connDetail = 'Global match active — direct encrypted WebRTC data link.';
+          } else if (this.transport === 'mqtt-relay') {
+            connDetail = 'Global match active via Cloud Relay.';
+          } else if (this.transport === 'lan-backup') {
+            connDetail = 'Direct LAN backup active — no internet required.';
+          }
           this.updateConnectionUI(
             'connected',
             `Connected as Player ${GameState.localPlayerRole || 1}!`,
-            this.transport === 'peerjs'
-              ? 'Global PeerJS match active — direct encrypted WebRTC data link.'
-              : (this.transport === 'lan-backup'
-                ? 'Direct LAN backup active — no internet required.'
-                : 'Live P2P link active — device remembered for 1-tap reconnect!')
+            connDetail
           );
           if (this.roomCode) {
+            const globalBadge = this.transport === 'lan-backup'
+              ? 'LAN DIRECT'
+              : (this.transport === 'mqtt-relay' ? 'CLOUD RELAY' : (this.transport === 'mqtt-webrtc' ? 'GLOBAL P2P' : 'PEERJS'));
             this.updateGlobalUI(
               'connected',
               `Connected as Player ${GameState.localPlayerRole || 1}`,
               this.transport === 'lan-backup' ? 'Direct LAN link active (internet-free).' : `Global room ${this.roomCode} connected.`,
-              this.transport === 'lan-backup' ? 'LAN DIRECT' : 'PEERJS'
+              globalBadge
             );
           }
           if (!isReconnect) SoundEngine.victory();
@@ -14286,7 +14946,7 @@
             }, 320);
           }
 
-          if (this.transport === 'peerjs') {
+          if (this.isGlobalTransport()) {
             setTimeout(() => this.startLanBackup(), 800);
           }
         },
@@ -14307,9 +14967,10 @@
             this.transport = 'none';
             return;
           }
+          const lostBadge = this.transport === 'mqtt-relay' ? 'CLOUD RELAY' : (this.transport === 'mqtt-webrtc' ? 'GLOBAL P2P' : 'PEERJS');
           this.updateConnectionUI('error', 'Link Lost', reason || 'Peer connection dropped');
           if (this.roomCode) {
-            this.updateGlobalUI('error', 'Connection lost', `${reason || 'network drop'} — rejoining room ${this.roomCode}…`, 'PEERJS');
+            this.updateGlobalUI('error', 'Connection lost', `${reason || 'network drop'} — rejoining room ${this.roomCode}…`, lostBadge);
           }
           this.notifyReconnectUI(reason || 'connection dropped');
           if (!GameState.gameOver && !GameState.graceTimerInterval) {
@@ -14738,7 +15399,91 @@
       let scannerStream = null;
       let scannerAnimId = null;
       let scannerCallback = null;
+      let scannerRequestToken = 0;
       let currentCameraFacing = 'environment';
+
+      function stopScannerStream() {
+        if (scannerAnimId) {
+          cancelAnimationFrame(scannerAnimId);
+          scannerAnimId = null;
+        }
+        if (scannerStream) {
+          try {
+            scannerStream.getTracks().forEach((t) => t.stop());
+          } catch (e) {}
+          scannerStream = null;
+        }
+        const video = document.getElementById('scannerVideo');
+        if (video) {
+          try { video.pause(); } catch (e) {}
+          video.srcObject = null;
+        }
+      }
+
+      async function acquireCameraStream(facing) {
+        const legacyGetUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          if (legacyGetUserMedia) {
+            return await new Promise((resolve, reject) => {
+              legacyGetUserMedia.call(navigator, { video: true, audio: false }, resolve, reject);
+            });
+          }
+          throw new Error(window.isSecureContext ? 'Camera API not supported in this browser.' : 'Live camera requires HTTPS or localhost.');
+        }
+
+        const isPermissionBlock = (err) => {
+          const n = (err && err.name) || '';
+          return n === 'NotAllowedError' || n === 'PermissionDeniedError' || n === 'SecurityError';
+        };
+
+        const attempts = [
+          { video: { facingMode: { ideal: facing }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+          { video: { facingMode: { ideal: facing } }, audio: false },
+          { video: { facingMode: facing }, audio: false },
+          { video: true, audio: false }
+        ];
+
+        let lastErr = null;
+        for (const constraints of attempts) {
+          try {
+            return await navigator.mediaDevices.getUserMedia(constraints);
+          } catch (err) {
+            lastErr = err;
+            if (isPermissionBlock(err)) throw err;
+          }
+        }
+
+        if (typeof navigator.mediaDevices.enumerateDevices === 'function') {
+          try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const cams = devices.filter((d) => d.kind === 'videoinput' && d.deviceId);
+            const wantFront = facing === 'user';
+            cams.sort((a, b) => {
+              const al = (a.label || '').toLowerCase();
+              const bl = (b.label || '').toLowerCase();
+              const aMatch = wantFront ? /front|user|selfie/.test(al) : /back|rear|environment/.test(al);
+              const bMatch = wantFront ? /front|user|selfie/.test(bl) : /back|rear|environment/.test(bl);
+              return (bMatch ? 1 : 0) - (aMatch ? 1 : 0);
+            });
+            for (const cam of cams) {
+              try {
+                return await navigator.mediaDevices.getUserMedia({
+                  video: { deviceId: { exact: cam.deviceId } },
+                  audio: false
+                });
+              } catch (err) {
+                lastErr = err;
+                if (isPermissionBlock(err)) throw err;
+              }
+            }
+          } catch (enumErr) {
+            if (isPermissionBlock(enumErr)) throw enumErr;
+            lastErr = lastErr || enumErr;
+          }
+        }
+
+        throw lastErr || new Error('Camera stream unavailable.');
+      }
 
       function isGlobalJoinPayload(text) {
         const t = String(text || '').trim();
@@ -14761,13 +15506,18 @@
       }
 
       async function openQrScanner(callback, titleText) {
-        closeQrScanner();
+        stopScannerStream();
+        const reqToken = ++scannerRequestToken;
         scannerCallback = callback;
         const modal = document.getElementById('scannerModal');
         const titleEl = document.getElementById('scannerTitle');
         const statusEl = document.getElementById('scannerStatus');
+        const btnSwitch = document.getElementById('btnSwitchCamera');
+        const btnRetry = document.getElementById('btnRetryCamera');
         if (titleEl && titleText) titleEl.textContent = titleText;
-        if (statusEl) statusEl.textContent = `Point ${currentCameraFacing === 'user' ? 'Front' : 'Back'} Camera at the QR code on the other phone`;
+        if (statusEl) statusEl.textContent = `Starting ${currentCameraFacing === 'user' ? 'Front' : 'Back'} Camera…`;
+        if (btnRetry) btnRetry.classList.add('hidden');
+        if (btnSwitch) btnSwitch.classList.add('hidden');
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -14777,26 +15527,53 @@
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
         try {
-          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            throw new Error('Camera access not supported in this browser.');
+          const stream = await acquireCameraStream(currentCameraFacing);
+          if (reqToken !== scannerRequestToken) {
+            try { stream.getTracks().forEach((t) => t.stop()); } catch (e) {}
+            return;
           }
 
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: { ideal: currentCameraFacing },
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
-            },
-            audio: false
-          });
           scannerStream = stream;
+          video.playsInline = true;
+          video.muted = true;
+          video.autoplay = true;
+          video.setAttribute('playsinline', '');
+          video.setAttribute('webkit-playsinline', '');
           video.srcObject = stream;
-          await video.play();
 
-          const btnSwitch = document.getElementById('btnSwitchCamera');
-          if (btnSwitch) {
-            btnSwitch.classList.remove('hidden');
+          await new Promise((resolve) => {
+            if (video.readyState >= 1) {
+              resolve();
+              return;
+            }
+            const tid = setTimeout(() => {
+              video.removeEventListener('loadedmetadata', onMeta);
+              resolve();
+            }, 1500);
+            const onMeta = () => {
+              clearTimeout(tid);
+              resolve();
+            };
+            video.addEventListener('loadedmetadata', onMeta, { once: true });
+          });
+
+          if (reqToken !== scannerRequestToken) {
+            stopScannerStream();
+            return;
           }
+
+          try {
+            await video.play();
+          } catch (playErr) {
+            const hasLiveTrack = stream.getVideoTracks().some((t) => t.readyState === 'live');
+            if (!hasLiveTrack) throw playErr;
+          }
+
+          if (statusEl) {
+            statusEl.textContent = `Point ${currentCameraFacing === 'user' ? 'Front' : 'Back'} Camera at the QR code on the other phone`;
+          }
+          if (btnSwitch) btnSwitch.classList.remove('hidden');
+          if (btnRetry) btnRetry.classList.add('hidden');
 
           let hasBarcodeDetector = ('BarcodeDetector' in window);
           let barcodeDetector = null;
@@ -14811,7 +15588,7 @@
           let isScanning = true;
           let frameCounter = 0;
           const scanLoop = async () => {
-            if (!isScanning || !scannerStream) return;
+            if (!isScanning || scannerStream !== stream || reqToken !== scannerRequestToken) return;
             if (video.readyState >= video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
               let detectedText = null;
               if (hasBarcodeDetector && barcodeDetector) {
@@ -14854,25 +15631,30 @@
           };
           scannerAnimId = requestAnimationFrame(scanLoop);
         } catch (err) {
+          stopScannerStream();
+          if (reqToken !== scannerRequestToken) return;
+          if (btnSwitch) btnSwitch.classList.add('hidden');
+          if (btnRetry) btnRetry.classList.remove('hidden');
           if (statusEl) {
-            statusEl.textContent = 'Camera stream unavailable. Tap "Snap Photo / Pick Image" below to scan:';
+            const name = (err && err.name) || '';
+            if (!window.isSecureContext) {
+              statusEl.textContent = 'Live camera requires HTTPS (not an http:// LAN link). Open over HTTPS/localhost or tap "Snap Photo" / "Pick Image" below.';
+            } else if (name === 'NotAllowedError' || name === 'PermissionDeniedError' || name === 'SecurityError') {
+              statusEl.textContent = 'Camera permission denied. Allow camera access and tap Retry, or use "Snap Photo" / "Pick Image" below.';
+            } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+              statusEl.textContent = 'No camera detected. Tap "Pick Image" below to scan a QR screenshot.';
+            } else if (name === 'NotReadableError' || name === 'TrackStartError' || name === 'AbortError') {
+              statusEl.textContent = 'Camera is busy or locked by another app. Close it and tap Retry, or use "Snap Photo" / "Pick Image".';
+            } else {
+              statusEl.textContent = 'Camera stream unavailable. Tap Retry Camera, "Snap Photo", or "Pick Image" below.';
+            }
           }
         }
       }
 
       function closeQrScanner() {
-        if (scannerAnimId) {
-          cancelAnimationFrame(scannerAnimId);
-          scannerAnimId = null;
-        }
-        if (scannerStream) {
-          try {
-            scannerStream.getTracks().forEach((t) => t.stop());
-          } catch (e) {}
-          scannerStream = null;
-        }
-        const video = document.getElementById('scannerVideo');
-        if (video) video.srcObject = null;
+        scannerRequestToken++;
+        stopScannerStream();
         const modal = document.getElementById('scannerModal');
         if (modal) {
           modal.classList.add('hidden');
@@ -14882,17 +15664,35 @@
 
       async function switchScannerCamera() {
         currentCameraFacing = currentCameraFacing === 'environment' ? 'user' : 'environment';
-        closeQrScanner();
-        if (scannerCallback) {
-          openQrScanner(scannerCallback, document.getElementById('scannerTitle').textContent);
+        const cb = scannerCallback;
+        const titleEl = document.getElementById('scannerTitle');
+        const statusEl = document.getElementById('scannerStatus');
+        const title = titleEl ? titleEl.textContent : '';
+        stopScannerStream();
+        const tok = ++scannerRequestToken;
+        if (statusEl) statusEl.textContent = `Switching to ${currentCameraFacing === 'user' ? 'Front' : 'Back'} Camera…`;
+        await new Promise((r) => setTimeout(r, 160));
+        if (tok !== scannerRequestToken) return;
+        if (cb) {
+          openQrScanner(cb, title);
         }
       }
 
       function handleScannerFileInput(file) {
         if (!file) return;
+        const statusEl = document.getElementById('scannerStatus');
+        if (statusEl) statusEl.textContent = 'Scanning selected image for QR code…';
         const reader = new FileReader();
+        reader.onerror = () => {
+          showBoardToast('Could not read the selected image.');
+          if (statusEl) statusEl.textContent = 'Could not read image. Try "Snap Photo" or "Pick Image" again.';
+        };
         reader.onload = () => {
           const img = new Image();
+          img.onerror = () => {
+            showBoardToast('Unsupported image format. Try JPG/PNG screenshot or Snap Photo.');
+            if (statusEl) statusEl.textContent = 'Unsupported image format. Try another photo or paste the code.';
+          };
           img.onload = async () => {
             let detected = null;
             if ('BarcodeDetector' in window) {
@@ -14903,28 +15703,38 @@
               } catch (e) {}
             }
             if (!detected && typeof jsQR !== 'undefined') {
+              const nw = img.naturalWidth || img.width;
+              const nh = img.naturalHeight || img.height;
               const c = document.createElement('canvas');
-              const maxDim = 800;
-              let w = img.naturalWidth || img.width;
-              let h = img.naturalHeight || img.height;
-              if (w > maxDim || h > maxDim) {
-                const s = Math.min(maxDim / w, maxDim / h);
-                w = Math.round(w * s);
-                h = Math.round(h * s);
+              const cx = c.getContext('2d', { willReadFrequently: true });
+              for (const maxDim of [1280, 1600, 800]) {
+                let w = nw;
+                let h = nh;
+                if (w > maxDim || h > maxDim) {
+                  const s = Math.min(maxDim / w, maxDim / h);
+                  w = Math.round(w * s);
+                  h = Math.round(h * s);
+                }
+                if (w <= 0 || h <= 0) continue;
+                c.width = w;
+                c.height = h;
+                cx.fillStyle = '#FFFFFF';
+                cx.fillRect(0, 0, w, h);
+                cx.drawImage(img, 0, 0, w, h);
+                const data = cx.getImageData(0, 0, w, h);
+                const qr = jsQR(data.data, w, h, { inversionAttempts: 'attemptBoth' });
+                if (qr && qr.data) {
+                  detected = qr.data;
+                  break;
+                }
               }
-              c.width = w;
-              c.height = h;
-              const cx = c.getContext('2d');
-              cx.drawImage(img, 0, 0, w, h);
-              const data = cx.getImageData(0, 0, w, h);
-              const qr = jsQR(data.data, w, h, { inversionAttempts: 'attemptBoth' });
-              if (qr && qr.data) detected = qr.data;
             }
             if (detected) {
               closeQrScanner();
               SoundEngine.select();
               routeScannedPayload(detected, scannerCallback);
             } else {
+              if (statusEl) statusEl.textContent = 'No QR found in image. Move closer, avoid glare, or paste code manually.';
               showBoardToast('No QR code detected in that photo. Try again or paste code manually.');
             }
           };
@@ -16931,11 +17741,42 @@
         btnSwitchCam.addEventListener('click', switchScannerCamera);
       }
 
+      const btnRetryCam = document.getElementById('btnRetryCamera');
+      if (btnRetryCam) {
+        btnRetryCam.addEventListener('click', () => {
+          SoundEngine.select();
+          const titleEl = document.getElementById('scannerTitle');
+          openQrScanner(scannerCallback, titleEl ? titleEl.textContent : '');
+        });
+      }
+
+      const scannerVideoEl = document.getElementById('scannerVideo');
+      if (scannerVideoEl) {
+        scannerVideoEl.addEventListener('click', () => {
+          if (scannerStream && scannerVideoEl.paused) {
+            scannerVideoEl.play().catch(() => {});
+          }
+        });
+      }
+
       document.getElementById('scannerFileInput').addEventListener('change', (e) => {
-        if (e.target.files && e.target.files[0]) {
-          handleScannerFileInput(e.target.files[0]);
+        const file = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (file) {
+          handleScannerFileInput(file);
         }
       });
+
+      const scannerGalleryEl = document.getElementById('scannerGalleryInput');
+      if (scannerGalleryEl) {
+        scannerGalleryEl.addEventListener('change', (e) => {
+          const file = e.target.files && e.target.files[0];
+          e.target.value = '';
+          if (file) {
+            handleScannerFileInput(file);
+          }
+        });
+      }
 
       document.getElementById('btnHostCreateOffer').addEventListener('click', () => {
         SoundEngine.select();
@@ -18081,7 +18922,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=e2223b8b31', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=c0f8c3559f', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
@@ -18378,6 +19219,12 @@
           if (typeof mqtt === 'undefined') return;
           if (this.client) {
             try { this.client.end(true); } catch (e) {}
+            this.client = null;
+          }
+          const badge = document.getElementById('wifiRoomBadge');
+          if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            if (badge) badge.textContent = 'Offline Mode';
+            return;
           }
 
           let netKey = WebRTCManager.activePin || '7860';
@@ -18393,14 +19240,25 @@
           }
 
           this.topic = 'katar_lobby_v2/' + netKey;
-          const badge = document.getElementById('wifiRoomBadge');
           if (badge) badge.textContent = 'Connecting...';
 
-          const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
-            keepalive: 30,
-            reconnectPeriod: 3000
-          });
+          let client;
+          try {
+            client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+              keepalive: 30,
+              reconnectPeriod: 5000
+            });
+          } catch (e) {
+            if (badge) badge.textContent = 'Lobby unavailable';
+            return;
+          }
           this.client = client;
+
+          client.on('error', () => {
+            if (this.client === client && badge && !client.connected) {
+              badge.textContent = 'Lobby offline';
+            }
+          });
 
           client.on('connect', () => {
             client.subscribe(this.topic);
@@ -18550,6 +19408,21 @@
               this.connectRoom(true);
             });
           }
+
+          window.addEventListener('online', () => {
+            if (!this.client || !this.client.connected) {
+              this.connectRoom(false);
+            }
+          });
+
+          window.addEventListener('offline', () => {
+            const badge = document.getElementById('wifiRoomBadge');
+            if (badge) badge.textContent = 'Offline Mode';
+            if (this.client) {
+              try { this.client.end(true); } catch (e) {}
+              this.client = null;
+            }
+          });
         }
       };
 

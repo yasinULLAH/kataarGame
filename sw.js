@@ -12,7 +12,7 @@
  * when offline and caused the old "libraries not loaded" bug.
  */
 
-const CACHE_NAME = 'katar-offline-e2223b8b31';
+const CACHE_NAME = 'katar-offline-c0f8c3559f';
 const OFFLINE_URL = './offline.html';
 
 const PRECACHE_ASSETS = [
