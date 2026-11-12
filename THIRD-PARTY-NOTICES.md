@@ -18,6 +18,9 @@ These licenses do **not** grant any rights to the game itself; see `LICENSE`.
 | Cinzel | `fonts/cinzel.woff2` | SIL Open Font License 1.1 | © Natanael Gama — https://fonts.google.com/specimen/Cinzel |
 | Inter | `fonts/inter.woff2` | SIL Open Font License 1.1 | © Rasmus Andersson — https://fonts.google.com/specimen/Inter |
 | JetBrains Mono | `fonts/jetbrains-mono.woff2` | SIL Open Font License 1.1 | © JetBrains — https://fonts.google.com/specimen/JetBrains+Mono |
+| Capacitor Core (`@capacitor/core`) | `node_modules/@capacitor/core` (`package.json`) | MIT | © Ionic / Drifty Co. — https://capacitorjs.com |
+| Capacitor CLI (`@capacitor/cli`) | `node_modules/@capacitor/cli` (`package.json`) | MIT | © Ionic / Drifty Co. — https://capacitorjs.com |
+| Capacitor Android (`@capacitor/android`) | `node_modules/@capacitor/android` (`package.json`) | MIT | © Ionic / Drifty Co. — https://capacitorjs.com |
 | Puter.js (optional cloud AI SDK) | Loaded at runtime from `https://js.puter.com/v2/` — **not bundled** | Puter's own terms | © Puter Technologies — https://puter.com |
 
 Notes:
