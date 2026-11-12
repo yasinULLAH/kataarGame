@@ -854,7 +854,7 @@
       ⭐ Navakankari (Nine Men's Morris • 9 Beads)
     </button>
     <button type="button" data-grid-preset="navakankari_12" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 bg-white text-walnut-800 border border-parchment-300">
-      ⭐ 12-Men's Katar Mill (Diagonal • 12 Beads)
+      ⭐ 12-Men's Katar Mill (Diagonal • 10 Beads)
     </button>
     <button type="button" data-grid-preset="three_morris" class="quick-grid-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 bg-white text-walnut-800 border border-parchment-300">
       🎯 Teen Guti (Three Men's Morris • 3v3)
@@ -2164,7 +2164,7 @@
               <select id="selGridPreset" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
                 <option value="6x6" selected>6×6 Katar Classic (36 Nodes • 18 Beads)</option>
                 <option value="navakankari_9">⭐ Navakankari / Nine Men's Morris (24 Nodes • 9 Beads)</option>
-                <option value="navakankari_12">⭐ 12-Men's Katar Mill with Diagonals (24 Nodes • 12 Beads)</option>
+                <option value="navakankari_12">⭐ 12-Men's Katar Mill with Diagonals (24 Nodes • 10 Beads)</option>
                 <option value="three_morris">🎯 Teen Guti / Three Men's Morris (9 Nodes • 3v3 Beads)</option>
                 <option value="six_morris">🎯 Chhah Guti / Six Men's Morris (16 Nodes • 6v6 Beads)</option>
                 <option value="bagh_chal">🐯 Bagh-Chal / Sher-Bakar (5×5 Alquerque • 4 Tigers vs 20 Goats)</option>
@@ -3000,6 +3000,14 @@
               </div>
               <button id="btnResetAIBrainMemory" type="button" class="android-btn self-start text-[9px] text-rose-700 hover:text-rose-900 underline font-semibold mt-1">Reset AI Memory</button>
             </div>
+          </div>
+
+          <div id="puterServerBreakdownBox" class="hidden bg-indigo-50/70 border border-indigo-200 rounded-xl p-2.5 text-[10.5px] space-y-1">
+            <div class="flex items-center justify-between font-extrabold text-indigo-950">
+              <span>☁️ Puter Cloud Monthly API Breakdown (This App)</span>
+              <span id="puterServerSyncTime" class="font-mono text-[10px] text-indigo-700">Synced</span>
+            </div>
+            <div id="puterServerBreakdownList" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5"></div>
           </div>
 
           <div class="bg-parchment-50 border border-parchment-300 rounded-xl p-2.5 text-[11px] flex flex-wrap items-center justify-between gap-2">
@@ -4225,7 +4233,7 @@
           GameState.rows = 7;
           GameState.cols = 7;
           GameState.hasTriangularCamps = false;
-          GameState.piecesPerPlayer = 12;
+          GameState.piecesPerPlayer = 10;
         } else if (preset === 'bagh_chal') {
           GameState.gameFamily = 'tiger_goat';
           GameState.rows = 5;
@@ -4382,7 +4390,7 @@
         if (GameState.gameFamily === 'morris') {
           if (GameState.gridPreset === 'three_morris') return 3;
           if (GameState.gridPreset === 'six_morris') return 6;
-          return GameState.morrisDiagonals ? 12 : 9;
+          return GameState.morrisDiagonals ? 10 : 9;
         }
         if (GameState.gameFamily === 'tiger_goat') {
           return GameState.gridPreset === 'aadu_puli' ? 15 : 20;
@@ -10579,25 +10587,72 @@
        * PUTER REAL CLOUD AI ENGINE & LIVE QUOTA ANALYTICS MANAGER
        * ------------------------------------------------------------------- */
       const PuterAIManager = {
-        storageKey: 'katar_puter_telemetry_v1',
+        storageKey: 'katar_puter_telemetry_v2',
         modelOverride: 'auto',
-        monthAllowanceMicrocents: 50000000, // Puter free tier default ($0.50 = 50,000,000 microcents ~ 5M tokens)
+        monthAllowanceMicrocents: 50000000,
         remainingMicrocents: 50000000,
+        unconfirmedLocalMicrocents: 0,
+        hasServerSync: false,
+        lastSyncedAt: 0,
         remoteApiCalls: 0,
         remoteApiTokens: 0,
-        callEvents: [], // [{ ts, model, diff, tokens, microcents, latencyMs }]
+        remoteAppCostMicro: 0,
+        remoteApiBreakdown: [],
+        callEvents: [],
         sessionCalls: 0,
+        sessionTokens: 0,
+        sessionMicrocents: 0,
         totalLatencyMs: 0,
         lastThought: 'Ready — enable "Play with Real AI" to play against live Puter cloud models.',
         isSignedIn: false,
         username: '',
         loaded: false,
+        _sdkPromise: null,
+
+        ensureSdkLoaded(timeoutMs = 6000) {
+          if (typeof window !== 'undefined' && window.puter) {
+            return Promise.resolve(true);
+          }
+          if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            return Promise.resolve(false);
+          }
+          if (this._sdkPromise) return this._sdkPromise;
+          this._sdkPromise = new Promise((resolve) => {
+            let settled = false;
+            const done = (ok) => {
+              if (settled) return;
+              settled = true;
+              this._sdkPromise = null;
+              resolve(ok);
+            };
+            const timer = setTimeout(() => done(Boolean(window.puter)), timeoutMs);
+            let existing = document.querySelector('script[data-puter-sdk]');
+            if (!existing) {
+              existing = document.createElement('script');
+              existing.src = 'https://js.puter.com/v2/';
+              existing.async = true;
+              existing.defer = true;
+              existing.setAttribute('data-puter-sdk', 'true');
+              document.head.appendChild(existing);
+            }
+            existing.addEventListener('load', () => {
+              clearTimeout(timer);
+              done(Boolean(window.puter));
+            }, { once: true });
+            existing.addEventListener('error', () => {
+              clearTimeout(timer);
+              done(false);
+            }, { once: true });
+          });
+          return this._sdkPromise;
+        },
 
         load() {
           if (this.loaded) return;
           this.loaded = true;
           try {
-            const raw = SafeStorage.getItem(this.storageKey);
+            let raw = SafeStorage.getItem(this.storageKey);
+            if (!raw) raw = SafeStorage.getItem('katar_puter_telemetry_v1');
             if (raw) {
               const d = JSON.parse(raw);
               if (d && typeof d === 'object') {
@@ -10608,8 +10663,20 @@
                 if (typeof d.remainingMicrocents === 'number' && d.remainingMicrocents >= 0) {
                   this.remainingMicrocents = d.remainingMicrocents;
                 }
+                this.unconfirmedLocalMicrocents = Number(d.unconfirmedLocalMicrocents) || 0;
+                this.hasServerSync = Boolean(d.hasServerSync);
+                this.lastSyncedAt = Number(d.lastSyncedAt) || 0;
+                this.remoteApiCalls = Number(d.remoteApiCalls) || 0;
+                this.remoteApiTokens = Number(d.remoteApiTokens) || 0;
+                this.remoteAppCostMicro = Number(d.remoteAppCostMicro) || 0;
+                if (Array.isArray(d.remoteApiBreakdown)) {
+                  this.remoteApiBreakdown = d.remoteApiBreakdown.slice(0, 12);
+                }
+                if (typeof d.username === 'string') {
+                  this.username = d.username;
+                }
                 if (Array.isArray(d.callEvents)) {
-                  const cutoff = Date.now() - 7 * 86400 * 1000;
+                  const cutoff = Date.now() - 30 * 86400 * 1000;
                   this.callEvents = d.callEvents.filter((e) => e && e.ts >= cutoff);
                 }
               }
@@ -10619,12 +10686,20 @@
 
         save() {
           try {
-            const cutoff = Date.now() - 7 * 86400 * 1000;
-            this.callEvents = this.callEvents.filter((e) => e && e.ts >= cutoff).slice(-500);
+            const cutoff = Date.now() - 30 * 86400 * 1000;
+            this.callEvents = this.callEvents.filter((e) => e && e.ts >= cutoff).slice(-600);
             SafeStorage.setItem(this.storageKey, JSON.stringify({
               modelOverride: this.modelOverride,
               monthAllowanceMicrocents: this.monthAllowanceMicrocents,
               remainingMicrocents: this.remainingMicrocents,
+              unconfirmedLocalMicrocents: this.unconfirmedLocalMicrocents,
+              hasServerSync: this.hasServerSync,
+              lastSyncedAt: this.lastSyncedAt,
+              remoteApiCalls: this.remoteApiCalls,
+              remoteApiTokens: this.remoteApiTokens,
+              remoteAppCostMicro: this.remoteAppCostMicro,
+              remoteApiBreakdown: this.remoteApiBreakdown,
+              username: this.username,
               callEvents: this.callEvents
             }));
           } catch (e) {}
@@ -10638,9 +10713,6 @@
               fallbacks: [this.modelOverride, 'gpt-4o-mini', 'deepseek-chat', 'gemini-2.0-flash']
             };
           }
-          // User requested:
-          // - Easy & Medium: best, cheapest, and fastest models
-          // - Hard & Hardest: best, most intelligent, and hardest models
           if (diff === 'easy') {
             return {
               primary: 'gpt-4o-mini',
@@ -10667,53 +10739,165 @@
 
         estimateCallCostMicrocents(model, tokens) {
           const m = String(model || '').toLowerCase();
-          // Puter microcents: 100,000,000 microcents = $1.00 (so $0.15 / 1M tokens = 0.015 microcents/token -> ~30 microcents per 1k tokens)
-          // We scale realistically against the 50,000,000 microcent ($0.50) monthly free allowance:
-          if (m.includes('mini') || m.includes('flash') || m === 'deepseek-chat') {
-            return Math.max(1500, Math.round(tokens * 25)); // ~7,500 microcents per 300-token move (~6,600 moves on $0.50)
+          const tok = Math.max(80, Number(tokens) || 220);
+          if (m.includes('mini') || m.includes('flash') || m.includes('nano') || m === 'deepseek-chat') {
+            return Math.max(800, Math.round(tok * 18));
           }
-          return Math.max(8000, Math.round(tokens * 110)); // ~44,000 microcents per 400-token reasoning move (~1,130 moves on $0.50)
+          return Math.max(4500, Math.round(tok * 85));
+        },
+
+        normalizeToMicrocents(val, unitHint, refAllowance) {
+          const num = Number(val);
+          if (!Number.isFinite(num) || num < 0) return null;
+          if (num === 0) return 0;
+          if (unitHint === 'credits') {
+            return num < 100000 ? Math.round(num * 100000) : Math.round(num);
+          }
+          const ref = Number(refAllowance) || num;
+          if (ref > 0 && ref <= 50) {
+            return Math.round(num * 100000000);
+          }
+          if (ref > 50 && ref < 100000) {
+            return Math.round(num * 100000);
+          }
+          return Math.round(num);
+        },
+
+        async checkSignedInState() {
+          if (typeof puter === 'undefined' || !puter.auth) return false;
+          try {
+            if (typeof puter.auth.isSignedIn === 'function') {
+              const res = puter.auth.isSignedIn();
+              this.isSignedIn = Boolean(res && typeof res.then === 'function' ? await res : res);
+            }
+          } catch (e) {
+            this.isSignedIn = false;
+          }
+          return this.isSignedIn;
         },
 
         async refreshQuotaFromPuter(silent = true) {
           this.load();
+          await this.ensureSdkLoaded(silent ? 4500 : 7000);
           if (typeof puter === 'undefined' || !puter.auth) {
             this.syncModalUI();
+            if (!silent) {
+              showBoardToast('Puter Cloud SDK is offline or unreachable — showing local telemetry.');
+            }
             return false;
           }
           try {
-            if (typeof puter.auth.isSignedIn === 'function') {
-              this.isSignedIn = Boolean(puter.auth.isSignedIn());
+            await this.checkSignedInState();
+            if (!this.isSignedIn && !silent && typeof puter.auth.signIn === 'function') {
+              try {
+                await puter.auth.signIn();
+                await this.checkSignedInState();
+              } catch (signInErr) {}
             }
-            if (this.isSignedIn && typeof puter.auth.getUser === 'function') {
+            if (!this.isSignedIn) {
+              this.syncModalUI();
+              if (!silent) {
+                showBoardToast('Sign in with Puter to sync your live account quota, or play to auto-connect.');
+              }
+              return false;
+            }
+            if (typeof puter.auth.getUser === 'function') {
               const u = await puter.auth.getUser().catch(() => null);
               if (u && u.username) this.username = u.username;
             }
             if (typeof puter.auth.getMonthlyUsage === 'function') {
               const usageData = await puter.auth.getMonthlyUsage();
-              if (usageData && usageData.allowanceInfo) {
-                const allow = Number(usageData.allowanceInfo.monthUsageAllowance);
-                const rem = Number(usageData.allowanceInfo.remaining);
-                if (Number.isFinite(allow) && allow > 0) this.monthAllowanceMicrocents = allow;
-                if (Number.isFinite(rem) && rem >= 0) this.remainingMicrocents = rem;
+              if (!usageData || usageData.error || usageData.code === 'unauthorized') {
+                throw new Error((usageData && usageData.message) || 'Unauthorized usage response');
               }
-              if (usageData && usageData.usage && typeof usageData.usage === 'object') {
-                let totalCalls = 0;
-                let totalUnits = 0;
-                for (const k of Object.keys(usageData.usage)) {
-                  const item = usageData.usage[k];
-                  if (item) {
-                    totalCalls += Number(item.count) || 0;
-                    totalUnits += Number(item.units) || 0;
+              const topUnit = usageData.unit || (usageData.allowanceInfo && usageData.allowanceInfo.unit) || '';
+              if (usageData.allowanceInfo && typeof usageData.allowanceInfo === 'object') {
+                const ai = usageData.allowanceInfo;
+                const rawAllow = Number(ai.monthUsageAllowance);
+                const rawRem = Number(ai.remaining);
+                const rawPurchased = Number(ai.purchasedCredits) || 0;
+                const normAllow = this.normalizeToMicrocents(rawAllow + rawPurchased, topUnit, rawAllow);
+                const normRem = this.normalizeToMicrocents(rawRem, topUnit, rawAllow > 0 ? rawAllow : rawRem);
+                if (normAllow !== null && normAllow > 0) {
+                  this.monthAllowanceMicrocents = normAllow;
+                }
+                if (normRem !== null && normRem >= 0) {
+                  this.remainingMicrocents = normRem;
+                  if (this.remainingMicrocents > this.monthAllowanceMicrocents) {
+                    this.monthAllowanceMicrocents = this.remainingMicrocents;
                   }
                 }
-                this.remoteApiCalls = totalCalls;
-                this.remoteApiTokens = totalUnits;
+                this.hasServerSync = true;
+                this.lastSyncedAt = Date.now();
+                this.unconfirmedLocalMicrocents = 0;
               }
+
+              let aiCalls = 0;
+              let allCalls = 0;
+              let aiTokens = 0;
+              let appCost = 0;
+              const breakdown = [];
+
+              if (usageData.usage && typeof usageData.usage === 'object') {
+                for (const k of Object.keys(usageData.usage)) {
+                  if (k === 'total' && typeof usageData.usage[k] === 'number') {
+                    const normTot = this.normalizeToMicrocents(usageData.usage[k], topUnit, usageData.allowanceInfo?.monthUsageAllowance);
+                    if (normTot !== null) appCost = Math.max(appCost, normTot);
+                    continue;
+                  }
+                  const item = usageData.usage[k];
+                  if (!item || typeof item !== 'object') continue;
+                  const cCount = Number(item.count) || 0;
+                  const cUnits = Number(item.units) || 0;
+                  const rawCost = Number(item.cost ?? item.total) || 0;
+                  const cCost = this.normalizeToMicrocents(rawCost, topUnit, usageData.allowanceInfo?.monthUsageAllowance) ?? rawCost;
+                  const isStorageOrFs = /^(fs|kv|hosting|subdomains|workers|apps|net|email|stat|readdir|mkdir|write|read|upload)/i.test(k);
+
+                  allCalls += cCount;
+                  appCost += cCost;
+                  if (!isStorageOrFs) {
+                    aiCalls += cCount;
+                    aiTokens += cUnits;
+                  }
+                  if (cCount > 0 || cCost > 0 || cUnits > 0) {
+                    breakdown.push({
+                      api: k,
+                      calls: cCount,
+                      units: cUnits,
+                      costMicro: cCost,
+                      isAi: !isStorageOrFs
+                    });
+                  }
+                }
+              }
+
+              if (usageData.appTotals && typeof usageData.appTotals === 'object') {
+                let appTotCalls = 0;
+                let appTotCost = 0;
+                for (const appKey of Object.keys(usageData.appTotals)) {
+                  const ap = usageData.appTotals[appKey];
+                  if (ap && typeof ap === 'object') {
+                    appTotCalls += Number(ap.count) || 0;
+                    const rc = Number(ap.total ?? ap.cost) || 0;
+                    appTotCost += this.normalizeToMicrocents(rc, topUnit, usageData.allowanceInfo?.monthUsageAllowance) ?? rc;
+                  }
+                }
+                allCalls = Math.max(allCalls, appTotCalls);
+                appCost = Math.max(appCost, appTotCost);
+              }
+
+              breakdown.sort((a, b) => (b.costMicro - a.costMicro) || (b.calls - a.calls));
+              this.remoteApiCalls = aiCalls > 0 ? aiCalls : allCalls;
+              this.remoteApiTokens = aiTokens;
+              this.remoteAppCostMicro = appCost;
+              this.remoteApiBreakdown = breakdown.slice(0, 10);
+
               this.save();
               this.syncModalUI();
-              if (!silent) showBoardToast('✅ Synced live quota from your Puter account!');
-              if (this.remainingMicrocents <= 0 && GameState.usePuterAI) {
+              if (!silent) {
+                showBoardToast(`✅ Synced live Puter quota${this.username ? ' for @' + this.username : ''}!`);
+              }
+              if (this.hasServerSync && this.remainingMicrocents <= 0 && GameState.usePuterAI) {
                 this.triggerQuotaExhaustedFallback('Monthly Puter quota reached 0 remaining');
               }
               return true;
@@ -10727,37 +10911,59 @@
           return false;
         },
 
-        recordCallTelemetry(model, diff, tokensUsed, latencyMs, thoughtText) {
+        extractResponseTokens(resp, rolePrompt, userPrompt, replyText) {
+          if (resp && typeof resp === 'object') {
+            const u = resp.usage || (resp.message && resp.message.usage) || (resp.result && resp.result.usage);
+            if (u) {
+              if (typeof u.total_tokens === 'number' && u.total_tokens > 0) return u.total_tokens;
+              if (typeof u.input_tokens === 'number' || typeof u.output_tokens === 'number') {
+                const sum = (Number(u.input_tokens) || 0) + (Number(u.output_tokens) || 0);
+                if (sum > 0) return sum;
+              }
+              if (typeof u.prompt_tokens === 'number' || typeof u.completion_tokens === 'number') {
+                const sum = (Number(u.prompt_tokens) || 0) + (Number(u.completion_tokens) || 0);
+                if (sum > 0) return sum;
+              }
+              if (Array.isArray(u)) {
+                let sum = 0;
+                for (const item of u) {
+                  if (item) sum += Number(item.amount ?? item.tokens ?? item.units ?? 0) || 0;
+                }
+                if (sum > 0) return sum;
+              }
+            }
+          }
+          return Math.max(95, Math.round(((rolePrompt || '').length + (userPrompt || '').length + (replyText || '').length) / 3.8));
+        },
+
+        recordCallTelemetry(model, diff, tokensUsed, latencyMs, thoughtText, exactCostMicro = null) {
           this.load();
-          const estCost = this.estimateCallCostMicrocents(model, tokensUsed);
-          this.callEvents.push({
+          const estCost = (typeof exactCostMicro === 'number' && exactCostMicro > 0)
+            ? Math.round(exactCostMicro)
+            : this.estimateCallCostMicrocents(model, tokensUsed);
+          const ev = {
             ts: Date.now(),
             model,
             diff,
             tokens: tokensUsed,
             microcents: estCost,
             latencyMs
-          });
+          };
+          this.callEvents.push(ev);
           this.sessionCalls++;
+          this.sessionTokens += tokensUsed;
+          this.sessionMicrocents += estCost;
           this.totalLatencyMs += latencyMs;
+          this.unconfirmedLocalMicrocents = (this.unconfirmedLocalMicrocents || 0) + estCost;
           if (thoughtText) this.lastThought = `[${model}] ${thoughtText}`;
-          this.remainingMicrocents = Math.max(0, this.remainingMicrocents - estCost);
+          if (!this.hasServerSync) {
+            this.remainingMicrocents = Math.max(0, this.remainingMicrocents - estCost);
+          }
           this.save();
           this.syncModalUI();
-          // Also asynchronously poll Puter's getMonthlyUsage() to keep exact server balance synced
-          if (typeof puter !== 'undefined' && puter.auth && typeof puter.auth.getMonthlyUsage === 'function') {
-            puter.auth.getMonthlyUsage().then((u) => {
-              if (u && u.allowanceInfo && typeof u.allowanceInfo.remaining === 'number') {
-                this.monthAllowanceMicrocents = u.allowanceInfo.monthUsageAllowance || this.monthAllowanceMicrocents;
-                this.remainingMicrocents = Math.max(0, u.allowanceInfo.remaining);
-                this.save();
-                this.syncModalUI();
-                if (this.remainingMicrocents <= 0 && GameState.usePuterAI) {
-                  this.triggerQuotaExhaustedFallback('Puter quota exhausted');
-                }
-              }
-            }).catch(() => {});
-          }
+
+          // Poll live Puter balance after call to reconcile exact server microcents
+          this.refreshQuotaFromPuter(true).catch(() => {});
         },
 
         triggerQuotaExhaustedFallback(reason) {
@@ -10767,7 +10973,7 @@
           syncSettingsControlsFromState();
           this.syncModalUI();
           updateHUD();
-          showBoardToast(`⚡ Puter AI quota/limit reached — switched to Built-in Grandmaster AI mid-game!`);
+          showBoardToast(`⚡ Puter AI (${reason}) — switched to Built-in Grandmaster AI mid-game!`);
         },
 
         getWindowStats() {
@@ -10781,34 +10987,51 @@
 
           for (const ev of this.callEvents) {
             if (!ev) continue;
-            localTotalMicro += ev.microcents || 0;
-            localTotalTokens += ev.tokens || 0;
+            localTotalMicro += Number(ev.microcents) || 0;
+            localTotalTokens += Number(ev.tokens) || 0;
             if (ev.ts >= dayAgo) {
               dailyCalls++;
-              dailyTokens += ev.tokens || 0;
-              dailyMicro += ev.microcents || 0;
+              dailyTokens += Number(ev.tokens) || 0;
+              dailyMicro += Number(ev.microcents) || 0;
             }
             if (ev.ts >= hourAgo) {
               hourlyCalls++;
-              hourlyTokens += ev.tokens || 0;
-              hourlyMicro += ev.microcents || 0;
+              hourlyTokens += Number(ev.tokens) || 0;
+              hourlyMicro += Number(ev.microcents) || 0;
             }
           }
 
-          const totalAllow = Math.max(1000000, this.monthAllowanceMicrocents || 50000000);
-          const remMicro = Math.max(0, Math.min(totalAllow, this.remainingMicrocents));
-          const usedMicro = Math.max(localTotalMicro, totalAllow - remMicro);
-          const effectiveRemMicro = Math.max(0, totalAllow - usedMicro);
-          const usedPct = Math.min(100, (usedMicro / totalAllow) * 100);
+          const rawAllow = this.monthAllowanceMicrocents > 0 ? this.monthAllowanceMicrocents : 50000000;
+          const totalAllow = Math.max(rawAllow, this.remainingMicrocents || 0);
+          let effectiveRemMicro = 0;
+          let usedMicro = 0;
+
+          if (this.hasServerSync) {
+            effectiveRemMicro = Math.max(0, Math.min(totalAllow, this.remainingMicrocents - (this.unconfirmedLocalMicrocents || 0)));
+            usedMicro = Math.max(0, totalAllow - effectiveRemMicro);
+            if (usedMicro === 0 && this.remoteAppCostMicro > 0) {
+              usedMicro = Math.min(totalAllow, this.remoteAppCostMicro);
+              effectiveRemMicro = Math.max(0, totalAllow - usedMicro);
+            }
+          } else {
+            usedMicro = Math.min(totalAllow, localTotalMicro);
+            effectiveRemMicro = Math.max(0, totalAllow - usedMicro);
+          }
+
+          const usedPct = totalAllow > 0 ? Math.min(100, Math.max(0, (usedMicro / totalAllow) * 100)) : 0;
           const leftPct = Math.max(0, 100 - usedPct);
 
-          // Approximate tokens & moves remaining
+          // Consistent token capacity math (10 microcents ~= 1 standard token on Puter)
           const estTotalTokens = Math.round(totalAllow / 10);
-          const estUsedTokens = Math.max(localTotalTokens, this.remoteApiTokens || Math.round(usedMicro / 10));
-          const estLeftTokens = Math.max(0, estTotalTokens - estUsedTokens);
+          const estLeftTokens = Math.round(effectiveRemMicro / 10);
+          const appTrackedTokens = Math.max(localTotalTokens, this.remoteApiTokens || 0);
+          const estUsedTokens = appTrackedTokens > 0
+            ? appTrackedTokens
+            : Math.round(usedMicro / 10);
+          const totalMonthlyCalls = Math.max(this.callEvents.length, (this.remoteApiCalls || 0) + (this.unconfirmedLocalMicrocents > 0 ? 1 : 0));
 
-          const easyMovesLeft = Math.floor(effectiveRemMicro / 7500);
-          const hardMovesLeft = Math.floor(effectiveRemMicro / 44000);
+          const easyMovesLeft = Math.floor(effectiveRemMicro / 4500);
+          const hardMovesLeft = Math.floor(effectiveRemMicro / 28000);
 
           return {
             totalAllow,
@@ -10818,11 +11041,13 @@
             leftPct,
             estTotalTokens,
             estUsedTokens,
+            appTrackedTokens,
+            totalMonthlyCalls,
             estLeftTokens,
             easyMovesLeft,
-            easyGamesLeft: Math.max(0, Math.floor(easyMovesLeft / 30)),
+            easyGamesLeft: Math.max(0, Math.floor(easyMovesLeft / 26)),
             hardMovesLeft,
-            hardGamesLeft: Math.max(0, Math.floor(hardMovesLeft / 30)),
+            hardGamesLeft: Math.max(0, Math.floor(hardMovesLeft / 26)),
             hourlyCalls,
             hourlyTokens,
             hourlyMicro,
@@ -10836,23 +11061,24 @@
           const st = this.getWindowStats();
           const modelInfo = this.getModelForDifficulty(GameState.aiDifficulty);
 
+          const fmtPct = (p) => (p > 0 && p < 99.9 && p % 1 !== 0) ? p.toFixed(1) : p.toFixed(0);
           const lblMini = document.getElementById('lblPuterQuotaMini');
           const dotMini = document.getElementById('puterLiveDot');
           const hdrSum = document.getElementById('hdrPuterSummary');
           if (lblMini) {
             lblMini.textContent = GameState.usePuterAI
-              ? `${modelInfo.primary} • ${st.leftPct.toFixed(0)}% Left`
-              : `Quota: ${st.leftPct.toFixed(0)}% (~${st.easyMovesLeft} mv)`;
+              ? `${modelInfo.primary} • ${fmtPct(st.leftPct)}% Left`
+              : `Quota: ${fmtPct(st.leftPct)}% (~${st.easyMovesLeft.toLocaleString()} mv)`;
           }
           if (dotMini) {
             dotMini.className = GameState.usePuterAI
               ? 'w-2 h-2 rounded-full bg-emerald-500 animate-ping'
-              : 'w-2 h-2 rounded-full bg-indigo-500';
+              : (this.hasServerSync ? 'w-2 h-2 rounded-full bg-emerald-500' : 'w-2 h-2 rounded-full bg-indigo-500');
           }
           if (hdrSum) {
             hdrSum.textContent = GameState.usePuterAI
-              ? `Real AI (${st.leftPct.toFixed(0)}%)`
-              : `Real AI • ${st.leftPct.toFixed(0)}%`;
+              ? `Real AI (${fmtPct(st.leftPct)}%)`
+              : `Real AI • ${fmtPct(st.leftPct)}%`;
           }
 
           const badge = document.getElementById('puterEngineStatusBadge');
@@ -10878,6 +11104,17 @@
             }
           }
 
+          const btnSignIn = document.getElementById('btnPuterSignIn');
+          if (btnSignIn) {
+            if (this.isSignedIn || this.username) {
+              btnSignIn.textContent = this.username ? `✅ @${this.username}` : '✅ Puter Connected';
+              btnSignIn.className = 'android-btn px-2.5 py-1 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-700 text-white font-extrabold text-[11px] shadow-sm';
+            } else {
+              btnSignIn.textContent = '🔐 Puter Sign-In';
+              btnSignIn.className = 'android-btn px-2.5 py-1 rounded-xl bg-gradient-to-b from-indigo-500 to-indigo-700 text-white font-extrabold text-[11px] shadow-sm';
+            }
+          }
+
           const selMod = document.getElementById('selPuterModelOverride');
           if (selMod) selMod.value = this.modelOverride || 'auto';
           const actModPill = document.getElementById('puterActiveModelPill');
@@ -10889,29 +11126,63 @@
           };
 
           const fmtUsd = (micro) => `$${(micro / 100000000).toFixed(4)}`;
-          const fmtMicro = (micro) => micro >= 1000000 ? `${(micro / 1000000).toFixed(1)}M μ¢` : `${micro.toLocaleString()} μ¢`;
+          const fmtMicro = (micro) => {
+            if (micro >= 1000000) return `${(micro / 1000000).toFixed(2)}M μ¢`;
+            if (micro >= 1000) return `${(micro / 1000).toFixed(1)}K μ¢`;
+            return `${Math.round(micro).toLocaleString()} μ¢`;
+          };
 
-          setTxt('puterQuotaUsedPctLabel', `Used: ${st.usedPct.toFixed(1)}% (${fmtUsd(st.usedMicro)})`);
-          setTxt('puterQuotaLeftPctLabel', `Remaining: ${st.leftPct.toFixed(1)}% Left`);
+          setTxt('puterQuotaUsedPctLabel', `Used: ${st.usedPct.toFixed(2)}% (${fmtUsd(st.usedMicro)})`);
+          setTxt('puterQuotaLeftPctLabel', `Remaining: ${st.leftPct.toFixed(2)}% Left`);
           const bar = document.getElementById('puterQuotaProgressBar');
-          if (bar) bar.style.width = `${Math.max(1, st.usedPct)}%`;
+          if (bar) bar.style.width = `${st.usedMicro > 0 ? Math.max(1.5, st.usedPct) : 0}%`;
 
           setTxt('puterStatTotalAllowance', `${fmtUsd(st.totalAllow)} (${fmtMicro(st.totalAllow)})`);
           setTxt('puterStatTotalTokensEst', `~${st.estTotalTokens.toLocaleString()} tokens capacity`);
           setTxt('puterStatUsedQuota', `${fmtUsd(st.usedMicro)} (${fmtMicro(st.usedMicro)})`);
-          setTxt('puterStatUsedTokensEst', `${st.estUsedTokens.toLocaleString()} tok • ${Math.max(this.callEvents.length, this.remoteApiCalls)} calls`);
+          if (st.appTrackedTokens > 0) {
+            setTxt('puterStatUsedTokensEst', `${st.appTrackedTokens.toLocaleString()} app tok • ${st.totalMonthlyCalls.toLocaleString()} calls`);
+          } else if (st.usedMicro > 0) {
+            setTxt('puterStatUsedTokensEst', `~${st.estUsedTokens.toLocaleString()} tok est • ${st.totalMonthlyCalls.toLocaleString()} app calls`);
+          } else {
+            setTxt('puterStatUsedTokensEst', `0 tokens • ${st.totalMonthlyCalls.toLocaleString()} calls`);
+          }
           setTxt('puterStatRemainingQuota', `${fmtUsd(st.effectiveRemMicro)} (${fmtMicro(st.effectiveRemMicro)})`);
           setTxt('puterStatRemainingTokensEst', `~${st.estLeftTokens.toLocaleString()} tokens left`);
 
-          setTxt('puterStatCanStillUseEasy', `~${st.easyMovesLeft.toLocaleString()} moves (~${st.easyGamesLeft} games)`);
-          setTxt('puterStatCanStillUseHard', `~${st.hardMovesLeft.toLocaleString()} moves (~${st.hardGamesLeft} games)`);
+          setTxt('puterStatCanStillUseEasy', `~${st.easyMovesLeft.toLocaleString()} moves (~${st.easyGamesLeft.toLocaleString()} games)`);
+          setTxt('puterStatCanStillUseHard', `~${st.hardMovesLeft.toLocaleString()} moves (~${st.hardGamesLeft.toLocaleString()} games)`);
 
           setTxt('puterStatHourlyCalls', `${st.hourlyCalls} calls`);
           setTxt('puterStatHourlyTokens', `${st.hourlyTokens.toLocaleString()} tok • ${fmtMicro(st.hourlyMicro)}`);
           setTxt('puterStatDailyCalls', `${st.dailyCalls} calls`);
           setTxt('puterStatDailyTokens', `${st.dailyTokens.toLocaleString()} tok • ${fmtMicro(st.dailyMicro)}`);
           setTxt('puterStatSessionCalls', `${this.sessionCalls} calls`);
-          setTxt('puterStatAvgLatency', this.sessionCalls > 0 ? `Avg: ${Math.round(this.totalLatencyMs / this.sessionCalls)} ms` : 'Avg: — ms');
+          setTxt('puterStatAvgLatency', this.sessionCalls > 0
+            ? `Avg: ${Math.round(this.totalLatencyMs / this.sessionCalls)} ms • ${this.sessionTokens.toLocaleString()} tok`
+            : (this.remoteApiCalls > 0 ? `Month App: ${this.remoteApiCalls} calls` : 'Avg: — ms'));
+
+          const bdBox = document.getElementById('puterServerBreakdownBox');
+          const bdList = document.getElementById('puterServerBreakdownList');
+          const bdTime = document.getElementById('puterServerSyncTime');
+          if (bdBox && bdList) {
+            if (this.remoteApiBreakdown && this.remoteApiBreakdown.length > 0) {
+              bdBox.classList.remove('hidden');
+              if (bdTime && this.lastSyncedAt) {
+                const d = new Date(this.lastSyncedAt);
+                bdTime.textContent = `Synced ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+              }
+              bdList.innerHTML = this.remoteApiBreakdown.map((item) => {
+                const uLabel = item.isAi ? `${item.units.toLocaleString()} tok` : `${item.units.toLocaleString()} units`;
+                return `<div class="bg-white/90 border border-indigo-200/80 rounded-lg px-2 py-1 flex items-center justify-between gap-2">
+                  <span class="font-mono font-bold text-indigo-950 truncate">${item.api}</span>
+                  <span class="font-mono text-[10px] text-walnut-700 shrink-0">${item.calls}c • ${uLabel} • ${fmtMicro(item.costMicro)}</span>
+                </div>`;
+              }).join('');
+            } else {
+              bdBox.classList.add('hidden');
+            }
+          }
 
           MorrisLearner.load();
           const info = MorrisLearner.getIntelligenceLevel();
@@ -10921,9 +11192,14 @@
 
           const authLine = document.getElementById('puterAuthAccountLine');
           if (authLine) {
-            authLine.textContent = this.username
-              ? `Signed into Puter as @${this.username} • Live Monthly & Rolling Hourly/Daily Quota`
-              : 'Puter User-Pays Cloud AI • Hourly, Daily & Monthly Quota Tracker';
+            if (this.hasServerSync) {
+              const syncStr = this.lastSyncedAt ? new Date(this.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'now';
+              authLine.textContent = this.username
+                ? `🟢 Live Puter Sync (@${this.username} at ${syncStr}) • App Calls This Month: ${this.remoteApiCalls}`
+                : `🟢 Live Puter Account Quota Synced (${syncStr}) • App Calls This Month: ${this.remoteApiCalls}`;
+            } else {
+              authLine.textContent = 'Puter User-Pays Cloud AI • Tap "🔐 Puter Sign-In" or "🔄 Refresh Quota" for live account sync';
+            }
           }
         },
 
@@ -10938,24 +11214,24 @@
 
         async executePuterAITurn(aiP, fallbackFn) {
           this.load();
+          const sdkOk = await this.ensureSdkLoaded(5000);
           const st = this.getWindowStats();
-          if (st.effectiveRemMicro <= 0) {
+          if (this.hasServerSync && st.effectiveRemMicro <= 0) {
             this.triggerQuotaExhaustedFallback('0 remaining quota');
             fallbackFn();
             return;
           }
-          if (typeof puter === 'undefined' || !puter.ai || typeof puter.ai.chat !== 'function') {
+          if (!sdkOk || typeof puter === 'undefined' || !puter.ai || typeof puter.ai.chat !== 'function') {
             this.triggerQuotaExhaustedFallback('Puter.js cloud SDK offline/unreachable');
             fallbackFn();
             return;
           }
 
-          // Gather legal moves and our Grandmaster engine's top ranked candidates
           let candidateList = [];
           let localBest = null;
 
           const res = (GameState.gameFamily === 'morris')
-            ? computeBestLocalMorrisAction()
+            ? computeBestLocalMorrisAction(aiP)
             : computeBestGeneralAction(aiP);
           if (!res || !res.bestAction) {
             fallbackFn();
@@ -11003,13 +11279,17 @@
           for (const tryModel of modelRoute.fallbacks) {
             usedModel = tryModel;
             try {
-              const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 7500));
+              const isReasoningModel = /o3|reasoner|claude-3-7/i.test(tryModel);
+              const timeoutMs = isReasoningModel ? 16000 : 11000;
+              const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs));
+              const chatOpts = { model: tryModel, max_tokens: 110 };
+              if (!isReasoningModel) chatOpts.temperature = 0.15;
               const chatPromise = puter.ai.chat(
                 [
                   { role: 'system', content: rolePrompt },
                   { role: 'user', content: userPrompt }
                 ],
-                { model: tryModel }
+                chatOpts
               );
               const resp = await Promise.race([chatPromise, timeoutPromise]);
               let text = '';
@@ -11040,19 +11320,19 @@
                 }
               }
 
-              // In Hardest mode, never let the LLM pick a move that scores drastically worse than the top grandmaster line or enters a loop
               if ((diff === 'hard' || diff === 'hardest') && pickedIdx > 0) {
                 const topSc = candidateList[0].score;
                 const pickSc = candidateList[pickedIdx].score;
-                if (topSc - pickSc > 18000) {
+                if (topSc - pickSc > 1800) {
                   pickedIdx = 0;
                 }
               }
 
               chosenAction = candidateList[pickedIdx].action;
-              const estTokens = Math.max(120, Math.round((rolePrompt.length + userPrompt.length + text.length) / 3.8));
+              const actualTokens = this.extractResponseTokens(resp, rolePrompt, userPrompt, text);
               const latency = Math.round(performance.now() - startTime);
-              this.recordCallTelemetry(usedModel, diff, estTokens, latency, chosenNote);
+              this.isSignedIn = true;
+              this.recordCallTelemetry(usedModel, diff, actualTokens, latency, chosenNote);
               succeeded = true;
               break;
             } catch (err) {
@@ -11067,7 +11347,8 @@
 
           GameState.puterAIThinking = false;
           if (!succeeded) {
-            this.triggerQuotaExhaustedFallback('Cloud AI unreachable — using Built-in Grandmaster AI');
+            this.lastThought = 'Cloud AI timed out or offline — Built-in Grandmaster AI played this turn.';
+            this.syncModalUI();
             fallbackFn();
             return;
           }
@@ -11077,6 +11358,9 @@
           executeAction(chosenAction, false);
         }
       };
+      if (typeof window !== 'undefined') {
+        window.PuterAIManager = PuterAIManager;
+      }
 
       let aiTurnTimeoutId = null;
 
@@ -18016,15 +18300,17 @@
       if (btnPuterLogin) {
         btnPuterLogin.addEventListener('click', async () => {
           SoundEngine.select();
+          await PuterAIManager.ensureSdkLoaded(6000);
           if (typeof puter !== 'undefined' && puter.auth && typeof puter.auth.signIn === 'function') {
             try {
               await puter.auth.signIn();
+              PuterAIManager.isSignedIn = true;
               await PuterAIManager.refreshQuotaFromPuter(false);
             } catch (e) {
-              showBoardToast('Puter sign-in window closed or unavailable in sandbox.');
+              showBoardToast('Puter sign-in window closed or blocked by browser.');
             }
           } else {
-            showBoardToast('Puter SDK is running in guest mode.');
+            showBoardToast('Puter Cloud SDK could not be loaded — check internet connection.');
           }
         });
       }
@@ -18035,10 +18321,16 @@
           SoundEngine.select();
           PuterAIManager.callEvents = [];
           PuterAIManager.sessionCalls = 0;
+          PuterAIManager.sessionTokens = 0;
+          PuterAIManager.sessionMicrocents = 0;
           PuterAIManager.totalLatencyMs = 0;
+          PuterAIManager.unconfirmedLocalMicrocents = 0;
+          if (!PuterAIManager.hasServerSync) {
+            PuterAIManager.remainingMicrocents = PuterAIManager.monthAllowanceMicrocents || 50000000;
+          }
           PuterAIManager.save();
           PuterAIManager.syncModalUI();
-          showBoardToast('Cleared local hourly & daily Puter counters.');
+          showBoardToast('Cleared local hourly, daily & session Puter counters.');
         });
       }
 
@@ -18624,7 +18916,7 @@
           const map = {
             '6x6': { title: '6×6 Katar Classic', subtitle: '36 Nodes • 18v18 Beads • Pashtun War Game', icon: '👑' },
             'navakankari_9': { title: 'Navakankari (9 Men’s Morris)', subtitle: '24 Nodes • 9v9 Beads • Form 3-in-a-Row Katar', icon: '⭐' },
-            'navakankari_12': { title: '12-Men’s Katar Mill', subtitle: '24 Nodes with Corner Diagonals • 12v12 Beads', icon: '⭐' },
+            'navakankari_12': { title: '12-Men’s Katar Mill', subtitle: '24 Nodes with Corner Diagonals • 10v10 Beads', icon: '⭐' },
             'three_morris': { title: 'Teen Guti (3 Men’s Morris)', subtitle: '9 Nodes • 3v3 Fast Tactical Mill Game', icon: '🎯' },
             'six_morris': { title: 'Chhah Guti (6 Men’s Morris)', subtitle: '16 Nodes • 6v6 Concentric Square Mill', icon: '🎯' },
             'bagh_chal': { title: 'Bagh-Chal (Tigers vs Goats)', subtitle: '4 Corner Tigers vs 20 Goats • Asymmetric Hunt', icon: '🐯' },
@@ -20061,7 +20353,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=bd5a7a2f60', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=be9badb822', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {

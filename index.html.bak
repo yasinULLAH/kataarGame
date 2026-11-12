@@ -3002,6 +3002,14 @@
             </div>
           </div>
 
+          <div id="puterServerBreakdownBox" class="hidden bg-indigo-50/70 border border-indigo-200 rounded-xl p-2.5 text-[10.5px] space-y-1">
+            <div class="flex items-center justify-between font-extrabold text-indigo-950">
+              <span>☁️ Puter Cloud Monthly API Breakdown (This App)</span>
+              <span id="puterServerSyncTime" class="font-mono text-[10px] text-indigo-700">Synced</span>
+            </div>
+            <div id="puterServerBreakdownList" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-0.5"></div>
+          </div>
+
           <div class="bg-parchment-50 border border-parchment-300 rounded-xl p-2.5 text-[11px] flex flex-wrap items-center justify-between gap-2">
             <div>
               <span class="font-extrabold text-walnut-900">Last Real AI Thought:</span>
@@ -6565,34 +6573,96 @@
        * 7. GRANDMASTER 4-TIER AI ENGINE + ANTI-LOOP + ADAPTIVE BRAIN + PUTER AI
        * ------------------------------------------------------------------- */
       let MorrisTT = new Map();
+      let MorrisKillerMoves = [];
+      let MorrisHistoryTable = { 1: new Int32Array(600), 2: new Int32Array(600) };
       let morrisSearchDeadline = 0;
       let morrisSearchAborted = false;
+      let morrisLastRuleSig = '';
 
-      // 8-Fold Dihedral Symmetry Engine for the 24-Node Navakankari Board
+      let _cachedMorrisLinesRef = null;
+      let NodeMillPairs = [];
+      let NodeDegreeWeights = [];
+
+      function ensureMorrisTopologyCache() {
+        if (_cachedMorrisLinesRef === MillLines && NodeMillPairs.length === Nodes.length) {
+          return;
+        }
+        _cachedMorrisLinesRef = MillLines;
+        NodeMillPairs = Array.from({ length: Nodes.length }, () => []);
+        NodeDegreeWeights = new Int32Array(Nodes.length);
+        for (let lineIdx = 0; lineIdx < MillLines.length; lineIdx++) {
+          const [a, b, c] = MillLines[lineIdx];
+          if (a < Nodes.length && b < Nodes.length && c < Nodes.length) {
+            NodeMillPairs[a].push([b, c, lineIdx]);
+            NodeMillPairs[b].push([a, c, lineIdx]);
+            NodeMillPairs[c].push([a, b, lineIdx]);
+          }
+        }
+        for (let i = 0; i < Nodes.length; i++) {
+          const deg = Adjacency[i] ? Adjacency[i].size : 2;
+          const mCount = NodeMillPairs[i].length;
+          NodeDegreeWeights[i] = deg * 12 + mCount * 14;
+        }
+      }
+
+      function getMorrisRuleSignature() {
+        return `${GameState.gridPreset}|${GameState.morrisDiagonals ? 1 : 0}|${GameState.piecesPerPlayer}|${GameState.morrisDropOrder}|${GameState.morrisDropMillRule}|${GameState.morrisMillRemovalRule}|${GameState.morrisFlyingRule}`;
+      }
+
+      function fastCountMillsAtNode(nodeId, player, board) {
+        ensureMorrisTopologyCache();
+        if (board[nodeId] !== player) return 0;
+        const pairs = NodeMillPairs[nodeId];
+        if (!pairs) return 0;
+        let count = 0;
+        for (let i = 0; i < pairs.length; i++) {
+          const p = pairs[i];
+          if (board[p[0]] === player && board[p[1]] === player) count++;
+        }
+        return count;
+      }
+
+      function fastWouldCompleteMill(nodeId, player, board) {
+        ensureMorrisTopologyCache();
+        const pairs = NodeMillPairs[nodeId];
+        if (!pairs) return 0;
+        let count = 0;
+        for (let i = 0; i < pairs.length; i++) {
+          const p = pairs[i];
+          if (board[p[0]] === player && board[p[1]] === player) count++;
+        }
+        return count;
+      }
+
+      // 8-Fold Dihedral Symmetry Engine for 24-Node, 16-Node & 9-Node Morris Boards
       const MorrisSymmetry = {
-        maps: null,
+        mapsByPreset: {},
         ensureMaps() {
-          if (this.maps && this.maps.length === 8) return this.maps;
-          if (!Nodes || Nodes.length !== 24 || GameState.gameFamily !== 'morris') return null;
+          const preset = GameState.gridPreset || 'navakankari_9';
+          const nLen = Nodes ? Nodes.length : 0;
+          const cacheKey = `${preset}_${nLen}`;
+          if (this.mapsByPreset[cacheKey]) return this.mapsByPreset[cacheKey];
+          if (!Nodes || nLen === 0 || GameState.gameFamily !== 'morris') return null;
+          const maxCoord = nLen === 9 ? 2 : (nLen === 16 ? 4 : 6);
           const coordToId = new Map();
-          for (let i = 0; i < 24; i++) {
+          for (let i = 0; i < nLen; i++) {
             coordToId.set(`${Math.round(Nodes[i].r)},${Math.round(Nodes[i].c)}`, i);
           }
           const transforms = [
             (r, c) => [r, c],
-            (r, c) => [c, 6 - r],
-            (r, c) => [6 - r, 6 - c],
-            (r, c) => [6 - c, r],
-            (r, c) => [r, 6 - c],
-            (r, c) => [6 - r, c],
+            (r, c) => [c, maxCoord - r],
+            (r, c) => [maxCoord - r, maxCoord - c],
+            (r, c) => [maxCoord - c, r],
+            (r, c) => [r, maxCoord - c],
+            (r, c) => [maxCoord - r, c],
             (r, c) => [c, r],
-            (r, c) => [6 - c, 6 - r]
+            (r, c) => [maxCoord - c, maxCoord - r]
           ];
           const maps = [];
           for (const tf of transforms) {
-            const perm = new Array(24);
+            const perm = new Array(nLen);
             let valid = true;
-            for (let i = 0; i < 24; i++) {
+            for (let i = 0; i < nLen; i++) {
               const [nr, nc] = tf(Math.round(Nodes[i].r), Math.round(Nodes[i].c));
               const mapped = coordToId.get(`${nr},${nc}`);
               if (mapped === undefined) {
@@ -6603,21 +6673,25 @@
             }
             if (valid) maps.push(perm);
           }
-          if (maps.length === 8) this.maps = maps;
-          return this.maps;
+          if (maps.length === 8) {
+            this.mapsByPreset[cacheKey] = maps;
+            return maps;
+          }
+          return null;
         },
 
         transformNode(nodeId, symIdx) {
           const maps = this.ensureMaps();
-          if (!maps || nodeId < 0 || nodeId >= 24) return nodeId;
+          if (!maps || nodeId < 0 || nodeId >= maps[0].length) return nodeId;
           return maps[symIdx % 8][nodeId];
         },
 
         canonicalizeStateAndAction(board, action, aiP) {
           const maps = this.ensureMaps();
-          if (!maps || board.length !== 24) {
+          const nLen = board.length;
+          if (!maps || maps[0].length !== nLen) {
             let raw = '';
-            for (let i = 0; i < board.length; i++) {
+            for (let i = 0; i < nLen; i++) {
               const v = board[i];
               raw += v === 0 ? '0' : (v === aiP ? '1' : '2');
             }
@@ -6628,10 +6702,10 @@
           let bestActStr = '';
           for (let s = 0; s < 8; s++) {
             const perm = maps[s];
-            const inv = new Array(24);
-            for (let i = 0; i < 24; i++) inv[perm[i]] = i;
+            const inv = new Array(nLen);
+            for (let i = 0; i < nLen; i++) inv[perm[i]] = i;
             let bStr = '';
-            for (let j = 0; j < 24; j++) {
+            for (let j = 0; j < nLen; j++) {
               const v = board[inv[j]];
               bStr += v === 0 ? '0' : (v === aiP ? '1' : '2');
             }
@@ -6711,7 +6785,6 @@
             if (isSameEdge) {
               oscCount++;
             } else if (pm.to === move.from || pm.from === move.to) {
-              // related piece shuttle
               if (pList.length - 1 - i <= 3) oscCount += 0.5;
             }
           }
@@ -6723,28 +6796,27 @@
           let isForbiddenLoop = false;
 
           if (isImmediateReversal) {
-            penalty += 14500;
+            penalty += 2200;
           }
           if (repCount === 1 || oscCount >= 1.5) {
-            penalty += 32000;
+            penalty += 4800;
           }
           if (repCount === 2 || oscCount >= 2.5) {
-            penalty += 95000;
+            penalty += 18000;
             isForbiddenLoop = true;
           }
           if (repCount >= 3 || oscCount >= 3.5) {
-            penalty += 280000;
+            penalty += 45000;
             isForbiddenLoop = true;
           }
 
           let breakthroughBonus = 0;
           if ((this.nonProgressPlies >= 4 || repCount >= 1 || isImmediateReversal) && lastMove && move.from !== lastMove.to) {
-            // Reward moving a different bead to break a stalemate/shuttle!
-            breakthroughBonus += 9200;
+            breakthroughBonus += 950;
             const opp = player === 1 ? 2 : 1;
             if (Adjacency[move.to]) {
               for (const nb of Adjacency[move.to]) {
-                if (boardAfter[nb] === opp) breakthroughBonus += 2800;
+                if (boardAfter[nb] === opp) breakthroughBonus += 350;
               }
             }
           }
@@ -6818,7 +6890,7 @@
       ];
 
       const MorrisLearner = {
-        storageKey: 'katar_ai_brain_v3',
+        storageKey: 'katar_ai_brain_v4',
         table: new Map(),
         blunderKeys: new Set(),
         episode: [],
@@ -6869,21 +6941,21 @@
           this.loaded = true;
           try {
             let raw = SafeStorage.getItem(this.storageKey);
-            if (!raw) {
-              raw = SafeStorage.getItem('katar_morris_brain_v2');
-            }
+            const isLegacy = !raw;
+            if (!raw) raw = SafeStorage.getItem('katar_ai_brain_v3') || SafeStorage.getItem('katar_morris_brain_v2');
             if (!raw) return;
             const data = JSON.parse(raw);
             if (data && typeof data === 'object') {
               if (Array.isArray(data.entries)) {
                 for (const [k, v] of data.entries) {
                   if (typeof k === 'string' && typeof v === 'number') {
-                    this.table.set(k, v);
+                    const clamped = isLegacy ? Math.max(-2500, Math.min(2500, Math.round(v * 0.08))) : Math.max(-6000, Math.min(6000, v));
+                    if (Math.abs(clamped) >= 25) this.table.set(k, clamped);
                   }
                 }
               }
-              if (Array.isArray(data.blunderKeys)) {
-                this.blunderKeys = new Set(data.blunderKeys);
+              if (!isLegacy && Array.isArray(data.blunderKeys)) {
+                this.blunderKeys = new Set(data.blunderKeys.slice(-500));
               }
               this.gamesLearned = Number(data.gamesLearned) || 0;
               this.mistakesCorrected = Number(data.mistakesCorrected) || 0;
@@ -6903,21 +6975,22 @@
               if (data.humanPresetFreq && typeof data.humanPresetFreq === 'object') {
                 this.humanPresetFreq = data.humanPresetFreq;
               }
+              if (isLegacy) this.save();
             }
           } catch (e) {}
         },
 
         save() {
           try {
-            if (this.table.size > 8000) {
+            if (this.table.size > 9000) {
               const sorted = Array.from(this.table.entries())
                 .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-                .slice(0, 5000);
+                .slice(0, 6000);
               this.table = new Map(sorted);
             }
             const payload = {
               entries: Array.from(this.table.entries()),
-              blunderKeys: Array.from(this.blunderKeys).slice(-400),
+              blunderKeys: Array.from(this.blunderKeys).slice(-500),
               gamesLearned: this.gamesLearned,
               mistakesCorrected: this.mistakesCorrected,
               archetypeStats: this.archetypeStats,
@@ -6949,33 +7022,36 @@
           this.humanNodeFreq = new Array(24).fill(0);
           this.humanPresetFreq = {};
           SafeStorage.removeItem(this.storageKey);
+          SafeStorage.removeItem('katar_ai_brain_v3');
           SafeStorage.removeItem('katar_morris_brain_v2');
           this.save();
         },
 
         getIntelligenceLevel() {
           const pts = (this.gamesLearned * 2) + (this.mistakesCorrected * 3);
-          if (pts >= 120) return { level: 5, title: 'Supreme Overlord AI', depthBonus: 2, bonusFactor: 3.5 };
-          if (pts >= 60) return { level: 4, title: 'Apex Grandmaster', depthBonus: 2, bonusFactor: 3.0 };
-          if (pts >= 25) return { level: 3, title: 'Strategic Master', depthBonus: 1, bonusFactor: 2.5 };
-          if (pts >= 10) return { level: 2, title: 'Tactical Veteran', depthBonus: 1, bonusFactor: 2.0 };
-          return { level: 1, title: 'Apprentice Khan', depthBonus: 0, bonusFactor: 1.5 };
+          if (pts >= 100) return { level: 5, title: 'Supreme Overlord AI', depthBonus: 3, bonusFactor: 1.0 };
+          if (pts >= 45) return { level: 4, title: 'Apex Grandmaster', depthBonus: 2, bonusFactor: 0.9 };
+          if (pts >= 20) return { level: 3, title: 'Strategic Master', depthBonus: 2, bonusFactor: 0.8 };
+          if (pts >= 8) return { level: 2, title: 'Tactical Veteran', depthBonus: 1, bonusFactor: 0.7 };
+          return { level: 1, title: 'Grandmaster Khan', depthBonus: 1, bonusFactor: 0.6 };
         },
 
         onMatchStart() {
           this.load();
           this.episode = [];
           this.currentDropSequence = [];
+          MorrisKillerMoves = [];
+          MorrisHistoryTable = { 1: new Int32Array(600), 2: new Int32Array(600) };
           const candidates = [];
           for (const arch of GRANDMASTER_MORRIS_ARCHETYPES) {
             const st = this.archetypeStats[arch.id] || { wins: 0, losses: 0, draws: 0, plays: 0 };
-            const winRate = (st.wins + 1.2) / (st.plays + 2.0);
-            const exploreBonus = Math.sqrt(Math.log((this.gamesLearned || 1) + 2) / (st.plays + 1)) * 0.45;
-            const repeatPenalty = (arch.id === this.lastArchetypeId) ? -1.5 : 0;
-            const lossStreakPenalty = (st.lastOutcome === 'loss') ? -0.9 : 0;
+            const winRate = (st.wins + 1.5) / (st.plays + 2.2);
+            const exploreBonus = Math.sqrt(Math.log((this.gamesLearned || 1) + 2) / (st.plays + 1)) * 0.38;
+            const repeatPenalty = (arch.id === this.lastArchetypeId) ? -1.2 : 0;
+            const lossStreakPenalty = (st.lastOutcome === 'loss') ? -0.95 : 0;
             candidates.push({
               arch,
-              score: winRate + exploreBonus + repeatPenalty + lossStreakPenalty + (Math.random() * 0.22)
+              score: winRate + exploreBonus + repeatPenalty + lossStreakPenalty + (Math.random() * 0.15)
             });
           }
           candidates.sort((a, b) => b.score - a.score);
@@ -7003,6 +7079,12 @@
 
         getActiveBlueprintNodes() {
           this.load();
+          if (Nodes.length === 9) {
+            return [4, 0, 2, 6, 8, 1, 3, 5, 7].map((nid) => MorrisSymmetry.transformNode(nid, this.activeSymmetryIdx || 0));
+          }
+          if (Nodes.length === 16) {
+            return [1, 3, 5, 7, 9, 11, 13, 15, 0, 4, 8, 12].map((nid) => MorrisSymmetry.transformNode(nid, this.activeSymmetryIdx || 0));
+          }
           const arch = GRANDMASTER_MORRIS_ARCHETYPES.find((a) => a.id === this.activeArchetypeId) || GRANDMASTER_MORRIS_ARCHETYPES[0];
           const sym = this.activeSymmetryIdx || 0;
           return arch.nodes.map((nid) => MorrisSymmetry.transformNode(nid, sym));
@@ -7019,16 +7101,31 @@
             if (!this.humanPresetFreq[preset]) this.humanPresetFreq[preset] = {};
             this.humanPresetFreq[preset][action.to] = (this.humanPresetFreq[preset][action.to] || 0) + 1;
           }
+          // Positive imitation learning: remember strong human moves that form mills or double threats
+          if (GameState.gameFamily === 'morris' && (action.type === 'drop' || action.type === 'step')) {
+            const opp = humanP === 1 ? 2 : 1;
+            const resH = (GameState.reserves && GameState.reserves[humanP]) || 0;
+            const resA = (GameState.reserves && GameState.reserves[opp]) || 0;
+            const sim = [...board];
+            if (action.type === 'step' && action.from >= 0) sim[action.from] = 0;
+            sim[action.to] = humanP;
+            const forbidM = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
+            const formed = !(action.type === 'drop' && forbidM) && fastCountMillsAtNode(action.to, humanP, sim) > 0;
+            if (formed) {
+              const { fullKey } = this.makeStateKey(board, action, humanP, resH, resA);
+              this.adjustWeight(fullKey, 420);
+            }
+          }
         },
 
         makeStateKey(board, action, aiP, resAi = 0, resHuman = 0) {
-          if (GameState.gameFamily === 'morris' && board.length === 24) {
+          if (GameState.gameFamily === 'morris') {
             const canon = MorrisSymmetry.canonicalizeStateAndAction(board, action, aiP);
-            const modeTag = GameState.morrisDropOrder === 'all_at_once' ? 'A' : (GameState.morrisDropMillRule === 'forbid_mill' ? 'F' : 'S');
+            const ruleTag = `${GameState.gridPreset}:${GameState.morrisDiagonals ? 1 : 0}:${GameState.morrisDropOrder === 'all_at_once' ? 'A' : (GameState.morrisDropMillRule === 'forbid_mill' ? 'F' : 'S')}:${GameState.morrisMillRemovalRule === 'any' ? 'K' : 'P'}:${GameState.morrisFlyingRule === 'enabled' ? 'Y' : 'N'}`;
             const phaseTag = (resAi > 0 || resHuman > 0) ? `D${resAi}_${resHuman}` : 'M';
             return {
-              fullKey: `${modeTag}:${phaseTag}:${canon.stateKey}|${canon.actionKey}`,
-              stateOnlyKey: `${modeTag}:${phaseTag}:${canon.stateKey}`
+              fullKey: `${ruleTag}:${phaseTag}:${canon.stateKey}|${canon.actionKey}`,
+              stateOnlyKey: `${ruleTag}:${phaseTag}:${canon.stateKey}`
             };
           }
 
@@ -7091,7 +7188,9 @@
         getBonus(board, action, aiP, resAi = 0, resHuman = 0) {
           this.load();
           const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
-          return this.table.get(fullKey) || 0;
+          if (this.blunderKeys.has(fullKey)) return -4500;
+          const w = this.table.get(fullKey) || 0;
+          return Math.max(-2200, Math.min(2200, w));
         },
 
         isBlunder(board, action, aiP, resAi = 0, resHuman = 0) {
@@ -7099,17 +7198,17 @@
           const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
           if (this.blunderKeys.has(fullKey)) return true;
           const w = this.table.get(fullKey) || 0;
-          return w <= -6500;
+          return w <= -2800;
         },
 
         getHardestBonus(board, action, aiP, resAi = 0, resHuman = 0) {
           this.load();
           const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
-          if (this.blunderKeys.has(fullKey)) return -350000;
+          if (this.blunderKeys.has(fullKey)) return -6500;
           const w = this.table.get(fullKey) || 0;
-          if (w <= -6500) return -350000;
+          if (w <= -2800) return -5500;
           const lvl = this.getIntelligenceLevel();
-          return Math.round(w * lvl.bonusFactor);
+          return Math.max(-2800, Math.min(2800, Math.round(w * lvl.bonusFactor)));
         },
 
         recordStep(board, action, aiP, resAi = 0, resHuman = 0) {
@@ -7125,8 +7224,8 @@
 
         adjustWeight(fullKey, delta) {
           const prev = this.table.get(fullKey) || 0;
-          const next = Math.max(-65000, Math.min(65000, Math.round(prev * 0.86 + delta)));
-          if (Math.abs(next) < 40) this.table.delete(fullKey);
+          const next = Math.max(-6000, Math.min(6000, Math.round(prev * 0.85 + delta)));
+          if (Math.abs(next) < 25) this.table.delete(fullKey);
           else this.table.set(fullKey, next);
         },
 
@@ -7137,12 +7236,12 @@
           const lastIdx = this.episode.length - 1;
           const lastMove = this.episode[lastIdx];
           this.blunderKeys.add(lastMove.fullKey);
-          this.adjustWeight(lastMove.fullKey, -19000 * count);
+          this.adjustWeight(lastMove.fullKey, -1600 * count);
           if (lastIdx >= 1) {
-            this.adjustWeight(this.episode[lastIdx - 1].fullKey, -8500 * count);
+            this.adjustWeight(this.episode[lastIdx - 1].fullKey, -850 * count);
           }
           if (lastIdx >= 2) {
-            this.adjustWeight(this.episode[lastIdx - 2].fullKey, -4000 * count);
+            this.adjustWeight(this.episode[lastIdx - 2].fullKey, -420 * count);
           }
           this.save();
         },
@@ -7174,17 +7273,17 @@
               for (let i = this.episode.length - 1; i >= 0; i--) {
                 const ep = this.episode[i];
                 if (!ep.aiP || ep.aiP === winner) {
-                  const stepDelta = Math.round(14000 * discountWin);
-                  if (Math.abs(stepDelta) >= 100) {
+                  const stepDelta = Math.round(900 * discountWin);
+                  if (Math.abs(stepDelta) >= 25) {
                     this.adjustWeight(ep.fullKey, stepDelta);
                   }
-                  discountWin *= 0.88;
+                  discountWin *= 0.9;
                 } else if (GameState.aiVsAi) {
-                  const penDelta = Math.round(-12000 * discountLoss);
-                  if (Math.abs(penDelta) >= 100) {
+                  const penDelta = Math.round(-1100 * discountLoss);
+                  if (Math.abs(penDelta) >= 25) {
                     this.adjustWeight(ep.fullKey, penDelta);
                   }
-                  discountLoss *= 0.86;
+                  discountLoss *= 0.88;
                 }
               }
             }
@@ -7194,7 +7293,7 @@
             this.gameFamilyStats[fam].draws++;
             if (this.episode.length > 0) {
               for (let i = this.episode.length - 1; i >= 0; i--) {
-                this.adjustWeight(this.episode[i].fullKey, 1800);
+                this.adjustWeight(this.episode[i].fullKey, 150);
               }
             }
           } else {
@@ -7210,19 +7309,20 @@
             if (this.episode.length > 0) {
               const lastIdx = this.episode.length - 1;
               this.blunderKeys.add(this.episode[lastIdx].fullKey);
-              this.adjustWeight(this.episode[lastIdx].fullKey, -32000);
+              this.adjustWeight(this.episode[lastIdx].fullKey, -2400);
               if (lastIdx >= 1) {
                 this.blunderKeys.add(this.episode[lastIdx - 1].fullKey);
-                this.adjustWeight(this.episode[lastIdx - 1].fullKey, -22000);
+                this.adjustWeight(this.episode[lastIdx - 1].fullKey, -1600);
               }
               if (lastIdx >= 2) {
-                this.adjustWeight(this.episode[lastIdx - 2].fullKey, -14000);
+                this.blunderKeys.add(this.episode[lastIdx - 2].fullKey);
+                this.adjustWeight(this.episode[lastIdx - 2].fullKey, -1000);
               }
-              let discount = 0.85;
+              let discount = 0.86;
               for (let i = lastIdx - 3; i >= 0; i--) {
-                const stepDelta = Math.round(-10000 * discount);
-                if (Math.abs(stepDelta) >= 100) {
-                  this.adjustWeight(this.episode[i].fullKey, stepDelta);
+                const stepDelta = Math.round(-750 * discount);
+                if (Math.abs(stepDelta) >= 25) {
+                  this.adjustWeight(epSafeKey(this.episode[i]), stepDelta);
                 }
                 discount *= 0.86;
               }
@@ -7238,17 +7338,23 @@
         }
       };
 
+      function epSafeKey(ep) {
+        return ep && ep.fullKey ? ep.fullKey : '';
+      }
+
       function getMorrisNodeWeight(nodeId) {
+        ensureMorrisTopologyCache();
+        if (nodeId >= 0 && nodeId < NodeDegreeWeights.length) {
+          return NodeDegreeWeights[nodeId];
+        }
         const deg = Adjacency[nodeId] ? Adjacency[nodeId].size : 2;
-        if (deg >= 4) return 48;
-        if (deg === 3) return 28;
-        return 14;
+        return deg >= 4 ? 52 : (deg === 3 ? 34 : 18);
       }
 
       function hasReadySliderForMill(emptyNodeId, line, player, board) {
         if (!Adjacency[emptyNodeId]) return false;
         for (const nb of Adjacency[emptyNodeId]) {
-          if (!line.includes(nb) && board[nb] === player) return true;
+          if (nb !== line[0] && nb !== line[1] && nb !== line[2] && board[nb] === player) return true;
         }
         return false;
       }
@@ -7257,9 +7363,16 @@
         if (!Adjacency[emptyNodeId]) return 0;
         let count = 0;
         for (const nb of Adjacency[emptyNodeId]) {
-          if (!line.includes(nb) && board[nb] === player) count++;
+          if (nb !== line[0] && nb !== line[1] && nb !== line[2] && board[nb] === player) count++;
         }
         return count;
+      }
+
+      function canPlayerFlyOnBoard(player, board, reserves) {
+        if (GameState.morrisFlyingRule !== 'enabled') return false;
+        if (GameState.gridPreset === 'three_morris' || GameState.gridPreset === 'six_morris') return false;
+        if (reserves && reserves[player] > 0) return false;
+        return countPlayerTotalPieces(player, board, reserves) === 3;
       }
 
       function canPlayerCloseMillAt(emptyNodeId, line, player, board, reserves) {
@@ -7268,108 +7381,190 @@
           if (!forbidLandingMill) return true;
           return hasReadySliderForMill(emptyNodeId, line, player, board);
         }
-        const pieceCount = countPlayerTotalPieces(player, board, reserves);
-        const canFly = (
-          GameState.morrisFlyingRule === 'enabled' &&
-          pieceCount === 3 &&
-          GameState.gridPreset !== 'three_morris' &&
-          GameState.gridPreset !== 'six_morris'
-        );
-        if (canFly) return pieceCount >= 3;
+        if (canPlayerFlyOnBoard(player, board, reserves)) return true;
         return hasReadySliderForMill(emptyNodeId, line, player, board);
       }
 
+      // Count how many open 2-in-a-row threats dropping at `nodeId` creates for `player`
+      function analyzeDropForkPotential(nodeId, player, board, reserves) {
+        ensureMorrisTopologyCache();
+        const pairs = NodeMillPairs[nodeId];
+        if (!pairs) return { millCount: 0, openTwoTargets: [], loadedTargets: [] };
+        const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
+        let millCount = 0;
+        const openTwoTargets = [];
+        const loadedTargets = [];
+
+        for (let i = 0; i < pairs.length; i++) {
+          const [o1, o2, lineIdx] = pairs[i];
+          const v1 = board[o1];
+          const v2 = board[o2];
+          if (v1 === player && v2 === player) {
+            millCount++;
+          } else if ((v1 === player && v2 === 0) || (v2 === player && v1 === 0)) {
+            const empId = v1 === 0 ? o1 : o2;
+            openTwoTargets.push(empId);
+            const line = MillLines[lineIdx];
+            if (hasReadySliderForMill(empId, line, player, board)) {
+              loadedTargets.push(empId);
+            }
+          }
+        }
+
+        // Also check if dropping at `nodeId` acts as the outside SLIDER that arms an existing 2-in-a-row!
+        if (Adjacency[nodeId]) {
+          for (const nb of Adjacency[nodeId]) {
+            if (board[nb] !== 0) continue;
+            const nbPairs = NodeMillPairs[nb];
+            if (!nbPairs) continue;
+            for (let j = 0; j < nbPairs.length; j++) {
+              const [p1, p2] = nbPairs[j];
+              if (p1 === nodeId || p2 === nodeId) continue;
+              if (board[p1] === player && board[p2] === player) {
+                if (!loadedTargets.includes(nb)) loadedTargets.push(nb);
+              }
+            }
+          }
+        }
+
+        return {
+          millCount: forbidLandingMill ? 0 : millCount,
+          rawMillCount: millCount,
+          openTwoTargets,
+          loadedTargets
+        };
+      }
+
       function scoreMorrisRemovalTarget(cid, board, aiP, humanP, res1 = GameState.reserves[1], res2 = GameState.reserves[2]) {
+        ensureMorrisTopologyCache();
         const res = { 1: res1, 2: res2 };
-        let score = getMorrisNodeWeight(cid) * 24;
+        let score = getMorrisNodeWeight(cid) * 30;
 
         const simB = [...board];
         simB[cid] = 0;
         const hmRemaining = countPlayerTotalPieces(humanP, simB, res);
-        if (hmRemaining <= 2) return 250000;
+        if (hmRemaining <= 2) return 400000;
         if (res[humanP] === 0) {
           const oppActs = getAllLegalActionsForPlayer(humanP, simB, res);
-          if (oppActs.total === 0) return 240000;
+          if (oppActs.total === 0) return 380000;
         }
 
+        const oppWillFlyAfterRemoval = canPlayerFlyOnBoard(humanP, simB, res);
+        const pairs = NodeMillPairs[cid] || [];
         let inOpenTwo = 0;
-        for (const line of MillLines) {
-          if (!line.includes(cid)) continue;
-          let oppC = 0, empId = -1, aiC = 0;
-          for (const id of line) {
-            if (board[id] === humanP) oppC++;
-            else if (board[id] === 0) empId = id;
-            else if (board[id] === aiP) aiC++;
-          }
-          if (oppC === 2 && empId !== -1) {
+        let inOneWithTwoEmpty = 0;
+
+        for (let i = 0; i < pairs.length; i++) {
+          const [o1, o2, lineIdx] = pairs[i];
+          const line = MillLines[lineIdx];
+          let oppC = 1;
+          let aiC = 0;
+          let empId = -1;
+          if (board[o1] === humanP) oppC++;
+          else if (board[o1] === aiP) aiC++;
+          else empId = o1;
+
+          if (board[o2] === humanP) oppC++;
+          else if (board[o2] === aiP) aiC++;
+          else empId = o2;
+
+          if (oppC === 2 && empId !== -1 && aiC === 0) {
             inOpenTwo++;
-            if (canPlayerCloseMillAt(empId, line, humanP, board, res)) {
-              score += 65000;
+            // Check both current board AND post-removal board (in case removal unlocks flying!)
+            if (canPlayerCloseMillAt(empId, line, humanP, board, res) || canPlayerCloseMillAt(empId, line, humanP, simB, res)) {
+              score += 85000;
             } else {
-              score += 22000;
+              score += 28000;
             }
+          } else if (oppC === 1 && aiC === 0) {
+            inOneWithTwoEmpty++;
           }
+
+          // Removing `cid` unblocks an AI 2-in-a-row on this exact line!
           if (aiC === 2 && oppC === 1) {
             if (canPlayerCloseMillAt(cid, line, aiP, simB, res)) {
-              score += 54000;
+              score += 72000;
             } else {
-              score += 18000;
+              score += 26000;
             }
+          } else if (aiC === 1 && oppC === 1 && empId !== -1) {
+            // Opens a full mill line for AI
+            score += 6500;
           }
         }
 
-        if (inOpenTwo >= 2) score += 45000;
+        // CRITICAL FLYING RULE AWARENESS: If removing `cid` reduces opponent to 3 beads in Flying Mode,
+        // check if the OTHER 3 remaining opponent beads on `simB` form any 2-in-a-row that can now fly-close!
+        if (oppWillFlyAfterRemoval) {
+          let survivingTwoInRows = 0;
+          for (let lIdx = 0; lIdx < MillLines.length; lIdx++) {
+            const [a, b, c] = MillLines[lIdx];
+            let hC = 0, eC = 0;
+            if (simB[a] === humanP) hC++; else if (simB[a] === 0) eC++;
+            if (simB[b] === humanP) hC++; else if (simB[b] === 0) eC++;
+            if (simB[c] === humanP) hC++; else if (simB[c] === 0) eC++;
+            if (hC === 2 && eC === 1) survivingTwoInRows++;
+          }
+          if (survivingTwoInRows > 0) {
+            score -= survivingTwoInRows * 90000;
+          } else {
+            score += 35000;
+          }
+        }
 
+        if (inOpenTwo >= 2) score += 65000;
+        if (inOneWithTwoEmpty >= 2) score += 9500; // Break opponent L-fork pivot
+
+        // Check if `cid` is the outside slider about to slide into an empty node `nb` to complete a mill
         for (const nb of Adjacency[cid]) {
           if (board[nb] === 0) {
-            for (const line of MillLines) {
-              if (line.includes(nb) && !line.includes(cid)) {
-                let oppCount = 0;
-                for (const id of line) if (board[id] === humanP) oppCount++;
-                if (oppCount === 2) {
-                  let otherSliders = 0;
-                  for (const snb of Adjacency[nb]) {
-                    if (snb !== cid && !line.includes(snb) && board[snb] === humanP) otherSliders++;
-                  }
-                  score += otherSliders === 0 ? 58000 : 22000;
-                }
+            const nbPairs = NodeMillPairs[nb] || [];
+            for (let j = 0; j < nbPairs.length; j++) {
+              const [p1, p2, lIdx] = nbPairs[j];
+              if (p1 === cid || p2 === cid) continue;
+              if (board[p1] === humanP && board[p2] === humanP) {
+                const otherSliders = countReadySlidersForMill(nb, MillLines[lIdx], humanP, simB);
+                score += otherSliders === 0 ? 78000 : 28000;
               }
             }
           }
         }
 
-        if (isNodeInAnyMill(cid, board)) {
+        // In 'any' mode (or when all opponent beads are in mills), breaking an active/running mill or see-saw
+        if (fastCountMillsAtNode(cid, humanP, board) > 0) {
           let canReopenSafely = false;
           let partOfSeeSaw = false;
-          for (const m1 of MillLines) {
-            if (!m1.includes(cid)) continue;
-            if (board[m1[0]] !== humanP || board[m1[1]] !== humanP || board[m1[2]] !== humanP) continue;
+          for (let i = 0; i < pairs.length; i++) {
+            const [o1, o2, lIdx] = pairs[i];
+            if (board[o1] !== humanP || board[o2] !== humanP) continue;
+            const m1 = MillLines[lIdx];
             for (const nid of m1) {
               for (const nb of Adjacency[nid]) {
                 if (!m1.includes(nb) && board[nb] === 0) {
                   canReopenSafely = true;
-                  for (const m2 of MillLines) {
-                    if (m2.includes(nb) && !m2.includes(nid)) {
-                      const o2 = m2.filter((x) => x !== nb);
-                      if (board[o2[0]] === humanP && board[o2[1]] === humanP) {
-                        partOfSeeSaw = true;
-                      }
-                    }
+                  if (fastWouldCompleteMill(nb, humanP, board) > 0) {
+                    partOfSeeSaw = true;
                   }
                 }
               }
             }
           }
-          if (partOfSeeSaw) score += 55000;
-          else if (canReopenSafely) score += 26000;
-          else score += 11000;
+          if (partOfSeeSaw) score += 92000;
+          else if (canReopenSafely) score += 44000;
+          else score += 18000;
         }
 
         let oppEmptyNeighbors = 0;
+        let friendlyTrappedFreed = 0;
         for (const nb of Adjacency[cid]) {
           if (board[nb] === 0) oppEmptyNeighbors++;
+          else if (board[nb] === aiP) {
+            let libBefore = 0;
+            for (const anb of Adjacency[nb]) if (board[anb] === 0) libBefore++;
+            if (libBefore === 0) friendlyTrappedFreed++;
+          }
         }
-        score += oppEmptyNeighbors * 220;
+        score += oppEmptyNeighbors * 350 + friendlyTrappedFreed * 8500;
         return score;
       }
 
@@ -7399,12 +7594,14 @@
         return scored.slice(0, maxCount).map((x) => x.cid);
       }
 
-      // Grandmaster evaluation for "Lay All 9 Beads First" (both 1st-Placer and 2nd-Placer)
+      // Grandmaster evaluation for "Lay All Beads First" (both 1st-Placer and 2nd-Placer)
       function evaluateAllAtOnceBoard(board, aiP, humanP, resAi, resHuman) {
+        ensureMorrisTopologyCache();
         const blueprint = MorrisLearner.getActiveBlueprintNodes();
         const humanFreq = MorrisLearner.humanNodeFreq || [];
+        const totalLines = MillLines.length;
 
-        // CASE A: AI is laying all 9 beads FIRST (resHuman > 0, human hasn't placed yet)
+        // CASE A: AI is laying all beads FIRST (resHuman > 0, human hasn't placed yet)
         if (resHuman > 0) {
           let score = 0;
           let linesCovered = 0;
@@ -7420,19 +7617,14 @@
           for (let i = 0; i < Nodes.length; i++) {
             if (board[i] !== aiP) continue;
             placedNodes.push(i);
-            const deg = Adjacency[i] ? Adjacency[i].size : 2;
-            if (deg >= 4) score += 18500;
-            else if (deg === 3) score += 6200;
-            else score += 3800;
+            score += getMorrisNodeWeight(i) * 320;
 
-            // Blueprint alignment bonus (ensures coherent 3-ring Grandmaster web formation that changes every game!)
             const bpIdx = blueprint.indexOf(i);
             if (bpIdx !== -1 && bpIdx < GameState.piecesPerPlayer) {
-              score += 26000 + (12 - bpIdx) * 1800;
+              score += 22000 + (12 - bpIdx) * 1600;
             }
 
-            // Pre-emptively contest the human's favorite drop intersections
-            if (humanFreq[i] > 0) {
+            if (i < humanFreq.length && humanFreq[i] > 0) {
               score += Math.min(4500, humanFreq[i] * 650);
             }
 
@@ -7446,18 +7638,16 @@
                 friendlyNb++;
               }
             }
-            // Never allow self-trapped beads that the human can suffocate with 1-2 drops
-            if (empNb === 0) score -= 75000;
-            else if (empNb === 1) score -= 24000;
-            else score += empNb * 2100;
+            if (empNb === 0) score -= 85000;
+            else if (empNb === 1) score -= 26000;
+            else score += empNb * 2400;
 
-            // Penalize clumping on low-degree corners where 1 human blocker locks 2 AI beads
+            const deg = Adjacency[i] ? Adjacency[i].size : 2;
             if (deg === 2 && friendlyNb >= 2) {
-              score -= 19000;
+              score -= 22000;
             }
           }
 
-          // Check if completed 9-bead pattern is in taboo memory (lost previously)
           if (resAi === 0 && placedNodes.length >= 6) {
             const dropSig = `DROP:${placedNodes.slice().sort((a, b) => a - b).join(',')}`;
             if (MorrisLearner.tabooFormationSignatures.has(dropSig)) {
@@ -7465,7 +7655,7 @@
             }
           }
 
-          score += frontierSet.size * 3800;
+          score += frontierSet.size * 4200;
 
           for (const line of MillLines) {
             let aC = 0, hC = 0, empNode = -1;
@@ -7496,7 +7686,6 @@
             }
           }
 
-          // Enforce 3-Ring Balance (Outer, Middle, Inner rings must each have >= 2 AI beads by the end of placement!)
           if (Nodes.length === 24 && resAi <= 3) {
             let outerC = 0, midC = 0, innerC = 0;
             const outerSet = [0, 1, 2, 9, 14, 21, 22, 23];
@@ -7516,42 +7705,38 @@
             }
           }
 
-          // Total Mill-Line Denial is paramount when placing all 9 beads first:
-          // Covering 15-16 of the 16 mill lines leaves the human ZERO open lines to build their own mill!
-          score += linesCovered * 24000;
-          if (linesCovered >= 14) score += 65000;
-          if (linesCovered >= 15) score += 95000;
-          if (linesCovered >= 16) score += 165000;
+          score += linesCovered * 26000;
+          if (linesCovered >= totalLines - 2) score += 65000;
+          if (linesCovered >= totalLines - 1) score += 95000;
+          if (linesCovered >= totalLines) score += 175000;
 
-          // Distribute 2-in-a-row + slider threats across distinct target nodes so human cannot block them all
-          score += openTwoTargets.size * 9500;
-          score += readyTargets.size * 34000;
-          score += multiSliderTargets.size * 22000;
-          score += cageTrapTargets.size * 58000;
+          score += openTwoTargets.size * 10000;
+          score += readyTargets.size * 38000;
+          score += multiSliderTargets.size * 25000;
+          score += cageTrapTargets.size * 62000;
 
-          // Avoid putting 2 different 2-in-a-rows onto the exact same empty target node (where 1 human blocker stops both!)
           for (const [, count] of targetShareCount) {
             if (count > 1) score -= (count - 1) * 18000;
           }
 
-          // When AI finishes placing its 9th bead (resAi === 0), simulate the human's best counter-placement!
+          // When AI finishes placing its Nth bead first, simulate Human's best N counter-drops,
+          // and then evaluate with `turnPlayer = aiP` because AI moves FIRST in the Slide Phase!
           if (resAi === 0) {
             const simBoard = [...board];
-            let hmLeft = Math.min(resHuman, 9);
+            let hmLeft = Math.min(resHuman, GameState.piecesPerPlayer);
             while (hmLeft > 0) {
               let bestHNode = -1;
               let bestHVal = -Infinity;
               for (let i = 0; i < Nodes.length; i++) {
                 if (simBoard[i] !== 0) continue;
                 simBoard[i] = humanP;
-                const formsForbiddenMill = getMillsContainingNode(i, humanP, simBoard).length > 0;
-                if (formsForbiddenMill) {
+                if (fastCountMillsAtNode(i, humanP, simBoard) > 0) {
                   simBoard[i] = 0;
                   continue;
                 }
-                let hVal = (Adjacency[i] ? Adjacency[i].size : 2) * 800;
-                if (readyTargets.has(i)) hVal += 45000;
-                else if (openTwoTargets.has(i)) hVal += 18000;
+                let hVal = getMorrisNodeWeight(i) * 40;
+                if (readyTargets.has(i)) hVal += 55000;
+                else if (openTwoTargets.has(i)) hVal += 22000;
                 for (const line of MillLines) {
                   if (!line.includes(i)) continue;
                   let hC = 0, aC = 0, emp = -1;
@@ -7561,8 +7746,12 @@
                     else emp = id;
                   }
                   if (hC === 2 && aC === 0 && emp !== -1) {
-                    hVal += hasReadySliderForMill(emp, line, humanP, simBoard) ? 28000 : 9000;
+                    hVal += hasReadySliderForMill(emp, line, humanP, simBoard) ? 34000 : 11000;
                   }
+                }
+                // Human also tries to block AI liberties
+                for (const nb of Adjacency[i]) {
+                  if (simBoard[nb] === aiP) hVal += 2500;
                 }
                 simBoard[i] = 0;
                 if (hVal > bestHVal) {
@@ -7574,17 +7763,20 @@
               simBoard[bestHNode] = humanP;
               hmLeft--;
             }
-            const postEval = evaluateMorrisBoardState(simBoard, 0, 0, humanP, aiP, humanP);
-            score += postEval * 2.5;
+            const postEval = evaluateMorrisBoardState(simBoard, 0, 0, aiP, aiP, humanP);
+            score += postEval * 3.2;
           }
 
           return score;
         }
 
-        // CASE B: Human already placed all 9 beads first (resHuman === 0), now AI places its 9 beads!
+        // CASE B: Human already placed all N beads first (resHuman === 0), now AI places its N beads!
+        // Note: Human's beads are 100% frozen until AI finishes all N drops, and then Human slides first
+        // (UNLESS Human has 0 legal moves, in which case AI wins immediately on its final drop!).
         let score = evaluateMorrisBoardState(board, 0, 0, humanP, aiP, humanP) * 4.5;
         const hmReadyTargets = new Set();
-        const hmTwoWithoutSliderTargets = new Set();
+        const hmTwoStepTargets = new Set();
+        const hmOpenTwoWithoutSlider = new Set();
         const aiReadyTargets = new Set();
         const aiUncontestedTargets = new Set();
 
@@ -7599,50 +7791,74 @@
             if (hasReadySliderForMill(emp, line, humanP, board)) {
               hmReadyTargets.add(emp);
             } else {
-              hmTwoWithoutSliderTargets.add(emp);
+              hmOpenTwoWithoutSlider.add(emp);
+              // Check if a human bead is 2 steps away from `emp`
+              for (const nb of Adjacency[emp]) {
+                if (board[nb] === 0 && !line.includes(nb)) {
+                  for (const nb2 of Adjacency[nb]) {
+                    if (!line.includes(nb2) && board[nb2] === humanP) {
+                      hmTwoStepTargets.add(emp);
+                      break;
+                    }
+                  }
+                }
+              }
             }
           } else if (a === 2 && h === 0 && emp !== -1) {
             if (hasReadySliderForMill(emp, line, aiP, board)) {
               aiReadyTargets.add(emp);
-              let oppAdj = false;
+              let oppCanSlideIntoEmp = false;
               for (const nb of Adjacency[emp]) {
                 if (board[nb] === humanP) {
-                  oppAdj = true;
+                  oppCanSlideIntoEmp = true;
                   break;
                 }
               }
-              if (!oppAdj) aiUncontestedTargets.add(emp);
+              if (!oppCanSlideIntoEmp) aiUncontestedTargets.add(emp);
             }
           }
         }
 
-        // Human moves FIRST after AI finishes placing, so any unblocked hmReadyTarget is an immediate human Katar!
-        score -= hmReadyTargets.size * 220000;
-        score -= hmTwoWithoutSliderTargets.size * 24000;
-        score += aiReadyTargets.size * 42000;
-        score += aiUncontestedTargets.size * 78000;
-        if (aiUncontestedTargets.size >= 1 && hmReadyTargets.size === 0) score += 95000;
-        if (aiReadyTargets.size >= 2) score += 88000;
+        score -= hmReadyTargets.size * 260000;
+        score -= hmTwoStepTargets.size * 48000;
+        score -= hmOpenTwoWithoutSlider.size * 22000;
+        score += aiReadyTargets.size * 46000;
+        score += aiUncontestedTargets.size * 92000;
+        if (aiUncontestedTargets.size >= 1 && hmReadyTargets.size === 0) score += 115000;
+        if (aiUncontestedTargets.size >= 2) score += 140000;
 
+        // Calculate Human's Liberty Frontier for Encirclement / Immobilization Win!
+        const hmLibertyNodes = new Set();
         let hmMob = 0;
         let hmTrapped = 0;
         for (let i = 0; i < Nodes.length; i++) {
           if (board[i] === humanP) {
             let lib = 0;
-            for (const nb of Adjacency[i]) if (board[nb] === 0) lib++;
+            for (const nb of Adjacency[i]) {
+              if (board[nb] === 0) {
+                lib++;
+                hmLibertyNodes.add(nb);
+              }
+            }
             hmMob += lib;
             if (lib === 0) hmTrapped++;
           }
         }
-        if (hmMob === 0) score += 900000; // Instant immobilization win!
-        score += hmTrapped * 22000;
-        score -= hmMob * 1800;
+        if (hmMob === 0) return 1500000; // Instant immobilization victory!
+        if (hmLibertyNodes.size <= resAi) {
+          // AI has enough beads left in hand to plug EVERY remaining human liberty and win immediately!
+          score += (resAi - hmLibertyNodes.size + 1) * 180000;
+        }
+        score += hmTrapped * 28000;
+        score -= hmMob * 2400;
+        score -= hmLibertyNodes.size * 4200;
 
         return score;
       }
 
-      // Grandmaster Single-Drop Evaluator (handles both Standard and "Disable 3-in-a-Row on First Lay" forbid_mill!)
+      // Grandmaster Single-Drop Evaluator (aware of allow_mill, forbid_mill, all_at_once, 9/12/6/3 variants)
       function scoreMorrisPlacement(nodeId, board, aiP, humanP, isAllAtOnce, resAi, resHuman) {
+        ensureMorrisTopologyCache();
         const landingMillForbidden = (isAllAtOnce || GameState.morrisDropMillRule === 'forbid_mill');
         const sim = [...board];
         sim[nodeId] = aiP;
@@ -7651,29 +7867,30 @@
           return evaluateAllAtOnceBoard(sim, aiP, humanP, Math.max(0, resAi - 1), resHuman);
         }
 
-        const simOpp = [...board];
-        simOpp[nodeId] = humanP;
+        const myForkInfo = analyzeDropForkPotential(nodeId, aiP, board, GameState.reserves);
+        const oppForkInfo = analyzeDropForkPotential(nodeId, humanP, board, GameState.reserves);
 
         if (!landingMillForbidden) {
-          const myMills = getMillsContainingNode(nodeId, aiP, sim).length;
-          const oppMills = getMillsContainingNode(nodeId, humanP, simOpp).length;
-          if (myMills > 0) return 360000 + myMills * 45000 + oppMills * 25000;
-          if (oppMills > 0) return 270000 + oppMills * 40000;
+          const myMills = myForkInfo.rawMillCount;
+          const oppMills = oppForkInfo.rawMillCount;
+          if (myMills > 0) {
+            return 420000 + myMills * 55000 + oppMills * 35000 + myForkInfo.openTwoTargets.length * 18000;
+          }
+          if (oppMills > 0) {
+            return 340000 + oppMills * 48000 + myForkInfo.openTwoTargets.length * 16000;
+          }
         }
 
-        let score = 0;
-        const deg = Adjacency[nodeId] ? Adjacency[nodeId].size : 2;
-        score += (deg >= 4 ? 11500 : (deg === 3 ? 4800 : 1800));
+        let score = getMorrisNodeWeight(nodeId) * 190;
 
-        // Blueprint & Human Habit Counter Bonus so AI varies openings and counters human's favorite spots
         const blueprint = MorrisLearner.getActiveBlueprintNodes();
         const bpIdx = blueprint.indexOf(nodeId);
         if (bpIdx !== -1 && bpIdx < 8) {
-          score += (9 - bpIdx) * 750;
+          score += (9 - bpIdx) * 650;
         }
-        const hFreq = (MorrisLearner.humanNodeFreq && MorrisLearner.humanNodeFreq[nodeId]) || 0;
+        const hFreq = (nodeId < MorrisLearner.humanNodeFreq.length && MorrisLearner.humanNodeFreq[nodeId]) || 0;
         if (hFreq > 0) {
-          score += Math.min(3600, hFreq * 550);
+          score += Math.min(3200, hFreq * 480);
         }
 
         let liberties = 0;
@@ -7682,9 +7899,9 @@
           if (sim[nb] === 0) liberties++;
           else if (sim[nb] === aiP) friendlyAdj++;
         }
-        if (liberties === 0) score -= 32000;
-        else if (liberties === 1) score -= 6500;
-        else score += liberties * 1500;
+        if (liberties === 0) score -= 28000;
+        else if (liberties === 1) score -= 5500;
+        else score += liberties * 1450;
 
         for (const nb of Adjacency[nodeId]) {
           if (board[nb] === humanP) {
@@ -7692,122 +7909,78 @@
             for (const onb of Adjacency[nb]) {
               if (sim[onb] === 0) oppLib++;
             }
-            if (oppLib === 0) score += 16500;
-            else if (oppLib === 1) score += 5800;
-          }
-        }
-
-        const aiOpenTargets = new Set();
-        const aiReadyTargets = new Set();
-        const aiUncontestedReadyTargets = new Set();
-        const oppOpenTargetsIfOppPlays = new Set();
-        const oppReadyTargetsIfOppPlays = new Set();
-
-        for (const line of MillLines) {
-          let aSim = 0, hSim = 0, empSim = -1;
-          let aOpp = 0, hOpp = 0, empOpp = -1;
-          for (const id of line) {
-            if (sim[id] === aiP) aSim++;
-            else if (sim[id] === humanP) hSim++;
-            else empSim = id;
-
-            if (simOpp[id] === aiP) aOpp++;
-            else if (simOpp[id] === humanP) hOpp++;
-            else empOpp = id;
-          }
-
-          if (aSim === 2 && hSim === 0 && empSim !== -1) {
-            aiOpenTargets.add(empSim);
-            if (hasReadySliderForMill(empSim, line, aiP, sim)) {
-              aiReadyTargets.add(empSim);
-              let oppAdjToTarget = false;
-              let emptyNbCount = 0;
-              for (const nb of Adjacency[empSim]) {
-                if (sim[nb] === humanP) oppAdjToTarget = true;
-                else if (sim[nb] === 0) emptyNbCount++;
-              }
-              if (!oppAdjToTarget) aiUncontestedReadyTargets.add(empSim);
-              if (emptyNbCount === 0 && !oppAdjToTarget) score += 48000; // Sealed cage trap!
-            }
-          }
-
-          if (hOpp === 2 && aOpp === 0 && empOpp !== -1) {
-            oppOpenTargetsIfOppPlays.add(empOpp);
-            if (hasReadySliderForMill(empOpp, line, humanP, simOpp)) {
-              oppReadyTargetsIfOppPlays.add(empOpp);
-            }
-          }
-
-          if (line.includes(nodeId)) {
-            let oppCount = 0, aiCount = 0;
-            for (const id of line) {
-              if (board[id] === humanP) oppCount++;
-              else if (board[id] === aiP) aiCount++;
-            }
-            if (oppCount === 2 && aiCount === 0) {
-              const hasSlider = hasReadySliderForMill(nodeId, line, humanP, board);
-              if (!landingMillForbidden) {
-                score += hasSlider ? 245000 : 210000;
-              } else {
-                // KEY GRANDMASTER INSIGHT for forbid_mill ("Disable 3-in-a-Row on First Lay"):
-                // Under forbid_mill, the human is LEGALLY FORBIDDEN from dropping their 3rd bead on `nodeId`!
-                // Therefore, `nodeId` is ONLY a real threat if the human ALREADY has a 3rd slider adjacent to `nodeId`
-                // OR if placement is nearly over (resHuman <= 3) and human can place a slider adjacent to `nodeId`!
-                let emptySliderSpotsForHuman = 0;
-                for (const nb of Adjacency[nodeId]) {
-                  if (!line.includes(nb) && board[nb] === 0) emptySliderSpotsForHuman++;
-                }
-                if (hasSlider) {
-                  // Human already has a slider ready to slide into `nodeId` once drops finish!
-                  score += (resHuman <= 3) ? 125000 : 62000;
-                } else if (emptySliderSpotsForHuman === 0) {
-                  // Human has NO slider and NO empty neighbor to ever slide into `nodeId`, AND cannot drop on `nodeId`!
-                  // So `nodeId` is a dead square for the human — don't waste our tempo blocking it early!
-                  score += 2500;
-                } else {
-                  score += (resHuman <= 2) ? 34000 : 12000;
-                }
-              }
-            } else if (oppCount === 1 && aiCount === 0) {
-              score += 4200;
-            }
-          }
-        }
-
-        // Under forbid_mill, also check if `nodeId` is the slider neighbor `nb` of an existing 2-in-a-row!
-        if (landingMillForbidden) {
-          for (const nb of Adjacency[nodeId]) {
-            if (board[nb] !== 0) continue;
-            for (const line of MillLines) {
-              if (!line.includes(nb) || line.includes(nodeId)) continue;
-              let aC = 0, hC = 0;
-              for (const id of line) {
-                if (board[id] === aiP) aC++;
-                else if (board[id] === humanP) hC++;
-              }
-              // Placing on `nodeId` arms a ready slider for our own 2-in-a-row at `nb`!
-              if (aC === 2 && hC === 0) {
-                score += 46000;
-              }
-              // Placing on `nodeId` denies the human from arming a slider for their 2-in-a-row at `nb` (while `nb` itself remains illegal for human to drop on!)
-              if (hC === 2 && aC === 0) {
-                score += 52000;
-              }
-            }
+            if (oppLib === 0) score += 18500;
+            else if (oppLib === 1) score += 6200;
           }
         }
 
         if (!landingMillForbidden) {
-          score += aiOpenTargets.size * 15000;
-          if (aiOpenTargets.size >= 2) score += 92000;
-          if (oppOpenTargetsIfOppPlays.size >= 2) score += 86000;
+          // Offensive & Defensive Double-Threat Fork Detection
+          const myNewTwos = myForkInfo.openTwoTargets.length;
+          const oppNewTwosIfOppDropsHere = oppForkInfo.openTwoTargets.length;
+
+          score += myNewTwos * 16500;
+          score += myForkInfo.loadedTargets.length * 14000;
+          if (myNewTwos >= 2) {
+            // Dropping here creates an unstoppable Double 2-in-a-Row Fork for AI!
+            score += 135000;
+          }
+          if (oppNewTwosIfOppDropsHere >= 2) {
+            // CRITICAL: `nodeId` is a Human Fork Point! If AI doesn't take it, Human drops here and creates a Double-Mill Fork!
+            score += 125000 + oppNewTwosIfOppDropsHere * 15000;
+          } else if (oppNewTwosIfOppDropsHere === 1) {
+            score += 9500;
+          }
         } else {
-          score += aiOpenTargets.size * 7500;
-          score += aiReadyTargets.size * 38000;
-          score += aiUncontestedReadyTargets.size * 32000;
-          if (aiReadyTargets.size >= 2) score += 84000;
-          if (oppReadyTargetsIfOppPlays.size >= 2) score += 76000;
-          else if (oppReadyTargetsIfOppPlays.size === 1) score += 32000;
+          // `forbid_mill` ("No Katar on Landing") specialized Grandmaster heuristics:
+          const oppRawMillsHere = oppForkInfo.rawMillCount;
+          const pairs = NodeMillPairs[nodeId] || [];
+
+          // 1. Plugging an opponent's 2-in-a-row `[h1, h2, nodeId]`
+          if (oppRawMillsHere > 0) {
+            for (let i = 0; i < pairs.length; i++) {
+              const [o1, o2, lIdx] = pairs[i];
+              if (board[o1] === humanP && board[o2] === humanP) {
+                const line = MillLines[lIdx];
+                const hasSlider = hasReadySliderForMill(nodeId, line, humanP, board);
+                let emptySliderSpots = 0;
+                for (const nb of Adjacency[nodeId]) {
+                  if (!line.includes(nb) && board[nb] === 0) emptySliderSpots++;
+                }
+                if (hasSlider) {
+                  // Opponent already has a ready slider into `nodeId`!
+                  score += (resHuman <= 4) ? 145000 : 88000;
+                } else if (emptySliderSpots > 0) {
+                  // Opponent can drop a slider adjacent to `nodeId` unless we plug `nodeId`!
+                  score += (resHuman <= 4) ? 68000 : 38000;
+                } else {
+                  score += 6000;
+                }
+              }
+            }
+          }
+
+          // 2. Building AI's own Loaded Slide-Mills & Immune Targets
+          score += myForkInfo.openTwoTargets.length * 9500;
+          score += myForkInfo.loadedTargets.length * 44000;
+          if (myForkInfo.loadedTargets.length >= 2) {
+            score += 96000;
+          }
+
+          // IMMUNE TARGET THEOREM: If `empId` in `myForkInfo.openTwoTargets` is ALSO an opponent 2-in-a-row,
+          // the opponent is legally FORBIDDEN from dropping on `empId` to block AI's mill!
+          for (const empId of myForkInfo.openTwoTargets) {
+            if (fastWouldCompleteMill(empId, humanP, board) > 0) {
+              score += myForkInfo.loadedTargets.includes(empId) ? 75000 : 34000;
+            }
+          }
+
+          // 3. Blocking Human from arming a Loaded Slide-Mill
+          if (oppForkInfo.loadedTargets.length >= 2) {
+            score += 92000;
+          } else if (oppForkInfo.loadedTargets.length === 1) {
+            score += 42000;
+          }
         }
 
         return score;
@@ -7816,7 +7989,7 @@
       function chooseBestMorrisDrop(allSteps, board, aiP, humanP, isAllAtOnce, resAi, resHuman, diff) {
         if (isAllAtOnce && diff !== 'easy' && resAi >= 1) {
           const forbidLandingMill = true;
-          const beamWidth = diff === 'hardest' ? 14 : (diff === 'hard' ? 9 : 4);
+          const beamWidth = diff === 'hardest' ? 16 : (diff === 'hard' ? 10 : 4);
           let beam = [{
             board: [...board],
             firstMove: null,
@@ -7837,10 +8010,9 @@
                 if (state.board[i] === 0) {
                   emptyIds.push(i);
                   if (forbidLandingMill) {
-                    state.board[i] = aiP;
-                    const formsMill = getMillsContainingNode(i, aiP, state.board).length > 0;
-                    state.board[i] = 0;
-                    if (!formsMill) nonMillIds.push(i);
+                    if (fastWouldCompleteMill(i, aiP, state.board) === 0) {
+                      nonMillIds.push(i);
+                    }
                   }
                 }
               }
@@ -7856,8 +8028,8 @@
                 const stepLearned = (diff === 'hardest')
                   ? MorrisLearner.getHardestBonus(state.board, stepMove, aiP, resAi - step, resHuman)
                   : MorrisLearner.getBonus(state.board, stepMove, aiP, resAi - step, resHuman);
-                const newLearnedSum = state.learnedSum + stepLearned * (step === 0 ? 2.5 : 1.2);
-                const jitter = (diff === 'medium' ? (Math.random() * 1400 - 700) : (Math.random() * 240 - 120));
+                const newLearnedSum = state.learnedSum + stepLearned * (step === 0 ? 1.5 : 0.6);
+                const jitter = (diff === 'medium' ? (Math.random() * 800 - 400) : 0);
                 const sc = evaluateAllAtOnceBoard(nb, aiP, humanP, remAfter, resHuman) + newLearnedSum + jitter;
                 nextBeam.push({ board: nb, firstMove: firstMv, learnedSum: newLearnedSum, score: sc });
               }
@@ -7868,18 +8040,18 @@
             beam = nextBeam.slice(0, beamWidth);
           }
 
-          if (resHuman === 0 && resAi <= 3 && (diff === 'hard' || diff === 'hardest') && beam.length > 0) {
+          if (resHuman === 0 && resAi <= 4 && (diff === 'hard' || diff === 'hardest') && beam.length > 0) {
             if (MorrisTT.size > 120000) MorrisTT.clear();
             morrisSearchAborted = false;
-            morrisSearchDeadline = performance.now() + 700;
+            morrisSearchDeadline = performance.now() + (diff === 'hardest' ? 650 : 380);
             let bestCand = beam[0];
             let bestTotal = -Infinity;
-            for (const cand of beam.slice(0, 6)) {
+            for (const cand of beam.slice(0, 7)) {
               const mmVal = minimaxMorris(
                 cand.board,
                 0,
                 0,
-                diff === 'hardest' ? 6 : 4,
+                diff === 'hardest' ? 7 : 5,
                 -Infinity,
                 Infinity,
                 humanP,
@@ -7887,7 +8059,7 @@
                 humanP,
                 new Set()
               );
-              const combined = cand.score + mmVal * 8;
+              const combined = cand.score + mmVal * 10;
               if (combined > bestTotal) {
                 bestTotal = combined;
                 bestCand = cand;
@@ -7905,7 +8077,7 @@
         for (const m of allSteps) {
           const learned = (diff === 'hardest')
             ? MorrisLearner.getHardestBonus(board, m, aiP, resAi, resHuman)
-            : MorrisLearner.getBonus(board, m, aiP, resAi, resHuman) * 2.5;
+            : MorrisLearner.getBonus(board, m, aiP, resAi, resHuman);
           const s1 = scoreMorrisPlacement(m.to, board, aiP, humanP, isAllAtOnce, resAi, resHuman) + learned;
           scored.push({ move: m, score: s1 });
         }
@@ -7922,6 +8094,7 @@
       }
 
       function evaluateMorrisBoardState(board, res1, res2, turnPlayer, aiP, humanP) {
+        ensureMorrisTopologyCache();
         const res = { 1: res1, 2: res2 };
         const aiTotal = countPlayerTotalPieces(aiP, board, res);
         const hmTotal = countPlayerTotalPieces(humanP, board, res);
@@ -7929,90 +8102,106 @@
         if (hmTotal <= 2) return 95000;
         if (aiTotal <= 2) return -95000;
 
-        let score = (aiTotal - hmTotal) * 5200;
-        if (hmTotal === 3 && res[humanP] === 0) score += 3200;
-        if (aiTotal === 3 && res[aiP] === 0) score -= 3200;
+        const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
+        const protectMills = (GameState.morrisMillRemovalRule === 'protect_mills');
+        const aiCanFly = canPlayerFlyOnBoard(aiP, board, res);
+        const hmCanFly = canPlayerFlyOnBoard(humanP, board, res);
+
+        let score = (aiTotal - hmTotal) * 6800;
+        if (hmTotal === 3 && res[humanP] === 0) score += hmCanFly ? 2600 : 4800;
+        if (aiTotal === 3 && res[aiP] === 0) score -= aiCanFly ? 2600 : 4800;
 
         let aiRepeatableMills = 0, hmRepeatableMills = 0;
         let aiLockedMills = 0, hmLockedMills = 0;
         let aiSeeSaw = 0, hmSeeSaw = 0;
+        let aiPinnedOppMills = 0, hmPinnedAiMills = 0;
         let aiBlockedTwo = 0, hmBlockedTwo = 0;
+
         const aiOpenEmptySet = new Set();
         const hmOpenEmptySet = new Set();
         const aiReadyEmptySet = new Set();
         const hmReadyEmptySet = new Set();
         const aiUncontestedReadySet = new Set();
         const hmUncontestedReadySet = new Set();
-        const aiTwoShare = new Array(Nodes.length).fill(0);
-        const hmTwoShare = new Array(Nodes.length).fill(0);
+        const aiTwoShare = new Int32Array(Nodes.length);
+        const hmTwoShare = new Int32Array(Nodes.length);
 
-        for (const line of MillLines) {
+        for (let lIdx = 0; lIdx < MillLines.length; lIdx++) {
+          const line = MillLines[lIdx];
           let a = 0, h = 0, e = 0, empNode = -1;
-          for (const id of line) {
+          for (let k = 0; k < 3; k++) {
+            const id = line[k];
             const v = board[id];
             if (v === aiP) a++;
             else if (v === humanP) h++;
             else { e++; empNode = id; }
           }
+
           if (a === 3) {
             let canSafelyOpen = false;
-            for (const id of line) {
+            let isPinnedByHuman = false;
+            for (let k = 0; k < 3; k++) {
+              const id = line[k];
               let hasEmptyOut = false;
-              let oppAdjacentToId = false;
+              let oppAdj = false;
               for (const nb of Adjacency[id]) {
-                if (!line.includes(nb)) {
+                if (nb !== line[0] && nb !== line[1] && nb !== line[2]) {
                   if (board[nb] === 0) {
                     hasEmptyOut = true;
-                    for (const m2 of MillLines) {
-                      if (m2.includes(nb) && !m2.includes(id)) {
-                        const other2 = m2.filter((x) => x !== nb);
-                        if (board[other2[0]] === aiP && board[other2[1]] === aiP) {
-                          aiSeeSaw++;
-                        }
-                      }
+                    if (fastWouldCompleteMill(nb, aiP, board) > 0) {
+                      aiSeeSaw++;
                     }
                   } else if (board[nb] === humanP) {
-                    oppAdjacentToId = true;
+                    oppAdj = true;
                   }
                 }
               }
-              if (hasEmptyOut && !oppAdjacentToId) canSafelyOpen = true;
+              if (hasEmptyOut && !oppAdj && !hmCanFly) canSafelyOpen = true;
+              if (hasEmptyOut && oppAdj) isPinnedByHuman = true;
             }
             if (canSafelyOpen) aiRepeatableMills++;
             else aiLockedMills++;
+            if (isPinnedByHuman && protectMills) hmPinnedAiMills++;
           } else if (h === 3) {
             let canSafelyOpen = false;
-            for (const id of line) {
+            let isPinnedByAi = false;
+            for (let k = 0; k < 3; k++) {
+              const id = line[k];
               let hasEmptyOut = false;
-              let aiAdjacentToId = false;
+              let aiAdj = false;
               for (const nb of Adjacency[id]) {
-                if (!line.includes(nb)) {
+                if (nb !== line[0] && nb !== line[1] && nb !== line[2]) {
                   if (board[nb] === 0) {
                     hasEmptyOut = true;
-                    for (const m2 of MillLines) {
-                      if (m2.includes(nb) && !m2.includes(id)) {
-                        const other2 = m2.filter((x) => x !== nb);
-                        if (board[other2[0]] === humanP && board[other2[1]] === humanP) {
-                          hmSeeSaw++;
-                        }
-                      }
+                    if (fastWouldCompleteMill(nb, humanP, board) > 0) {
+                      hmSeeSaw++;
                     }
                   } else if (board[nb] === aiP) {
-                    aiAdjacentToId = true;
+                    aiAdj = true;
                   }
                 }
               }
-              if (hasEmptyOut && !aiAdjacentToId) canSafelyOpen = true;
+              if (hasEmptyOut && !aiAdj && !aiCanFly) canSafelyOpen = true;
+              if (hasEmptyOut && aiAdj) isPinnedByAi = true;
             }
             if (canSafelyOpen) hmRepeatableMills++;
             else hmLockedMills++;
+            if (isPinnedByAi && protectMills) aiPinnedOppMills++;
           } else if (a === 2 && e === 1) {
             aiOpenEmptySet.add(empNode);
-            for (const id of line) if (board[id] === aiP) aiTwoShare[id]++;
+            for (let k = 0; k < 3; k++) {
+              const id = line[k];
+              if (board[id] === aiP) aiTwoShare[id]++;
+            }
             if (canPlayerCloseMillAt(empNode, line, aiP, board, res)) {
               aiReadyEmptySet.add(empNode);
-              let oppCanBlock = res[humanP] > 0;
-              if (!oppCanBlock) {
+              let oppCanBlock = false;
+              if (res[humanP] > 0) {
+                // In forbidLandingMill mode, if `empNode` would complete a human mill, human CANNOT drop on `empNode`!
+                oppCanBlock = !(forbidLandingMill && fastWouldCompleteMill(empNode, humanP, board) > 0);
+              } else if (hmCanFly) {
+                oppCanBlock = true;
+              } else {
                 for (const nb of Adjacency[empNode]) {
                   if (board[nb] === humanP) {
                     oppCanBlock = true;
@@ -8024,11 +8213,18 @@
             }
           } else if (h === 2 && e === 1) {
             hmOpenEmptySet.add(empNode);
-            for (const id of line) if (board[id] === humanP) hmTwoShare[id]++;
+            for (let k = 0; k < 3; k++) {
+              const id = line[k];
+              if (board[id] === humanP) hmTwoShare[id]++;
+            }
             if (canPlayerCloseMillAt(empNode, line, humanP, board, res)) {
               hmReadyEmptySet.add(empNode);
-              let aiCanBlock = res[aiP] > 0;
-              if (!aiCanBlock) {
+              let aiCanBlock = false;
+              if (res[aiP] > 0) {
+                aiCanBlock = !(forbidLandingMill && fastWouldCompleteMill(empNode, aiP, board) > 0);
+              } else if (aiCanFly) {
+                aiCanBlock = true;
+              } else {
                 for (const nb of Adjacency[empNode]) {
                   if (board[nb] === aiP) {
                     aiCanBlock = true;
@@ -8059,48 +8255,53 @@
             let degEmpty = 0;
             for (const nb of Adjacency[i]) if (board[nb] === 0) degEmpty++;
             aiMob += degEmpty;
-            if (degEmpty === 0) aiTrapped++;
+            if (degEmpty === 0 && !aiCanFly) aiTrapped++;
           } else if (occ === humanP) {
             score -= getMorrisNodeWeight(i);
             let degEmpty = 0;
             for (const nb of Adjacency[i]) if (board[nb] === 0) degEmpty++;
             hmMob += degEmpty;
-            if (degEmpty === 0) hmTrapped++;
+            if (degEmpty === 0 && !hmCanFly) hmTrapped++;
           }
         }
 
-        if (res1 === 0 && res2 === 0 && GameState.morrisFlyingRule !== 'enabled') {
-          if (hmMob === 0) return 93000;
-          if (aiMob === 0) return -93000;
-          // Squeeze bonus when human has only 1-2 legal slides left
-          if (hmMob === 1) score += 6500;
-          else if (hmMob === 2) score += 3200;
+        if (res1 === 0 && res2 === 0) {
+          if (!hmCanFly && hmMob === 0) return 93000;
+          if (!aiCanFly && aiMob === 0) return -93000;
+          if (!hmCanFly) {
+            if (hmMob === 1) score += 7200;
+            else if (hmMob === 2) score += 3600;
+          }
+          if (!aiCanFly) {
+            if (aiMob === 1) score -= 7200;
+            else if (aiMob === 2) score -= 3600;
+          }
         }
 
-        score += (aiSeeSaw - hmSeeSaw) * 7200;
-        score += (aiRepeatableMills - hmRepeatableMills) * 2400;
-        score += (aiLockedMills - hmLockedMills) * 700;
-        score += (aiUncontestedReadySet.size - hmUncontestedReadySet.size) * 3800;
-        score += ((aiReadyEmptySet.size - aiUncontestedReadySet.size) - (hmReadyEmptySet.size - hmUncontestedReadySet.size)) * 1600;
-        score += (aiOpenEmptySet.size - hmOpenEmptySet.size) * 650;
-        score += (aiForks - hmForks) * 2800;
-        score += (aiBlockedTwo - hmBlockedTwo) * 340;
-        score += (aiMob - hmMob) * 145;
-        score += (hmTrapped - aiTrapped) * 1150;
+        score += (aiSeeSaw - hmSeeSaw) * 9500;
+        score += (aiRepeatableMills - hmRepeatableMills) * 3400;
+        score += (aiLockedMills - hmLockedMills) * (protectMills ? 1250 : 600);
+        score += (aiPinnedOppMills - hmPinnedAiMills) * 1800;
+        score += (aiUncontestedReadySet.size - hmUncontestedReadySet.size) * 5800;
+        score += ((aiReadyEmptySet.size - aiUncontestedReadySet.size) - (hmReadyEmptySet.size - hmUncontestedReadySet.size)) * 2200;
+        score += (aiOpenEmptySet.size - hmOpenEmptySet.size) * 750;
+        score += (aiForks - hmForks) * 3400;
+        score += (aiBlockedTwo - hmBlockedTwo) * 420;
+        score += (aiMob - hmMob) * 180;
+        score += (hmTrapped - aiTrapped) * 1500;
 
+        // Turn-aware immediate threat evaluation
         if (turnPlayer === aiP) {
-          if (aiReadyEmptySet.size >= 1) score += 4800;
-          if (hmUncontestedReadySet.size >= 1) score -= 3600;
-          if (hmReadyEmptySet.size >= 2) score -= 5400;
+          if (aiReadyEmptySet.size >= 1) score += 8200;
+          if (aiReadyEmptySet.size >= 2) score += 6500;
+          // If Human has >= 2 distinct ready threats, AI can only block 1 on this turn unless AI forms a mill!
+          if (hmReadyEmptySet.size >= 2 && aiReadyEmptySet.size === 0) score -= 9500;
+          if (hmUncontestedReadySet.size >= 1 && aiReadyEmptySet.size === 0) score -= 7800;
         } else {
-          if (hmReadyEmptySet.size >= 1) score -= 4800;
-          if (aiUncontestedReadySet.size >= 1) score += 3600;
-          if (aiReadyEmptySet.size >= 2) score += 5400;
-        }
-
-        if (res1 > 0 || res2 > 0) {
-          if (aiOpenEmptySet.size >= 2) score += 3100;
-          if (hmOpenEmptySet.size >= 2) score -= 3300;
+          if (hmReadyEmptySet.size >= 1) score -= 8200;
+          if (hmReadyEmptySet.size >= 2) score -= 6500;
+          if (aiReadyEmptySet.size >= 2 && hmReadyEmptySet.size === 0) score += 9500;
+          if (aiUncontestedReadySet.size >= 1 && hmReadyEmptySet.size === 0) score += 7800;
         }
 
         return score;
@@ -8120,8 +8321,8 @@
         }
 
         const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
-        const mills = (move.type === 'drop' && forbidLandingMill) ? [] : getMillsContainingNode(move.to, player, baseBoard);
-        if (mills.length === 0) {
+        const formedCount = (move.type === 'drop' && forbidLandingMill) ? 0 : fastCountMillsAtNode(move.to, player, baseBoard);
+        if (formedCount === 0) {
           return [{ board: baseBoard, res1: nRes1, res2: nRes2, formedMill: false, removedId: -1 }];
         }
 
@@ -8138,107 +8339,141 @@
         });
       }
 
-      function orderMorrisMoves(moves, board, player, opp, res1, res2, applyRootAntiLoop = false) {
+      function encodeMorrisMoveKey(m) {
+        if (!m) return 0;
+        if (m.type === 'drop') return 1000 + m.to;
+        if (m.type === 'step') return ((m.from + 1) * 25) + m.to;
+        if (m.type === 'remove_opponent') return 2000 + m.capturedId;
+        return 0;
+      }
+
+      function orderMorrisMoves(moves, board, player, opp, res1, res2, applyRootAntiLoop = false, depth = 0, ttBestMoveKey = 0) {
+        ensureMorrisTopologyCache();
         const res = { 1: res1, 2: res2 };
         const scored = [];
+        const canFly = canPlayerFlyOnBoard(player, board, res);
+        const killerPair = MorrisKillerMoves[depth] || null;
+        const histTbl = MorrisHistoryTable[player] || null;
 
         for (const m of moves) {
-          if (m.type === 'step' && GameState.morrisFlyingRule !== 'enabled' && !Adjacency[m.from].has(m.to)) {
+          if (m.type === 'step' && !canFly && !Adjacency[m.from].has(m.to)) {
             continue;
           }
+          const mKey = encodeMorrisMoveKey(m);
+          const pvBonus = (ttBestMoveKey && mKey === ttBestMoveKey) ? 600000 : 0;
+          const killerBonus = (killerPair && (mKey === killerPair[0] || mKey === killerPair[1])) ? 35000 : 0;
+          const histBonus = (histTbl && mKey > 0 && mKey < histTbl.length) ? Math.min(18000, histTbl[mKey]) : 0;
+
           if (m.type === 'drop') {
-            const p = scoreMorrisPlacement(m.to, board, player, opp, GameState.morrisDropOrder === 'all_at_once', res[player], res[opp]);
-            scored.push({ move: m, priority: p, isForbiddenLoop: false });
+            const p = scoreMorrisPlacement(m.to, board, player, opp, GameState.morrisDropOrder === 'all_at_once', res[player], res[opp])
+              + pvBonus + killerBonus + histBonus;
+            scored.push({ move: m, mKey, priority: p, isForbiddenLoop: false });
             continue;
           }
 
-          let priority = getMorrisNodeWeight(m.to) * 8;
+          let priority = getMorrisNodeWeight(m.to) * 10 + pvBonus + killerBonus + histBonus;
           const sim = [...board];
           sim[m.from] = 0;
           sim[m.to] = player;
 
-          const myMills = getMillsContainingNode(m.to, player, sim);
-          const wasInMill = isNodeInAnyMill(m.from, board);
+          const myMillsCount = fastCountMillsAtNode(m.to, player, sim);
+          const wasInMill = fastCountMillsAtNode(m.from, player, board) > 0;
 
-          if (myMills.length > 0) {
-            priority += 65000 * myMills.length;
-            if (wasInMill) priority += 95000;
+          if (myMillsCount > 0) {
+            priority += 110000 * myMillsCount;
+            if (wasInMill) priority += 125000; // See-saw double mill!
           }
 
-          if (wasInMill && myMills.length === 0) {
-            let oppCanEnterFrom = false;
-            for (const nb of Adjacency[m.from]) {
-              if (board[nb] === opp) oppCanEnterFrom = true;
-            }
-            if (!oppCanEnterFrom) priority += 26000;
-            else priority -= 28000;
-          }
-
-          // Blocking opponent 1-step mill
-          for (const line of MillLines) {
-            if (!line.includes(m.to)) continue;
-            let oppCount = 0;
-            for (const id of line) if (board[id] === opp) oppCount++;
-            if (oppCount === 2) {
-              const hasSlider = hasReadySliderForMill(m.to, line, opp, board);
-              priority += hasSlider ? 52000 : 16000;
-            }
-          }
-
-          // Penalty for vacating a critical block of an opponent's 2-in-a-row
-          if (myMills.length === 0) {
-            for (const line of MillLines) {
-              if (!line.includes(m.from)) continue;
-              let oppCount = 0;
-              for (const id of line) if (board[id] === opp) oppCount++;
-              if (oppCount === 2 && hasReadySliderForMill(m.from, line, opp, sim)) {
-                priority -= 54000;
+          if (wasInMill && myMillsCount === 0) {
+            let oppCanEnterFrom = canPlayerFlyOnBoard(opp, board, res);
+            if (!oppCanEnterFrom) {
+              for (const nb of Adjacency[m.from]) {
+                if (board[nb] === opp) { oppCanEnterFrom = true; break; }
               }
+            }
+            if (!oppCanEnterFrom) priority += 36000; // Safe opening of running mill
+            else priority -= 34000;
+          }
+
+          // Blocking opponent 1-step mill at `m.to`
+          const oppMillsAtTo = fastWouldCompleteMill(m.to, opp, board);
+          if (oppMillsAtTo > 0) {
+            const toPairs = NodeMillPairs[m.to] || [];
+            let hasSlider = canPlayerFlyOnBoard(opp, board, res);
+            for (let i = 0; i < toPairs.length && !hasSlider; i++) {
+              const [o1, o2, lIdx] = toPairs[i];
+              if (board[o1] === opp && board[o2] === opp) {
+                if (hasReadySliderForMill(m.to, MillLines[lIdx], opp, board)) hasSlider = true;
+              }
+            }
+            priority += hasSlider ? 82000 : 22000;
+          }
+
+          // Penalty for vacating `m.from` when `m.from` was blocking an opponent 2-in-a-row!
+          if (myMillsCount === 0) {
+            const oppMillsAtFrom = fastWouldCompleteMill(m.from, opp, sim);
+            if (oppMillsAtFrom > 0) {
+              const fromPairs = NodeMillPairs[m.from] || [];
+              let oppReady = canPlayerFlyOnBoard(opp, sim, res);
+              for (let i = 0; i < fromPairs.length && !oppReady; i++) {
+                const [o1, o2, lIdx] = fromPairs[i];
+                if (sim[o1] === opp && sim[o2] === opp) {
+                  if (hasReadySliderForMill(m.from, MillLines[lIdx], opp, sim)) oppReady = true;
+                }
+              }
+              if (oppReady) priority -= 86000;
             }
           }
 
           // Creating our own 1-step ready mill
-          for (const line of MillLines) {
-            if (!line.includes(m.to)) continue;
-            let pC = 0, emp = -1;
-            for (const id of line) {
-              if (sim[id] === player) pC++;
-              else if (sim[id] === 0) emp = id;
-            }
-            if (pC === 2 && emp !== -1) {
-              if (hasReadySliderForMill(emp, line, player, sim)) priority += 22000;
-              else priority += 6500;
+          const toPairs = NodeMillPairs[m.to] || [];
+          let createdReady = 0;
+          for (let i = 0; i < toPairs.length; i++) {
+            const [o1, o2, lIdx] = toPairs[i];
+            const v1 = sim[o1], v2 = sim[o2];
+            if ((v1 === player && v2 === 0) || (v2 === player && v1 === 0)) {
+              const emp = v1 === 0 ? o1 : o2;
+              if (canPlayerCloseMillAt(emp, MillLines[lIdx], player, sim, res)) {
+                createdReady++;
+                priority += 28000;
+              } else {
+                priority += 6500;
+              }
             }
           }
+          if (createdReady >= 2) priority += 55000; // Double-mill slide fork!
 
           let myLib = 0;
           for (const nb of Adjacency[m.to]) {
             if (sim[nb] === 0) myLib++;
           }
-          if (myLib === 0 && myMills.length === 0) priority -= 14000;
+          if (myLib === 0 && myMillsCount === 0 && !canFly) priority -= 16000;
           else priority += myLib * 650;
 
           for (const nb of Adjacency[m.to]) {
             if (board[nb] === opp) {
               let oppLib = 0;
               for (const onb of Adjacency[nb]) if (sim[onb] === 0) oppLib++;
-              if (oppLib === 0) priority += 12500;
+              if (oppLib === 0) priority += 16500;
+              else if (oppLib === 1) priority += 5200;
+              if (GameState.morrisMillRemovalRule === 'protect_mills' && fastCountMillsAtNode(nb, opp, board) > 0) {
+                priority += 8500; // Pinning opponent's closed mill
+              }
             }
           }
 
           let isForbiddenLoop = false;
           if (applyRootAntiLoop) {
-            const loopInfo = LoopTracker.evaluateLoopPenalty(m, board, sim, player, res1, res2, myMills.length > 0);
-            priority -= loopInfo.penalty;
-            priority += loopInfo.breakthroughBonus;
+            const loopInfo = LoopTracker.evaluateLoopPenalty(m, board, sim, player, res1, res2, myMillsCount > 0);
+            priority -= loopInfo.penalty * 4;
+            priority += loopInfo.breakthroughBonus * 4;
             isForbiddenLoop = loopInfo.isForbiddenLoop;
           }
 
-          scored.push({ move: m, priority, isForbiddenLoop });
+          scored.push({ move: m, mKey, priority, isForbiddenLoop });
         }
 
         scored.sort((a, b) => b.priority - a.priority);
-        // If anti-loop flagged looping moves and there is at least one non-looping move that doesn't immediately lose, put non-looping moves first
         if (applyRootAntiLoop && scored.length > 1) {
           const nonLooping = scored.filter((s) => !s.isForbiddenLoop);
           if (nonLooping.length > 0) {
@@ -8257,6 +8492,82 @@
         return `${turnPlayer}:${res1}:${res2}:${h1}:${h2}`;
       }
 
+      // Tactical Mill Quiescence Search at depth <= 0 to eliminate Horizon Effect on imminent mills
+      function quiesceMorris(board, res1, res2, qDepth, alpha, beta, turnPlayer, aiP, humanP) {
+        const standPat = evaluateMorrisBoardState(board, res1, res2, turnPlayer, aiP, humanP);
+        if (qDepth <= 0 || Math.abs(standPat) >= 90000) {
+          return standPat;
+        }
+        if (morrisSearchDeadline && performance.now() > morrisSearchDeadline) {
+          morrisSearchAborted = true;
+          return standPat;
+        }
+
+        const res = { 1: res1, 2: res2 };
+        const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
+        if ((res[turnPlayer] || 0) > 0 && forbidLandingMill) {
+          return standPat;
+        }
+
+        const rawMoves = getAllLegalActionsForPlayer(turnPlayer, board, res).allSteps;
+        if (rawMoves.length === 0) {
+          return turnPlayer === aiP ? -93000 : 93000;
+        }
+
+        // Filter ONLY moves that immediately complete a 3-in-a-row Katar mill on this turn
+        const millMoves = [];
+        for (let i = 0; i < rawMoves.length; i++) {
+          const m = rawMoves[i];
+          if (m.type === 'drop') {
+            if (fastWouldCompleteMill(m.to, turnPlayer, board) > 0) millMoves.push(m);
+          } else {
+            const prev = board[m.from];
+            board[m.from] = 0;
+            const forms = fastWouldCompleteMill(m.to, turnPlayer, board) > 0;
+            board[m.from] = prev;
+            if (forms) millMoves.push(m);
+          }
+        }
+
+        if (millMoves.length === 0) {
+          return standPat;
+        }
+
+        const isMax = (turnPlayer === aiP);
+        const opp = turnPlayer === 1 ? 2 : 1;
+        let bestVal = standPat;
+        if (isMax) {
+          if (bestVal >= beta) return bestVal;
+          if (bestVal > alpha) alpha = bestVal;
+        } else {
+          if (bestVal <= alpha) return bestVal;
+          if (bestVal < beta) beta = bestVal;
+        }
+
+        for (let i = 0; i < Math.min(4, millMoves.length); i++) {
+          const mv = millMoves[i];
+          const states = expandMorrisMoveStates(board, res1, res2, mv, turnPlayer, aiP, humanP, 1);
+          for (const st of states) {
+            const nextTurn = (GameState.morrisDropOrder === 'all_at_once' && (turnPlayer === 1 ? st.res1 : st.res2) > 0)
+              ? turnPlayer
+              : opp;
+            const ev = quiesceMorris(st.board, st.res1, st.res2, qDepth - 1, alpha, beta, nextTurn, aiP, humanP);
+            if (morrisSearchAborted) return bestVal;
+            if (isMax) {
+              if (ev > bestVal) bestVal = ev;
+              if (bestVal > alpha) alpha = bestVal;
+            } else {
+              if (ev < bestVal) bestVal = ev;
+              if (bestVal < beta) beta = bestVal;
+            }
+            if (beta <= alpha) break;
+          }
+          if (beta <= alpha) break;
+        }
+
+        return bestVal;
+      }
+
       function minimaxMorris(board, res1, res2, depth, alpha, beta, turnPlayer, aiP, humanP, pathSet = null) {
         if (morrisSearchDeadline && performance.now() > morrisSearchDeadline) {
           morrisSearchAborted = true;
@@ -8270,28 +8581,31 @@
         if (aiTotal <= 2) return -95000 - depth * 250;
 
         const ttKey = computeMorrisStateKey(board, res1, res2, turnPlayer);
-        // Anti-Loop Contempt inside Minimax Tree: if this position repeats along the search path or match history, penalize loops!
         if (pathSet && pathSet.has(ttKey)) {
-          return -26000;
+          return 0;
         }
         if (res1 === 0 && res2 === 0) {
           const sig = LoopTracker.computeSignature(board, res, null);
           const matchReps = LoopTracker.stateCounts.get(sig) || 0;
           if (matchReps >= 2) {
-            return -32000;
+            return -18000;
           }
         }
 
         if (depth <= 0) {
-          return evaluateMorrisBoardState(board, res1, res2, turnPlayer, aiP, humanP);
+          return quiesceMorris(board, res1, res2, 2, alpha, beta, turnPlayer, aiP, humanP);
         }
 
+        let ttBestMoveKey = 0;
         const cached = MorrisTT.get(ttKey);
-        if (cached && cached.depth >= depth && (!pathSet || pathSet.size <= 1)) {
-          if (cached.flag === 0) return cached.val;
-          if (cached.flag === 1 && cached.val > alpha) alpha = cached.val;
-          else if (cached.flag === 2 && cached.val < beta) beta = cached.val;
-          if (alpha >= beta) return cached.val;
+        if (cached) {
+          ttBestMoveKey = cached.bestMoveKey || 0;
+          if (cached.depth >= depth) {
+            if (cached.flag === 0) return cached.val;
+            if (cached.flag === 1 && cached.val > alpha) alpha = cached.val;
+            else if (cached.flag === 2 && cached.val < beta) beta = cached.val;
+            if (alpha >= beta) return cached.val;
+          }
         }
 
         const rawMoves = getAllLegalActionsForPlayer(turnPlayer, board, res).allSteps;
@@ -8300,25 +8614,32 @@
         }
 
         const opp = turnPlayer === 1 ? 2 : 1;
-        const ordered = orderMorrisMoves(rawMoves, board, turnPlayer, opp, res1, res2, false);
+        const ordered = orderMorrisMoves(rawMoves, board, turnPlayer, opp, res1, res2, false, depth, ttBestMoveKey);
         const isHardest = (GameState.aiDifficulty === 'hardest');
         const maxMoves = isHardest
-          ? (depth >= 6 ? 15 : (depth >= 4 ? 19 : 24))
-          : (depth >= 4 ? 12 : (depth === 3 ? 10 : 8));
+          ? (depth >= 7 ? 14 : (depth >= 4 ? 18 : 24))
+          : (depth >= 5 ? 12 : (depth >= 3 ? 14 : 16));
         const pool = ordered.slice(0, maxMoves);
-        const remBranch = isHardest ? (depth >= 3 ? 3 : 2) : (depth >= 3 ? 2 : 1);
+        const remBranch = isHardest ? (depth >= 4 ? 3 : 2) : (depth >= 3 ? 2 : 1);
 
-        const nextPathSet = new Set(pathSet || []);
-        nextPathSet.add(ttKey);
+        let nextPathSet = pathSet;
+        if (res1 === 0 && res2 === 0) {
+          nextPathSet = new Set(pathSet || []);
+          nextPathSet.add(ttKey);
+        }
 
         const alphaOrig = alpha;
         const betaOrig = beta;
         const isMax = (turnPlayer === aiP);
         let bestVal = isMax ? -Infinity : Infinity;
+        let bestMoveKey = ttBestMoveKey;
 
-        for (const mv of pool) {
+        for (let i = 0; i < pool.length; i++) {
+          const mv = pool[i];
+          const mvKey = encodeMorrisMoveKey(mv);
           const states = expandMorrisMoveStates(board, res1, res2, mv, turnPlayer, aiP, humanP, remBranch);
-          for (const st of states) {
+          for (let sIdx = 0; sIdx < states.length; sIdx++) {
+            const st = states[sIdx];
             const nextTurn = (GameState.morrisDropOrder === 'all_at_once' && (turnPlayer === 1 ? st.res1 : st.res2) > 0)
               ? turnPlayer
               : opp;
@@ -8326,29 +8647,55 @@
             if (morrisSearchAborted) return bestVal === -Infinity || bestVal === Infinity ? ev : bestVal;
 
             if (isMax) {
-              if (ev > bestVal) bestVal = ev;
+              if (ev > bestVal) {
+                bestVal = ev;
+                bestMoveKey = mvKey;
+              }
               if (bestVal > alpha) alpha = bestVal;
             } else {
-              if (ev < bestVal) bestVal = ev;
+              if (ev < bestVal) {
+                bestVal = ev;
+                bestMoveKey = mvKey;
+              }
               if (bestVal < beta) beta = bestVal;
             }
-            if (beta <= alpha) break;
+            if (beta <= alpha) {
+              if (!st.formedMill) {
+                const kp = MorrisKillerMoves[depth] || [0, 0];
+                if (kp[0] !== mvKey) {
+                  kp[1] = kp[0];
+                  kp[0] = mvKey;
+                  MorrisKillerMoves[depth] = kp;
+                }
+                const hTbl = MorrisHistoryTable[turnPlayer];
+                if (hTbl && mvKey > 0 && mvKey < hTbl.length) {
+                  hTbl[mvKey] += depth * depth * 40;
+                }
+              }
+              break;
+            }
           }
           if (beta <= alpha) break;
         }
 
-        if (!morrisSearchAborted && MorrisTT.size < 120000 && (!pathSet || pathSet.size <= 1)) {
+        if (!morrisSearchAborted && MorrisTT.size < 160000) {
           let flag = 0;
           if (bestVal <= alphaOrig) flag = 2;
           else if (bestVal >= betaOrig) flag = 1;
-          MorrisTT.set(ttKey, { depth, val: bestVal, flag });
+          MorrisTT.set(ttKey, { depth, val: bestVal, flag, bestMoveKey });
         }
 
         return bestVal;
       }
 
-      function computeBestLocalMorrisAction() {
-        const aiP = GameState.aiPlayerRole || 2;
+      function computeBestLocalMorrisAction(aiP = (GameState.aiPlayerRole || 2)) {
+        ensureMorrisTopologyCache();
+        const curRuleSig = getMorrisRuleSignature();
+        if (curRuleSig !== morrisLastRuleSig) {
+          MorrisTT.clear();
+          morrisLastRuleSig = curRuleSig;
+        }
+
         const humanP = aiP === 1 ? 2 : 1;
         const diff = GameState.aiDifficulty;
 
@@ -8365,13 +8712,14 @@
             return { bestAction: act, ranked: candidates.map((c) => ({ action: { type: 'remove_opponent', capturedId: c }, score: scoreMorrisRemovalTarget(c, GameState.board, aiP, humanP) })) };
           }
 
-          if (MorrisTT.size > 120000) MorrisTT.clear();
+          if (MorrisTT.size > 140000) MorrisTT.clear();
           morrisSearchAborted = false;
-          morrisSearchDeadline = performance.now() + 340;
+          const intel = MorrisLearner.getIntelligenceLevel();
+          morrisSearchDeadline = performance.now() + (diff === 'hardest' ? 450 : 280);
 
           let bestRem = candidates[0];
           let bestVal = -Infinity;
-          const lookDepth = diff === 'hardest' ? 5 : 4;
+          const lookDepth = diff === 'hardest' ? (6 + Math.min(2, intel.depthBonus)) : 5;
           const ranked = [];
 
           for (const cid of candidates) {
@@ -8395,7 +8743,7 @@
               humanP,
               new Set()
             );
-            const total = immediateScore * 0.35 + futureVal + learned;
+            const total = futureVal + immediateScore * 0.08 + learned * 0.4;
             ranked.push({ action: remAct, score: Math.round(total) });
             if (total > bestVal) {
               bestVal = total;
@@ -8410,10 +8758,9 @@
         if (allSteps.length === 0) return null;
 
         const isAllAtOnce = (GameState.morrisDropOrder === 'all_at_once');
-        const isForbidMillDrop = (allSteps[0].type === 'drop' && (isAllAtOnce || GameState.morrisDropMillRule === 'forbid_mill'));
 
-        // For all_at_once drops, or easy/medium drops, or early forbid_mill drops where strategic web setup dominates:
-        if (allSteps[0].type === 'drop' && (isAllAtOnce || diff === 'easy' || diff === 'medium' || (isForbidMillDrop && GameState.reserves[aiP] > 3))) {
+        // Use specialized full-sequence beam planner for all_at_once drops, or easy/medium drops
+        if (allSteps[0].type === 'drop' && (isAllAtOnce || diff === 'easy' || diff === 'medium')) {
           const chosenDrop = chooseBestMorrisDrop(
             allSteps,
             GameState.board,
@@ -8431,7 +8778,7 @@
           return { bestAction: chosenDrop, ranked: rankedDrops };
         }
 
-        const orderedMoves = orderMorrisMoves(allSteps, GameState.board, aiP, humanP, GameState.reserves[1], GameState.reserves[2], true);
+        const orderedMoves = orderMorrisMoves(allSteps, GameState.board, aiP, humanP, GameState.reserves[1], GameState.reserves[2], true, 0, 0);
         if (orderedMoves.length === 0) return null;
 
         if (diff === 'easy') {
@@ -8461,23 +8808,28 @@
           return { bestAction: bestMed, ranked };
         }
 
-        if (MorrisTT.size > 120000) MorrisTT.clear();
+        // HARD & HARDEST: Full Iterative Deepening Alpha-Beta + Quiescence + Transposition Table + Adaptive Brain
+        if (MorrisTT.size > 140000) MorrisTT.clear();
         morrisSearchAborted = false;
         const intel = MorrisLearner.getIntelligenceLevel();
         const isDropPhase = (allSteps[0].type === 'drop');
-        const timeBudgetMs = diff === 'hardest' ? (isDropPhase ? 420 : (560 + intel.depthBonus * 120)) : 280;
+        const isSmallBoard = (Nodes.length <= 16);
+        const timeBudgetMs = diff === 'hardest'
+          ? (isDropPhase ? 480 : (620 + intel.depthBonus * 110))
+          : (isDropPhase ? 290 : 360);
         morrisSearchDeadline = performance.now() + timeBudgetMs;
 
-        const maxDepth = diff === 'hardest' ? (isDropPhase ? 6 : (9 + intel.depthBonus)) : (isDropPhase ? 4 : 6);
-        const rootPool = orderedMoves.slice(0, Math.min(isDropPhase ? 14 : (20 + intel.depthBonus * 2), orderedMoves.length));
+        const maxDepth = diff === 'hardest'
+          ? (isSmallBoard ? 12 : (isDropPhase ? (7 + Math.min(2, intel.depthBonus)) : (10 + intel.depthBonus)))
+          : (isSmallBoard ? 8 : (isDropPhase ? 5 : 7));
+        const rootPool = orderedMoves.slice(0, Math.min(isDropPhase ? 18 : 24, orderedMoves.length));
         let bestMove = rootPool[0];
         let latestScores = new Map();
 
         for (let d = 2; d <= maxDepth; d++) {
           let iterBestMove = rootPool[0];
           let iterBestVal = -Infinity;
-          let alpha = -Infinity;
-          const beta = Infinity;
+          let rawAlpha = -Infinity;
           const iterMap = new Map();
 
           for (const mv of rootPool) {
@@ -8486,26 +8838,31 @@
             const learnedBias = (diff === 'hardest')
               ? MorrisLearner.getHardestBonus(GameState.board, mv, aiP, GameState.reserves[aiP], GameState.reserves[humanP])
               : MorrisLearner.getBonus(GameState.board, mv, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
-            const placementBias = isDropPhase
-              ? scoreMorrisPlacement(mv.to, GameState.board, aiP, humanP, false, GameState.reserves[aiP], GameState.reserves[humanP]) * 0.08
+            // Keep placement heuristic strictly scaled as a tie-breaker so it never overrides a 6800-pt bead capture or mill!
+            const placementTieBreaker = isDropPhase
+              ? Math.max(-1800, Math.min(2200, scoreMorrisPlacement(mv.to, GameState.board, aiP, humanP, false, GameState.reserves[aiP], GameState.reserves[humanP]) * 0.0045))
               : 0;
 
             for (const st of states) {
               const nextTurn = humanP;
-              const millBonus = st.formedMill ? 2600 : 0;
+              const millBonus = st.formedMill ? 1800 : 0;
               const loopInfo = LoopTracker.evaluateLoopPenalty(mv, GameState.board, st.board, aiP, st.res1, st.res2, st.formedMill);
-              const v = millBonus + placementBias + learnedBias - loopInfo.penalty + loopInfo.breakthroughBonus + minimaxMorris(
+              const rootAdditive = millBonus + placementTieBreaker + learnedBias - loopInfo.penalty + loopInfo.breakthroughBonus;
+              // CRITICAL: Adjust alpha into raw minimax units so MIN node never suffers false beta-cutoffs!
+              const childAlpha = (rawAlpha > -900000) ? (rawAlpha - rootAdditive - 100) : -Infinity;
+              const mmVal = minimaxMorris(
                 st.board,
                 st.res1,
                 st.res2,
                 d - 1,
-                alpha,
-                beta,
+                childAlpha,
+                Infinity,
                 nextTurn,
                 aiP,
                 humanP,
                 new Set()
               );
+              const v = mmVal + rootAdditive;
               if (v > bestBranchVal) bestBranchVal = v;
               if (morrisSearchAborted) break;
             }
@@ -8517,29 +8874,25 @@
               iterBestVal = bestBranchVal;
               iterBestMove = mv;
             }
-            if (iterBestVal > alpha) alpha = iterBestVal;
+            if (iterBestVal > rawAlpha) rawAlpha = iterBestVal;
           }
 
           if (!morrisSearchAborted) {
             bestMove = iterBestMove;
             latestScores = iterMap;
-            const winIdx = rootPool.indexOf(bestMove);
-            if (winIdx > 0) {
-              rootPool.splice(winIdx, 1);
-              rootPool.unshift(bestMove);
-            }
+            rootPool.sort((a, b) => (latestScores.get(b) ?? -999999) - (latestScores.get(a) ?? -999999));
             if (iterBestVal >= 90000) break;
           } else {
             break;
           }
         }
 
-        // Final strict anti-loop safeguard: if bestMove is a 3x repeated loop and another root move doesn't lose immediately, break the loop!
+        // Final strict anti-loop safeguard: if bestMove is a repeated loop and another root move doesn't lose immediately, break the loop!
         if (!isDropPhase && rootPool.length > 1) {
           const checkSim = [...GameState.board];
           checkSim[bestMove.from] = 0;
           checkSim[bestMove.to] = aiP;
-          const formedM = getMillsContainingNode(bestMove.to, aiP, checkSim).length > 0;
+          const formedM = fastCountMillsAtNode(bestMove.to, aiP, checkSim) > 0;
           const bestLoop = LoopTracker.evaluateLoopPenalty(bestMove, GameState.board, checkSim, aiP, GameState.reserves[1], GameState.reserves[2], formedM);
           if (bestLoop.isForbiddenLoop || bestLoop.repCount >= 2 || bestLoop.oscCount >= 2) {
             for (const alt of rootPool) {
@@ -8547,10 +8900,10 @@
               const altSim = [...GameState.board];
               altSim[alt.from] = 0;
               altSim[alt.to] = aiP;
-              const altMill = getMillsContainingNode(alt.to, aiP, altSim).length > 0;
+              const altMill = fastCountMillsAtNode(alt.to, aiP, altSim) > 0;
               const altLoop = LoopTracker.evaluateLoopPenalty(alt, GameState.board, altSim, aiP, GameState.reserves[1], GameState.reserves[2], altMill);
               const altScore = latestScores.get(alt) || 0;
-              if (!altLoop.isForbiddenLoop && altLoop.repCount < 2 && altScore > -45000) {
+              if (!altLoop.isForbiddenLoop && altLoop.repCount < 2 && altScore > -35000) {
                 bestMove = alt;
                 break;
               }
@@ -8569,7 +8922,7 @@
       function runNavakankariAI() {
         const aiP = GameState.aiPlayerRole || 2;
         const humanP = aiP === 1 ? 2 : 1;
-        const result = computeBestLocalMorrisAction();
+        const result = computeBestLocalMorrisAction(aiP);
         if (!result || !result.bestAction) {
           if (GameState.morrisPendingRemove) finishTurnAndCheckWin(aiP, false, null);
           return;
@@ -10119,7 +10472,7 @@
       }
 
       function computeBestGeneralAction(aiP = (GameState.aiPlayerRole || 2)) {
-        if (GameState.gameFamily === 'morris') return computeBestLocalMorrisAction();
+        if (GameState.gameFamily === 'morris') return computeBestLocalMorrisAction(aiP);
         if (GameState.gameFamily === 'gomoku') return computeBestGomokuAction(aiP);
         if (GameState.gameFamily === 'tiger_goat') return computeBestTigerGoatAction(aiP);
 
@@ -10234,25 +10587,72 @@
        * PUTER REAL CLOUD AI ENGINE & LIVE QUOTA ANALYTICS MANAGER
        * ------------------------------------------------------------------- */
       const PuterAIManager = {
-        storageKey: 'katar_puter_telemetry_v1',
+        storageKey: 'katar_puter_telemetry_v2',
         modelOverride: 'auto',
-        monthAllowanceMicrocents: 50000000, // Puter free tier default ($0.50 = 50,000,000 microcents ~ 5M tokens)
+        monthAllowanceMicrocents: 50000000,
         remainingMicrocents: 50000000,
+        unconfirmedLocalMicrocents: 0,
+        hasServerSync: false,
+        lastSyncedAt: 0,
         remoteApiCalls: 0,
         remoteApiTokens: 0,
-        callEvents: [], // [{ ts, model, diff, tokens, microcents, latencyMs }]
+        remoteAppCostMicro: 0,
+        remoteApiBreakdown: [],
+        callEvents: [],
         sessionCalls: 0,
+        sessionTokens: 0,
+        sessionMicrocents: 0,
         totalLatencyMs: 0,
         lastThought: 'Ready — enable "Play with Real AI" to play against live Puter cloud models.',
         isSignedIn: false,
         username: '',
         loaded: false,
+        _sdkPromise: null,
+
+        ensureSdkLoaded(timeoutMs = 6000) {
+          if (typeof window !== 'undefined' && window.puter) {
+            return Promise.resolve(true);
+          }
+          if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            return Promise.resolve(false);
+          }
+          if (this._sdkPromise) return this._sdkPromise;
+          this._sdkPromise = new Promise((resolve) => {
+            let settled = false;
+            const done = (ok) => {
+              if (settled) return;
+              settled = true;
+              this._sdkPromise = null;
+              resolve(ok);
+            };
+            const timer = setTimeout(() => done(Boolean(window.puter)), timeoutMs);
+            let existing = document.querySelector('script[data-puter-sdk]');
+            if (!existing) {
+              existing = document.createElement('script');
+              existing.src = 'https://js.puter.com/v2/';
+              existing.async = true;
+              existing.defer = true;
+              existing.setAttribute('data-puter-sdk', 'true');
+              document.head.appendChild(existing);
+            }
+            existing.addEventListener('load', () => {
+              clearTimeout(timer);
+              done(Boolean(window.puter));
+            }, { once: true });
+            existing.addEventListener('error', () => {
+              clearTimeout(timer);
+              done(false);
+            }, { once: true });
+          });
+          return this._sdkPromise;
+        },
 
         load() {
           if (this.loaded) return;
           this.loaded = true;
           try {
-            const raw = SafeStorage.getItem(this.storageKey);
+            let raw = SafeStorage.getItem(this.storageKey);
+            if (!raw) raw = SafeStorage.getItem('katar_puter_telemetry_v1');
             if (raw) {
               const d = JSON.parse(raw);
               if (d && typeof d === 'object') {
@@ -10263,8 +10663,20 @@
                 if (typeof d.remainingMicrocents === 'number' && d.remainingMicrocents >= 0) {
                   this.remainingMicrocents = d.remainingMicrocents;
                 }
+                this.unconfirmedLocalMicrocents = Number(d.unconfirmedLocalMicrocents) || 0;
+                this.hasServerSync = Boolean(d.hasServerSync);
+                this.lastSyncedAt = Number(d.lastSyncedAt) || 0;
+                this.remoteApiCalls = Number(d.remoteApiCalls) || 0;
+                this.remoteApiTokens = Number(d.remoteApiTokens) || 0;
+                this.remoteAppCostMicro = Number(d.remoteAppCostMicro) || 0;
+                if (Array.isArray(d.remoteApiBreakdown)) {
+                  this.remoteApiBreakdown = d.remoteApiBreakdown.slice(0, 12);
+                }
+                if (typeof d.username === 'string') {
+                  this.username = d.username;
+                }
                 if (Array.isArray(d.callEvents)) {
-                  const cutoff = Date.now() - 7 * 86400 * 1000;
+                  const cutoff = Date.now() - 30 * 86400 * 1000;
                   this.callEvents = d.callEvents.filter((e) => e && e.ts >= cutoff);
                 }
               }
@@ -10274,12 +10686,20 @@
 
         save() {
           try {
-            const cutoff = Date.now() - 7 * 86400 * 1000;
-            this.callEvents = this.callEvents.filter((e) => e && e.ts >= cutoff).slice(-500);
+            const cutoff = Date.now() - 30 * 86400 * 1000;
+            this.callEvents = this.callEvents.filter((e) => e && e.ts >= cutoff).slice(-600);
             SafeStorage.setItem(this.storageKey, JSON.stringify({
               modelOverride: this.modelOverride,
               monthAllowanceMicrocents: this.monthAllowanceMicrocents,
               remainingMicrocents: this.remainingMicrocents,
+              unconfirmedLocalMicrocents: this.unconfirmedLocalMicrocents,
+              hasServerSync: this.hasServerSync,
+              lastSyncedAt: this.lastSyncedAt,
+              remoteApiCalls: this.remoteApiCalls,
+              remoteApiTokens: this.remoteApiTokens,
+              remoteAppCostMicro: this.remoteAppCostMicro,
+              remoteApiBreakdown: this.remoteApiBreakdown,
+              username: this.username,
               callEvents: this.callEvents
             }));
           } catch (e) {}
@@ -10293,9 +10713,6 @@
               fallbacks: [this.modelOverride, 'gpt-4o-mini', 'deepseek-chat', 'gemini-2.0-flash']
             };
           }
-          // User requested:
-          // - Easy & Medium: best, cheapest, and fastest models
-          // - Hard & Hardest: best, most intelligent, and hardest models
           if (diff === 'easy') {
             return {
               primary: 'gpt-4o-mini',
@@ -10322,53 +10739,165 @@
 
         estimateCallCostMicrocents(model, tokens) {
           const m = String(model || '').toLowerCase();
-          // Puter microcents: 100,000,000 microcents = $1.00 (so $0.15 / 1M tokens = 0.015 microcents/token -> ~30 microcents per 1k tokens)
-          // We scale realistically against the 50,000,000 microcent ($0.50) monthly free allowance:
-          if (m.includes('mini') || m.includes('flash') || m === 'deepseek-chat') {
-            return Math.max(1500, Math.round(tokens * 25)); // ~7,500 microcents per 300-token move (~6,600 moves on $0.50)
+          const tok = Math.max(80, Number(tokens) || 220);
+          if (m.includes('mini') || m.includes('flash') || m.includes('nano') || m === 'deepseek-chat') {
+            return Math.max(800, Math.round(tok * 18));
           }
-          return Math.max(8000, Math.round(tokens * 110)); // ~44,000 microcents per 400-token reasoning move (~1,130 moves on $0.50)
+          return Math.max(4500, Math.round(tok * 85));
+        },
+
+        normalizeToMicrocents(val, unitHint, refAllowance) {
+          const num = Number(val);
+          if (!Number.isFinite(num) || num < 0) return null;
+          if (num === 0) return 0;
+          if (unitHint === 'credits') {
+            return num < 100000 ? Math.round(num * 100000) : Math.round(num);
+          }
+          const ref = Number(refAllowance) || num;
+          if (ref > 0 && ref <= 50) {
+            return Math.round(num * 100000000);
+          }
+          if (ref > 50 && ref < 100000) {
+            return Math.round(num * 100000);
+          }
+          return Math.round(num);
+        },
+
+        async checkSignedInState() {
+          if (typeof puter === 'undefined' || !puter.auth) return false;
+          try {
+            if (typeof puter.auth.isSignedIn === 'function') {
+              const res = puter.auth.isSignedIn();
+              this.isSignedIn = Boolean(res && typeof res.then === 'function' ? await res : res);
+            }
+          } catch (e) {
+            this.isSignedIn = false;
+          }
+          return this.isSignedIn;
         },
 
         async refreshQuotaFromPuter(silent = true) {
           this.load();
+          await this.ensureSdkLoaded(silent ? 4500 : 7000);
           if (typeof puter === 'undefined' || !puter.auth) {
             this.syncModalUI();
+            if (!silent) {
+              showBoardToast('Puter Cloud SDK is offline or unreachable — showing local telemetry.');
+            }
             return false;
           }
           try {
-            if (typeof puter.auth.isSignedIn === 'function') {
-              this.isSignedIn = Boolean(puter.auth.isSignedIn());
+            await this.checkSignedInState();
+            if (!this.isSignedIn && !silent && typeof puter.auth.signIn === 'function') {
+              try {
+                await puter.auth.signIn();
+                await this.checkSignedInState();
+              } catch (signInErr) {}
             }
-            if (this.isSignedIn && typeof puter.auth.getUser === 'function') {
+            if (!this.isSignedIn) {
+              this.syncModalUI();
+              if (!silent) {
+                showBoardToast('Sign in with Puter to sync your live account quota, or play to auto-connect.');
+              }
+              return false;
+            }
+            if (typeof puter.auth.getUser === 'function') {
               const u = await puter.auth.getUser().catch(() => null);
               if (u && u.username) this.username = u.username;
             }
             if (typeof puter.auth.getMonthlyUsage === 'function') {
               const usageData = await puter.auth.getMonthlyUsage();
-              if (usageData && usageData.allowanceInfo) {
-                const allow = Number(usageData.allowanceInfo.monthUsageAllowance);
-                const rem = Number(usageData.allowanceInfo.remaining);
-                if (Number.isFinite(allow) && allow > 0) this.monthAllowanceMicrocents = allow;
-                if (Number.isFinite(rem) && rem >= 0) this.remainingMicrocents = rem;
+              if (!usageData || usageData.error || usageData.code === 'unauthorized') {
+                throw new Error((usageData && usageData.message) || 'Unauthorized usage response');
               }
-              if (usageData && usageData.usage && typeof usageData.usage === 'object') {
-                let totalCalls = 0;
-                let totalUnits = 0;
-                for (const k of Object.keys(usageData.usage)) {
-                  const item = usageData.usage[k];
-                  if (item) {
-                    totalCalls += Number(item.count) || 0;
-                    totalUnits += Number(item.units) || 0;
+              const topUnit = usageData.unit || (usageData.allowanceInfo && usageData.allowanceInfo.unit) || '';
+              if (usageData.allowanceInfo && typeof usageData.allowanceInfo === 'object') {
+                const ai = usageData.allowanceInfo;
+                const rawAllow = Number(ai.monthUsageAllowance);
+                const rawRem = Number(ai.remaining);
+                const rawPurchased = Number(ai.purchasedCredits) || 0;
+                const normAllow = this.normalizeToMicrocents(rawAllow + rawPurchased, topUnit, rawAllow);
+                const normRem = this.normalizeToMicrocents(rawRem, topUnit, rawAllow > 0 ? rawAllow : rawRem);
+                if (normAllow !== null && normAllow > 0) {
+                  this.monthAllowanceMicrocents = normAllow;
+                }
+                if (normRem !== null && normRem >= 0) {
+                  this.remainingMicrocents = normRem;
+                  if (this.remainingMicrocents > this.monthAllowanceMicrocents) {
+                    this.monthAllowanceMicrocents = this.remainingMicrocents;
                   }
                 }
-                this.remoteApiCalls = totalCalls;
-                this.remoteApiTokens = totalUnits;
+                this.hasServerSync = true;
+                this.lastSyncedAt = Date.now();
+                this.unconfirmedLocalMicrocents = 0;
               }
+
+              let aiCalls = 0;
+              let allCalls = 0;
+              let aiTokens = 0;
+              let appCost = 0;
+              const breakdown = [];
+
+              if (usageData.usage && typeof usageData.usage === 'object') {
+                for (const k of Object.keys(usageData.usage)) {
+                  if (k === 'total' && typeof usageData.usage[k] === 'number') {
+                    const normTot = this.normalizeToMicrocents(usageData.usage[k], topUnit, usageData.allowanceInfo?.monthUsageAllowance);
+                    if (normTot !== null) appCost = Math.max(appCost, normTot);
+                    continue;
+                  }
+                  const item = usageData.usage[k];
+                  if (!item || typeof item !== 'object') continue;
+                  const cCount = Number(item.count) || 0;
+                  const cUnits = Number(item.units) || 0;
+                  const rawCost = Number(item.cost ?? item.total) || 0;
+                  const cCost = this.normalizeToMicrocents(rawCost, topUnit, usageData.allowanceInfo?.monthUsageAllowance) ?? rawCost;
+                  const isStorageOrFs = /^(fs|kv|hosting|subdomains|workers|apps|net|email|stat|readdir|mkdir|write|read|upload)/i.test(k);
+
+                  allCalls += cCount;
+                  appCost += cCost;
+                  if (!isStorageOrFs) {
+                    aiCalls += cCount;
+                    aiTokens += cUnits;
+                  }
+                  if (cCount > 0 || cCost > 0 || cUnits > 0) {
+                    breakdown.push({
+                      api: k,
+                      calls: cCount,
+                      units: cUnits,
+                      costMicro: cCost,
+                      isAi: !isStorageOrFs
+                    });
+                  }
+                }
+              }
+
+              if (usageData.appTotals && typeof usageData.appTotals === 'object') {
+                let appTotCalls = 0;
+                let appTotCost = 0;
+                for (const appKey of Object.keys(usageData.appTotals)) {
+                  const ap = usageData.appTotals[appKey];
+                  if (ap && typeof ap === 'object') {
+                    appTotCalls += Number(ap.count) || 0;
+                    const rc = Number(ap.total ?? ap.cost) || 0;
+                    appTotCost += this.normalizeToMicrocents(rc, topUnit, usageData.allowanceInfo?.monthUsageAllowance) ?? rc;
+                  }
+                }
+                allCalls = Math.max(allCalls, appTotCalls);
+                appCost = Math.max(appCost, appTotCost);
+              }
+
+              breakdown.sort((a, b) => (b.costMicro - a.costMicro) || (b.calls - a.calls));
+              this.remoteApiCalls = aiCalls > 0 ? aiCalls : allCalls;
+              this.remoteApiTokens = aiTokens;
+              this.remoteAppCostMicro = appCost;
+              this.remoteApiBreakdown = breakdown.slice(0, 10);
+
               this.save();
               this.syncModalUI();
-              if (!silent) showBoardToast('✅ Synced live quota from your Puter account!');
-              if (this.remainingMicrocents <= 0 && GameState.usePuterAI) {
+              if (!silent) {
+                showBoardToast(`✅ Synced live Puter quota${this.username ? ' for @' + this.username : ''}!`);
+              }
+              if (this.hasServerSync && this.remainingMicrocents <= 0 && GameState.usePuterAI) {
                 this.triggerQuotaExhaustedFallback('Monthly Puter quota reached 0 remaining');
               }
               return true;
@@ -10382,37 +10911,59 @@
           return false;
         },
 
-        recordCallTelemetry(model, diff, tokensUsed, latencyMs, thoughtText) {
+        extractResponseTokens(resp, rolePrompt, userPrompt, replyText) {
+          if (resp && typeof resp === 'object') {
+            const u = resp.usage || (resp.message && resp.message.usage) || (resp.result && resp.result.usage);
+            if (u) {
+              if (typeof u.total_tokens === 'number' && u.total_tokens > 0) return u.total_tokens;
+              if (typeof u.input_tokens === 'number' || typeof u.output_tokens === 'number') {
+                const sum = (Number(u.input_tokens) || 0) + (Number(u.output_tokens) || 0);
+                if (sum > 0) return sum;
+              }
+              if (typeof u.prompt_tokens === 'number' || typeof u.completion_tokens === 'number') {
+                const sum = (Number(u.prompt_tokens) || 0) + (Number(u.completion_tokens) || 0);
+                if (sum > 0) return sum;
+              }
+              if (Array.isArray(u)) {
+                let sum = 0;
+                for (const item of u) {
+                  if (item) sum += Number(item.amount ?? item.tokens ?? item.units ?? 0) || 0;
+                }
+                if (sum > 0) return sum;
+              }
+            }
+          }
+          return Math.max(95, Math.round(((rolePrompt || '').length + (userPrompt || '').length + (replyText || '').length) / 3.8));
+        },
+
+        recordCallTelemetry(model, diff, tokensUsed, latencyMs, thoughtText, exactCostMicro = null) {
           this.load();
-          const estCost = this.estimateCallCostMicrocents(model, tokensUsed);
-          this.callEvents.push({
+          const estCost = (typeof exactCostMicro === 'number' && exactCostMicro > 0)
+            ? Math.round(exactCostMicro)
+            : this.estimateCallCostMicrocents(model, tokensUsed);
+          const ev = {
             ts: Date.now(),
             model,
             diff,
             tokens: tokensUsed,
             microcents: estCost,
             latencyMs
-          });
+          };
+          this.callEvents.push(ev);
           this.sessionCalls++;
+          this.sessionTokens += tokensUsed;
+          this.sessionMicrocents += estCost;
           this.totalLatencyMs += latencyMs;
+          this.unconfirmedLocalMicrocents = (this.unconfirmedLocalMicrocents || 0) + estCost;
           if (thoughtText) this.lastThought = `[${model}] ${thoughtText}`;
-          this.remainingMicrocents = Math.max(0, this.remainingMicrocents - estCost);
+          if (!this.hasServerSync) {
+            this.remainingMicrocents = Math.max(0, this.remainingMicrocents - estCost);
+          }
           this.save();
           this.syncModalUI();
-          // Also asynchronously poll Puter's getMonthlyUsage() to keep exact server balance synced
-          if (typeof puter !== 'undefined' && puter.auth && typeof puter.auth.getMonthlyUsage === 'function') {
-            puter.auth.getMonthlyUsage().then((u) => {
-              if (u && u.allowanceInfo && typeof u.allowanceInfo.remaining === 'number') {
-                this.monthAllowanceMicrocents = u.allowanceInfo.monthUsageAllowance || this.monthAllowanceMicrocents;
-                this.remainingMicrocents = Math.max(0, u.allowanceInfo.remaining);
-                this.save();
-                this.syncModalUI();
-                if (this.remainingMicrocents <= 0 && GameState.usePuterAI) {
-                  this.triggerQuotaExhaustedFallback('Puter quota exhausted');
-                }
-              }
-            }).catch(() => {});
-          }
+
+          // Poll live Puter balance after call to reconcile exact server microcents
+          this.refreshQuotaFromPuter(true).catch(() => {});
         },
 
         triggerQuotaExhaustedFallback(reason) {
@@ -10422,7 +10973,7 @@
           syncSettingsControlsFromState();
           this.syncModalUI();
           updateHUD();
-          showBoardToast(`⚡ Puter AI quota/limit reached — switched to Built-in Grandmaster AI mid-game!`);
+          showBoardToast(`⚡ Puter AI (${reason}) — switched to Built-in Grandmaster AI mid-game!`);
         },
 
         getWindowStats() {
@@ -10436,34 +10987,51 @@
 
           for (const ev of this.callEvents) {
             if (!ev) continue;
-            localTotalMicro += ev.microcents || 0;
-            localTotalTokens += ev.tokens || 0;
+            localTotalMicro += Number(ev.microcents) || 0;
+            localTotalTokens += Number(ev.tokens) || 0;
             if (ev.ts >= dayAgo) {
               dailyCalls++;
-              dailyTokens += ev.tokens || 0;
-              dailyMicro += ev.microcents || 0;
+              dailyTokens += Number(ev.tokens) || 0;
+              dailyMicro += Number(ev.microcents) || 0;
             }
             if (ev.ts >= hourAgo) {
               hourlyCalls++;
-              hourlyTokens += ev.tokens || 0;
-              hourlyMicro += ev.microcents || 0;
+              hourlyTokens += Number(ev.tokens) || 0;
+              hourlyMicro += Number(ev.microcents) || 0;
             }
           }
 
-          const totalAllow = Math.max(1000000, this.monthAllowanceMicrocents || 50000000);
-          const remMicro = Math.max(0, Math.min(totalAllow, this.remainingMicrocents));
-          const usedMicro = Math.max(localTotalMicro, totalAllow - remMicro);
-          const effectiveRemMicro = Math.max(0, totalAllow - usedMicro);
-          const usedPct = Math.min(100, (usedMicro / totalAllow) * 100);
+          const rawAllow = this.monthAllowanceMicrocents > 0 ? this.monthAllowanceMicrocents : 50000000;
+          const totalAllow = Math.max(rawAllow, this.remainingMicrocents || 0);
+          let effectiveRemMicro = 0;
+          let usedMicro = 0;
+
+          if (this.hasServerSync) {
+            effectiveRemMicro = Math.max(0, Math.min(totalAllow, this.remainingMicrocents - (this.unconfirmedLocalMicrocents || 0)));
+            usedMicro = Math.max(0, totalAllow - effectiveRemMicro);
+            if (usedMicro === 0 && this.remoteAppCostMicro > 0) {
+              usedMicro = Math.min(totalAllow, this.remoteAppCostMicro);
+              effectiveRemMicro = Math.max(0, totalAllow - usedMicro);
+            }
+          } else {
+            usedMicro = Math.min(totalAllow, localTotalMicro);
+            effectiveRemMicro = Math.max(0, totalAllow - usedMicro);
+          }
+
+          const usedPct = totalAllow > 0 ? Math.min(100, Math.max(0, (usedMicro / totalAllow) * 100)) : 0;
           const leftPct = Math.max(0, 100 - usedPct);
 
-          // Approximate tokens & moves remaining
+          // Consistent token capacity math (10 microcents ~= 1 standard token on Puter)
           const estTotalTokens = Math.round(totalAllow / 10);
-          const estUsedTokens = Math.max(localTotalTokens, this.remoteApiTokens || Math.round(usedMicro / 10));
-          const estLeftTokens = Math.max(0, estTotalTokens - estUsedTokens);
+          const estLeftTokens = Math.round(effectiveRemMicro / 10);
+          const appTrackedTokens = Math.max(localTotalTokens, this.remoteApiTokens || 0);
+          const estUsedTokens = appTrackedTokens > 0
+            ? appTrackedTokens
+            : Math.round(usedMicro / 10);
+          const totalMonthlyCalls = Math.max(this.callEvents.length, (this.remoteApiCalls || 0) + (this.unconfirmedLocalMicrocents > 0 ? 1 : 0));
 
-          const easyMovesLeft = Math.floor(effectiveRemMicro / 7500);
-          const hardMovesLeft = Math.floor(effectiveRemMicro / 44000);
+          const easyMovesLeft = Math.floor(effectiveRemMicro / 4500);
+          const hardMovesLeft = Math.floor(effectiveRemMicro / 28000);
 
           return {
             totalAllow,
@@ -10473,11 +11041,13 @@
             leftPct,
             estTotalTokens,
             estUsedTokens,
+            appTrackedTokens,
+            totalMonthlyCalls,
             estLeftTokens,
             easyMovesLeft,
-            easyGamesLeft: Math.max(0, Math.floor(easyMovesLeft / 30)),
+            easyGamesLeft: Math.max(0, Math.floor(easyMovesLeft / 26)),
             hardMovesLeft,
-            hardGamesLeft: Math.max(0, Math.floor(hardMovesLeft / 30)),
+            hardGamesLeft: Math.max(0, Math.floor(hardMovesLeft / 26)),
             hourlyCalls,
             hourlyTokens,
             hourlyMicro,
@@ -10491,23 +11061,24 @@
           const st = this.getWindowStats();
           const modelInfo = this.getModelForDifficulty(GameState.aiDifficulty);
 
+          const fmtPct = (p) => (p > 0 && p < 99.9 && p % 1 !== 0) ? p.toFixed(1) : p.toFixed(0);
           const lblMini = document.getElementById('lblPuterQuotaMini');
           const dotMini = document.getElementById('puterLiveDot');
           const hdrSum = document.getElementById('hdrPuterSummary');
           if (lblMini) {
             lblMini.textContent = GameState.usePuterAI
-              ? `${modelInfo.primary} • ${st.leftPct.toFixed(0)}% Left`
-              : `Quota: ${st.leftPct.toFixed(0)}% (~${st.easyMovesLeft} mv)`;
+              ? `${modelInfo.primary} • ${fmtPct(st.leftPct)}% Left`
+              : `Quota: ${fmtPct(st.leftPct)}% (~${st.easyMovesLeft.toLocaleString()} mv)`;
           }
           if (dotMini) {
             dotMini.className = GameState.usePuterAI
               ? 'w-2 h-2 rounded-full bg-emerald-500 animate-ping'
-              : 'w-2 h-2 rounded-full bg-indigo-500';
+              : (this.hasServerSync ? 'w-2 h-2 rounded-full bg-emerald-500' : 'w-2 h-2 rounded-full bg-indigo-500');
           }
           if (hdrSum) {
             hdrSum.textContent = GameState.usePuterAI
-              ? `Real AI (${st.leftPct.toFixed(0)}%)`
-              : `Real AI • ${st.leftPct.toFixed(0)}%`;
+              ? `Real AI (${fmtPct(st.leftPct)}%)`
+              : `Real AI • ${fmtPct(st.leftPct)}%`;
           }
 
           const badge = document.getElementById('puterEngineStatusBadge');
@@ -10533,6 +11104,17 @@
             }
           }
 
+          const btnSignIn = document.getElementById('btnPuterSignIn');
+          if (btnSignIn) {
+            if (this.isSignedIn || this.username) {
+              btnSignIn.textContent = this.username ? `✅ @${this.username}` : '✅ Puter Connected';
+              btnSignIn.className = 'android-btn px-2.5 py-1 rounded-xl bg-gradient-to-b from-emerald-500 to-emerald-700 text-white font-extrabold text-[11px] shadow-sm';
+            } else {
+              btnSignIn.textContent = '🔐 Puter Sign-In';
+              btnSignIn.className = 'android-btn px-2.5 py-1 rounded-xl bg-gradient-to-b from-indigo-500 to-indigo-700 text-white font-extrabold text-[11px] shadow-sm';
+            }
+          }
+
           const selMod = document.getElementById('selPuterModelOverride');
           if (selMod) selMod.value = this.modelOverride || 'auto';
           const actModPill = document.getElementById('puterActiveModelPill');
@@ -10544,29 +11126,63 @@
           };
 
           const fmtUsd = (micro) => `$${(micro / 100000000).toFixed(4)}`;
-          const fmtMicro = (micro) => micro >= 1000000 ? `${(micro / 1000000).toFixed(1)}M μ¢` : `${micro.toLocaleString()} μ¢`;
+          const fmtMicro = (micro) => {
+            if (micro >= 1000000) return `${(micro / 1000000).toFixed(2)}M μ¢`;
+            if (micro >= 1000) return `${(micro / 1000).toFixed(1)}K μ¢`;
+            return `${Math.round(micro).toLocaleString()} μ¢`;
+          };
 
-          setTxt('puterQuotaUsedPctLabel', `Used: ${st.usedPct.toFixed(1)}% (${fmtUsd(st.usedMicro)})`);
-          setTxt('puterQuotaLeftPctLabel', `Remaining: ${st.leftPct.toFixed(1)}% Left`);
+          setTxt('puterQuotaUsedPctLabel', `Used: ${st.usedPct.toFixed(2)}% (${fmtUsd(st.usedMicro)})`);
+          setTxt('puterQuotaLeftPctLabel', `Remaining: ${st.leftPct.toFixed(2)}% Left`);
           const bar = document.getElementById('puterQuotaProgressBar');
-          if (bar) bar.style.width = `${Math.max(1, st.usedPct)}%`;
+          if (bar) bar.style.width = `${st.usedMicro > 0 ? Math.max(1.5, st.usedPct) : 0}%`;
 
           setTxt('puterStatTotalAllowance', `${fmtUsd(st.totalAllow)} (${fmtMicro(st.totalAllow)})`);
           setTxt('puterStatTotalTokensEst', `~${st.estTotalTokens.toLocaleString()} tokens capacity`);
           setTxt('puterStatUsedQuota', `${fmtUsd(st.usedMicro)} (${fmtMicro(st.usedMicro)})`);
-          setTxt('puterStatUsedTokensEst', `${st.estUsedTokens.toLocaleString()} tok • ${Math.max(this.callEvents.length, this.remoteApiCalls)} calls`);
+          if (st.appTrackedTokens > 0) {
+            setTxt('puterStatUsedTokensEst', `${st.appTrackedTokens.toLocaleString()} app tok • ${st.totalMonthlyCalls.toLocaleString()} calls`);
+          } else if (st.usedMicro > 0) {
+            setTxt('puterStatUsedTokensEst', `~${st.estUsedTokens.toLocaleString()} tok est • ${st.totalMonthlyCalls.toLocaleString()} app calls`);
+          } else {
+            setTxt('puterStatUsedTokensEst', `0 tokens • ${st.totalMonthlyCalls.toLocaleString()} calls`);
+          }
           setTxt('puterStatRemainingQuota', `${fmtUsd(st.effectiveRemMicro)} (${fmtMicro(st.effectiveRemMicro)})`);
           setTxt('puterStatRemainingTokensEst', `~${st.estLeftTokens.toLocaleString()} tokens left`);
 
-          setTxt('puterStatCanStillUseEasy', `~${st.easyMovesLeft.toLocaleString()} moves (~${st.easyGamesLeft} games)`);
-          setTxt('puterStatCanStillUseHard', `~${st.hardMovesLeft.toLocaleString()} moves (~${st.hardGamesLeft} games)`);
+          setTxt('puterStatCanStillUseEasy', `~${st.easyMovesLeft.toLocaleString()} moves (~${st.easyGamesLeft.toLocaleString()} games)`);
+          setTxt('puterStatCanStillUseHard', `~${st.hardMovesLeft.toLocaleString()} moves (~${st.hardGamesLeft.toLocaleString()} games)`);
 
           setTxt('puterStatHourlyCalls', `${st.hourlyCalls} calls`);
           setTxt('puterStatHourlyTokens', `${st.hourlyTokens.toLocaleString()} tok • ${fmtMicro(st.hourlyMicro)}`);
           setTxt('puterStatDailyCalls', `${st.dailyCalls} calls`);
           setTxt('puterStatDailyTokens', `${st.dailyTokens.toLocaleString()} tok • ${fmtMicro(st.dailyMicro)}`);
           setTxt('puterStatSessionCalls', `${this.sessionCalls} calls`);
-          setTxt('puterStatAvgLatency', this.sessionCalls > 0 ? `Avg: ${Math.round(this.totalLatencyMs / this.sessionCalls)} ms` : 'Avg: — ms');
+          setTxt('puterStatAvgLatency', this.sessionCalls > 0
+            ? `Avg: ${Math.round(this.totalLatencyMs / this.sessionCalls)} ms • ${this.sessionTokens.toLocaleString()} tok`
+            : (this.remoteApiCalls > 0 ? `Month App: ${this.remoteApiCalls} calls` : 'Avg: — ms'));
+
+          const bdBox = document.getElementById('puterServerBreakdownBox');
+          const bdList = document.getElementById('puterServerBreakdownList');
+          const bdTime = document.getElementById('puterServerSyncTime');
+          if (bdBox && bdList) {
+            if (this.remoteApiBreakdown && this.remoteApiBreakdown.length > 0) {
+              bdBox.classList.remove('hidden');
+              if (bdTime && this.lastSyncedAt) {
+                const d = new Date(this.lastSyncedAt);
+                bdTime.textContent = `Synced ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+              }
+              bdList.innerHTML = this.remoteApiBreakdown.map((item) => {
+                const uLabel = item.isAi ? `${item.units.toLocaleString()} tok` : `${item.units.toLocaleString()} units`;
+                return `<div class="bg-white/90 border border-indigo-200/80 rounded-lg px-2 py-1 flex items-center justify-between gap-2">
+                  <span class="font-mono font-bold text-indigo-950 truncate">${item.api}</span>
+                  <span class="font-mono text-[10px] text-walnut-700 shrink-0">${item.calls}c • ${uLabel} • ${fmtMicro(item.costMicro)}</span>
+                </div>`;
+              }).join('');
+            } else {
+              bdBox.classList.add('hidden');
+            }
+          }
 
           MorrisLearner.load();
           const info = MorrisLearner.getIntelligenceLevel();
@@ -10576,9 +11192,14 @@
 
           const authLine = document.getElementById('puterAuthAccountLine');
           if (authLine) {
-            authLine.textContent = this.username
-              ? `Signed into Puter as @${this.username} • Live Monthly & Rolling Hourly/Daily Quota`
-              : 'Puter User-Pays Cloud AI • Hourly, Daily & Monthly Quota Tracker';
+            if (this.hasServerSync) {
+              const syncStr = this.lastSyncedAt ? new Date(this.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'now';
+              authLine.textContent = this.username
+                ? `🟢 Live Puter Sync (@${this.username} at ${syncStr}) • App Calls This Month: ${this.remoteApiCalls}`
+                : `🟢 Live Puter Account Quota Synced (${syncStr}) • App Calls This Month: ${this.remoteApiCalls}`;
+            } else {
+              authLine.textContent = 'Puter User-Pays Cloud AI • Tap "🔐 Puter Sign-In" or "🔄 Refresh Quota" for live account sync';
+            }
           }
         },
 
@@ -10593,24 +11214,24 @@
 
         async executePuterAITurn(aiP, fallbackFn) {
           this.load();
+          const sdkOk = await this.ensureSdkLoaded(5000);
           const st = this.getWindowStats();
-          if (st.effectiveRemMicro <= 0) {
+          if (this.hasServerSync && st.effectiveRemMicro <= 0) {
             this.triggerQuotaExhaustedFallback('0 remaining quota');
             fallbackFn();
             return;
           }
-          if (typeof puter === 'undefined' || !puter.ai || typeof puter.ai.chat !== 'function') {
+          if (!sdkOk || typeof puter === 'undefined' || !puter.ai || typeof puter.ai.chat !== 'function') {
             this.triggerQuotaExhaustedFallback('Puter.js cloud SDK offline/unreachable');
             fallbackFn();
             return;
           }
 
-          // Gather legal moves and our Grandmaster engine's top ranked candidates
           let candidateList = [];
           let localBest = null;
 
           const res = (GameState.gameFamily === 'morris')
-            ? computeBestLocalMorrisAction()
+            ? computeBestLocalMorrisAction(aiP)
             : computeBestGeneralAction(aiP);
           if (!res || !res.bestAction) {
             fallbackFn();
@@ -10658,13 +11279,17 @@
           for (const tryModel of modelRoute.fallbacks) {
             usedModel = tryModel;
             try {
-              const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 7500));
+              const isReasoningModel = /o3|reasoner|claude-3-7/i.test(tryModel);
+              const timeoutMs = isReasoningModel ? 16000 : 11000;
+              const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs));
+              const chatOpts = { model: tryModel, max_tokens: 110 };
+              if (!isReasoningModel) chatOpts.temperature = 0.15;
               const chatPromise = puter.ai.chat(
                 [
                   { role: 'system', content: rolePrompt },
                   { role: 'user', content: userPrompt }
                 ],
-                { model: tryModel }
+                chatOpts
               );
               const resp = await Promise.race([chatPromise, timeoutPromise]);
               let text = '';
@@ -10695,19 +11320,19 @@
                 }
               }
 
-              // In Hardest mode, never let the LLM pick a move that scores drastically worse than the top grandmaster line or enters a loop
               if ((diff === 'hard' || diff === 'hardest') && pickedIdx > 0) {
                 const topSc = candidateList[0].score;
                 const pickSc = candidateList[pickedIdx].score;
-                if (topSc - pickSc > 18000) {
+                if (topSc - pickSc > 1800) {
                   pickedIdx = 0;
                 }
               }
 
               chosenAction = candidateList[pickedIdx].action;
-              const estTokens = Math.max(120, Math.round((rolePrompt.length + userPrompt.length + text.length) / 3.8));
+              const actualTokens = this.extractResponseTokens(resp, rolePrompt, userPrompt, text);
               const latency = Math.round(performance.now() - startTime);
-              this.recordCallTelemetry(usedModel, diff, estTokens, latency, chosenNote);
+              this.isSignedIn = true;
+              this.recordCallTelemetry(usedModel, diff, actualTokens, latency, chosenNote);
               succeeded = true;
               break;
             } catch (err) {
@@ -10722,7 +11347,8 @@
 
           GameState.puterAIThinking = false;
           if (!succeeded) {
-            this.triggerQuotaExhaustedFallback('Cloud AI unreachable — using Built-in Grandmaster AI');
+            this.lastThought = 'Cloud AI timed out or offline — Built-in Grandmaster AI played this turn.';
+            this.syncModalUI();
             fallbackFn();
             return;
           }
@@ -10732,6 +11358,9 @@
           executeAction(chosenAction, false);
         }
       };
+      if (typeof window !== 'undefined') {
+        window.PuterAIManager = PuterAIManager;
+      }
 
       let aiTurnTimeoutId = null;
 
@@ -16745,9 +17374,9 @@
       document.getElementById('btnHintMove').addEventListener('click', () => {
         if (GameState.gameOver) return;
         if (GameState.gameFamily === 'morris' && GameState.morrisPendingRemove) {
-          const rem = getRemovableOpponentNodes(GameState.currentTurn === 1 ? 2 : 1);
-          if (rem.length > 0) {
-            VisualFX.hintHighlight = { from: -1, to: rem[0] };
+          const bestRem = pickBestMorrisRemoval(GameState.board, GameState.currentTurn, GameState.currentTurn === 1 ? 2 : 1);
+          if (bestRem !== -1) {
+            VisualFX.hintHighlight = { from: -1, to: bestRem };
             SoundEngine.select();
             showBoardToast('Hint: Tap the highlighted opponent bead to remove it!');
             requestRender();
@@ -17671,15 +18300,17 @@
       if (btnPuterLogin) {
         btnPuterLogin.addEventListener('click', async () => {
           SoundEngine.select();
+          await PuterAIManager.ensureSdkLoaded(6000);
           if (typeof puter !== 'undefined' && puter.auth && typeof puter.auth.signIn === 'function') {
             try {
               await puter.auth.signIn();
+              PuterAIManager.isSignedIn = true;
               await PuterAIManager.refreshQuotaFromPuter(false);
             } catch (e) {
-              showBoardToast('Puter sign-in window closed or unavailable in sandbox.');
+              showBoardToast('Puter sign-in window closed or blocked by browser.');
             }
           } else {
-            showBoardToast('Puter SDK is running in guest mode.');
+            showBoardToast('Puter Cloud SDK could not be loaded — check internet connection.');
           }
         });
       }
@@ -17690,10 +18321,16 @@
           SoundEngine.select();
           PuterAIManager.callEvents = [];
           PuterAIManager.sessionCalls = 0;
+          PuterAIManager.sessionTokens = 0;
+          PuterAIManager.sessionMicrocents = 0;
           PuterAIManager.totalLatencyMs = 0;
+          PuterAIManager.unconfirmedLocalMicrocents = 0;
+          if (!PuterAIManager.hasServerSync) {
+            PuterAIManager.remainingMicrocents = PuterAIManager.monthAllowanceMicrocents || 50000000;
+          }
           PuterAIManager.save();
           PuterAIManager.syncModalUI();
-          showBoardToast('Cleared local hourly & daily Puter counters.');
+          showBoardToast('Cleared local hourly, daily & session Puter counters.');
         });
       }
 
@@ -19716,7 +20353,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=187757e5b5', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=cf2fcb75fe', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
