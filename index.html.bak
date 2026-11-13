@@ -9415,8 +9415,16 @@
           }
           const sigAfter = this.computeSignature(boardAfter, { 1: res1, 2: res2 }, GameState.kings);
           const repCount = this.stateCounts.get(sigAfter) || 0;
-
           const pList = this.playerMoves[player] || [];
+          const lastMove = pList.length > 0 ? pList[pList.length - 1] : null;
+          const isImmediateReversal = Boolean(lastMove && lastMove.from === move.to && lastMove.to === move.from);
+
+          // In Hardest mode against a human player, never force the AI to abandon a blockade or play an inferior move.
+          if (GameState.aiDifficulty === 'hardest' && !GameState.aiVsAi) {
+            const tinyTieBreaker = (isImmediateReversal ? 8 : 0) + Math.min(20, repCount * 10);
+            return { penalty: tinyTieBreaker, isForbiddenLoop: false, repCount: 0, oscCount: 0, breakthroughBonus: 0 };
+          }
+
           let oscCount = 0;
           for (let i = pList.length - 1; i >= 0; i--) {
             const pm = pList[i];
@@ -9427,9 +9435,6 @@
               if (pList.length - 1 - i <= 3) oscCount += 0.5;
             }
           }
-
-          const lastMove = pList.length > 0 ? pList[pList.length - 1] : null;
-          const isImmediateReversal = Boolean(lastMove && lastMove.from === move.to && lastMove.to === move.from);
 
           let penalty = 0;
           let isForbiddenLoop = false;
@@ -9575,10 +9580,13 @@
 
       const MorrisLearner = {
         storageKey: 'katar_ai_brain_v4',
-        brainSchema: 2,
+        brainSchema: 3,
         table: new Map(),
         patternTable: new Map(),
         blunderKeys: new Set(),
+        allAtOnceMemory: {},
+        activeAllAtOnceHmMask: 0,
+        activeAllAtOnceAiMask: 0,
         episode: [],
         loaded: false,
         gamesLearned: 0,
@@ -9624,6 +9632,95 @@
           return validPerms;
         },
 
+        transformBitmask(mask, perm, nLen) {
+          let out = 0;
+          for (let i = 0; i < nLen; i++) {
+            if (mask & (1 << i)) out |= (1 << perm[i]);
+          }
+          return out;
+        },
+
+        canonicalizeAllAtOnceMask(hmMask) {
+          const nLen = Math.min(24, Nodes.length || 24);
+          const maps = MorrisSymmetry.ensureMaps();
+          const rulePrefix = `${GameState.gridPreset}:${GameState.morrisDiagonals ? 1 : 0}:${GameState.piecesPerPlayer}`;
+          if (!maps || maps.length === 0) {
+            const idPerm = Array.from({ length: nLen }, (_, i) => i);
+            return { canonKey: `${rulePrefix}:${hmMask}`, perm: idPerm, invPerm: idPerm };
+          }
+          let bestMask = null;
+          let bestPerm = maps[0];
+          for (let s = 0; s < maps.length; s++) {
+            const perm = maps[s];
+            const tMask = this.transformBitmask(hmMask, perm, nLen);
+            if (bestMask === null || tMask < bestMask) {
+              bestMask = tMask;
+              bestPerm = perm;
+            }
+          }
+          const invPerm = new Array(nLen);
+          for (let i = 0; i < nLen; i++) invPerm[bestPerm[i]] = i;
+          return { canonKey: `${rulePrefix}:${bestMask}`, perm: bestPerm, invPerm };
+        },
+
+        recordAllAtOnceThreat(hmMask, aiMask, criticalNodes = [], banAiMask = false) {
+          if (!hmMask || Nodes.length > 24) return;
+          this.load();
+          const nLen = Math.min(24, Nodes.length);
+          const { canonKey, perm } = this.canonicalizeAllAtOnceMask(hmMask);
+          const entry = this.allAtOnceMemory[canonKey] || { mustBlock: [], bannedAiMasks: [] };
+          for (const nid of criticalNodes) {
+            if (nid >= 0 && nid < nLen && !(hmMask & (1 << nid))) {
+              const cNode = perm[nid];
+              if (!entry.mustBlock.includes(cNode)) entry.mustBlock.push(cNode);
+            }
+          }
+          if (banAiMask && aiMask) {
+            const cAiMask = this.transformBitmask(aiMask, perm, nLen);
+            if (!entry.bannedAiMasks.includes(cAiMask)) {
+              entry.bannedAiMasks.push(cAiMask);
+              if (entry.bannedAiMasks.length > 20) entry.bannedAiMasks.shift();
+            }
+          }
+          this.allAtOnceMemory[canonKey] = entry;
+          this.cachedSecondPlacerPlan = null;
+          this.save();
+        },
+
+        getAllAtOnceMemoryForBoard(hmMask) {
+          this.load();
+          const mustBlockSet = new Set();
+          const bannedAiMasksSet = new Set();
+          if (!hmMask || Nodes.length > 24) return { mustBlockSet, bannedAiMasksSet };
+          const nLen = Math.min(24, Nodes.length);
+          const maps = MorrisSymmetry.ensureMaps();
+          const rulePrefix = `${GameState.gridPreset}:${GameState.morrisDiagonals ? 1 : 0}:${GameState.piecesPerPlayer}`;
+          const { canonKey } = this.canonicalizeAllAtOnceMask(hmMask);
+          const entry = this.allAtOnceMemory[canonKey];
+          if (!entry) return { mustBlockSet, bannedAiMasksSet };
+
+          const canonMaskVal = Number(canonKey.split(':').pop());
+          const symPerms = maps && maps.length > 0 ? maps : [Array.from({ length: nLen }, (_, i) => i)];
+          for (let s = 0; s < symPerms.length; s++) {
+            const perm = symPerms[s];
+            if (this.transformBitmask(hmMask, perm, nLen) === canonMaskVal) {
+              const inv = new Array(nLen);
+              for (let i = 0; i < nLen; i++) inv[perm[i]] = i;
+              if (Array.isArray(entry.mustBlock)) {
+                for (const cn of entry.mustBlock) {
+                  if (cn >= 0 && cn < nLen) mustBlockSet.add(inv[cn]);
+                }
+              }
+              if (Array.isArray(entry.bannedAiMasks)) {
+                for (const bm of entry.bannedAiMasks) {
+                  bannedAiMasksSet.add(this.transformBitmask(bm, inv, nLen));
+                }
+              }
+            }
+          }
+          return { mustBlockSet, bannedAiMasksSet };
+        },
+
         load() {
           if (this.loaded) return;
           this.loaded = true;
@@ -9634,12 +9731,12 @@
             if (!raw) return;
             const data = JSON.parse(raw);
             if (data && typeof data === 'object') {
-              const sameSchema = (data.brainSchema === this.brainSchema);
+              const sameSchema = (data.brainSchema >= 2);
               if (Array.isArray(data.entries)) {
                 for (const [k, v] of data.entries) {
                   if (typeof k === 'string' && typeof v === 'number') {
                     if (!sameSchema && k.startsWith('navakankari_12:')) continue;
-                    const clamped = isLegacy ? Math.max(-2500, Math.min(2500, Math.round(v * 0.08))) : Math.max(-6000, Math.min(6000, v));
+                    const clamped = isLegacy ? Math.max(-2500, Math.min(2500, Math.round(v * 0.08))) : Math.max(-9000, Math.min(9000, v));
                     if (Math.abs(clamped) >= 25) this.table.set(k, clamped);
                   }
                 }
@@ -9647,7 +9744,7 @@
               if (sameSchema && Array.isArray(data.patternEntries)) {
                 for (const [k, v] of data.patternEntries) {
                   if (typeof k === 'string' && typeof v === 'number' && Math.abs(v) >= 20) {
-                    this.patternTable.set(k, Math.max(-4500, Math.min(4500, v)));
+                    this.patternTable.set(k, Math.max(-6500, Math.min(6500, v)));
                   }
                 }
               }
@@ -9655,7 +9752,10 @@
                 const filteredBlunders = sameSchema
                   ? data.blunderKeys
                   : data.blunderKeys.filter((k) => typeof k === 'string' && !k.startsWith('navakankari_12:'));
-                this.blunderKeys = new Set(filteredBlunders.slice(-600));
+                this.blunderKeys = new Set(filteredBlunders.slice(-900));
+              }
+              if (data.allAtOnceMemory && typeof data.allAtOnceMemory === 'object') {
+                this.allAtOnceMemory = data.allAtOnceMemory;
               }
               this.gamesLearned = Number(data.gamesLearned) || 0;
               this.mistakesCorrected = Number(data.mistakesCorrected) || 0;
@@ -9667,7 +9767,7 @@
                 this.recentFormationSignatures = data.recentFormationSignatures.slice(-12);
               }
               if (Array.isArray(data.tabooFormationSignatures)) {
-                this.tabooFormationSignatures = new Set(data.tabooFormationSignatures.slice(-50));
+                this.tabooFormationSignatures = new Set(data.tabooFormationSignatures.slice(-80));
               }
               if (Array.isArray(data.humanNodeFreq) && data.humanNodeFreq.length === 24) {
                 this.humanNodeFreq = data.humanNodeFreq.map((n) => Number(n) || 0);
@@ -9678,7 +9778,7 @@
               if (data.humanPresetFreq && typeof data.humanPresetFreq === 'object') {
                 this.humanPresetFreq = data.humanPresetFreq;
               }
-              if (isLegacy || !sameSchema) this.save();
+              if (isLegacy || data.brainSchema !== this.brainSchema) this.save();
             }
           } catch (e) {}
         },
@@ -9701,7 +9801,8 @@
               brainSchema: this.brainSchema,
               entries: Array.from(this.table.entries()),
               patternEntries: Array.from(this.patternTable.entries()),
-              blunderKeys: Array.from(this.blunderKeys).slice(-600),
+              blunderKeys: Array.from(this.blunderKeys).slice(-900),
+              allAtOnceMemory: this.allAtOnceMemory,
               gamesLearned: this.gamesLearned,
               mistakesCorrected: this.mistakesCorrected,
               archetypeStats: this.archetypeStats,
@@ -9709,7 +9810,7 @@
               lastArchetypeId: this.lastArchetypeId,
               lastSymmetryIdx: this.lastSymmetryIdx,
               recentFormationSignatures: this.recentFormationSignatures.slice(-12),
-              tabooFormationSignatures: Array.from(this.tabooFormationSignatures).slice(-50),
+              tabooFormationSignatures: Array.from(this.tabooFormationSignatures).slice(-80),
               humanNodeFreq: this.humanNodeFreq,
               humanPivotFreq: this.humanPivotFreq,
               humanPresetFreq: this.humanPresetFreq
@@ -9722,6 +9823,9 @@
           this.table.clear();
           this.patternTable.clear();
           this.blunderKeys.clear();
+          this.allAtOnceMemory = {};
+          this.activeAllAtOnceHmMask = 0;
+          this.activeAllAtOnceAiMask = 0;
           this.episode = [];
           this.currentDropSequence = [];
           this.cachedSecondPlacerPlan = null;
@@ -9744,11 +9848,11 @@
 
         getIntelligenceLevel() {
           const pts = (this.gamesLearned * 2) + (this.mistakesCorrected * 3);
-          if (pts >= 100) return { level: 5, title: 'Supreme Overlord AI', depthBonus: 3, bonusFactor: 1.05 };
-          if (pts >= 45) return { level: 4, title: 'Apex Grandmaster', depthBonus: 2, bonusFactor: 0.95 };
-          if (pts >= 20) return { level: 3, title: 'Strategic Master', depthBonus: 2, bonusFactor: 0.85 };
-          if (pts >= 8) return { level: 2, title: 'Tactical Veteran', depthBonus: 1, bonusFactor: 0.75 };
-          return { level: 1, title: 'Grandmaster Khan', depthBonus: 1, bonusFactor: 0.65 };
+          if (pts >= 100) return { level: 5, title: 'Supreme Overlord AI', depthBonus: 3, bonusFactor: 1.15 };
+          if (pts >= 45) return { level: 4, title: 'Apex Grandmaster', depthBonus: 2, bonusFactor: 1.05 };
+          if (pts >= 20) return { level: 3, title: 'Strategic Master', depthBonus: 2, bonusFactor: 0.95 };
+          if (pts >= 8) return { level: 2, title: 'Tactical Veteran', depthBonus: 1, bonusFactor: 0.85 };
+          return { level: 1, title: 'Grandmaster Khan', depthBonus: 1, bonusFactor: 0.75 };
         },
 
         getActiveArchetypePool() {
@@ -9763,6 +9867,8 @@
           this.episode = [];
           this.currentDropSequence = [];
           this.cachedSecondPlacerPlan = null;
+          this.activeAllAtOnceHmMask = 0;
+          this.activeAllAtOnceAiMask = 0;
           MorrisKillerMoves = [];
           MorrisHistoryTable = { 1: new Int32Array(3000), 2: new Int32Array(3000) };
           const pool = this.getActiveArchetypePool();
@@ -9834,8 +9940,6 @@
           const ruleTag = `${GameState.gridPreset}:${GameState.morrisDiagonals ? 1 : 0}:${GameState.morrisDropOrder === 'all_at_once' ? 'A' : (GameState.morrisDropMillRule === 'forbid_mill' ? 'F' : 'S')}`;
 
           const buildLocalSig = (perm) => {
-            const inv = new Array(board.length);
-            for (let i = 0; i < board.length; i++) inv[perm[i]] = i;
             const tMapped = perm[target];
             const fMapped = (action.type === 'step' && action.from >= 0) ? perm[action.from] : -1;
             const pairs = NodeMillPairs[target] || [];
@@ -9866,7 +9970,7 @@
         adjustPatternWeight(patKey, delta) {
           if (!patKey) return;
           const prev = this.patternTable.get(patKey) || 0;
-          const next = Math.max(-4500, Math.min(4500, Math.round(prev * 0.85 + delta)));
+          const next = Math.max(-6500, Math.min(6500, Math.round(prev * 0.88 + delta)));
           if (Math.abs(next) < 20) this.patternTable.delete(patKey);
           else this.patternTable.set(patKey, next);
         },
@@ -9875,49 +9979,65 @@
           if (!this.episode || this.episode.length === 0 || !humanAction) return;
           const aiP = humanP === 1 ? 2 : 1;
           const lastIdx = this.episode.length - 1;
-          const ep = this.episode[lastIdx];
-          if (!ep || !ep.board) return;
 
-          this.blunderKeys.add(ep.fullKey);
-          this.adjustWeight(ep.fullKey, -2600);
-          if (ep.patternKey) this.adjustPatternWeight(ep.patternKey, -1100);
-          if (lastIdx >= 1) {
-            const epPrev = this.episode[lastIdx - 1];
-            this.adjustWeight(epPrev.fullKey, -1350);
-            if (epPrev.patternKey) this.adjustPatternWeight(epPrev.patternKey, -550);
-          }
-
-          // Identify which critical squares would have refuted Human's mill or double-threat fork
           const refuteSquares = new Set();
           if (humanAction.to >= 0) refuteSquares.add(humanAction.to);
+          if (humanAction.type === 'step' && humanAction.from >= 0) refuteSquares.add(humanAction.from);
           if (boardAfterHumanMove && humanAction.to >= 0) {
             const pairs = NodeMillPairs[humanAction.to] || [];
             for (let i = 0; i < pairs.length; i++) {
               const [o1, o2] = pairs[i];
-              if (boardAfterHumanMove[o1] === humanP && boardAfterHumanMove[o2] === 0) refuteSquares.add(o2);
-              if (boardAfterHumanMove[o2] === humanP && boardAfterHumanMove[o1] === 0) refuteSquares.add(o1);
+              if (boardAfterHumanMove[o1] === humanP && boardAfterHumanMove[o2] === humanP) {
+                refuteSquares.add(o1);
+                refuteSquares.add(o2);
+              } else if (boardAfterHumanMove[o1] === humanP && boardAfterHumanMove[o2] === 0) {
+                refuteSquares.add(o2);
+              } else if (boardAfterHumanMove[o2] === humanP && boardAfterHumanMove[o1] === 0) {
+                refuteSquares.add(o1);
+              }
             }
           }
 
-          const resObj = { 1: aiP === 1 ? ep.resAi : ep.resHuman, 2: aiP === 2 ? ep.resAi : ep.resHuman };
-          const legalOnPrev = getAllLegalActionsForPlayer(aiP, ep.board, resObj).allSteps;
+          if (GameState.morrisDropOrder === 'all_at_once' && this.activeAllAtOnceHmMask) {
+            this.recordAllAtOnceThreat(this.activeAllAtOnceHmMask, this.activeAllAtOnceAiMask, Array.from(refuteSquares), true);
+          }
+
           const forbidM = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill' || GameState.gridPreset === 'dara');
+          const penWeights = [-3400, -2400, -1400];
+          const boostScales = [1.0, 0.82, 0.62];
 
-          for (const alt of legalOnPrev) {
-            if (alt.type === ep.action.type && alt.from === ep.action.from && alt.to === ep.action.to) continue;
-            const sim = [...ep.board];
-            if (alt.type === 'step' && alt.from >= 0) sim[alt.from] = 0;
-            sim[alt.to] = aiP;
-            const formsAiMill = !(alt.type === 'drop' && forbidM) && fastCountMillsAtNode(alt.to, aiP, sim) > 0;
-            const blocksRefuteSquare = refuteSquares.has(alt.to);
-            if (formsAiMill || blocksRefuteSquare) {
-              const { fullKey: altFullKey } = this.makeStateKey(ep.board, alt, aiP, ep.resAi, ep.resHuman);
-              const altPatKey = this.makePatternKey(ep.board, alt, aiP, ep.resAi, ep.resHuman);
-              const boost = (formsAiMill && blocksRefuteSquare) ? 2800 : (formsAiMill ? 2100 : 1950);
-              this.adjustWeight(altFullKey, boost);
-              this.adjustPatternWeight(altPatKey, Math.round(boost * 0.45));
+          for (let offset = 0; offset < 3; offset++) {
+            const idx = lastIdx - offset;
+            if (idx < 0) break;
+            const ep = this.episode[idx];
+            if (!ep || !ep.board || !ep.action) continue;
+            if (offset <= 1) this.blunderKeys.add(ep.fullKey);
+            this.adjustWeight(ep.fullKey, penWeights[offset]);
+            if (ep.patternKey) this.adjustPatternWeight(ep.patternKey, Math.round(penWeights[offset] * 0.48));
+
+            const resObj = { 1: aiP === 1 ? ep.resAi : ep.resHuman, 2: aiP === 2 ? ep.resAi : ep.resHuman };
+            const legalOnPrev = getAllLegalActionsForPlayer(aiP, ep.board, resObj).allSteps;
+            const scale = boostScales[offset];
+
+            for (const alt of legalOnPrev) {
+              if (alt.type === ep.action.type && alt.from === ep.action.from && alt.to === ep.action.to) continue;
+              const sim = [...ep.board];
+              if (alt.type === 'step' && alt.from >= 0) sim[alt.from] = 0;
+              sim[alt.to] = aiP;
+              const formsAiMill = !(alt.type === 'drop' && forbidM) && fastCountMillsAtNode(alt.to, aiP, sim) > 0;
+              const blocksRefuteSquare = refuteSquares.has(alt.to);
+              const keepsBlockerPut = (ep.action.type === 'step' && refuteSquares.has(ep.action.from) && alt.from !== ep.action.from);
+              if (formsAiMill || blocksRefuteSquare || keepsBlockerPut) {
+                const { fullKey: altFullKey } = this.makeStateKey(ep.board, alt, aiP, ep.resAi, ep.resHuman);
+                const altPatKey = this.makePatternKey(ep.board, alt, aiP, ep.resAi, ep.resHuman);
+                const rawBoost = (formsAiMill && blocksRefuteSquare) ? 3800 : (blocksRefuteSquare ? 3100 : (formsAiMill ? 2600 : 2100));
+                const boost = Math.round(rawBoost * scale);
+                this.adjustWeight(altFullKey, boost);
+                this.adjustPatternWeight(altPatKey, Math.round(boost * 0.5));
+              }
             }
           }
+          MorrisTT.clear();
         },
 
         recordHumanAction(board, action, humanP) {
@@ -9953,12 +10073,12 @@
 
             if (formed || openTwosCreated >= 2) {
               if (action.to < 24) {
-                this.humanPivotFreq[action.to] = (this.humanPivotFreq[action.to] || 0) + (formed ? 2 : 3);
+                this.humanPivotFreq[action.to] = (this.humanPivotFreq[action.to] || 0) + (formed ? 3 : 4);
               }
               const { fullKey } = this.makeStateKey(board, action, humanP, resH, resA);
               const patKey = this.makePatternKey(board, action, humanP, resH, resA);
-              this.adjustWeight(fullKey, formed ? 680 : 920);
-              this.adjustPatternWeight(patKey, formed ? 320 : 480);
+              this.adjustWeight(fullKey, formed ? 950 : 1250);
+              this.adjustPatternWeight(patKey, formed ? 450 : 620);
               this.learnCounterfactualFix(action, humanP, sim);
               this.save();
             }
@@ -10035,11 +10155,11 @@
         getBonus(board, action, aiP, resAi = 0, resHuman = 0) {
           this.load();
           const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
-          if (this.blunderKeys.has(fullKey)) return -5500;
+          if (this.blunderKeys.has(fullKey)) return -12000;
           const w = this.table.get(fullKey) || 0;
           const patKey = this.makePatternKey(board, action, aiP, resAi, resHuman);
           const pw = patKey ? (this.patternTable.get(patKey) || 0) : 0;
-          return Math.max(-2800, Math.min(2800, w + Math.round(pw * 0.55)));
+          return Math.max(-6000, Math.min(6000, w + Math.round(pw * 0.65)));
         },
 
         isBlunder(board, action, aiP, resAi = 0, resHuman = 0) {
@@ -10047,19 +10167,19 @@
           const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
           if (this.blunderKeys.has(fullKey)) return true;
           const w = this.table.get(fullKey) || 0;
-          return w <= -2400;
+          return w <= -2200;
         },
 
         getHardestBonus(board, action, aiP, resAi = 0, resHuman = 0) {
           this.load();
           const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
-          if (this.blunderKeys.has(fullKey)) return -8500;
+          if (this.blunderKeys.has(fullKey)) return -24000;
           const w = this.table.get(fullKey) || 0;
-          if (w <= -2400) return -6500;
+          if (w <= -2200) return -16000;
           const patKey = this.makePatternKey(board, action, aiP, resAi, resHuman);
           const pw = patKey ? (this.patternTable.get(patKey) || 0) : 0;
           const lvl = this.getIntelligenceLevel();
-          return Math.max(-3600, Math.min(3600, Math.round((w + pw * 0.65) * lvl.bonusFactor)));
+          return Math.max(-9500, Math.min(9500, Math.round((w + pw * 0.75) * lvl.bonusFactor)));
         },
 
         recordStep(board, action, aiP, resAi = 0, resHuman = 0) {
@@ -10077,7 +10197,7 @@
         adjustWeight(fullKey, delta) {
           if (!fullKey) return;
           const prev = this.table.get(fullKey) || 0;
-          const next = Math.max(-6000, Math.min(6000, Math.round(prev * 0.85 + delta)));
+          const next = Math.max(-9000, Math.min(9000, Math.round(prev * 0.88 + delta)));
           if (Math.abs(next) < 25) this.table.delete(fullKey);
           else this.table.set(fullKey, next);
         },
@@ -10085,20 +10205,29 @@
         onHumanCapturedAiBead(count = 1) {
           this.load();
           this.mistakesCorrected += count;
+          if (GameState.gameFamily === 'morris' && GameState.morrisDropOrder === 'all_at_once' && this.activeAllAtOnceHmMask) {
+            const millNodes = Array.isArray(GameState.lastFormedMill) ? GameState.lastFormedMill : [];
+            this.recordAllAtOnceThreat(this.activeAllAtOnceHmMask, this.activeAllAtOnceAiMask, millNodes, true);
+          }
+          MorrisTT.clear();
           if (this.episode.length === 0) return;
           const lastIdx = this.episode.length - 1;
           const lastMove = this.episode[lastIdx];
           this.blunderKeys.add(lastMove.fullKey);
-          this.adjustWeight(lastMove.fullKey, -1800 * count);
-          if (lastMove.patternKey) this.adjustPatternWeight(lastMove.patternKey, -800 * count);
+          this.adjustWeight(lastMove.fullKey, -2400 * count);
+          if (lastMove.patternKey) this.adjustPatternWeight(lastMove.patternKey, -1100 * count);
           if (lastIdx >= 1) {
-            this.adjustWeight(this.episode[lastIdx - 1].fullKey, -950 * count);
+            this.blunderKeys.add(this.episode[lastIdx - 1].fullKey);
+            this.adjustWeight(this.episode[lastIdx - 1].fullKey, -1600 * count);
             if (this.episode[lastIdx - 1].patternKey) {
-              this.adjustPatternWeight(this.episode[lastIdx - 1].patternKey, -450 * count);
+              this.adjustPatternWeight(this.episode[lastIdx - 1].patternKey, -750 * count);
             }
           }
           if (lastIdx >= 2) {
-            this.adjustWeight(this.episode[lastIdx - 2].fullKey, -480 * count);
+            this.adjustWeight(this.episode[lastIdx - 2].fullKey, -950 * count);
+            if (this.episode[lastIdx - 2].patternKey) {
+              this.adjustPatternWeight(this.episode[lastIdx - 2].patternKey, -450 * count);
+            }
           }
           this.save();
         },
@@ -10165,34 +10294,39 @@
               const sortedDrops = [...this.currentDropSequence].sort((a, b) => a - b).join(',');
               this.tabooFormationSignatures.add(`DROP:${sortedDrops}`);
             }
+            if (GameState.gameFamily === 'morris' && GameState.morrisDropOrder === 'all_at_once' && this.activeAllAtOnceHmMask) {
+              const millNodes = Array.isArray(GameState.lastFormedMill) ? GameState.lastFormedMill : [];
+              this.recordAllAtOnceThreat(this.activeAllAtOnceHmMask, this.activeAllAtOnceAiMask, millNodes, true);
+            }
             if (this.episode.length > 0) {
               const lastIdx = this.episode.length - 1;
               this.blunderKeys.add(this.episode[lastIdx].fullKey);
-              this.adjustWeight(this.episode[lastIdx].fullKey, -2600);
-              if (this.episode[lastIdx].patternKey) this.adjustPatternWeight(this.episode[lastIdx].patternKey, -1100);
+              this.adjustWeight(this.episode[lastIdx].fullKey, -3200);
+              if (this.episode[lastIdx].patternKey) this.adjustPatternWeight(this.episode[lastIdx].patternKey, -1400);
               if (lastIdx >= 1) {
                 this.blunderKeys.add(this.episode[lastIdx - 1].fullKey);
-                this.adjustWeight(this.episode[lastIdx - 1].fullKey, -1800);
-                if (this.episode[lastIdx - 1].patternKey) this.adjustPatternWeight(this.episode[lastIdx - 1].patternKey, -750);
+                this.adjustWeight(this.episode[lastIdx - 1].fullKey, -2400);
+                if (this.episode[lastIdx - 1].patternKey) this.adjustPatternWeight(this.episode[lastIdx - 1].patternKey, -1000);
               }
               if (lastIdx >= 2) {
                 this.blunderKeys.add(this.episode[lastIdx - 2].fullKey);
-                this.adjustWeight(this.episode[lastIdx - 2].fullKey, -1100);
-                if (this.episode[lastIdx - 2].patternKey) this.adjustPatternWeight(this.episode[lastIdx - 2].patternKey, -480);
+                this.adjustWeight(this.episode[lastIdx - 2].fullKey, -1600);
+                if (this.episode[lastIdx - 2].patternKey) this.adjustPatternWeight(this.episode[lastIdx - 2].patternKey, -680);
               }
               let discount = 0.86;
               for (let i = lastIdx - 3; i >= 0; i--) {
-                const stepDelta = Math.round(-800 * discount);
+                const stepDelta = Math.round(-950 * discount);
                 if (Math.abs(stepDelta) >= 25) {
                   this.adjustWeight(epSafeKey(this.episode[i]), stepDelta);
                   if (this.episode[i].patternKey) {
-                    this.adjustPatternWeight(this.episode[i].patternKey, Math.round(stepDelta * 0.35));
+                    this.adjustPatternWeight(this.episode[i].patternKey, Math.round(stepDelta * 0.4));
                   }
                 }
                 discount *= 0.86;
               }
             }
           }
+          MorrisTT.clear();
           this.archetypeStats[archId] = st;
           this.episode = [];
           this.currentDropSequence = [];
@@ -10520,24 +10654,31 @@
         return scored.slice(0, maxCount).map((x) => x.cid);
       }
 
+      function scoreDropTargetUrgency(nid, board, aiP, humanP) {
+        ensureMorrisTopologyCache();
+        let prio = getMorrisNodeWeight(nid);
+        const pairs = NodeMillPairs[nid] || [];
+        for (let i = 0; i < pairs.length; i++) {
+          const [o1, o2, lIdx] = pairs[i];
+          if (board[o1] === humanP && board[o2] === humanP) {
+            const hasSlider = hasReadySliderForMill(nid, MillLines[lIdx], humanP, board);
+            prio += hasSlider ? 50000 : 18000;
+          } else if ((board[o1] === humanP && board[o2] === 0) || (board[o2] === humanP && board[o1] === 0)) {
+            const otherEmp = board[o1] === 0 ? o1 : o2;
+            if (hasReadySliderForMill(nid, MillLines[lIdx], humanP, board) && hasReadySliderForMill(otherEmp, MillLines[lIdx], humanP, board)) {
+              prio += 9500;
+            } else {
+              prio += 1200;
+            }
+          }
+        }
+        return prio;
+      }
+
       // Exact Combinatorial Bitmask Subset Solver when AI places all N beads second in `all_at_once` mode (resHuman === 0)
       function solveOptimalSecondPlacerSubset(board, aiP, humanP, resAi, diff) {
         ensureMorrisTopologyCache();
         if (Nodes.length > 24 || resAi <= 0) return null;
-
-        if (
-          MorrisLearner.cachedSecondPlacerPlan &&
-          MorrisLearner.cachedSecondPlacerPlan.ruleSig === getMorrisRuleSignature() &&
-          MorrisLearner.cachedSecondPlacerPlan.targets.length > 0
-        ) {
-          const plan = MorrisLearner.cachedSecondPlacerPlan;
-          const remainingTargets = plan.targets.filter((nid) => board[nid] === 0);
-          const allValid = plan.targets.every((nid) => board[nid] === 0 || board[nid] === aiP);
-          if (allValid && remainingTargets.length === resAi) {
-            remainingTargets.sort((a, b) => getMorrisNodeWeight(b) - getMorrisNodeWeight(a));
-            return { from: -1, to: remainingTargets[0], type: 'drop' };
-          }
-        }
 
         const emptyList = [];
         let curAiMask = 0;
@@ -10554,17 +10695,48 @@
           }
         }
 
+        if (curAiMask === 0 && hmMask !== 0) {
+          MorrisLearner.activeAllAtOnceHmMask = hmMask;
+          MorrisLearner.cachedSecondPlacerPlan = null;
+        }
+
+        if (
+          MorrisLearner.cachedSecondPlacerPlan &&
+          MorrisLearner.cachedSecondPlacerPlan.ruleSig === getMorrisRuleSignature() &&
+          MorrisLearner.cachedSecondPlacerPlan.hmMask === hmMask &&
+          MorrisLearner.cachedSecondPlacerPlan.targets.length > 0
+        ) {
+          const plan = MorrisLearner.cachedSecondPlacerPlan;
+          const remainingTargets = plan.targets.filter((nid) => board[nid] === 0);
+          const allValid = plan.targets.every((nid) => board[nid] === 0 || board[nid] === aiP);
+          if (allValid && remainingTargets.length === resAi) {
+            remainingTargets.sort((a, b) => scoreDropTargetUrgency(b, board, aiP, humanP) - scoreDropTargetUrgency(a, board, aiP, humanP));
+            return { from: -1, to: remainingTargets[0], type: 'drop' };
+          }
+        }
+
         const E = emptyList.length;
         const K = E - resAi;
-        if (K < 0 || K > 7 || E > 17) return null;
+        if (K < 0 || K > 8 || E > 18) return null;
 
         const hmNodes = [];
         for (let i = 0; i < Nodes.length; i++) {
           if (board[i] === humanP) hmNodes.push(i);
         }
 
+        const mem = MorrisLearner.getAllAtOnceMemoryForBoard(hmMask);
+        const mustBlockArr = Array.from(mem.mustBlockSet);
+        const bannedMasksSet = mem.bannedAiMasksSet;
+
         const numMills = MillBitMasks.length;
         const topSubsets = [];
+
+        const compareSubsets = (a, b) => {
+          if (a.hmReadyMills !== b.hmReadyMills) return a.hmReadyMills - b.hmReadyMills;
+          if (a.hmTwoStepMills !== b.hmTwoStepMills) return a.hmTwoStepMills - b.hmTwoStepMills;
+          if (a.hmOpenTwos !== b.hmOpenTwos) return a.hmOpenTwos - b.hmOpenTwos;
+          return b.fastScore - a.fastScore;
+        };
 
         const evaluateMaskCandidate = (emptyKeepMask, allowMillFallback) => {
           const finalAiMask = curAiMask | (allEmptyMask ^ emptyKeepMask);
@@ -10573,6 +10745,7 @@
               const mm = MillBitMasks[m];
               if ((finalAiMask & mm) === mm) return;
             }
+            if (bannedMasksSet.has(finalAiMask)) return;
           }
 
           // 1. Check Human Mobility (if 0, Human has ZERO legal moves on Turn 1 of Slide Phase = INSTANT AI WIN!)
@@ -10588,17 +10761,27 @@
             }
           }
           if (hmMoves === 0) {
-            topSubsets.push({ emptyKeepMask, finalAiMask, fastScore: 50000000 });
+            topSubsets.push({ emptyKeepMask, finalAiMask, hmReadyMills: 0, hmTwoStepMills: 0, hmOpenTwos: 0, fastScore: 50000000 });
             return;
           }
 
-          let fastScore = -hmMoves * 3600 - hmMovableBeads * 4800;
+          let fastScore = -hmMoves * 3800 - hmMovableBeads * 5200;
+          if (bannedMasksSet.has(finalAiMask)) fastScore -= 15000000;
 
-          // 2. Check Human & AI 1-step slide mills on the K empty nodes
+          for (let i = 0; i < mustBlockArr.length; i++) {
+            const mb = mustBlockArr[i];
+            if (finalAiMask & (1 << mb)) fastScore += 2200000;
+            else if (emptyKeepMask & (1 << mb)) fastScore -= 2200000;
+          }
+
+          // 2. Full Open-Katar Detection across all MillLines
           let hmReadyMills = 0;
+          let hmTwoStepMills = 0;
+          let hmOpenTwos = 0;
           let aiReadyMills = 0;
           let aiUncontestedMills = 0;
           let aiCoveredLines = 0;
+          const empForkLines = new Int32Array(Nodes.length);
 
           for (let m = 0; m < numMills; m++) {
             const mm = MillBitMasks[m];
@@ -10607,34 +10790,92 @@
             const eBits = emptyKeepMask & mm;
             if (aBits !== 0 && hBits === 0) aiCoveredLines++;
 
-            if (eBits !== 0 && (eBits & (eBits - 1)) === 0) {
-              // Exactly 1 empty node on this mill line
-              const line = MillLines[m];
+            const line = MillLines[m];
+            const hHas2 = hBits !== 0 && (hBits & (hBits - 1)) !== 0 && ((hBits & (hBits - 1)) & ((hBits & (hBits - 1)) - 1)) === 0;
+            const aHas2 = aBits !== 0 && (aBits & (aBits - 1)) !== 0 && ((aBits & (aBits - 1)) & ((aBits & (aBits - 1)) - 1)) === 0;
+            const eHas1 = eBits !== 0 && (eBits & (eBits - 1)) === 0;
+            const eHas2 = eBits !== 0 && (eBits & (eBits - 1)) !== 0 && ((eBits & (eBits - 1)) & ((eBits & (eBits - 1)) - 1)) === 0;
+
+            if (hHas2 && aBits !== 0 && eBits === 0) {
+              // AI directly plugged a Human [H, H, _] open Katar!
+              const blkId = (aBits & (1 << line[0])) ? line[0] : ((aBits & (1 << line[1])) ? line[1] : line[2]);
+              const sMask = MillSliderBitMasks[m][blkId] || 0;
+              if ((hmMask & sMask) !== 0) {
+                fastScore += 950000;
+              } else {
+                fastScore += 450000;
+              }
+            } else if (hHas2 && eHas1 && aBits === 0) {
+              // Human [H, H, 0] Open Katar left UNBLOCKED at empId!
               const empId = (eBits & (1 << line[0])) ? line[0] : ((eBits & (1 << line[1])) ? line[1] : line[2]);
               const sliderMask = MillSliderBitMasks[m][empId] || 0;
-              if (aBits === 0 && hBits !== 0 && (hBits & (hBits - 1)) !== 0) {
-                // Human has 2 beads + 1 empty
-                if ((hmMask & sliderMask) !== 0) {
-                  hmReadyMills++;
-                } else {
-                  fastScore -= 18000;
+              if ((hmMask & sliderMask) !== 0) {
+                hmReadyMills++;
+                fastScore -= 8000000;
+              } else if ((emptyKeepMask & sliderMask) !== 0) {
+                hmTwoStepMills++;
+                let hasTwoStepSlider = false;
+                let tmpS = emptyKeepMask & sliderMask;
+                while (tmpS) {
+                  const lsb = tmpS & -tmpS;
+                  const sIdx = 31 - Math.clz32(lsb);
+                  if ((hmMask & NodeAdjBitMasks[sIdx]) !== 0) { hasTwoStepSlider = true; break; }
+                  tmpS ^= lsb;
                 }
-              } else if (hBits === 0 && aBits !== 0 && (aBits & (aBits - 1)) !== 0) {
-                // AI has 2 beads + 1 empty
-                if ((finalAiMask & sliderMask) !== 0) {
-                  aiReadyMills++;
-                  if ((hmMask & NodeAdjBitMasks[empId]) === 0) {
-                    aiUncontestedMills++;
-                  }
+                if (hasTwoStepSlider) {
+                  fastScore -= ((finalAiMask & sliderMask) === 0) ? 3200000 : 2200000;
                 } else {
-                  fastScore += 12000;
+                  fastScore -= 1200000;
                 }
+              } else {
+                hmOpenTwos++;
+                fastScore -= 550000;
+              }
+            } else if (aBits === 0 && hBits !== 0 && (hBits & (hBits - 1)) === 0 && eHas2) {
+              // Human [H, 0, 0] Split Open Katar with 2 empty nodes on this line
+              const hNode = (hBits & (1 << line[0])) ? line[0] : ((hBits & (1 << line[1])) ? line[1] : line[2]);
+              const e1 = line[0] === hNode ? line[1] : line[0];
+              const e2 = line[2] === hNode ? line[1] : line[2];
+              const s1 = MillSliderBitMasks[m][e1] || 0;
+              const s2 = MillSliderBitMasks[m][e2] || 0;
+              const hS1 = (hmMask & s1) !== 0;
+              const hS2 = (hmMask & s2) !== 0;
+              if (hS1 && hS2) {
+                hmTwoStepMills++;
+                fastScore -= 950000;
+              } else if (hS1 || hS2) {
+                fastScore -= 180000;
+              }
+              empForkLines[e1]++;
+              empForkLines[e2]++;
+            } else if (aHas2 && eHas1 && hBits === 0) {
+              // AI has 2 beads + 1 empty
+              const empId = (eBits & (1 << line[0])) ? line[0] : ((eBits & (1 << line[1])) ? line[1] : line[2]);
+              const sliderMask = MillSliderBitMasks[m][empId] || 0;
+              if ((finalAiMask & sliderMask) !== 0) {
+                aiReadyMills++;
+                if ((hmMask & NodeAdjBitMasks[empId]) === 0) {
+                  aiUncontestedMills++;
+                }
+              } else {
+                fastScore += 12000;
               }
             }
           }
 
-          fastScore -= hmReadyMills * 420000;
-          fastScore += aiReadyMills * 55000 + aiUncontestedMills * 135000 + aiCoveredLines * 9500;
+          // Check if any empty node in emptyKeepMask is a Turn-1 Slide Fork for Human
+          let tmpE = emptyKeepMask;
+          while (tmpE) {
+            const lsb = tmpE & -tmpE;
+            const eIdx = 31 - Math.clz32(lsb);
+            if (empForkLines[eIdx] >= 2 && (hmMask & NodeAdjBitMasks[eIdx]) !== 0) {
+              hmTwoStepMills++;
+              fastScore -= 1500000;
+            }
+            tmpE ^= lsb;
+          }
+
+          fastScore += aiReadyMills * 48000 + aiUncontestedMills * 115000 + aiCoveredLines * 8500;
 
           // 3. Node weights & AI mobility
           let aiMoves = 0;
@@ -10646,10 +10887,11 @@
           }
           fastScore += aiMoves * 2800;
 
-          if (topSubsets.length < 14 || fastScore > topSubsets[topSubsets.length - 1].fastScore) {
-            topSubsets.push({ emptyKeepMask, finalAiMask, fastScore });
-            topSubsets.sort((a, b) => b.fastScore - a.fastScore);
-            if (topSubsets.length > 14) topSubsets.pop();
+          const candObj = { emptyKeepMask, finalAiMask, hmReadyMills, hmTwoStepMills, hmOpenTwos, fastScore };
+          if (topSubsets.length < 16 || compareSubsets(candObj, topSubsets[topSubsets.length - 1]) < 0) {
+            topSubsets.push(candObj);
+            topSubsets.sort(compareSubsets);
+            if (topSubsets.length > 16) topSubsets.pop();
           }
         };
 
@@ -10672,21 +10914,26 @@
         let bestSub = topSubsets[0];
         if (bestSub.fastScore < 40000000 && (diff === 'hard' || diff === 'hardest') && topSubsets.length > 1) {
           if (MorrisTT.size > 120000) MorrisTT.clear();
-          morrisSearchAborted = false;
-          morrisSearchDeadline = performance.now() + (diff === 'hardest' ? 420 : 240);
           let bestCombined = -Infinity;
-          const verifyCount = Math.min(diff === 'hardest' ? 8 : 5, topSubsets.length);
+          const minReady = topSubsets[0].hmReadyMills;
+          const viablePool = topSubsets.filter((c) => c.hmReadyMills === minReady);
+          const verifyCount = Math.min(diff === 'hardest' ? 6 : 4, viablePool.length);
+          const perCandMs = diff === 'hardest' ? 75 : 45;
+          const vDepth = diff === 'hardest' ? 6 : 5;
+
           for (let idx = 0; idx < verifyCount; idx++) {
-            const cand = topSubsets[idx];
+            const cand = viablePool[idx];
             const simB = [...board];
             for (let i = 0; i < Nodes.length; i++) {
               if (cand.finalAiMask & (1 << i)) simB[i] = aiP;
             }
+            morrisSearchAborted = false;
+            morrisSearchDeadline = performance.now() + perCandMs;
             const mmVal = minimaxMorris(
               simB,
               0,
               0,
-              diff === 'hardest' ? 7 : 5,
+              vDepth,
               -Infinity,
               Infinity,
               humanP,
@@ -10694,14 +10941,15 @@
               humanP,
               new Set()
             );
-            const total = cand.fastScore + mmVal * 14;
+            const total = cand.fastScore + mmVal * 65;
             if (total > bestCombined) {
               bestCombined = total;
               bestSub = cand;
             }
-            if (morrisSearchAborted) break;
           }
         }
+
+        MorrisLearner.activeAllAtOnceAiMask = bestSub.finalAiMask;
 
         const chosenTargets = [];
         const dropMask = bestSub.finalAiMask & ~curAiMask;
@@ -10712,15 +10960,11 @@
 
         MorrisLearner.cachedSecondPlacerPlan = {
           ruleSig: getMorrisRuleSignature(),
+          hmMask,
           targets: chosenTargets
         };
 
-        // Order chosen targets so we block urgent Human 2-in-a-rows and grab 3-mill hubs first
-        chosenTargets.sort((a, b) => {
-          const bA = fastWouldCompleteMill(a, humanP, board) * 500 + getMorrisNodeWeight(a);
-          const bB = fastWouldCompleteMill(b, humanP, board) * 500 + getMorrisNodeWeight(b);
-          return bB - bA;
-        });
+        chosenTargets.sort((a, b) => scoreDropTargetUrgency(b, board, aiP, humanP) - scoreDropTargetUrgency(a, board, aiP, humanP));
         return { from: -1, to: chosenTargets[0], type: 'drop' };
       }
 
@@ -10899,6 +11143,7 @@
         const hmOpenTwoWithoutSlider = new Set();
         const aiReadyTargets = new Set();
         const aiUncontestedTargets = new Set();
+        let aiDirectBlocks = 0;
 
         for (const line of MillLines) {
           let a = 0, h = 0, emp = -1;
@@ -10907,7 +11152,9 @@
             else if (board[id] === humanP) h++;
             else emp = id;
           }
-          if (h === 2 && a === 0 && emp !== -1) {
+          if (h === 2 && a === 1) {
+            aiDirectBlocks++;
+          } else if (h === 2 && a === 0 && emp !== -1) {
             if (hasReadySliderForMill(emp, line, humanP, board)) {
               hmReadyTargets.add(emp);
             } else {
@@ -10938,9 +11185,10 @@
           }
         }
 
-        score -= hmReadyTargets.size * 280000;
-        score -= hmTwoStepTargets.size * 52000;
-        score -= hmOpenTwoWithoutSlider.size * 25000;
+        score += aiDirectBlocks * 320000;
+        score -= hmReadyTargets.size * 2500000;
+        score -= hmTwoStepTargets.size * 680000;
+        score -= hmOpenTwoWithoutSlider.size * 340000;
         score += aiReadyTargets.size * 48000;
         score += aiUncontestedTargets.size * 98000;
         if (aiUncontestedTargets.size >= 1 && hmReadyTargets.size === 0) score += 125000;
@@ -10962,7 +11210,7 @@
             if (lib === 0) hmTrapped++;
           }
         }
-        if (hmMob === 0) return 1800000;
+        if (hmMob === 0) return 18000000;
         if (hmLibertyNodes.size <= resAi) {
           score += (resAi - hmLibertyNodes.size + 1) * 195000;
         }
@@ -10999,7 +11247,6 @@
 
         let score = getMorrisNodeWeight(nodeId) * 210;
 
-        // Extra Star-Hub priority in 12-Men's Katar Mill (where middle corners [3,5,18,20] control 3 mills & 4 directions)
         if (GameState.morrisDiagonals && Nodes.length === 24) {
           if (nodeId === 3 || nodeId === 5 || nodeId === 18 || nodeId === 20) {
             score += 6800;
@@ -11019,7 +11266,7 @@
         }
         const pFreq = (nodeId < MorrisLearner.humanPivotFreq.length && MorrisLearner.humanPivotFreq[nodeId]) || 0;
         if (pFreq > 0) {
-          score += Math.min(7500, pFreq * 1100);
+          score += Math.min(9500, pFreq * 1400);
         }
 
         let liberties = 0;
@@ -11045,35 +11292,28 @@
           const myNewTwos = myForkInfo.openTwoTargets.length;
           const oppNewTwosIfOppDropsHere = oppForkInfo.openTwoTargets.length;
 
-          // 1. Offensive Double/Triple-Mill Fork Creation
           if (myNewTwos >= 3) {
             score += 245000;
           } else if (myNewTwos === 2) {
             score += 185000;
           } else if (myNewTwos === 1) {
-            // Smart Initiative / Boomerang Analysis for a single 2-in-a-row threat:
             const empId = myForkInfo.openTwoTargets[0];
             const oppWouldMillOnBlock = fastWouldCompleteMill(empId, humanP, sim);
             const oppHalfThreatsOnBlock = countLiveHalfThreatsAtEmptyNode(empId, humanP, sim);
 
             if (oppWouldMillOnBlock > 0 && resHuman > 0) {
-              // Boomerang blunder: forcing Human onto `empId` completes a Human mill!
               score -= 95000;
             } else if (oppHalfThreatsOnBlock >= 2 && resHuman > 0) {
-              // Forcing Human onto `empId` hands Human a Double-Mill Fork!
               score -= 58000;
             } else if (oppHalfThreatsOnBlock === 1 && myForkInfo.futureForkPivots === 0 && resHuman > 2) {
-              // Single easily-blocked threat that gives Human a counter-threat and wastes our line
               score -= 3500;
             } else if (oppHalfThreatsOnBlock === 0 && myForkInfo.futureForkPivots >= 1) {
-              // Grandmaster Forcing Tempo Move: Human is forced to play a dead blocking stone at `empId` while we set up a Fork Pivot!
               score += 36000 + myForkInfo.futureForkPivots * 14000;
             } else {
               score += 7500 + myForkInfo.loadedTargets.length * 9500;
             }
           }
 
-          // 2. Defensive Fork Prevention: If `nodeId` is an Active Fork Intersection for Human, SEIZE IT!
           if (oppNewTwosIfOppDropsHere >= 3) {
             score += 225000;
           } else if (oppNewTwosIfOppDropsHere === 2) {
@@ -11082,17 +11322,14 @@
             score += 8800 + oppForkInfo.futureForkPivots * 6500;
           }
 
-          // 3. Building 2-Turn Triangle / Star-Hub Fork Setups
           score += myForkInfo.futureForkPivots * 13500;
           score += myForkInfo.cleanLineDevelopments * 2200;
           score += oppForkInfo.cleanLineDevelopments * 1600;
         } else {
-          // `forbid_mill` ("No Katar on Landing" / Dara) Grandmaster Heuristics:
           const slideFirst = getSlidePhaseFirstMover(resAi - 1, resHuman, humanP);
           const oppRawMillsHere = oppForkInfo.rawMillCount;
           const pairs = NodeMillPairs[nodeId] || [];
 
-          // 1. Plugging an opponent's 2-in-a-row `[h1, h2, nodeId]`
           if (oppRawMillsHere > 0) {
             for (let i = 0; i < pairs.length; i++) {
               const [o1, o2, lIdx] = pairs[i];
@@ -11104,20 +11341,18 @@
                   if (!line.includes(nb) && board[nb] === 0) emptySliderSpots++;
                 }
                 if (hasSlider) {
-                  score += (resHuman <= 4) ? 165000 : (slideFirst === humanP ? 105000 : 72000);
+                  score += 260000;
                 } else if (emptySliderSpots > 0) {
-                  score += (resHuman <= 3) ? 78000 : 32000;
+                  score += 145000;
                 } else {
-                  score += 5000;
+                  score += 65000;
                 }
               }
             }
           }
 
-          // 2. Avoid the "Forbid-Mill Self-Lock Trap" when Human moves first in Slide Phase
           for (const empId of myForkInfo.openTwoTargets) {
             if (fastWouldCompleteMill(empId, humanP, board) > 0) {
-              // Both players have 2-in-a-row pointing at `empId`, so `empId` is mutually forbidden during Drop Phase!
               const aiReady = myForkInfo.loadedTargets.includes(empId);
               let hmReady = false;
               for (const [ho1, ho2, hlIdx] of (NodeMillPairs[empId] || [])) {
@@ -11127,10 +11362,8 @@
                 }
               }
               if (hmReady && (slideFirst === humanP || !aiReady)) {
-                // Self-Lock Trap: making `empId` illegal for AI to plug guarantees Human's loaded mill survives!
-                score -= 115000;
+                score -= 185000;
               } else if (aiReady && (slideFirst === aiP || !hmReady)) {
-                // Immune Target Theorem: Human is forbidden from plugging `empId` and AI slides in first!
                 score += 92000;
               } else {
                 score += 28000;
@@ -11138,7 +11371,6 @@
             }
           }
 
-          // 3. Building AI's Loaded Slide-Mills & 20-Line Lockout
           score += myForkInfo.openTwoTargets.length * (resAi <= 4 ? 14000 : 7500);
           score += myForkInfo.loadedTargets.length * (resAi <= 5 ? 52000 : 34000);
           if (myForkInfo.loadedTargets.length >= 2) {
@@ -11146,11 +11378,10 @@
           }
           score += myForkInfo.cleanLineDevelopments * 4500;
 
-          // 4. Blocking Human from arming a Loaded Slide-Mill
           if (oppForkInfo.loadedTargets.length >= 2) {
-            score += 98000;
+            score += 185000;
           } else if (oppForkInfo.loadedTargets.length === 1) {
-            score += (resHuman <= 4) ? 58000 : 32000;
+            score += 95000;
           }
         }
 
@@ -11159,7 +11390,7 @@
 
       function chooseBestMorrisDrop(allSteps, board, aiP, humanP, isAllAtOnce, resAi, resHuman, diff) {
         if (isAllAtOnce && diff !== 'easy' && resAi >= 1) {
-          if (resHuman === 0 && (diff === 'hard' || diff === 'hardest')) {
+          if (resHuman === 0) {
             const exactMove = solveOptimalSecondPlacerSubset(board, aiP, humanP, resAi, diff);
             if (exactMove && allSteps.some((s) => s.to === exactMove.to)) {
               return exactMove;
@@ -11222,16 +11453,16 @@
 
           if (resHuman === 0 && resAi <= 4 && (diff === 'hard' || diff === 'hardest') && beam.length > 0) {
             if (MorrisTT.size > 120000) MorrisTT.clear();
-            morrisSearchAborted = false;
-            morrisSearchDeadline = performance.now() + (diff === 'hardest' ? 650 : 380);
             let bestCand = beam[0];
             let bestTotal = -Infinity;
-            for (const cand of beam.slice(0, 7)) {
+            for (const cand of beam.slice(0, 6)) {
+              morrisSearchAborted = false;
+              morrisSearchDeadline = performance.now() + (diff === 'hardest' ? 75 : 45);
               const mmVal = minimaxMorris(
                 cand.board,
                 0,
                 0,
-                diff === 'hardest' ? 7 : 5,
+                diff === 'hardest' ? 6 : 5,
                 -Infinity,
                 Infinity,
                 humanP,
@@ -11239,7 +11470,7 @@
                 humanP,
                 new Set()
               );
-              const combined = cand.score + mmVal * 10;
+              const combined = cand.score + mmVal * 65;
               if (combined > bestTotal) {
                 bestTotal = combined;
                 bestCand = cand;
@@ -11298,6 +11529,7 @@
         let aiSeeSaw = 0, hmSeeSaw = 0;
         let aiPinnedOppMills = 0, hmPinnedAiMills = 0;
         let aiBlockedTwo = 0, hmBlockedTwo = 0;
+        let aiPinnedBlockerLocks = 0, hmPinnedBlockerLocks = 0;
         let aiCoveredLines = 0, hmCoveredLines = 0;
 
         const aiOpenEmptySet = new Set();
@@ -11435,8 +11667,16 @@
             }
           } else if (a === 2 && h === 1) {
             hmBlockedTwo++;
+            const blkNode = board[line[0]] === humanP ? line[0] : (board[line[1]] === humanP ? line[1] : line[2]);
+            if (hasReadySliderForMill(blkNode, line, aiP, board)) {
+              hmPinnedBlockerLocks++;
+            }
           } else if (h === 2 && a === 1) {
             aiBlockedTwo++;
+            const blkNode = board[line[0]] === aiP ? line[0] : (board[line[1]] === aiP ? line[1] : line[2]);
+            if (hasReadySliderForMill(blkNode, line, humanP, board)) {
+              aiPinnedBlockerLocks++;
+            }
           }
         }
 
@@ -11510,17 +11750,17 @@
         score += (aiRepeatableMills - hmRepeatableMills) * (protectMills ? 4400 : 3400);
         score += (aiLockedMills - hmLockedMills) * (protectMills ? 2600 : 650);
         score += (aiPinnedOppMills - hmPinnedAiMills) * 2100;
-        score += (aiUncontestedReadySet.size - hmUncontestedReadySet.size) * 6500;
-        score += ((aiReadyEmptySet.size - aiUncontestedReadySet.size) - (hmReadyEmptySet.size - hmUncontestedReadySet.size)) * 2400;
-        score += (aiOpenEmptySet.size - hmOpenEmptySet.size) * 850;
+        score += (aiPinnedBlockerLocks - hmPinnedBlockerLocks) * 6800;
+        score += (aiUncontestedReadySet.size - hmUncontestedReadySet.size) * 7500;
+        score += ((aiReadyEmptySet.size - aiUncontestedReadySet.size) - (hmReadyEmptySet.size - hmUncontestedReadySet.size)) * 3200;
+        score += (aiOpenEmptySet.size - hmOpenEmptySet.size) * (isDropPhase && forbidLandingMill ? 4800 : 1200);
         score += (aiForks - hmForks) * 4200;
         score += (aiCoveredLines - hmCoveredLines) * 340;
-        score += (aiBlockedTwo - hmBlockedTwo) * (isDropPhase ? 1250 : 520);
+        score += (aiBlockedTwo - hmBlockedTwo) * (isDropPhase ? 2400 : 950);
         score += (aiMob - hmMob) * 210;
         score += (aiFrontierCount - hmFrontierCount) * 380;
         score += (hmTrapped - aiTrapped) * 1750;
 
-        // Drop-Phase Fork Intersection Evaluation (crucial for 12-Men's Mill diagonal/corner forks!)
         if (isDropPhase && !forbidLandingMill) {
           score += (aiEmptyForkIntersections - hmEmptyForkIntersections) * 3200;
           score += (aiTripleForkIntersections - hmTripleForkIntersections) * 4800;
@@ -11532,12 +11772,12 @@
             if (aiEmptyForkIntersections >= 2 && hmReadyEmptySet.size === 0) score += 9500;
           }
         } else if (isDropPhase && forbidLandingMill) {
-          // In forbid_mill Drop Phase, reward whoever holds uncontested loaded targets for the Slide Phase
-          if (slideFirst === aiP && aiReadyEmptySet.size >= 1) score += 4500;
-          else if (slideFirst === humanP && hmReadyEmptySet.size >= 1) score -= 4500;
+          score -= hmReadyEmptySet.size * 14500;
+          score -= hmUncontestedReadySet.size * 12000;
+          if (slideFirst === aiP && aiReadyEmptySet.size >= 1) score += 5500;
+          else if (slideFirst === humanP && hmReadyEmptySet.size >= 1) score -= 9500;
         }
 
-        // Turn-aware immediate mill & double-threat fork evaluation
         if (turnPlayer === aiP) {
           if (aiReadyEmptySet.size >= 1 && (!isDropPhase || !forbidLandingMill)) score += 14500;
           if (aiReadyEmptySet.size >= 2) score += 8500;
@@ -11632,7 +11872,7 @@
 
           if (myMillsCount > 0) {
             priority += 135000 * myMillsCount;
-            if (wasInMill) priority += 140000; // See-saw double mill!
+            if (wasInMill) priority += 140000;
           }
 
           if (wasInMill && myMillsCount === 0) {
@@ -11642,11 +11882,10 @@
                 if (board[nb] === opp) { oppCanEnterFrom = true; break; }
               }
             }
-            if (!oppCanEnterFrom) priority += 42000; // Safe opening of running mill
+            if (!oppCanEnterFrom) priority += 42000;
             else priority -= 38000;
           }
 
-          // Blocking opponent 1-step mill at `m.to`
           const oppMillsAtTo = fastWouldCompleteMill(m.to, opp, board);
           if (oppMillsAtTo > 0) {
             const toPairs = NodeMillPairs[m.to] || [];
@@ -11660,7 +11899,6 @@
             priority += hasSlider ? 95000 : 24000;
           }
 
-          // Penalty for vacating `m.from` when `m.from` was blocking an opponent 2-in-a-row!
           if (myMillsCount === 0) {
             const oppMillsAtFrom = fastWouldCompleteMill(m.from, opp, sim);
             if (oppMillsAtFrom > 0) {
@@ -11676,7 +11914,6 @@
             }
           }
 
-          // Creating our own 1-step ready mill (either as 2nd stone in line OR as outside slider arming an existing 2-in-a-row!)
           const toPairs = NodeMillPairs[m.to] || [];
           const armedTargetSet = new Set();
           for (let i = 0; i < toPairs.length; i++) {
@@ -11704,7 +11941,7 @@
               }
             }
           }
-          if (armedTargetSet.size >= 2) priority += 68000; // Double-mill slide fork!
+          if (armedTargetSet.size >= 2) priority += 68000;
 
           let myLib = 0;
           for (const nb of Adjacency[m.to]) {
@@ -11847,7 +12084,7 @@
           const sig = LoopTracker.computeSignature(board, res, null);
           const matchReps = LoopTracker.stateCounts.get(sig) || 0;
           if (matchReps >= 2) {
-            return -18000;
+            return (GameState.aiDifficulty === 'hardest' && !GameState.aiVsAi) ? 0 : -18000;
           }
         }
 
@@ -11877,7 +12114,6 @@
         const isHardest = (GameState.aiDifficulty === 'hardest');
         const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill' || GameState.gridPreset === 'dara');
 
-        // Forced-Reply Pruning & Threat Extension in Drop & Slide Phase
         let pool = null;
         let forcedBlockSquares = null;
 
@@ -11894,17 +12130,14 @@
             }
           }
           if (myWinningDrops.length > 0) {
-            // Side to move can complete a Katar mill immediately: focus search on mill completions + top 3 forks
             const extras = ordered.filter((m) => !myWinningDrops.includes(m)).slice(0, 3);
             pool = [...myWinningDrops, ...extras];
           } else if (oppThreatBlocks.length > 0) {
-            // Opponent threatens 1 or more immediate drop mills: side to move MUST block!
             forcedBlockSquares = new Set(oppThreatBlocks.map((m) => m.to));
             const extras = ordered.filter((m) => !forcedBlockSquares.has(m.to)).slice(0, 2);
             pool = [...oppThreatBlocks, ...extras];
           }
         } else if (res1 === 0 && res2 === 0) {
-          // Slide Phase forced-block detection
           const oppCanFly = canPlayerFlyOnBoard(opp, board, res);
           const oppReadySquares = new Set();
           for (let lIdx = 0; lIdx < MillLines.length; lIdx++) {
@@ -11951,7 +12184,6 @@
           const mvKey = encodeMorrisMoveKey(mv);
           const states = expandMorrisMoveStates(board, res1, res2, mv, turnPlayer, aiP, humanP, remBranch);
 
-          // Threat / Forced-Block Extension & Late Move Reduction (LMR)
           const isForcedReply = Boolean(forcedBlockSquares && forcedBlockSquares.size === 1 && forcedBlockSquares.has(mv.to));
           const extendPly = (isForcedReply && extBudget > 0) ? 1 : 0;
           const lmrReduce = (!isForcedReply && !states[0].formedMill && depth >= 3 && i >= 5) ? 1 : 0;
@@ -12137,6 +12369,7 @@
         morrisSearchAborted = false;
         const intel = MorrisLearner.getIntelligenceLevel();
         const isDropPhase = allSteps.every((m) => m.type === 'drop');
+        const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill' || GameState.gridPreset === 'dara');
         const isSmallBoard = (Nodes.length <= 16);
         const timeBudgetMs = diff === 'hardest'
           ? (isDropPhase ? 560 : (680 + intel.depthBonus * 110))
@@ -12162,8 +12395,9 @@
             const learnedBias = (diff === 'hardest')
               ? MorrisLearner.getHardestBonus(GameState.board, mv, aiP, GameState.reserves[aiP], GameState.reserves[humanP])
               : MorrisLearner.getBonus(GameState.board, mv, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
+            const placementScale = forbidLandingMill ? 0.065 : 0.02;
             const placementTieBreaker = mv.type === 'drop'
-              ? Math.max(-4500, Math.min(6500, scoreMorrisPlacement(mv.to, GameState.board, aiP, humanP, false, GameState.reserves[aiP], GameState.reserves[humanP]) * 0.015))
+              ? Math.max(-9500, Math.min(18500, scoreMorrisPlacement(mv.to, GameState.board, aiP, humanP, false, GameState.reserves[aiP], GameState.reserves[humanP]) * placementScale))
               : 0;
 
             for (const st of states) {
@@ -12210,7 +12444,7 @@
           }
         }
 
-        if (bestMove.type === 'step' && rootPool.length > 1) {
+        if ((diff !== 'hardest' || GameState.aiVsAi) && bestMove.type === 'step' && rootPool.length > 1) {
           const checkSim = [...GameState.board];
           checkSim[bestMove.from] = 0;
           checkSim[bestMove.to] = aiP;
@@ -24661,7 +24895,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=93bd5897ae', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=62ec4b794b', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {

@@ -267,6 +267,11 @@
       border: 2px solid #8C5832;
     }
 
+    .custom-scroll {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+    }
     .custom-scroll::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -278,6 +283,39 @@
     .custom-scroll::-webkit-scrollbar-thumb {
       background: #B8976C;
       border-radius: 9999px;
+    }
+
+    .stats-table-scroll {
+      overflow-x: auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-x pan-y;
+      scrollbar-width: thin;
+    }
+    .stats-table-scroll * {
+      touch-action: pan-x pan-y;
+    }
+    .stats-table-scroll::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .stats-table-scroll::-webkit-scrollbar-track {
+      background: #F3E7D3;
+      border-radius: 9999px;
+    }
+    .stats-table-scroll::-webkit-scrollbar-thumb {
+      background: #B8976C;
+      border-radius: 9999px;
+    }
+
+    .touch-pan-x {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+      touch-action: pan-x;
+    }
+    .touch-pan-x * {
+      touch-action: pan-x;
     }
 
     .no-scrollbar::-webkit-scrollbar {
@@ -1196,14 +1234,14 @@
     <section id="sidePanelP2" class="w-full lg:w-72 flex flex-col gap-1 sm:gap-1.5 shrink-0">
       <div id="cardPlayer2" class="game-card rounded-xl sm:rounded-2xl p-1.5 sm:p-3 transition-all duration-200">
         <div class="flex items-center justify-between gap-1.5 sm:gap-2">
-          <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
             <div class="w-7 h-7 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-rose-400 via-rose-600 to-rose-900 p-0.5 shadow-md flex items-center justify-center shrink-0">
               <div class="w-full h-full rounded-[10px] sm:rounded-[14px] border-2 border-rose-200/60 flex items-center justify-center bg-rose-700/40">
                 <div class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-rose-100 shadow-inner"></div>
               </div>
             </div>
-            <div class="truncate">
-              <div class="flex items-center gap-1 sm:gap-1.5">
+            <div class="min-w-0 flex-1 truncate">
+              <div class="flex items-center gap-1 sm:gap-1.5 min-w-0">
                 <span id="p2NameLabel" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Medium AI (Sang)</span>
                 <span id="p2RoleBadge" class="text-[9px] sm:text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300">NORTH</span>
               </div>
@@ -1332,14 +1370,14 @@
     <section id="sidePanelP1" class="w-full lg:w-72 flex flex-col gap-1 sm:gap-1.5 shrink-0">
       <div id="cardPlayer1" class="game-card-active-p1 rounded-xl sm:rounded-2xl p-1.5 sm:p-3 transition-all duration-200">
         <div class="flex items-center justify-between gap-1.5 sm:gap-2">
-          <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
             <div class="w-7 h-7 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-teal-300 via-teal-600 to-teal-900 p-0.5 shadow-md flex items-center justify-center shrink-0">
               <div class="w-full h-full rounded-[10px] sm:rounded-[14px] border-2 border-amber-300/80 flex items-center justify-center bg-teal-700/40">
                 <div class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-amber-300 shadow-inner"></div>
               </div>
             </div>
-            <div class="truncate">
-              <div class="flex items-center gap-1 sm:gap-1.5">
+            <div class="min-w-0 flex-1 truncate">
+              <div class="flex items-center gap-1 sm:gap-1.5 min-w-0">
                 <span id="p1NameLabel" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Player 1 (Feroza)</span>
                 <span id="p1RoleBadge" class="text-[9px] sm:text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-300">SOUTH</span>
               </div>
@@ -1873,15 +1911,15 @@
               </div>
             </div>
 
-            <div class="pt-2.5 border-t border-parchment-200 flex items-center justify-between gap-2">
+            <div class="pt-2.5 border-t border-parchment-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <div class="text-xs font-extrabold text-walnut-900">Player 2 Controller</div>
                 <div class="text-[11px] text-walnut-600">2-Player Human vs. Tactical AI Bot</div>
               </div>
-              <div class="flex items-center gap-1.5 bg-parchment-100 p-1 rounded-xl border border-parchment-300">
-                <button id="btnOpponentHuman" type="button" class="android-btn px-2.5 py-1 rounded-lg text-xs font-bold text-walnut-700">2P Human</button>
-                <button id="btnOpponentAI" type="button" class="android-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-teal-600 text-white shadow-sm">Tactical AI</button>
-                <button id="btnOpponentAIvAI" type="button" class="android-btn px-2.5 py-1 rounded-lg text-xs font-bold text-walnut-700">AI vs AI</button>
+              <div class="grid grid-cols-3 sm:flex items-center gap-1 bg-parchment-100 p-1 rounded-xl border border-parchment-300 w-full sm:w-auto">
+                <button id="btnOpponentHuman" type="button" class="android-btn px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-lg text-[11px] sm:text-xs font-bold text-walnut-700 text-center">2P Human</button>
+                <button id="btnOpponentAI" type="button" class="android-btn px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-lg text-[11px] sm:text-xs font-extrabold bg-teal-600 text-white shadow-sm text-center">Tactical AI</button>
+                <button id="btnOpponentAIvAI" type="button" class="android-btn px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-lg text-[11px] sm:text-xs font-bold text-walnut-700 text-center">AI vs AI</button>
               </div>
             </div>
 
@@ -3006,16 +3044,16 @@
   </div>
 
   <div id="modalProfile" class="fixed inset-0 z-50 bg-walnut-900/75 backdrop-blur-md hidden items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="w-full sm:max-w-3xl bg-parchment-50 border-t-4 sm:border-2 border-amber-500 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-walnut-900">
-      <div class="px-5 py-3.5 bg-parchment-100 border-b border-parchment-300 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <span id="profileModalBadgeIcon" class="w-8 h-8 rounded-xl bg-amber-500 text-walnut-900 flex items-center justify-center text-base shadow-sm">👑</span>
-          <div>
-            <h2 id="profileModalTitle" class="font-display text-base sm:text-lg font-extrabold text-walnut-900 leading-tight">Create Your Player Profile</h2>
-            <p id="profileModalSubtitle" class="text-[11px] font-semibold text-walnut-600">Set up your identity, career analytics &amp; match telemetry</p>
+    <div class="w-full sm:max-w-3xl bg-parchment-50 border-t-4 sm:border-2 border-amber-500 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] max-h-[92dvh] overflow-hidden text-walnut-900">
+      <div class="px-3.5 sm:px-5 py-2.5 sm:py-3.5 bg-parchment-100 border-b border-parchment-300 flex items-center justify-between gap-2 shrink-0">
+        <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+          <span id="profileModalBadgeIcon" class="w-8 h-8 rounded-xl bg-amber-500 text-walnut-900 flex items-center justify-center text-base shadow-sm shrink-0">👑</span>
+          <div class="min-w-0">
+            <h2 id="profileModalTitle" class="font-display text-sm sm:text-lg font-extrabold text-walnut-900 leading-tight truncate">Create Your Player Profile</h2>
+            <p id="profileModalSubtitle" class="text-[10.5px] sm:text-[11px] font-semibold text-walnut-600 truncate">Identity, career analytics &amp; match telemetry</p>
           </div>
         </div>
-        <button id="btnCloseProfileModal" type="button" class="android-btn p-1.5 rounded-xl bg-white border border-parchment-300 text-walnut-700 hover:text-walnut-900" aria-label="Close Profile">
+        <button id="btnCloseProfileModal" type="button" class="android-btn p-1.5 rounded-xl bg-white border border-parchment-300 text-walnut-700 hover:text-walnut-900 shrink-0" aria-label="Close Profile">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
@@ -3023,43 +3061,43 @@
         </button>
       </div>
 
-      <div class="p-3.5 sm:p-5 overflow-y-auto custom-scroll space-y-4 text-xs">
-        <div class="grid grid-cols-3 gap-1.5 p-1 bg-parchment-200 rounded-2xl border border-parchment-300">
-          <button id="tabProfileIdentity" type="button" class="android-btn py-2 px-2 sm:px-3 rounded-xl text-[11px] sm:text-xs font-extrabold bg-teal-600 text-white shadow-sm flex items-center justify-center gap-1">
-            <span>👤</span><span>Profile &amp; Overview</span>
+      <div class="p-2.5 sm:p-5 overflow-y-auto custom-scroll space-y-3 sm:space-y-4 text-xs flex-1 min-h-0">
+        <div class="grid grid-cols-3 gap-1 sm:gap-1.5 p-1 bg-parchment-200 rounded-2xl border border-parchment-300 shrink-0">
+          <button id="tabProfileIdentity" type="button" class="android-btn py-1.5 sm:py-2 px-1 sm:px-3 rounded-xl text-[10px] sm:text-xs font-extrabold bg-teal-600 text-white shadow-sm flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 leading-tight text-center">
+            <span>👤</span><span>Profile</span>
           </button>
-          <button id="tabProfileAnalytics" type="button" class="android-btn py-2 px-2 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold text-walnut-800 hover:text-walnut-900 flex items-center justify-center gap-1">
-            <span>📊</span><span>Full Stats &amp; Dates</span>
+          <button id="tabProfileAnalytics" type="button" class="android-btn py-1.5 sm:py-2 px-1 sm:px-3 rounded-xl text-[10px] sm:text-xs font-bold text-walnut-800 hover:text-walnut-900 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 leading-tight text-center">
+            <span>📊</span><span>Stats &amp; Dates</span>
           </button>
-          <button id="tabProfileBackup" type="button" class="android-btn py-2 px-2 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold text-walnut-800 hover:text-walnut-900 flex items-center justify-center gap-1">
-            <span>💾</span><span>Backup &amp; Restore</span>
+          <button id="tabProfileBackup" type="button" class="android-btn py-1.5 sm:py-2 px-1 sm:px-3 rounded-xl text-[10px] sm:text-xs font-bold text-walnut-800 hover:text-walnut-900 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 leading-tight text-center">
+            <span>💾</span><span>Backup</span>
           </button>
         </div>
 
-        <div id="panelProfileIdentity" class="space-y-4">
+        <div id="panelProfileIdentity" class="space-y-3 sm:space-y-4">
           <div id="firstTimeWelcomeBanner" class="bg-gradient-to-r from-amber-100 via-parchment-100 to-teal-50 border-2 border-amber-400 rounded-2xl p-3 flex items-center justify-between gap-2">
             <div>
               <div class="font-extrabold text-walnut-900 text-xs">🌟 Welcome to Katar &amp; Navakankari!</div>
-              <div class="text-[11px] text-walnut-700 mt-0.5">Please create your player profile below to begin playing, or switch to the <strong>Backup &amp; Restore</strong> tab to restore an existing profile.</div>
+              <div class="text-[11px] text-walnut-700 mt-0.5">Please create your player profile below to begin playing, or switch to the <strong>Backup</strong> tab to restore an existing profile.</div>
             </div>
           </div>
 
-          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-3 sm:p-4 space-y-3 shadow-sm">
             <div>
               <label class="block text-xs font-extrabold text-walnut-900 mb-1.5">1. Choose Your Royal Emblem</label>
-              <div id="profileAvatarGrid" class="grid grid-cols-8 gap-1.5">
-                <button type="button" data-avatar="👑" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-amber-500 text-walnut-900 border-2 border-amber-700 shadow-sm">👑</button>
-                <button type="button" data-avatar="🦅" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🦅</button>
-                <button type="button" data-avatar="🦁" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🦁</button>
-                <button type="button" data-avatar="⚔️" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">⚔️</button>
-                <button type="button" data-avatar="💎" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">💎</button>
-                <button type="button" data-avatar="🐯" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🐯</button>
-                <button type="button" data-avatar="🛡️" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🛡️</button>
-                <button type="button" data-avatar="🌙" class="profile-avatar-btn android-btn h-9 rounded-xl text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🌙</button>
+              <div id="profileAvatarGrid" class="grid grid-cols-8 gap-1 sm:gap-1.5">
+                <button type="button" data-avatar="👑" class="profile-avatar-btn android-btn h-8 sm:h-9 rounded-xl text-sm sm:text-base flex items-center justify-center bg-amber-500 text-walnut-900 border-2 border-amber-700 shadow-sm">👑</button>
+                <button type="button" data-avatar="🦅" class="profile-avatar-btn android-btn h-8 sm:h-9 rounded-xl text-sm sm:text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🦅</button>
+                <button type="button" data-avatar="🦁" class="profile-avatar-btn android-btn h-8 sm:h-9 rounded-xl text-sm sm:text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🦁</button>
+                <button type="button" data-avatar="⚔️" class="profile-avatar-btn android-btn h-8 sm:h-9 rounded-xl text-sm sm:text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">⚔️</button>
+                <button type="button" data-avatar="💎" class="profile-avatar-btn android-btn h-8 sm:h-9 rounded-xl text-sm sm:text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">💎</button>
+                <button type="button" data-avatar="🐯" class="profile-avatar-btn android-btn h-8 sm:h-9 rounded-xl text-sm sm:text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🐯</button>
+                <button type="button" data-avatar="🛡️" class="profile-avatar-btn android-btn h-8 sm:h-9 rounded-xl text-sm sm:text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🛡️</button>
+                <button type="button" data-avatar="🌙" class="profile-avatar-btn android-btn h-8 sm:h-9 rounded-xl text-sm sm:text-base flex items-center justify-center bg-parchment-100 border border-parchment-300">🌙</button>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 pt-1">
               <div>
                 <label for="inpProfileName" class="block text-xs font-extrabold text-walnut-900 mb-1">2. Your Player Name <span class="text-rose-600">*</span></label>
                 <input id="inpProfileName" type="text" maxlength="20" placeholder="Enter your name..." class="selectable-input w-full bg-parchment-100 border-2 border-parchment-400 focus:border-teal-600 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none" />
@@ -3083,60 +3121,61 @@
               <input id="inpProfileP2Name" type="text" maxlength="20" placeholder="Player 2 / Brother / Friend" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-bold text-walnut-800 focus:outline-none" />
             </div>
 
-            <button id="btnSaveProfileStart" type="button" class="android-btn w-full py-3 rounded-2xl bg-gradient-to-b from-teal-500 to-teal-700 text-white font-extrabold text-sm shadow-[0_4px_0_#115E59]">
+            <button id="btnSaveProfileStart" type="button" class="android-btn w-full py-2.5 sm:py-3 rounded-2xl bg-gradient-to-b from-teal-500 to-teal-700 text-white font-extrabold text-xs sm:text-sm shadow-[0_4px_0_#115E59]">
               ✅ Save Profile &amp; Enter Game
             </button>
           </div>
 
-          <div id="profileCareerStatsCard" class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
-            <div class="flex items-center justify-between">
+          <div id="profileCareerStatsCard" class="bg-white border-2 border-parchment-300 rounded-2xl p-3 sm:p-4 space-y-2.5 sm:space-y-3 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
               <span class="font-extrabold text-walnut-900 uppercase tracking-wider text-[11px]">🏅 Lifetime Career Snapshot</span>
               <span id="lblProfileCreatedDate" class="text-[10px] font-mono text-walnut-500">Member</span>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center bg-parchment-100 rounded-xl p-2.5 border border-parchment-300">
-              <div>
-                <div class="text-[10px] font-bold text-walnut-600">Completed</div>
-                <div id="careerTotalMatches" class="font-mono text-sm font-black text-walnut-900">0</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 text-center bg-parchment-100 rounded-xl p-2 sm:p-2.5 border border-parchment-300">
+              <div class="bg-white/70 rounded-lg p-1.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-walnut-600 truncate">Completed</div>
+                <div id="careerTotalMatches" class="font-mono text-xs sm:text-sm font-black text-walnut-900 truncate">0</div>
               </div>
-              <div>
-                <div class="text-[10px] font-bold text-teal-800">Wins (Win %)</div>
-                <div id="careerWins" class="font-mono text-sm font-black text-teal-700">0</div>
+              <div class="bg-white/70 rounded-lg p-1.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-teal-800 truncate">Wins (Win %)</div>
+                <div id="careerWins" class="font-mono text-xs sm:text-sm font-black text-teal-700 truncate">0</div>
               </div>
-              <div>
-                <div class="text-[10px] font-bold text-rose-800">Lost to AI</div>
-                <div id="careerLossesToAI" class="font-mono text-sm font-black text-rose-600">0</div>
+              <div class="bg-white/70 rounded-lg p-1.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-rose-800 truncate">Lost to AI</div>
+                <div id="careerLossesToAI" class="font-mono text-xs sm:text-sm font-black text-rose-600 truncate">0</div>
               </div>
-              <div>
-                <div class="text-[10px] font-bold text-amber-800">Best Streak</div>
-                <div id="careerBestStreak" class="font-mono text-sm font-black text-amber-700">0🔥</div>
+              <div class="bg-white/70 rounded-lg p-1.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-amber-800 truncate">Best Streak</div>
+                <div id="careerBestStreak" class="font-mono text-xs sm:text-sm font-black text-amber-700 truncate">0🔥</div>
               </div>
-              <div>
-                <div class="text-[10px] font-bold text-orange-800">Quits Mid-Game</div>
-                <div id="careerQuitsMidGame" class="font-mono text-sm font-black text-orange-700">0</div>
+              <div class="bg-white/70 rounded-lg p-1.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-orange-800 truncate">Quits Mid-Game</div>
+                <div id="careerQuitsMidGame" class="font-mono text-xs sm:text-sm font-black text-orange-700 truncate">0</div>
               </div>
-              <div>
-                <div class="text-[10px] font-bold text-indigo-800">Restarts</div>
-                <div id="careerRestarts" class="font-mono text-sm font-black text-indigo-700">0</div>
+              <div class="bg-white/70 rounded-lg p-1.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-indigo-800 truncate">Restarts</div>
+                <div id="careerRestarts" class="font-mono text-xs sm:text-sm font-black text-indigo-700 truncate">0</div>
               </div>
-              <div>
-                <div class="text-[10px] font-bold text-emerald-800">Play Time</div>
-                <div id="careerTotalPlayTime" class="font-mono text-sm font-black text-emerald-700">0m</div>
+              <div class="bg-white/70 rounded-lg p-1.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-emerald-800 truncate">Play Time</div>
+                <div id="careerTotalPlayTime" class="font-mono text-xs sm:text-sm font-black text-emerald-700 truncate">0m</div>
               </div>
-              <div>
-                <div class="text-[10px] font-bold text-rose-800">Beads Eaten</div>
-                <div id="careerBeadsEaten" class="font-mono text-sm font-black text-rose-600">0</div>
+              <div class="bg-white/70 rounded-lg p-1.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-rose-800 truncate">Beads Eaten</div>
+                <div id="careerBeadsEaten" class="font-mono text-xs sm:text-sm font-black text-rose-600 truncate">0</div>
               </div>
             </div>
-            <button id="btnJumpToFullAnalytics" type="button" class="android-btn w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 via-teal-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-extrabold text-xs shadow flex items-center justify-center gap-2">
+            <button id="btnJumpToFullAnalytics" type="button" class="android-btn w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 via-teal-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-extrabold text-[11px] sm:text-xs shadow flex items-center justify-center gap-1.5">
               <span>📊</span>
-              <span>Open Full User Stats, AI Loss Breakdown, Move Telemetry &amp; Date-Range Summaries →</span>
+              <span class="sm:hidden">View Full Stats, AI Losses &amp; Date Breakdown →</span>
+              <span class="hidden sm:inline">Open Full User Stats, AI Loss Breakdown, Move Telemetry &amp; Date-Range Summaries →</span>
             </button>
           </div>
 
-          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
-            <div class="flex items-center justify-between">
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-3 sm:p-4 space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between gap-2">
               <span class="font-extrabold text-walnut-900 uppercase tracking-wider text-[11px]">🎬 Saved Match History &amp; Replays</span>
-              <button id="btnClearSavedReplaysProf" type="button" class="android-btn text-[10px] font-bold text-rose-700 hover:underline">Clear All</button>
+              <button id="btnClearSavedReplaysProf" type="button" class="android-btn text-[10px] font-bold text-rose-700 hover:underline shrink-0">Clear All</button>
             </div>
             <div id="savedReplaysListProfile" class="space-y-1.5 max-h-48 overflow-y-auto custom-scroll pr-0.5">
               <div class="text-[11px] text-walnut-500 italic py-2 text-center">No completed matches saved yet — finish a match to watch its replay anytime!</div>
@@ -3145,36 +3184,36 @@
         </div>
 
         <!-- TAB 2: DEEP USER STATS, AI LOSSES, QUIT/RESTART TELEMETRY & DATE-RANGE ANALYTICS -->
-        <div id="panelProfileAnalytics" class="hidden space-y-3.5">
+        <div id="panelProfileAnalytics" class="hidden space-y-3 sm:space-y-3.5">
           <!-- Live Active Match Telemetry Strip -->
-          <div id="statsLiveMatchBanner" class="hidden bg-gradient-to-r from-teal-900 via-walnut-900 to-indigo-950 text-white rounded-2xl p-3 border border-amber-400/70 shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-                <span id="statsLiveMatchTitle" class="font-extrabold text-xs text-amber-300">Active Match In Progress</span>
+          <div id="statsLiveMatchBanner" class="hidden bg-gradient-to-r from-teal-900 via-walnut-900 to-indigo-950 text-white rounded-2xl p-2.5 sm:p-3 border border-amber-400/70 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
+                <span id="statsLiveMatchTitle" class="font-extrabold text-[11px] sm:text-xs text-amber-300 truncate">Active Match In Progress</span>
               </div>
-              <div id="statsLiveMatchMetrics" class="font-mono text-[11px] text-parchment-100">Time: 0:00 • Moves: 0 • Eaten: 0</div>
+              <div id="statsLiveMatchMetrics" class="font-mono text-[10px] sm:text-[11px] text-parchment-100">Time: 0:00 • Moves: 0 • Eaten: 0</div>
             </div>
           </div>
 
           <!-- Interactive Date-Range Filter Bar -->
-          <div class="bg-white border-2 border-teal-500/60 rounded-2xl p-3.5 space-y-2.5 shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="bg-white border-2 border-teal-500/60 rounded-2xl p-2.5 sm:p-3.5 space-y-2 sm:space-y-2.5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
               <div class="flex items-center gap-1.5">
                 <span class="text-sm">📅</span>
-                <span class="font-extrabold text-walnut-900 uppercase tracking-wider text-[11px]">Date Range &amp; Period Filter</span>
+                <span class="font-extrabold text-walnut-900 uppercase tracking-wider text-[10.5px] sm:text-[11px]">Date Range &amp; Period Filter</span>
               </div>
-              <span id="statsActiveRangeBadge" class="text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-900 border border-teal-300">All Time</span>
+              <span id="statsActiveRangeBadge" class="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-teal-100 text-teal-900 border border-teal-300 shrink-0">All Time</span>
             </div>
 
-            <div class="flex flex-wrap items-center gap-1.5">
-              <button type="button" data-stats-range="all" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm">All Time</button>
-              <button type="button" data-stats-range="today" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">Today</button>
-              <button type="button" data-stats-range="yesterday" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">Yesterday</button>
-              <button type="button" data-stats-range="7d" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">Last 7 Days</button>
-              <button type="button" data-stats-range="30d" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">Last 30 Days</button>
-              <button type="button" data-stats-range="month" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">This Month</button>
-              <button type="button" data-stats-range="custom" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">Custom Dates...</button>
+            <div class="flex sm:flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar touch-pan-x pb-1 sm:pb-0 -mx-0.5 px-0.5">
+              <button type="button" data-stats-range="all" class="stats-range-chip android-btn shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm">All Time</button>
+              <button type="button" data-stats-range="today" class="stats-range-chip android-btn shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">Today</button>
+              <button type="button" data-stats-range="yesterday" class="stats-range-chip android-btn shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">Yesterday</button>
+              <button type="button" data-stats-range="7d" class="stats-range-chip android-btn shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">Last 7 Days</button>
+              <button type="button" data-stats-range="30d" class="stats-range-chip android-btn shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">Last 30 Days</button>
+              <button type="button" data-stats-range="month" class="stats-range-chip android-btn shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">This Month</button>
+              <button type="button" data-stats-range="custom" class="stats-range-chip android-btn shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">Custom Dates...</button>
             </div>
 
             <div id="statsCustomDateBox" class="hidden pt-2 border-t border-parchment-200 grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
@@ -3191,176 +3230,185 @@
           </div>
 
           <!-- 1. Overall Outcomes, Losses to AI & Quit / Restart Discipline -->
-          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-extrabold uppercase tracking-wider text-walnut-900">1. Match Outcomes, Losses to AI &amp; Quit/Restart Tracker</h3>
-              <span id="stCompletionBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-300">100% Finished</span>
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-3 sm:p-4 space-y-2.5 sm:space-y-3 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <h3 class="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-walnut-900">1. Match Outcomes, AI Losses &amp; Quits</h3>
+              <span id="stCompletionBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-300 shrink-0 whitespace-nowrap">100% Finished</span>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
-                <div class="text-[10px] font-bold text-walnut-600">Started / Finished</div>
-                <div id="stStartedCompleted" class="font-mono text-sm font-black text-walnut-900 mt-0.5">0 / 0</div>
-                <div id="stDrawsSub" class="text-[10px] font-semibold text-walnut-500">0 Draws</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 text-center">
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2 sm:p-2.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-walnut-600 truncate">Started / Finished</div>
+                <div id="stStartedCompleted" class="font-mono text-xs sm:text-sm font-black text-walnut-900 mt-0.5 truncate">0 / 0</div>
+                <div id="stDrawsSub" class="text-[9.5px] sm:text-[10px] font-semibold text-walnut-500 truncate">0 Draws</div>
               </div>
-              <div class="bg-teal-50 border border-teal-200 rounded-xl p-2.5">
-                <div class="text-[10px] font-extrabold text-teal-900">🏆 Total Wins</div>
-                <div id="stTotalWins" class="font-mono text-sm font-black text-teal-700 mt-0.5">0 (0%)</div>
-                <div id="stWinStreakSub" class="text-[10px] font-semibold text-teal-800">Streak: 0 • Best: 0🔥</div>
+              <div class="bg-teal-50 border border-teal-200 rounded-xl p-2 sm:p-2.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-extrabold text-teal-900 truncate">🏆 Total Wins</div>
+                <div id="stTotalWins" class="font-mono text-xs sm:text-sm font-black text-teal-700 mt-0.5 truncate">0 (0%)</div>
+                <div id="stWinStreakSub" class="text-[9.5px] sm:text-[10px] font-semibold text-teal-800 truncate">Streak: 0 • Best: 0🔥</div>
               </div>
-              <div class="bg-rose-50 border border-rose-200 rounded-xl p-2.5">
-                <div class="text-[10px] font-extrabold text-rose-900">💀 Lost to AI / Total</div>
-                <div id="stLossesToAI" class="font-mono text-sm font-black text-rose-700 mt-0.5">0 AI / 0 Tot</div>
-                <div id="stLossHumanSub" class="text-[10px] font-semibold text-rose-800">0 vs Human • Worst: 0</div>
+              <div class="bg-rose-50 border border-rose-200 rounded-xl p-2 sm:p-2.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-extrabold text-rose-900 truncate">💀 Lost to AI / Total</div>
+                <div id="stLossesToAI" class="font-mono text-xs sm:text-sm font-black text-rose-700 mt-0.5 truncate">0 AI / 0 Tot</div>
+                <div id="stLossHumanSub" class="text-[9.5px] sm:text-[10px] font-semibold text-rose-800 truncate">0 vs 2P • Worst: 0</div>
               </div>
-              <div class="bg-amber-50 border border-amber-200 rounded-xl p-2.5">
-                <div class="text-[10px] font-extrabold text-amber-900">🚪 Quits &amp; 🔄 Restarts</div>
-                <div id="stQuitsAndRestarts" class="font-mono text-sm font-black text-amber-800 mt-0.5">0 Q / 0 R</div>
-                <div id="stRageQuitSub" class="text-[10px] font-semibold text-amber-900">0 while trailing • 0 total R</div>
+              <div class="bg-amber-50 border border-amber-200 rounded-xl p-2 sm:p-2.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-extrabold text-amber-900 truncate">🚪 Quits &amp; 🔄 Restarts</div>
+                <div id="stQuitsAndRestarts" class="font-mono text-xs sm:text-sm font-black text-amber-800 mt-0.5 truncate">0 Q / 0 R</div>
+                <div id="stRageQuitSub" class="text-[9.5px] sm:text-[10px] font-semibold text-amber-900 truncate">0 trailing • 0 total R</div>
               </div>
             </div>
           </div>
 
           <!-- 2. Record vs AI by Difficulty & Engine -->
-          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-extrabold uppercase tracking-wider text-indigo-900">2. Record vs AI (Wins, Losses to AI &amp; Quits by Difficulty)</h3>
-              <span id="stAiEngineSummary" class="text-[10px] font-mono font-bold text-indigo-800 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">Built-in &amp; Real AI</span>
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-3 sm:p-4 space-y-2.5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <h3 class="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-indigo-900">2. Record vs AI (By Difficulty)</h3>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="sm:hidden text-[9.5px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded-md">↔ Swipe</span>
+                <span id="stAiEngineSummary" class="text-[9.5px] sm:text-[10px] font-mono font-bold text-indigo-800 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md whitespace-nowrap">Built-in &amp; Real AI</span>
+              </div>
             </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse text-[11px]">
+            <div class="stats-table-scroll rounded-xl border border-parchment-200 sm:border-0">
+              <table class="w-full min-w-[520px] sm:min-w-full text-left border-collapse text-[11px]">
                 <thead>
-                  <tr class="border-b border-parchment-300 text-[10px] uppercase text-walnut-600">
-                    <th class="py-1.5 pr-2">AI Level / Engine</th>
-                    <th class="py-1.5 px-2 text-center">Played</th>
-                    <th class="py-1.5 px-2 text-center text-teal-800">Wins</th>
-                    <th class="py-1.5 px-2 text-center text-rose-700">Lost to AI</th>
-                    <th class="py-1.5 px-2 text-center">Draws</th>
-                    <th class="py-1.5 px-2 text-center text-amber-800">Quit / Restart</th>
-                    <th class="py-1.5 pl-2 text-right">Win %</th>
+                  <tr class="border-b border-parchment-300 text-[10px] uppercase text-walnut-600 bg-parchment-100/90">
+                    <th class="py-2 pl-2.5 pr-2 whitespace-nowrap sticky left-0 z-10 bg-parchment-100">AI Level / Engine</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">Played</th>
+                    <th class="py-2 px-2 text-center text-teal-800 whitespace-nowrap">Wins</th>
+                    <th class="py-2 px-2 text-center text-rose-700 whitespace-nowrap">Lost to AI</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">Draws</th>
+                    <th class="py-2 px-2 text-center text-amber-800 whitespace-nowrap">Quit / Rst</th>
+                    <th class="py-2 pl-2 pr-2.5 text-right whitespace-nowrap">Win %</th>
                   </tr>
                 </thead>
-                <tbody id="stAiDifficultyTableBody" class="divide-y divide-parchment-200 font-mono"></tbody>
+                <tbody id="stAiDifficultyTableBody" class="divide-y divide-parchment-200 font-mono bg-white"></tbody>
               </table>
             </div>
           </div>
 
           <!-- 3. Match Duration & Thinking Time Telemetry -->
-          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-extrabold uppercase tracking-wider text-teal-800">3. Match Duration &amp; Player Thinking Time</h3>
-              <span id="stAvgMoveSpeedBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-teal-50 text-teal-900 border border-teal-200">Avg: 0.0s / move</span>
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-3 sm:p-4 space-y-2.5 sm:space-y-3 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <h3 class="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-teal-800">3. Match Duration &amp; Think Time</h3>
+              <span id="stAvgMoveSpeedBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-teal-50 text-teal-900 border border-teal-200 shrink-0 whitespace-nowrap">Avg: 0.0s / move</span>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
-                <div class="text-[10px] font-bold text-walnut-600">⏱️ Total Play Time</div>
-                <div id="stTotalPlayTime" class="font-mono text-sm font-black text-walnut-900 mt-0.5">0m 0s</div>
-                <div id="stAvgMatchTimeSub" class="text-[10px] font-semibold text-walnut-600">Avg Match: 0m 0s</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 text-center">
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2 sm:p-2.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-walnut-600 truncate">⏱️ Total Play Time</div>
+                <div id="stTotalPlayTime" class="font-mono text-xs sm:text-sm font-black text-walnut-900 mt-0.5 truncate">0m 0s</div>
+                <div id="stAvgMatchTimeSub" class="text-[9.5px] sm:text-[10px] font-semibold text-walnut-600 truncate">Avg Match: 0m 0s</div>
               </div>
-              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
-                <div class="text-[10px] font-bold text-teal-800">🧠 Your Think Time</div>
-                <div id="stUserThinkTime" class="font-mono text-sm font-black text-teal-700 mt-0.5">0m 0s</div>
-                <div id="stOppThinkTimeSub" class="text-[10px] font-semibold text-walnut-600">AI/Opp: 0m 0s</div>
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2 sm:p-2.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-teal-800 truncate">🧠 Your Think Time</div>
+                <div id="stUserThinkTime" class="font-mono text-xs sm:text-sm font-black text-teal-700 mt-0.5 truncate">0m 0s</div>
+                <div id="stOppThinkTimeSub" class="text-[9.5px] sm:text-[10px] font-semibold text-walnut-600 truncate">AI/Opp: 0m 0s</div>
               </div>
-              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
-                <div class="text-[10px] font-bold text-amber-800">⚡ Fastest / Longest Move</div>
-                <div id="stFastestLongestMove" class="font-mono text-sm font-black text-amber-800 mt-0.5">— / —</div>
-                <div id="stAvgMoveTimeSub" class="text-[10px] font-semibold text-walnut-600">Avg Turn: 0.0s</div>
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2 sm:p-2.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-amber-800 truncate">⚡ Fast / Slow Move</div>
+                <div id="stFastestLongestMove" class="font-mono text-xs sm:text-sm font-black text-amber-800 mt-0.5 truncate">— / —</div>
+                <div id="stAvgMoveTimeSub" class="text-[9.5px] sm:text-[10px] font-semibold text-walnut-600 truncate">Avg Turn: 0.0s</div>
               </div>
-              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
-                <div class="text-[10px] font-bold text-indigo-800">🏁 Fastest Win / Longest</div>
-                <div id="stFastestLongestMatch" class="font-mono text-sm font-black text-indigo-800 mt-0.5">— / —</div>
-                <div class="text-[10px] font-semibold text-walnut-600">Match Duration Span</div>
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2 sm:p-2.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-indigo-800 truncate">🏁 Fast Win / Longest</div>
+                <div id="stFastestLongestMatch" class="font-mono text-xs sm:text-sm font-black text-indigo-800 mt-0.5 truncate">— / —</div>
+                <div class="text-[9.5px] sm:text-[10px] font-semibold text-walnut-600 truncate">Match Duration Span</div>
               </div>
             </div>
           </div>
 
           <!-- 4. Bead Movements & Combat Telemetry -->
-          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-extrabold uppercase tracking-wider text-rose-800">4. Bead Movements, Captures &amp; Tactical Details</h3>
-              <span id="stKdRatioBadge" class="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-md bg-rose-50 text-rose-900 border border-rose-200">Eaten/Lost Ratio: 1.00</span>
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-3 sm:p-4 space-y-2.5 sm:space-y-3 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <h3 class="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-rose-800">4. Bead Movements &amp; Combat</h3>
+              <span id="stKdRatioBadge" class="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-md bg-rose-50 text-rose-900 border border-rose-200 shrink-0 whitespace-nowrap">Eaten/Lost Ratio: 1.00</span>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
-                <div class="text-[10px] font-bold text-walnut-600">📿 Total Moves Made</div>
-                <div id="stTotalUserMoves" class="font-mono text-sm font-black text-walnut-900 mt-0.5">0</div>
-                <div id="stOppMovesSub" class="text-[10px] font-semibold text-walnut-600">Opp/AI Moves: 0</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 text-center">
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2 sm:p-2.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-walnut-600 truncate">📿 Total Moves Made</div>
+                <div id="stTotalUserMoves" class="font-mono text-xs sm:text-sm font-black text-walnut-900 mt-0.5 truncate">0</div>
+                <div id="stOppMovesSub" class="text-[9.5px] sm:text-[10px] font-semibold text-walnut-600 truncate">Opp/AI Moves: 0</div>
               </div>
-              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
-                <div class="text-[10px] font-bold text-teal-800">📍 Drops vs ↔️ Slides</div>
-                <div id="stDropsAndSlides" class="font-mono text-sm font-black text-teal-700 mt-0.5">0 / 0</div>
-                <div class="text-[10px] font-semibold text-walnut-600">Placed vs Step Moves</div>
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2 sm:p-2.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-teal-800 truncate">📍 Drops vs ↔️ Slides</div>
+                <div id="stDropsAndSlides" class="font-mono text-xs sm:text-sm font-black text-teal-700 mt-0.5 truncate">0 / 0</div>
+                <div class="text-[9.5px] sm:text-[10px] font-semibold text-walnut-600 truncate">Placed vs Step Moves</div>
               </div>
-              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
-                <div class="text-[10px] font-bold text-amber-800">⚡ Jumps &amp; 🔥 Chains</div>
-                <div id="stJumpsAndChains" class="font-mono text-sm font-black text-amber-800 mt-0.5">0 / 0</div>
-                <div id="stMaxChainSub" class="text-[10px] font-semibold text-amber-900">Max Chain: 0x • Kings: 0👑</div>
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2 sm:p-2.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-amber-800 truncate">⚡ Jumps &amp; 🔥 Chains</div>
+                <div id="stJumpsAndChains" class="font-mono text-xs sm:text-sm font-black text-amber-800 mt-0.5 truncate">0 / 0</div>
+                <div id="stMaxChainSub" class="text-[9.5px] sm:text-[10px] font-semibold text-amber-900 truncate">Max Chain: 0x • Kings: 0👑</div>
               </div>
-              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
-                <div class="text-[10px] font-bold text-rose-800">⚔️ Eaten vs 🛡️ Lost</div>
-                <div id="stEatenVsLost" class="font-mono text-sm font-black text-rose-700 mt-0.5">0 / 0</div>
-                <div id="stMillsAndAssistsSub" class="text-[10px] font-semibold text-walnut-600">Katars: 0 • Undo: 0 • Hint: 0</div>
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2 sm:p-2.5 min-w-0">
+                <div class="text-[9.5px] sm:text-[10px] font-bold text-rose-800 truncate">⚔️ Eaten vs 🛡️ Lost</div>
+                <div id="stEatenVsLost" class="font-mono text-xs sm:text-sm font-black text-rose-700 mt-0.5 truncate">0 / 0</div>
+                <div id="stMillsAndAssistsSub" class="text-[9.5px] sm:text-[10px] font-semibold text-walnut-600 truncate">Katars: 0 • Undo: 0 • Hint: 0</div>
               </div>
             </div>
           </div>
 
           <!-- 5. Date-by-Date Summary Breakdown -->
-          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-extrabold uppercase tracking-wider text-walnut-900">5. Date-by-Date Activity &amp; Summary Table</h3>
-              <span class="text-[10px] font-semibold text-walnut-500">Daily Breakdown</span>
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-3 sm:p-4 space-y-2.5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <h3 class="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-walnut-900">5. Date-by-Date Summary Table</h3>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="sm:hidden text-[9.5px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded-md">↔ Swipe</span>
+                <span class="text-[10px] font-semibold text-walnut-500">Daily Breakdown</span>
+              </div>
             </div>
-            <div class="max-h-48 overflow-y-auto custom-scroll">
-              <table class="w-full text-left border-collapse text-[11px]">
+            <div class="stats-table-scroll max-h-56 rounded-xl border border-parchment-200 sm:border-0">
+              <table class="w-full min-w-[540px] sm:min-w-full text-left border-collapse text-[11px]">
                 <thead>
-                  <tr class="border-b border-parchment-300 text-[10px] uppercase text-walnut-600 sticky top-0 bg-white">
-                    <th class="py-1.5 pr-2">Date</th>
-                    <th class="py-1.5 px-1.5 text-center">Matches</th>
-                    <th class="py-1.5 px-1.5 text-center">W / L (AI) / D</th>
-                    <th class="py-1.5 px-1.5 text-center">Quit / Rst</th>
-                    <th class="py-1.5 px-1.5 text-center">Play Time</th>
-                    <th class="py-1.5 px-1.5 text-center">Moves</th>
-                    <th class="py-1.5 pl-1.5 text-right">Eaten/Lost</th>
+                  <tr class="border-b border-parchment-300 text-[10px] uppercase text-walnut-600 sticky top-0 z-20 bg-parchment-100">
+                    <th class="py-2 pl-2.5 pr-2 whitespace-nowrap sticky left-0 z-30 bg-parchment-100">Date</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">Matches</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">W / L (AI) / D</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">Quit / Rst</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">Play Time</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">Moves</th>
+                    <th class="py-2 pl-2 pr-2.5 text-right whitespace-nowrap">Eaten/Lost</th>
                   </tr>
                 </thead>
-                <tbody id="stDailySummaryTableBody" class="divide-y divide-parchment-200 font-mono"></tbody>
+                <tbody id="stDailySummaryTableBody" class="divide-y divide-parchment-200 font-mono bg-white"></tbody>
               </table>
             </div>
           </div>
 
           <!-- 6. Per-Game Variant Summary -->
-          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-extrabold uppercase tracking-wider text-teal-900">6. Breakdown by Game Variant</h3>
-              <span class="text-[10px] font-semibold text-walnut-500">Performance per Board</span>
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-3 sm:p-4 space-y-2.5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <h3 class="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-teal-900">6. Breakdown by Game Variant</h3>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="sm:hidden text-[9.5px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded-md">↔ Swipe</span>
+                <span class="text-[10px] font-semibold text-walnut-500">Per Board</span>
+              </div>
             </div>
-            <div class="max-h-48 overflow-y-auto custom-scroll">
-              <table class="w-full text-left border-collapse text-[11px]">
+            <div class="stats-table-scroll max-h-56 rounded-xl border border-parchment-200 sm:border-0">
+              <table class="w-full min-w-[540px] sm:min-w-full text-left border-collapse text-[11px]">
                 <thead>
-                  <tr class="border-b border-parchment-300 text-[10px] uppercase text-walnut-600 sticky top-0 bg-white">
-                    <th class="py-1.5 pr-2">Game Board</th>
-                    <th class="py-1.5 px-1.5 text-center">Played</th>
-                    <th class="py-1.5 px-1.5 text-center">W / L (AI)</th>
-                    <th class="py-1.5 px-1.5 text-center">Quit / Rst</th>
-                    <th class="py-1.5 px-1.5 text-center">Time</th>
-                    <th class="py-1.5 px-1.5 text-center">Moves</th>
-                    <th class="py-1.5 pl-1.5 text-right">Eaten/Lost</th>
+                  <tr class="border-b border-parchment-300 text-[10px] uppercase text-walnut-600 sticky top-0 z-20 bg-parchment-100">
+                    <th class="py-2 pl-2.5 pr-2 whitespace-nowrap sticky left-0 z-30 bg-parchment-100">Game Board</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">Played</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">W / L (AI)</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">Quit / Rst</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">Time</th>
+                    <th class="py-2 px-2 text-center whitespace-nowrap">Moves</th>
+                    <th class="py-2 pl-2 pr-2.5 text-right whitespace-nowrap">Eaten/Lost</th>
                   </tr>
                 </thead>
-                <tbody id="stVariantSummaryTableBody" class="divide-y divide-parchment-200 font-mono"></tbody>
+                <tbody id="stVariantSummaryTableBody" class="divide-y divide-parchment-200 font-mono bg-white"></tbody>
               </table>
             </div>
           </div>
 
           <!-- 7. Detailed Match, Quit & Restart Log -->
-          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-extrabold uppercase tracking-wider text-walnut-900">7. Recent Match, Quit &amp; Restart Session Log</h3>
-              <button id="btnResetPlayerAnalytics" type="button" class="android-btn text-[10px] font-bold text-rose-700 hover:underline">Reset Stats</button>
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-3 sm:p-4 space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-walnut-900">7. Recent Match, Quit &amp; Restart Log</h3>
+              <button id="btnResetPlayerAnalytics" type="button" class="android-btn text-[10px] font-bold text-rose-700 hover:underline shrink-0">Reset Stats</button>
             </div>
-            <div id="stRecentSessionsFeed" class="space-y-1.5 max-h-56 overflow-y-auto custom-scroll pr-0.5"></div>
+            <div id="stRecentSessionsFeed" class="space-y-1.5 max-h-60 overflow-y-auto custom-scroll pr-0.5"></div>
           </div>
         </div>
 
@@ -7185,11 +7233,11 @@
           document.querySelectorAll('.stats-range-chip').forEach((btn) => {
             const r = btn.getAttribute('data-stats-range');
             if (r === this.activeFilter) {
-              btn.className = 'stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm';
+              btn.className = 'stats-range-chip android-btn shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm';
             } else {
               btn.className = r === 'custom'
-                ? 'stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300'
-                : 'stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300';
+                ? 'stats-range-chip android-btn shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300'
+                : 'stats-range-chip android-btn shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300';
             }
           });
           const customBox = document.getElementById('statsCustomDateBox');
@@ -7199,15 +7247,15 @@
 
           const compRate = sum.started > 0 ? Math.round((sum.completed / sum.started) * 100) : 100;
           const winRate = sum.completed > 0 ? Math.round((sum.wins / sum.completed) * 100) : 0;
-          setTxt('stCompletionBadge', `${compRate}% Completion Rate`);
+          setTxt('stCompletionBadge', `${compRate}% Finished`);
           setTxt('stStartedCompleted', `${sum.started} / ${sum.completed}`);
           setTxt('stDrawsSub', `${sum.draws} Draw(s)`);
           setTxt('stTotalWins', `${sum.wins} (${winRate}%)`);
           setTxt('stWinStreakSub', `Cur: ${sum.curWinStreak} • Best: ${sum.bestWinStreak}🔥`);
           setTxt('stLossesToAI', `${sum.lossesToAI} AI / ${sum.losses} Tot`);
-          setTxt('stLossHumanSub', `${sum.lossesToHuman} vs 2P • Worst Streak: ${sum.worstLossStreak}`);
+          setTxt('stLossHumanSub', `${sum.lossesToHuman} vs 2P • Worst: ${sum.worstLossStreak}`);
           setTxt('stQuitsAndRestarts', `${sum.quitsMidGame} Q / ${sum.restartsMidGame} R`);
-          setTxt('stRageQuitSub', `${sum.quitsWhileBehind + sum.restartsWhileBehind} while trailing • ${sum.totalRestarts} all restarts`);
+          setTxt('stRageQuitSub', `${sum.quitsWhileBehind + sum.restartsWhileBehind} trailing • ${sum.totalRestarts} all R`);
 
           // AI Difficulty Table
           const aiTbody = document.getElementById('stAiDifficultyTableBody');
@@ -7216,18 +7264,18 @@
               const b = sum.byDiff[k];
               const wr = b.played > 0 ? Math.round((b.wins / b.played) * 100) + '%' : '—';
               return `<tr class="hover:bg-parchment-100/70">
-                <td class="py-1.5 pr-2 font-sans font-extrabold text-walnut-900">${b.label}</td>
-                <td class="py-1.5 px-2 text-center font-bold">${b.played}</td>
-                <td class="py-1.5 px-2 text-center font-extrabold text-teal-700">${b.wins}</td>
-                <td class="py-1.5 px-2 text-center font-extrabold text-rose-600">${b.losses}</td>
-                <td class="py-1.5 px-2 text-center text-walnut-600">${b.draws}</td>
-                <td class="py-1.5 px-2 text-center text-amber-800 font-bold">${b.quits}Q / ${b.restarts}R</td>
-                <td class="py-1.5 pl-2 text-right font-extrabold text-walnut-900">${wr}</td>
+                <td class="py-2 pl-2.5 pr-2 font-sans font-extrabold text-walnut-900 whitespace-nowrap sticky left-0 z-10 bg-white shadow-[1px_0_0_rgba(207,178,138,0.45)] sm:shadow-none">${b.label}</td>
+                <td class="py-2 px-2 text-center font-bold whitespace-nowrap">${b.played}</td>
+                <td class="py-2 px-2 text-center font-extrabold text-teal-700 whitespace-nowrap">${b.wins}</td>
+                <td class="py-2 px-2 text-center font-extrabold text-rose-600 whitespace-nowrap">${b.losses}</td>
+                <td class="py-2 px-2 text-center text-walnut-600 whitespace-nowrap">${b.draws}</td>
+                <td class="py-2 px-2 text-center text-amber-800 font-bold whitespace-nowrap">${b.quits}Q / ${b.restarts}R</td>
+                <td class="py-2 pl-2 pr-2.5 text-right font-extrabold text-walnut-900 whitespace-nowrap">${wr}</td>
               </tr>`;
             });
             aiTbody.innerHTML = rows.join('');
           }
-          setTxt('stAiEngineSummary', `Vs AI: ${sum.winsVsAI}W - ${sum.lossesToAI}L - ${sum.drawsVsAI}D (${sum.quitsVsAI + sum.restartsVsAI} Quit/Rst)`);
+          setTxt('stAiEngineSummary', `Vs AI: ${sum.winsVsAI}W-${sum.lossesToAI}L-${sum.drawsVsAI}D (${sum.quitsVsAI + sum.restartsVsAI} Q/R)`);
 
           // Duration & Think Time
           const avgMatchMs = sum.started > 0 ? Math.round(sum.totalPlayTimeMs / sum.started) : 0;
@@ -7236,21 +7284,21 @@
           setTxt('stTotalPlayTime', this.formatDuration(sum.totalPlayTimeMs));
           setTxt('stAvgMatchTimeSub', `Avg Match: ${this.formatDuration(avgMatchMs)}`);
           setTxt('stUserThinkTime', this.formatDuration(sum.userThinkMs));
-          setTxt('stOppThinkTimeSub', `AI/Opp Think: ${this.formatDuration(sum.oppThinkMs)}`);
+          setTxt('stOppThinkTimeSub', `AI/Opp: ${this.formatDuration(sum.oppThinkMs)}`);
           setTxt('stFastestLongestMove', `${this.formatMoveTime(sum.fastestSingleMoveMs)} / ${this.formatMoveTime(sum.longestSingleThinkMs)}`);
-          setTxt('stAvgMoveTimeSub', `Avg Turn Think: ${this.formatMoveTime(avgMoveMs)}`);
+          setTxt('stAvgMoveTimeSub', `Avg Turn: ${this.formatMoveTime(avgMoveMs)}`);
           setTxt('stFastestLongestMatch', `${sum.fastestWinMs ? this.formatDuration(sum.fastestWinMs, true) : '—'} / ${sum.longestMatchMs ? this.formatDuration(sum.longestMatchMs, true) : '—'}`);
 
           // Bead Movements & Combat
           const kd = sum.beadsLost > 0 ? (sum.beadsEaten / sum.beadsLost).toFixed(2) : (sum.beadsEaten > 0 ? `${sum.beadsEaten}.00` : '1.00');
-          setTxt('stKdRatioBadge', `Eaten/Lost Ratio: ${kd}`);
+          setTxt('stKdRatioBadge', `Eaten/Lost: ${kd}`);
           setTxt('stTotalUserMoves', sum.userMoves.toLocaleString());
           setTxt('stOppMovesSub', `Opp/AI Moves: ${sum.oppMoves.toLocaleString()}`);
           setTxt('stDropsAndSlides', `${sum.drops} / ${sum.steps}`);
           setTxt('stJumpsAndChains', `${sum.jumps} / ${sum.chains}`);
           setTxt('stMaxChainSub', `Max Chain: ${sum.maxChain}x • Kings: ${sum.kings}👑`);
           setTxt('stEatenVsLost', `${sum.beadsEaten} / ${sum.beadsLost}`);
-          setTxt('stMillsAndAssistsSub', `Katars: ${sum.mills} (Opp: ${sum.oppMills}) • Undo: ${sum.undos} • Hint: ${sum.hints}`);
+          setTxt('stMillsAndAssistsSub', `Katars: ${sum.mills} (Opp: ${sum.oppMills}) • U:${sum.undos} H:${sum.hints}`);
 
           // Date-by-Date Table
           const dailyBody = document.getElementById('stDailySummaryTableBody');
@@ -7260,13 +7308,13 @@
               dailyBody.innerHTML = '<tr><td colspan="7" class="py-3 text-center font-sans text-walnut-500 italic">No match sessions recorded in this date range yet.</td></tr>';
             } else {
               dailyBody.innerHTML = dayRows.map((d) => `<tr class="hover:bg-parchment-100/70">
-                <td class="py-1.5 pr-2 font-bold text-walnut-900">${d.dateKey}</td>
-                <td class="py-1.5 px-1.5 text-center font-bold">${d.started}</td>
-                <td class="py-1.5 px-1.5 text-center"><span class="text-teal-700 font-extrabold">${d.wins}W</span> / <span class="text-rose-600 font-extrabold">${d.losses}L (${d.lossesAI} AI)</span> / ${d.draws}D</td>
-                <td class="py-1.5 px-1.5 text-center text-amber-800 font-bold">${d.quits}Q / ${d.restarts}R</td>
-                <td class="py-1.5 px-1.5 text-center text-walnut-700">${this.formatDuration(d.timeMs, true)}</td>
-                <td class="py-1.5 px-1.5 text-center">${d.moves}</td>
-                <td class="py-1.5 pl-1.5 text-right"><span class="text-teal-700 font-bold">${d.eaten}</span> / <span class="text-rose-600">${d.lost}</span></td>
+                <td class="py-2 pl-2.5 pr-2 font-bold text-walnut-900 whitespace-nowrap sticky left-0 z-10 bg-white shadow-[1px_0_0_rgba(207,178,138,0.45)] sm:shadow-none">${d.dateKey}</td>
+                <td class="py-2 px-2 text-center font-bold whitespace-nowrap">${d.started}</td>
+                <td class="py-2 px-2 text-center whitespace-nowrap"><span class="text-teal-700 font-extrabold">${d.wins}W</span> / <span class="text-rose-600 font-extrabold">${d.losses}L (${d.lossesAI} AI)</span> / ${d.draws}D</td>
+                <td class="py-2 px-2 text-center text-amber-800 font-bold whitespace-nowrap">${d.quits}Q / ${d.restarts}R</td>
+                <td class="py-2 px-2 text-center text-walnut-700 whitespace-nowrap">${this.formatDuration(d.timeMs, true)}</td>
+                <td class="py-2 px-2 text-center whitespace-nowrap">${d.moves}</td>
+                <td class="py-2 pl-2 pr-2.5 text-right whitespace-nowrap"><span class="text-teal-700 font-bold">${d.eaten}</span> / <span class="text-rose-600">${d.lost}</span></td>
               </tr>`).join('');
             }
           }
@@ -7279,13 +7327,13 @@
               varBody.innerHTML = '<tr><td colspan="7" class="py-3 text-center font-sans text-walnut-500 italic">No game variants played in this date range yet.</td></tr>';
             } else {
               varBody.innerHTML = varRows.map((v) => `<tr class="hover:bg-parchment-100/70">
-                <td class="py-1.5 pr-2 font-sans font-extrabold text-walnut-900">${v.title}</td>
-                <td class="py-1.5 px-1.5 text-center font-bold">${v.started}</td>
-                <td class="py-1.5 px-1.5 text-center"><span class="text-teal-700 font-extrabold">${v.wins}W</span> / <span class="text-rose-600 font-extrabold">${v.losses}L (${v.lossesAI} AI)</span></td>
-                <td class="py-1.5 px-1.5 text-center text-amber-800 font-bold">${v.quits}Q / ${v.restarts}R</td>
-                <td class="py-1.5 px-1.5 text-center text-walnut-700">${this.formatDuration(v.timeMs, true)}</td>
-                <td class="py-1.5 px-1.5 text-center">${v.moves}</td>
-                <td class="py-1.5 pl-1.5 text-right"><span class="text-teal-700 font-bold">${v.eaten}</span> / <span class="text-rose-600">${v.lost}</span></td>
+                <td class="py-2 pl-2.5 pr-2 font-sans font-extrabold text-walnut-900 whitespace-nowrap sticky left-0 z-10 bg-white shadow-[1px_0_0_rgba(207,178,138,0.45)] sm:shadow-none">${v.title}</td>
+                <td class="py-2 px-2 text-center font-bold whitespace-nowrap">${v.started}</td>
+                <td class="py-2 px-2 text-center whitespace-nowrap"><span class="text-teal-700 font-extrabold">${v.wins}W</span> / <span class="text-rose-600 font-extrabold">${v.losses}L (${v.lossesAI} AI)</span></td>
+                <td class="py-2 px-2 text-center text-amber-800 font-bold whitespace-nowrap">${v.quits}Q / ${v.restarts}R</td>
+                <td class="py-2 px-2 text-center text-walnut-700 whitespace-nowrap">${this.formatDuration(v.timeMs, true)}</td>
+                <td class="py-2 px-2 text-center whitespace-nowrap">${v.moves}</td>
+                <td class="py-2 pl-2 pr-2.5 text-right whitespace-nowrap"><span class="text-teal-700 font-bold">${v.eaten}</span> / <span class="text-rose-600">${v.lost}</span></td>
               </tr>`).join('');
             }
           }
@@ -7319,21 +7367,21 @@
                 }
                 const oppTag = ev.vsAI ? `vs ${ev.aiEngine === 'puter' ? 'Real AI' : ev.aiDiff.toUpperCase() + ' AI'}` : '2P Match';
                 const avgMv = ev.userMoves > 0 ? this.formatMoveTime(Math.round((ev.userThinkMs || 0) / ev.userMoves)) : '—';
-                return `<div class="bg-parchment-100/90 border border-parchment-300 rounded-xl px-2.5 py-1.5 space-y-0.5">
+                return `<div class="bg-parchment-100/90 border border-parchment-300 rounded-xl px-2.5 py-2 space-y-1">
                   <div class="flex items-center justify-between gap-1.5 flex-wrap">
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                      <span class="text-[9.5px] font-extrabold px-1.5 py-0.5 rounded-md border ${badgeCls}">${badgeTxt}</span>
-                      <span class="text-[11px] font-extrabold text-walnut-900">${ev.title || 'Katar'}</span>
-                      <span class="text-[10px] font-semibold text-walnut-600">(${oppTag})</span>
+                    <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                      <span class="text-[9.5px] font-extrabold px-1.5 py-0.5 rounded-md border whitespace-nowrap ${badgeCls}">${badgeTxt}</span>
+                      <span class="text-[11px] font-extrabold text-walnut-900 truncate">${ev.title || 'Katar'}</span>
+                      <span class="text-[10px] font-semibold text-walnut-600 whitespace-nowrap">(${oppTag})</span>
                     </div>
-                    <span class="text-[10px] font-mono text-walnut-500">${timeStr}</span>
+                    <span class="text-[10px] font-mono text-walnut-500 whitespace-nowrap">${timeStr}</span>
                   </div>
-                  <div class="text-[10px] font-mono text-walnut-700 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <span>⏱️ ${this.formatDuration(ev.durationMs)} (Avg ${avgMv}/mv)</span>
-                    <span>•</span>
-                    <span>📿 ${ev.userMoves} mv (${ev.drops}D / ${ev.steps}S / ${ev.jumps}J${ev.mills ? ' / ' + ev.mills + '★' : ''})</span>
-                    <span>•</span>
-                    <span>⚔️ Eaten ${ev.beadsEaten} / Lost ${ev.beadsLost}</span>
+                  <div class="text-[10px] font-mono text-walnut-700 flex flex-wrap items-center gap-x-2 gap-y-0.5 leading-snug">
+                    <span class="whitespace-nowrap">⏱️ ${this.formatDuration(ev.durationMs)} (Avg ${avgMv}/mv)</span>
+                    <span class="hidden sm:inline">•</span>
+                    <span class="whitespace-nowrap">📿 ${ev.userMoves} mv (${ev.drops}D/${ev.steps}S/${ev.jumps}J${ev.mills ? '/' + ev.mills + '★' : ''})</span>
+                    <span class="hidden sm:inline">•</span>
+                    <span class="whitespace-nowrap">⚔️ Eaten ${ev.beadsEaten} / Lost ${ev.beadsLost}</span>
                   </div>
                 </div>`;
               }).join('');
@@ -24895,7 +24943,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=f73d7afaf5', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=630429b021', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
@@ -24997,8 +25045,8 @@
       const panelProfBk = document.getElementById('panelProfileBackup');
 
       function switchProfileModalTab(targetTab) {
-        const activeCls = 'android-btn py-2 px-2 sm:px-3 rounded-xl text-[11px] sm:text-xs font-extrabold bg-teal-600 text-white shadow-sm flex items-center justify-center gap-1';
-        const idleCls = 'android-btn py-2 px-2 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold text-walnut-800 hover:text-walnut-900 flex items-center justify-center gap-1';
+        const activeCls = 'android-btn py-1.5 sm:py-2 px-1 sm:px-3 rounded-xl text-[10px] sm:text-xs font-extrabold bg-teal-600 text-white shadow-sm flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 leading-tight text-center';
+        const idleCls = 'android-btn py-1.5 sm:py-2 px-1 sm:px-3 rounded-xl text-[10px] sm:text-xs font-bold text-walnut-800 hover:text-walnut-900 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 leading-tight text-center';
         if (tabProfId) tabProfId.className = targetTab === 'identity' ? activeCls : idleCls;
         if (tabProfAn) tabProfAn.className = targetTab === 'analytics' ? activeCls : idleCls;
         if (tabProfBk) tabProfBk.className = targetTab === 'backup' ? activeCls : idleCls;
