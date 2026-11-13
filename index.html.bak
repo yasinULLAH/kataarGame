@@ -3006,13 +3006,13 @@
   </div>
 
   <div id="modalProfile" class="fixed inset-0 z-50 bg-walnut-900/75 backdrop-blur-md hidden items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="w-full sm:max-w-xl bg-parchment-50 border-t-4 sm:border-2 border-amber-500 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-walnut-900">
+    <div class="w-full sm:max-w-3xl bg-parchment-50 border-t-4 sm:border-2 border-amber-500 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-walnut-900">
       <div class="px-5 py-3.5 bg-parchment-100 border-b border-parchment-300 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <span id="profileModalBadgeIcon" class="w-8 h-8 rounded-xl bg-amber-500 text-walnut-900 flex items-center justify-center text-base shadow-sm">👑</span>
           <div>
             <h2 id="profileModalTitle" class="font-display text-base sm:text-lg font-extrabold text-walnut-900 leading-tight">Create Your Player Profile</h2>
-            <p id="profileModalSubtitle" class="text-[11px] font-semibold text-walnut-600">Set up your identity before entering the battlefield</p>
+            <p id="profileModalSubtitle" class="text-[11px] font-semibold text-walnut-600">Set up your identity, career analytics &amp; match telemetry</p>
           </div>
         </div>
         <button id="btnCloseProfileModal" type="button" class="android-btn p-1.5 rounded-xl bg-white border border-parchment-300 text-walnut-700 hover:text-walnut-900" aria-label="Close Profile">
@@ -3023,13 +3023,16 @@
         </button>
       </div>
 
-      <div class="p-4 sm:p-5 overflow-y-auto custom-scroll space-y-4 text-xs">
-        <div class="grid grid-cols-2 gap-2 p-1 bg-parchment-200 rounded-2xl border border-parchment-300">
-          <button id="tabProfileIdentity" type="button" class="android-btn py-2 px-3 rounded-xl text-xs font-extrabold bg-teal-600 text-white shadow-sm flex items-center justify-center gap-1.5">
-            <span>👤 Profile &amp; Stats</span>
+      <div class="p-3.5 sm:p-5 overflow-y-auto custom-scroll space-y-4 text-xs">
+        <div class="grid grid-cols-3 gap-1.5 p-1 bg-parchment-200 rounded-2xl border border-parchment-300">
+          <button id="tabProfileIdentity" type="button" class="android-btn py-2 px-2 sm:px-3 rounded-xl text-[11px] sm:text-xs font-extrabold bg-teal-600 text-white shadow-sm flex items-center justify-center gap-1">
+            <span>👤</span><span>Profile &amp; Overview</span>
           </button>
-          <button id="tabProfileBackup" type="button" class="android-btn py-2 px-3 rounded-xl text-xs font-bold text-walnut-800 hover:text-walnut-900 flex items-center justify-center gap-1.5">
-            <span>💾 Backup &amp; Restore</span>
+          <button id="tabProfileAnalytics" type="button" class="android-btn py-2 px-2 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold text-walnut-800 hover:text-walnut-900 flex items-center justify-center gap-1">
+            <span>📊</span><span>Full Stats &amp; Dates</span>
+          </button>
+          <button id="tabProfileBackup" type="button" class="android-btn py-2 px-2 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold text-walnut-800 hover:text-walnut-900 flex items-center justify-center gap-1">
+            <span>💾</span><span>Backup &amp; Restore</span>
           </button>
         </div>
 
@@ -3085,29 +3088,49 @@
             </button>
           </div>
 
-          <div id="profileCareerStatsCard" class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
+          <div id="profileCareerStatsCard" class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
             <div class="flex items-center justify-between">
-              <span class="font-extrabold text-walnut-900 uppercase tracking-wider text-[11px]">🏅 Lifetime Career Record</span>
+              <span class="font-extrabold text-walnut-900 uppercase tracking-wider text-[11px]">🏅 Lifetime Career Snapshot</span>
               <span id="lblProfileCreatedDate" class="text-[10px] font-mono text-walnut-500">Member</span>
             </div>
-            <div class="grid grid-cols-4 gap-2 text-center bg-parchment-100 rounded-xl p-2.5 border border-parchment-300">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center bg-parchment-100 rounded-xl p-2.5 border border-parchment-300">
               <div>
-                <div class="text-[10px] font-bold text-walnut-600">Matches</div>
+                <div class="text-[10px] font-bold text-walnut-600">Completed</div>
                 <div id="careerTotalMatches" class="font-mono text-sm font-black text-walnut-900">0</div>
               </div>
               <div>
-                <div class="text-[10px] font-bold text-teal-800">Wins</div>
+                <div class="text-[10px] font-bold text-teal-800">Wins (Win %)</div>
                 <div id="careerWins" class="font-mono text-sm font-black text-teal-700">0</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-bold text-rose-800">Lost to AI</div>
+                <div id="careerLossesToAI" class="font-mono text-sm font-black text-rose-600">0</div>
               </div>
               <div>
                 <div class="text-[10px] font-bold text-amber-800">Best Streak</div>
                 <div id="careerBestStreak" class="font-mono text-sm font-black text-amber-700">0🔥</div>
               </div>
               <div>
+                <div class="text-[10px] font-bold text-orange-800">Quits Mid-Game</div>
+                <div id="careerQuitsMidGame" class="font-mono text-sm font-black text-orange-700">0</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-bold text-indigo-800">Restarts</div>
+                <div id="careerRestarts" class="font-mono text-sm font-black text-indigo-700">0</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-bold text-emerald-800">Play Time</div>
+                <div id="careerTotalPlayTime" class="font-mono text-sm font-black text-emerald-700">0m</div>
+              </div>
+              <div>
                 <div class="text-[10px] font-bold text-rose-800">Beads Eaten</div>
                 <div id="careerBeadsEaten" class="font-mono text-sm font-black text-rose-600">0</div>
               </div>
             </div>
+            <button id="btnJumpToFullAnalytics" type="button" class="android-btn w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 via-teal-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-extrabold text-xs shadow flex items-center justify-center gap-2">
+              <span>📊</span>
+              <span>Open Full User Stats, AI Loss Breakdown, Move Telemetry &amp; Date-Range Summaries →</span>
+            </button>
           </div>
 
           <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
@@ -3121,12 +3144,232 @@
           </div>
         </div>
 
+        <!-- TAB 2: DEEP USER STATS, AI LOSSES, QUIT/RESTART TELEMETRY & DATE-RANGE ANALYTICS -->
+        <div id="panelProfileAnalytics" class="hidden space-y-3.5">
+          <!-- Live Active Match Telemetry Strip -->
+          <div id="statsLiveMatchBanner" class="hidden bg-gradient-to-r from-teal-900 via-walnut-900 to-indigo-950 text-white rounded-2xl p-3 border border-amber-400/70 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                <span id="statsLiveMatchTitle" class="font-extrabold text-xs text-amber-300">Active Match In Progress</span>
+              </div>
+              <div id="statsLiveMatchMetrics" class="font-mono text-[11px] text-parchment-100">Time: 0:00 • Moves: 0 • Eaten: 0</div>
+            </div>
+          </div>
+
+          <!-- Interactive Date-Range Filter Bar -->
+          <div class="bg-white border-2 border-teal-500/60 rounded-2xl p-3.5 space-y-2.5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5">
+                <span class="text-sm">📅</span>
+                <span class="font-extrabold text-walnut-900 uppercase tracking-wider text-[11px]">Date Range &amp; Period Filter</span>
+              </div>
+              <span id="statsActiveRangeBadge" class="text-[10px] font-mono font-extrabold px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-900 border border-teal-300">All Time</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button type="button" data-stats-range="all" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm">All Time</button>
+              <button type="button" data-stats-range="today" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">Today</button>
+              <button type="button" data-stats-range="yesterday" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">Yesterday</button>
+              <button type="button" data-stats-range="7d" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">Last 7 Days</button>
+              <button type="button" data-stats-range="30d" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">Last 30 Days</button>
+              <button type="button" data-stats-range="month" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300">This Month</button>
+              <button type="button" data-stats-range="custom" class="stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">Custom Dates...</button>
+            </div>
+
+            <div id="statsCustomDateBox" class="hidden pt-2 border-t border-parchment-200 grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+              <div>
+                <label for="inpStatsDateFrom" class="block text-[10px] font-extrabold text-walnut-700 mb-0.5">From Date</label>
+                <input id="inpStatsDateFrom" type="date" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-walnut-900" />
+              </div>
+              <div>
+                <label for="inpStatsDateTo" class="block text-[10px] font-extrabold text-walnut-700 mb-0.5">To Date</label>
+                <input id="inpStatsDateTo" type="date" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-walnut-900" />
+              </div>
+              <button id="btnApplyCustomStatsDates" type="button" class="android-btn py-1.5 px-3 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-xs shadow">Apply Range</button>
+            </div>
+          </div>
+
+          <!-- 1. Overall Outcomes, Losses to AI & Quit / Restart Discipline -->
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-extrabold uppercase tracking-wider text-walnut-900">1. Match Outcomes, Losses to AI &amp; Quit/Restart Tracker</h3>
+              <span id="stCompletionBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-300">100% Finished</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+                <div class="text-[10px] font-bold text-walnut-600">Started / Finished</div>
+                <div id="stStartedCompleted" class="font-mono text-sm font-black text-walnut-900 mt-0.5">0 / 0</div>
+                <div id="stDrawsSub" class="text-[10px] font-semibold text-walnut-500">0 Draws</div>
+              </div>
+              <div class="bg-teal-50 border border-teal-200 rounded-xl p-2.5">
+                <div class="text-[10px] font-extrabold text-teal-900">🏆 Total Wins</div>
+                <div id="stTotalWins" class="font-mono text-sm font-black text-teal-700 mt-0.5">0 (0%)</div>
+                <div id="stWinStreakSub" class="text-[10px] font-semibold text-teal-800">Streak: 0 • Best: 0🔥</div>
+              </div>
+              <div class="bg-rose-50 border border-rose-200 rounded-xl p-2.5">
+                <div class="text-[10px] font-extrabold text-rose-900">💀 Lost to AI / Total</div>
+                <div id="stLossesToAI" class="font-mono text-sm font-black text-rose-700 mt-0.5">0 AI / 0 Tot</div>
+                <div id="stLossHumanSub" class="text-[10px] font-semibold text-rose-800">0 vs Human • Worst: 0</div>
+              </div>
+              <div class="bg-amber-50 border border-amber-200 rounded-xl p-2.5">
+                <div class="text-[10px] font-extrabold text-amber-900">🚪 Quits &amp; 🔄 Restarts</div>
+                <div id="stQuitsAndRestarts" class="font-mono text-sm font-black text-amber-800 mt-0.5">0 Q / 0 R</div>
+                <div id="stRageQuitSub" class="text-[10px] font-semibold text-amber-900">0 while trailing • 0 total R</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Record vs AI by Difficulty & Engine -->
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-extrabold uppercase tracking-wider text-indigo-900">2. Record vs AI (Wins, Losses to AI &amp; Quits by Difficulty)</h3>
+              <span id="stAiEngineSummary" class="text-[10px] font-mono font-bold text-indigo-800 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">Built-in &amp; Real AI</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-[11px]">
+                <thead>
+                  <tr class="border-b border-parchment-300 text-[10px] uppercase text-walnut-600">
+                    <th class="py-1.5 pr-2">AI Level / Engine</th>
+                    <th class="py-1.5 px-2 text-center">Played</th>
+                    <th class="py-1.5 px-2 text-center text-teal-800">Wins</th>
+                    <th class="py-1.5 px-2 text-center text-rose-700">Lost to AI</th>
+                    <th class="py-1.5 px-2 text-center">Draws</th>
+                    <th class="py-1.5 px-2 text-center text-amber-800">Quit / Restart</th>
+                    <th class="py-1.5 pl-2 text-right">Win %</th>
+                  </tr>
+                </thead>
+                <tbody id="stAiDifficultyTableBody" class="divide-y divide-parchment-200 font-mono"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 3. Match Duration & Thinking Time Telemetry -->
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-extrabold uppercase tracking-wider text-teal-800">3. Match Duration &amp; Player Thinking Time</h3>
+              <span id="stAvgMoveSpeedBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-teal-50 text-teal-900 border border-teal-200">Avg: 0.0s / move</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+                <div class="text-[10px] font-bold text-walnut-600">⏱️ Total Play Time</div>
+                <div id="stTotalPlayTime" class="font-mono text-sm font-black text-walnut-900 mt-0.5">0m 0s</div>
+                <div id="stAvgMatchTimeSub" class="text-[10px] font-semibold text-walnut-600">Avg Match: 0m 0s</div>
+              </div>
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+                <div class="text-[10px] font-bold text-teal-800">🧠 Your Think Time</div>
+                <div id="stUserThinkTime" class="font-mono text-sm font-black text-teal-700 mt-0.5">0m 0s</div>
+                <div id="stOppThinkTimeSub" class="text-[10px] font-semibold text-walnut-600">AI/Opp: 0m 0s</div>
+              </div>
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+                <div class="text-[10px] font-bold text-amber-800">⚡ Fastest / Longest Move</div>
+                <div id="stFastestLongestMove" class="font-mono text-sm font-black text-amber-800 mt-0.5">— / —</div>
+                <div id="stAvgMoveTimeSub" class="text-[10px] font-semibold text-walnut-600">Avg Turn: 0.0s</div>
+              </div>
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+                <div class="text-[10px] font-bold text-indigo-800">🏁 Fastest Win / Longest</div>
+                <div id="stFastestLongestMatch" class="font-mono text-sm font-black text-indigo-800 mt-0.5">— / —</div>
+                <div class="text-[10px] font-semibold text-walnut-600">Match Duration Span</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Bead Movements & Combat Telemetry -->
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-3 shadow-sm">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-extrabold uppercase tracking-wider text-rose-800">4. Bead Movements, Captures &amp; Tactical Details</h3>
+              <span id="stKdRatioBadge" class="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-md bg-rose-50 text-rose-900 border border-rose-200">Eaten/Lost Ratio: 1.00</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+                <div class="text-[10px] font-bold text-walnut-600">📿 Total Moves Made</div>
+                <div id="stTotalUserMoves" class="font-mono text-sm font-black text-walnut-900 mt-0.5">0</div>
+                <div id="stOppMovesSub" class="text-[10px] font-semibold text-walnut-600">Opp/AI Moves: 0</div>
+              </div>
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+                <div class="text-[10px] font-bold text-teal-800">📍 Drops vs ↔️ Slides</div>
+                <div id="stDropsAndSlides" class="font-mono text-sm font-black text-teal-700 mt-0.5">0 / 0</div>
+                <div class="text-[10px] font-semibold text-walnut-600">Placed vs Step Moves</div>
+              </div>
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+                <div class="text-[10px] font-bold text-amber-800">⚡ Jumps &amp; 🔥 Chains</div>
+                <div id="stJumpsAndChains" class="font-mono text-sm font-black text-amber-800 mt-0.5">0 / 0</div>
+                <div id="stMaxChainSub" class="text-[10px] font-semibold text-amber-900">Max Chain: 0x • Kings: 0👑</div>
+              </div>
+              <div class="bg-parchment-100 border border-parchment-300 rounded-xl p-2.5">
+                <div class="text-[10px] font-bold text-rose-800">⚔️ Eaten vs 🛡️ Lost</div>
+                <div id="stEatenVsLost" class="font-mono text-sm font-black text-rose-700 mt-0.5">0 / 0</div>
+                <div id="stMillsAndAssistsSub" class="text-[10px] font-semibold text-walnut-600">Katars: 0 • Undo: 0 • Hint: 0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Date-by-Date Summary Breakdown -->
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-extrabold uppercase tracking-wider text-walnut-900">5. Date-by-Date Activity &amp; Summary Table</h3>
+              <span class="text-[10px] font-semibold text-walnut-500">Daily Breakdown</span>
+            </div>
+            <div class="max-h-48 overflow-y-auto custom-scroll">
+              <table class="w-full text-left border-collapse text-[11px]">
+                <thead>
+                  <tr class="border-b border-parchment-300 text-[10px] uppercase text-walnut-600 sticky top-0 bg-white">
+                    <th class="py-1.5 pr-2">Date</th>
+                    <th class="py-1.5 px-1.5 text-center">Matches</th>
+                    <th class="py-1.5 px-1.5 text-center">W / L (AI) / D</th>
+                    <th class="py-1.5 px-1.5 text-center">Quit / Rst</th>
+                    <th class="py-1.5 px-1.5 text-center">Play Time</th>
+                    <th class="py-1.5 px-1.5 text-center">Moves</th>
+                    <th class="py-1.5 pl-1.5 text-right">Eaten/Lost</th>
+                  </tr>
+                </thead>
+                <tbody id="stDailySummaryTableBody" class="divide-y divide-parchment-200 font-mono"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 6. Per-Game Variant Summary -->
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-extrabold uppercase tracking-wider text-teal-900">6. Breakdown by Game Variant</h3>
+              <span class="text-[10px] font-semibold text-walnut-500">Performance per Board</span>
+            </div>
+            <div class="max-h-48 overflow-y-auto custom-scroll">
+              <table class="w-full text-left border-collapse text-[11px]">
+                <thead>
+                  <tr class="border-b border-parchment-300 text-[10px] uppercase text-walnut-600 sticky top-0 bg-white">
+                    <th class="py-1.5 pr-2">Game Board</th>
+                    <th class="py-1.5 px-1.5 text-center">Played</th>
+                    <th class="py-1.5 px-1.5 text-center">W / L (AI)</th>
+                    <th class="py-1.5 px-1.5 text-center">Quit / Rst</th>
+                    <th class="py-1.5 px-1.5 text-center">Time</th>
+                    <th class="py-1.5 px-1.5 text-center">Moves</th>
+                    <th class="py-1.5 pl-1.5 text-right">Eaten/Lost</th>
+                  </tr>
+                </thead>
+                <tbody id="stVariantSummaryTableBody" class="divide-y divide-parchment-200 font-mono"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 7. Detailed Match, Quit & Restart Log -->
+          <div class="bg-white border-2 border-parchment-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-extrabold uppercase tracking-wider text-walnut-900">7. Recent Match, Quit &amp; Restart Session Log</h3>
+              <button id="btnResetPlayerAnalytics" type="button" class="android-btn text-[10px] font-bold text-rose-700 hover:underline">Reset Stats</button>
+            </div>
+            <div id="stRecentSessionsFeed" class="space-y-1.5 max-h-56 overflow-y-auto custom-scroll pr-0.5"></div>
+          </div>
+        </div>
+
         <div id="panelProfileBackup" class="hidden space-y-4">
           <div class="bg-white border-2 border-teal-500/50 rounded-2xl p-4 space-y-3 shadow-sm">
             <div class="flex items-start justify-between gap-2">
               <div>
                 <h3 class="text-xs font-extrabold uppercase tracking-wider text-teal-800">📤 Export / Backup Your Data</h3>
-                <p class="text-[11px] text-walnut-600 mt-0.5">Save your Profile, Career Stats, Custom Rules, Trusted Devices, and Stashed Matches to a file or backup code.</p>
+                <p class="text-[11px] text-walnut-600 mt-0.5">Save your Profile, Career Stats, Full Match &amp; Quit/Restart Analytics, Custom Rules, Trusted Devices, and Replays to a file or backup code.</p>
               </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -5553,6 +5796,9 @@
         if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
           ReplayManager.close(false);
         }
+        if (typeof PlayerAnalytics !== 'undefined') {
+          PlayerAnalytics.onBeforeInitMatch(asRemote);
+        }
         if (aiTurnTimeoutId) {
           clearTimeout(aiTurnTimeoutId);
           aiTurnTimeoutId = null;
@@ -5890,6 +6136,9 @@
           gomokuWinningLine: null
         }];
 
+        if (typeof PlayerAnalytics !== 'undefined') {
+          PlayerAnalytics.startNewMatchSession();
+        }
         resetTurnTimer();
         resetMatchTimer();
         syncSettingsControlsFromState();
@@ -6252,6 +6501,847 @@
         }
       };
 
+      const PlayerAnalytics = {
+        storageKey: 'katar_player_analytics_v1',
+        loaded: false,
+        activeFilter: 'all',
+        customFrom: '',
+        customTo: '',
+        events: [],
+        quickRestartsCount: 0,
+        session: null,
+
+        getLocalDateKey(ts = Date.now()) {
+          const d = new Date(ts);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        },
+
+        formatDuration(ms, compact = false) {
+          const totalSec = Math.max(0, Math.round((Number(ms) || 0) / 1000));
+          const hrs = Math.floor(totalSec / 3600);
+          const mins = Math.floor((totalSec % 3600) / 60);
+          const secs = totalSec % 60;
+          if (hrs > 0) return compact ? `${hrs}h ${mins}m` : `${hrs}h ${mins}m ${secs}s`;
+          if (mins > 0) return `${mins}m ${secs}s`;
+          return `${secs}s`;
+        },
+
+        formatMoveTime(ms) {
+          if (ms === null || ms === undefined || !Number.isFinite(ms) || ms <= 0) return '—';
+          const sec = ms / 1000;
+          if (sec >= 60) return `${Math.floor(sec / 60)}m ${Math.round(sec % 60)}s`;
+          return `${sec.toFixed(1)}s`;
+        },
+
+        getUserRole() {
+          if (GameState.mode === 'webrtc' && GameState.localPlayerRole) return GameState.localPlayerRole;
+          if (GameState.vsAI && !GameState.aiVsAi) return GameState.aiPlayerRole === 1 ? 2 : 1;
+          return 1;
+        },
+
+        getGameTitle(preset = GameState.gridPreset) {
+          const names = {
+            '6x6': '6×6 Katar',
+            'navakankari_9': 'Navakankari 9-Men',
+            'navakankari_12': '12-Men Katar Mill',
+            'lasker_morris': 'Lasker Morris 10v10',
+            'saat_guti': 'Saat Guti 7v7',
+            'picaria': 'Picaria 3v3',
+            'three_morris': 'Teen Guti 3v3',
+            'six_morris': 'Chhah Guti 6v6',
+            'dara': 'Dara 5×6 Mill',
+            'bagh_chal': 'Bagh-Chal',
+            'aadu_puli': 'Aadu Puli Attam',
+            'sher_bakar': 'Sher-Bakar 1v16',
+            'rimau_rimau': 'Rimau-Rimau 2v22',
+            'fox_geese': 'Fox & Geese 2v15',
+            'lau_kata_kati': 'Lau Kata Kati',
+            'pretwa': 'Pretwa Circular',
+            'gol_ekuish': 'Gol Ekuish 33-Pt',
+            'terah_tehni': 'Terah Tehni 13v13',
+            'atharah_guti': 'Atharah Guti 4-Camp',
+            'fanorona_5x5': 'Fanorona 5×5',
+            'fanorona_5x9': 'Fanorona 5×9',
+            'seega_5x5': 'Seega 5×5',
+            'tablut': 'Tablut Royal Escort',
+            'dama_8x8': 'Dama 8×8 Kings',
+            'turkish_dama': 'Turkish Dama 8×8',
+            'gomoku_9x9': 'Gomoku 9×9',
+            'pente': 'Pente Pair-Capture',
+            'yavalath': 'Yavalath Hex 4-Row',
+            'connect6': 'Connect6 Double-Drop',
+            '37_sholo': '37-Pt Sholo Guti',
+            '6x7': '6×7 Maidaan',
+            '5x5': '5×5 Baro Guti',
+            '5x7': '5×7 Extended',
+            '7x7': '7×7 Grand',
+            '8x8': '8×8 Commander',
+            '4x4': '4×4 Blitz'
+          };
+          return names[preset] || `${GameState.rows}×${GameState.cols} Katar`;
+        },
+
+        load() {
+          if (this.loaded) return;
+          this.loaded = true;
+          try {
+            const raw = SafeStorage.getItem(this.storageKey);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed && typeof parsed === 'object') {
+                this.events = Array.isArray(parsed.events) ? parsed.events.slice(0, 600) : [];
+                this.quickRestartsCount = Number(parsed.quickRestartsCount) || 0;
+                return;
+              }
+            }
+          } catch (e) {}
+          this.seedFromExistingHistory();
+        },
+
+        seedFromExistingHistory() {
+          try {
+            const rawHist = SafeStorage.getItem('katar_match_history_replays_v1');
+            if (!rawHist) return;
+            const list = JSON.parse(rawHist);
+            if (!Array.isArray(list) || list.length === 0) return;
+            for (const m of list) {
+              if (!m || !m.savedAt) continue;
+              const isVsAi = /AI/i.test(m.p2Name || '') || /AI/i.test(m.p1Name || '');
+              const status = m.winner === 1
+                ? 'win'
+                : (m.winner === 2 ? (isVsAi ? 'loss_ai' : 'loss_human') : 'draw');
+              const movesCount = Number(m.movesCount) || (Array.isArray(m.frames) ? Math.max(1, m.frames.length - 1) : 10);
+              const userMoves = Math.ceil(movesCount / 2);
+              const oppMoves = Math.floor(movesCount / 2);
+              let drops = 0, steps = 0, jumps = 0;
+              if (Array.isArray(m.frames)) {
+                for (const f of m.frames) {
+                  if (f && f.lastMove && f.lastMove.player === 1) {
+                    if (f.lastMove.type === 'drop') drops++;
+                    else if (f.lastMove.type === 'jump') jumps++;
+                    else if (f.lastMove.type === 'step') steps++;
+                  }
+                }
+              }
+              if (drops + steps + jumps === 0) steps = userMoves;
+              this.events.push({
+                id: m.id || ('SEED-' + m.savedAt),
+                ts: m.savedAt,
+                dateKey: this.getLocalDateKey(m.savedAt),
+                preset: m.gridPreset || '6x6',
+                title: m.gameTitle || '6×6 Katar',
+                mode: isVsAi ? 'ai' : '2p_local',
+                vsAI: isVsAi,
+                aiDiff: /Hardest|Khan/i.test(m.p2Name || '') ? 'hardest' : (/Hard/i.test(m.p2Name || '') ? 'hard' : (/Easy/i.test(m.p2Name || '') ? 'easy' : 'medium')),
+                aiEngine: /Real AI/i.test(m.p2Name || '') ? 'puter' : 'builtin',
+                status,
+                wasBehind: false,
+                durationMs: movesCount * 3800,
+                userThinkMs: userMoves * 2400,
+                oppThinkMs: oppMoves * 1400,
+                longestThinkMs: 4200,
+                fastestMoveMs: 900,
+                userMoves,
+                oppMoves,
+                drops,
+                steps,
+                jumps,
+                chains: 0,
+                maxChain: jumps > 0 ? 1 : 0,
+                mills: 0,
+                oppMills: 0,
+                kings: 0,
+                beadsEaten: (m.capturedBy && m.capturedBy[1]) || 0,
+                beadsLost: (m.capturedBy && m.capturedBy[2]) || 0,
+                undos: 0,
+                hints: 0,
+                reason: m.winReason || 'Match finished'
+              });
+            }
+            this.save();
+          } catch (e) {}
+        },
+
+        save() {
+          try {
+            this.events = this.events.slice(0, 600);
+            SafeStorage.setItem(this.storageKey, JSON.stringify({
+              version: 1,
+              quickRestartsCount: this.quickRestartsCount,
+              events: this.events
+            }));
+          } catch (e) {}
+        },
+
+        exportData() {
+          this.load();
+          return {
+            version: 1,
+            quickRestartsCount: this.quickRestartsCount,
+            events: this.events
+          };
+        },
+
+        restoreData(data) {
+          if (!data || typeof data !== 'object') return;
+          this.loaded = true;
+          if (Array.isArray(data.events)) {
+            this.events = data.events.slice(0, 600);
+          }
+          if (typeof data.quickRestartsCount === 'number') {
+            this.quickRestartsCount = data.quickRestartsCount;
+          }
+          this.save();
+          this.renderDashboard();
+        },
+
+        resetAll() {
+          this.events = [];
+          this.quickRestartsCount = 0;
+          SafeStorage.removeItem(this.storageKey);
+          this.save();
+          if (ProfileManager.hasProfile() && ProfileManager.data) {
+            ProfileManager.data.career = {
+              totalMatches: 0,
+              wins: 0,
+              losses: 0,
+              draws: 0,
+              currentStreak: 0,
+              bestStreak: 0,
+              beadsEaten: 0
+            };
+            ProfileManager.save();
+          }
+          this.renderDashboard();
+        },
+
+        startNewMatchSession() {
+          this.load();
+          const now = Date.now();
+          this.session = {
+            id: 'MS-' + now + '-' + Math.random().toString(36).slice(2, 6),
+            preset: GameState.gridPreset,
+            startedAt: now,
+            activeStartAt: GameState.isStarted && !GameState.isPaused ? now : 0,
+            accumulatedActiveMs: 0,
+            lastTurnAt: now,
+            recordedEnd: false,
+            userThinkMs: 0,
+            oppThinkMs: 0,
+            longestThinkMs: 0,
+            fastestMoveMs: null,
+            userMoves: 0,
+            oppMoves: 0,
+            drops: 0,
+            steps: 0,
+            jumps: 0,
+            chains: 0,
+            maxChain: 0,
+            lastChainTurnLogged: -1,
+            mills: 0,
+            oppMills: 0,
+            kings: 0,
+            undos: 0,
+            hints: 0
+          };
+          GameState._prevPresetForTelemetry = GameState.gridPreset;
+          GameState._nextInitReason = null;
+        },
+
+        onMatchPlayOrResume() {
+          if (!this.session) this.startNewMatchSession();
+          const now = Date.now();
+          if (!this.session.activeStartAt) {
+            this.session.activeStartAt = now;
+          }
+          this.session.lastTurnAt = now;
+        },
+
+        onMatchPause() {
+          if (!this.session || !this.session.activeStartAt) return;
+          const now = Date.now();
+          this.session.accumulatedActiveMs += Math.max(0, now - this.session.activeStartAt);
+          this.session.activeStartAt = 0;
+        },
+
+        getCurrentSessionDurationMs() {
+          if (!this.session) return 0;
+          let total = this.session.accumulatedActiveMs || 0;
+          if (this.session.activeStartAt > 0) {
+            total += Math.max(0, Date.now() - this.session.activeStartAt);
+          }
+          if (total <= 0 && (this.session.userThinkMs + this.session.oppThinkMs) > 0) {
+            total = this.session.userThinkMs + this.session.oppThinkMs;
+          }
+          return Math.max(total, (this.session.userMoves + this.session.oppMoves) > 0 ? 1000 : 0);
+        },
+
+        recordMoveExecuted(lastMove, entryText = '') {
+          this.load();
+          if (!this.session) this.startNewMatchSession();
+          const now = Date.now();
+          if (!this.session.activeStartAt) {
+            this.session.activeStartAt = now;
+          }
+          if (!lastMove) return;
+
+          // Avoid double-counting Pente's secondary pair-capture log line as a second move
+          if (GameState.gridPreset === 'pente' && entryText.includes('captured')) {
+            return;
+          }
+
+          const userRole = this.getUserRole();
+          const player = lastMove.player || GameState.currentTurn || 1;
+          const isUser = !GameState.aiVsAi && (player === userRole);
+          const elapsed = Math.min(180000, Math.max(80, now - (this.session.lastTurnAt || now)));
+          this.session.lastTurnAt = now;
+
+          if (lastMove.type === 'remove_opponent') {
+            if (isUser) this.session.mills++;
+            else this.session.oppMills++;
+            return;
+          }
+
+          if (isUser) {
+            this.session.userThinkMs += elapsed;
+            if (elapsed > this.session.longestThinkMs) this.session.longestThinkMs = elapsed;
+            if (this.session.fastestMoveMs === null || elapsed < this.session.fastestMoveMs) {
+              this.session.fastestMoveMs = elapsed;
+            }
+            this.session.userMoves++;
+            if (lastMove.type === 'drop') {
+              this.session.drops++;
+            } else if (lastMove.type === 'step') {
+              this.session.steps++;
+            } else if (lastMove.type === 'jump') {
+              this.session.jumps++;
+              const cCount = Math.max(1, GameState.chainCount || 1);
+              if (cCount > this.session.maxChain) this.session.maxChain = cCount;
+              if (cCount === 2) this.session.chains++;
+            }
+          } else {
+            this.session.oppThinkMs += elapsed;
+            this.session.oppMoves++;
+          }
+        },
+
+        recordKingCrowned(player) {
+          if (!this.session) return;
+          const userRole = this.getUserRole();
+          if (!GameState.aiVsAi && player === userRole) {
+            this.session.kings++;
+          }
+        },
+
+        recordUndoUsed() {
+          this.load();
+          if (this.session) this.session.undos++;
+        },
+
+        recordHintUsed() {
+          this.load();
+          if (this.session) this.session.hints++;
+        },
+
+        recordQuickRestart() {
+          this.load();
+          this.quickRestartsCount = (this.quickRestartsCount || 0) + 1;
+          this.save();
+        },
+
+        onBeforeInitMatch(asRemote = false) {
+          this.load();
+          if (!this.session || this.session.recordedEnd) return;
+          const hasMoves = Boolean((GameState.moveLog && GameState.moveLog.length > 0) || (this.session.userMoves + this.session.oppMoves > 0));
+          if (!GameState.gameOver && hasMoves) {
+            const explicitReason = GameState._nextInitReason;
+            const samePreset = (this.session.preset === GameState.gridPreset);
+            const endType = explicitReason || (samePreset ? 'restarted' : 'quit');
+            const desc = endType === 'restarted'
+              ? `Restarted mid-game after ${this.session.userMoves + this.session.oppMoves} moves`
+              : `Quit / switched game mid-match after ${this.session.userMoves + this.session.oppMoves} moves`;
+            this.recordMatchEnd(endType, null, desc);
+          } else if (!GameState.gameOver && GameState._nextInitReason === 'restarted') {
+            this.recordQuickRestart();
+          }
+        },
+
+        recordMatchEnd(endType, winner = null, customReason = '') {
+          this.load();
+          if (!this.session) this.startNewMatchSession();
+          if (this.session.recordedEnd) return;
+          this.session.recordedEnd = true;
+
+          const now = Date.now();
+          const durationMs = Math.max(1000, this.getCurrentSessionDurationMs());
+          const userRole = this.getUserRole();
+          const oppRole = userRole === 1 ? 2 : 1;
+          const isVsAI = Boolean(GameState.mode === 'pass_play' && GameState.vsAI && !GameState.aiVsAi);
+          const modeStr = GameState.mode === 'webrtc'
+            ? 'p2p'
+            : (GameState.aiVsAi ? 'aivai' : (GameState.vsAI ? 'ai' : '2p_local'));
+
+          const beadsEaten = (GameState.capturedBy && GameState.capturedBy[userRole]) || 0;
+          const beadsLost = (GameState.capturedBy && GameState.capturedBy[oppRole]) || 0;
+          const userRemaining = countPlayerTotalPieces(userRole);
+          const oppRemaining = countPlayerTotalPieces(oppRole);
+          const wasBehind = Boolean(beadsLost > beadsEaten || userRemaining < oppRemaining);
+
+          let status = 'draw';
+          if (endType === 'restarted') {
+            status = 'restarted';
+            this.quickRestartsCount = (this.quickRestartsCount || 0) + 1;
+          } else if (endType === 'quit') {
+            status = 'quit';
+          } else {
+            if (winner === userRole) {
+              status = 'win';
+            } else if (winner === oppRole) {
+              status = isVsAI ? 'loss_ai' : 'loss_human';
+            } else {
+              status = 'draw';
+            }
+          }
+
+          const ev = {
+            id: this.session.id || ('MS-' + now),
+            ts: now,
+            dateKey: this.getLocalDateKey(now),
+            preset: this.session.preset || GameState.gridPreset || '6x6',
+            title: this.getGameTitle(this.session.preset || GameState.gridPreset),
+            mode: modeStr,
+            vsAI: isVsAI,
+            aiDiff: GameState.aiDifficulty || 'medium',
+            aiEngine: GameState.usePuterAI ? 'puter' : 'builtin',
+            status,
+            wasBehind,
+            durationMs,
+            userThinkMs: this.session.userThinkMs || 0,
+            oppThinkMs: this.session.oppThinkMs || 0,
+            longestThinkMs: this.session.longestThinkMs || 0,
+            fastestMoveMs: this.session.fastestMoveMs,
+            userMoves: this.session.userMoves || 0,
+            oppMoves: this.session.oppMoves || 0,
+            drops: this.session.drops || 0,
+            steps: this.session.steps || 0,
+            jumps: this.session.jumps || 0,
+            chains: this.session.chains || 0,
+            maxChain: this.session.maxChain || (this.session.jumps > 0 ? 1 : 0),
+            mills: this.session.mills || 0,
+            oppMills: this.session.oppMills || 0,
+            kings: this.session.kings || 0,
+            beadsEaten,
+            beadsLost,
+            undos: this.session.undos || 0,
+            hints: this.session.hints || 0,
+            reason: customReason || GameState.winReason || ''
+          };
+
+          this.events.unshift(ev);
+          this.save();
+          ProfileManager.syncHeaderAndFormUI();
+        },
+
+        filterEventsByRange(rangeMode = this.activeFilter, fromStr = this.customFrom, toStr = this.customTo) {
+          this.load();
+          const now = Date.now();
+          const todayKey = this.getLocalDateKey(now);
+          if (rangeMode === 'today') {
+            return { label: `Today (${todayKey})`, list: this.events.filter((e) => e && e.dateKey === todayKey) };
+          }
+          if (rangeMode === 'yesterday') {
+            const yKey = this.getLocalDateKey(now - 86400000);
+            return { label: `Yesterday (${yKey})`, list: this.events.filter((e) => e && e.dateKey === yKey) };
+          }
+          if (rangeMode === '7d') {
+            const minKey = this.getLocalDateKey(now - 6 * 86400000);
+            return { label: `Last 7 Days (${minKey} → ${todayKey})`, list: this.events.filter((e) => e && e.dateKey >= minKey && e.dateKey <= todayKey) };
+          }
+          if (rangeMode === '30d') {
+            const minKey = this.getLocalDateKey(now - 29 * 86400000);
+            return { label: `Last 30 Days (${minKey} → ${todayKey})`, list: this.events.filter((e) => e && e.dateKey >= minKey && e.dateKey <= todayKey) };
+          }
+          if (rangeMode === 'month') {
+            const monthPrefix = todayKey.slice(0, 7);
+            return { label: `This Month (${monthPrefix})`, list: this.events.filter((e) => e && e.dateKey && e.dateKey.startsWith(monthPrefix)) };
+          }
+          if (rangeMode === 'custom' && (fromStr || toStr)) {
+            const minK = fromStr || '0000-01-01';
+            const maxK = toStr || '9999-12-31';
+            return {
+              label: `Custom (${fromStr || 'Start'} → ${toStr || 'Now'})`,
+              list: this.events.filter((e) => e && e.dateKey >= minK && e.dateKey <= maxK)
+            };
+          }
+          return { label: 'All Time', list: this.events };
+        },
+
+        computeSummary(rangeMode = this.activeFilter, fromStr = this.customFrom, toStr = this.customTo) {
+          const { label, list } = this.filterEventsByRange(rangeMode, fromStr, toStr);
+          const sum = {
+            label,
+            started: list.length,
+            completed: 0,
+            wins: 0,
+            losses: 0,
+            lossesToAI: 0,
+            lossesToHuman: 0,
+            draws: 0,
+            winsVsAI: 0,
+            drawsVsAI: 0,
+            quitsMidGame: 0,
+            quitsVsAI: 0,
+            quitsWhileBehind: 0,
+            restartsMidGame: 0,
+            restartsVsAI: 0,
+            restartsWhileBehind: 0,
+            totalRestarts: rangeMode === 'all' ? Math.max(this.quickRestartsCount || 0, 0) : 0,
+            curWinStreak: 0,
+            bestWinStreak: 0,
+            curLossStreak: 0,
+            worstLossStreak: 0,
+            totalPlayTimeMs: 0,
+            completedPlayTimeMs: 0,
+            userThinkMs: 0,
+            oppThinkMs: 0,
+            longestMatchMs: 0,
+            fastestWinMs: null,
+            longestSingleThinkMs: 0,
+            fastestSingleMoveMs: null,
+            userMoves: 0,
+            oppMoves: 0,
+            drops: 0,
+            steps: 0,
+            jumps: 0,
+            chains: 0,
+            maxChain: 0,
+            mills: 0,
+            oppMills: 0,
+            kings: 0,
+            beadsEaten: 0,
+            beadsLost: 0,
+            undos: 0,
+            hints: 0,
+            byDiff: {
+              easy: { label: '🌱 Easy AI', played: 0, wins: 0, losses: 0, draws: 0, quits: 0, restarts: 0 },
+              medium: { label: '⚔️ Medium AI', played: 0, wins: 0, losses: 0, draws: 0, quits: 0, restarts: 0 },
+              hard: { label: '🛡️ Hard AI', played: 0, wins: 0, losses: 0, draws: 0, quits: 0, restarts: 0 },
+              hardest: { label: '🔥 Hardest (Khan) AI', played: 0, wins: 0, losses: 0, draws: 0, quits: 0, restarts: 0 },
+              puter: { label: '🧠 Real Cloud AI (Puter)', played: 0, wins: 0, losses: 0, draws: 0, quits: 0, restarts: 0 },
+              human2p: { label: '👥 2P Local / Online P2P', played: 0, wins: 0, losses: 0, draws: 0, quits: 0, restarts: 0 }
+            },
+            byDateMap: new Map(),
+            byVariantMap: new Map(),
+            recentEvents: list.slice(0, 60)
+          };
+
+          // Chronological order (oldest -> newest) for accurate streak calculation
+          const chronological = [...list].reverse();
+          let runningWinS = 0;
+          let runningLossS = 0;
+
+          for (const ev of chronological) {
+            if (!ev) continue;
+            const dMs = Number(ev.durationMs) || 0;
+            sum.totalPlayTimeMs += dMs;
+            if (dMs > sum.longestMatchMs) sum.longestMatchMs = dMs;
+            sum.userThinkMs += Number(ev.userThinkMs) || 0;
+            sum.oppThinkMs += Number(ev.oppThinkMs) || 0;
+            if ((ev.longestThinkMs || 0) > sum.longestSingleThinkMs) sum.longestSingleThinkMs = ev.longestThinkMs;
+            if (ev.fastestMoveMs && (sum.fastestSingleMoveMs === null || ev.fastestMoveMs < sum.fastestSingleMoveMs)) {
+              sum.fastestSingleMoveMs = ev.fastestMoveMs;
+            }
+
+            sum.userMoves += Number(ev.userMoves) || 0;
+            sum.oppMoves += Number(ev.oppMoves) || 0;
+            sum.drops += Number(ev.drops) || 0;
+            sum.steps += Number(ev.steps) || 0;
+            sum.jumps += Number(ev.jumps) || 0;
+            sum.chains += Number(ev.chains) || 0;
+            if ((ev.maxChain || 0) > sum.maxChain) sum.maxChain = ev.maxChain;
+            sum.mills += Number(ev.mills) || 0;
+            sum.oppMills += Number(ev.oppMills) || 0;
+            sum.kings += Number(ev.kings) || 0;
+            sum.beadsEaten += Number(ev.beadsEaten) || 0;
+            sum.beadsLost += Number(ev.beadsLost) || 0;
+            sum.undos += Number(ev.undos) || 0;
+            sum.hints += Number(ev.hints) || 0;
+
+            const diffBucket = ev.vsAI ? (sum.byDiff[ev.aiDiff] || sum.byDiff.medium) : sum.byDiff.human2p;
+            const puterBucket = (ev.vsAI && ev.aiEngine === 'puter') ? sum.byDiff.puter : null;
+
+            if (ev.status === 'restarted') {
+              sum.restartsMidGame++;
+              if (rangeMode !== 'all') sum.totalRestarts++;
+              if (ev.vsAI) sum.restartsVsAI++;
+              if (ev.wasBehind) sum.restartsWhileBehind++;
+              if (diffBucket) diffBucket.restarts++;
+              if (puterBucket) puterBucket.restarts++;
+            } else if (ev.status === 'quit') {
+              sum.quitsMidGame++;
+              if (ev.vsAI) sum.quitsVsAI++;
+              if (ev.wasBehind) sum.quitsWhileBehind++;
+              if (diffBucket) diffBucket.quits++;
+              if (puterBucket) puterBucket.quits++;
+            } else {
+              sum.completed++;
+              sum.completedPlayTimeMs += dMs;
+              if (diffBucket) diffBucket.played++;
+              if (puterBucket) puterBucket.played++;
+
+              if (ev.status === 'win') {
+                sum.wins++;
+                if (ev.vsAI) sum.winsVsAI++;
+                if (diffBucket) diffBucket.wins++;
+                if (puterBucket) puterBucket.wins++;
+                if (sum.fastestWinMs === null || dMs < sum.fastestWinMs) sum.fastestWinMs = dMs;
+                runningWinS++;
+                runningLossS = 0;
+                if (runningWinS > sum.bestWinStreak) sum.bestWinStreak = runningWinS;
+              } else if (ev.status === 'loss_ai' || ev.status === 'loss_human') {
+                sum.losses++;
+                if (ev.status === 'loss_ai') sum.lossesToAI++;
+                else sum.lossesToHuman++;
+                if (diffBucket) diffBucket.losses++;
+                if (puterBucket) puterBucket.losses++;
+                runningLossS++;
+                runningWinS = 0;
+                if (runningLossS > sum.worstLossStreak) sum.worstLossStreak = runningLossS;
+              } else {
+                sum.draws++;
+                if (ev.vsAI) sum.drawsVsAI++;
+                if (diffBucket) diffBucket.draws++;
+                if (puterBucket) puterBucket.draws++;
+              }
+            }
+
+            const dKey = ev.dateKey || 'Unknown';
+            let dayRow = sum.byDateMap.get(dKey);
+            if (!dayRow) {
+              dayRow = { dateKey: dKey, started: 0, wins: 0, losses: 0, lossesAI: 0, draws: 0, quits: 0, restarts: 0, timeMs: 0, moves: 0, eaten: 0, lost: 0 };
+              sum.byDateMap.set(dKey, dayRow);
+            }
+            dayRow.started++;
+            dayRow.timeMs += dMs;
+            dayRow.moves += (Number(ev.userMoves) || 0);
+            dayRow.eaten += (Number(ev.beadsEaten) || 0);
+            dayRow.lost += (Number(ev.beadsLost) || 0);
+            if (ev.status === 'win') dayRow.wins++;
+            else if (ev.status === 'loss_ai') { dayRow.losses++; dayRow.lossesAI++; }
+            else if (ev.status === 'loss_human') dayRow.losses++;
+            else if (ev.status === 'draw') dayRow.draws++;
+            else if (ev.status === 'quit') dayRow.quits++;
+            else if (ev.status === 'restarted') dayRow.restarts++;
+
+            const vKey = ev.preset || '6x6';
+            let varRow = sum.byVariantMap.get(vKey);
+            if (!varRow) {
+              varRow = { preset: vKey, title: ev.title || this.getGameTitle(vKey), started: 0, wins: 0, losses: 0, lossesAI: 0, draws: 0, quits: 0, restarts: 0, timeMs: 0, moves: 0, eaten: 0, lost: 0 };
+              sum.byVariantMap.set(vKey, varRow);
+            }
+            varRow.started++;
+            varRow.timeMs += dMs;
+            varRow.moves += (Number(ev.userMoves) || 0);
+            varRow.eaten += (Number(ev.beadsEaten) || 0);
+            varRow.lost += (Number(ev.beadsLost) || 0);
+            if (ev.status === 'win') varRow.wins++;
+            else if (ev.status === 'loss_ai') { varRow.losses++; varRow.lossesAI++; }
+            else if (ev.status === 'loss_human') varRow.losses++;
+            else if (ev.status === 'draw') varRow.draws++;
+            else if (ev.status === 'quit') varRow.quits++;
+            else if (ev.status === 'restarted') varRow.restarts++;
+          }
+
+          sum.curWinStreak = runningWinS;
+          sum.curLossStreak = runningLossS;
+          sum.totalRestarts = Math.max(sum.totalRestarts, sum.restartsMidGame);
+          return sum;
+        },
+
+        renderDashboard() {
+          const sum = this.computeSummary(this.activeFilter, this.customFrom, this.customTo);
+          const setTxt = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+          };
+
+          // Live active match strip
+          const liveBanner = document.getElementById('statsLiveMatchBanner');
+          if (liveBanner) {
+            const isLive = Boolean(this.session && !GameState.gameOver && ((this.session.userMoves + this.session.oppMoves) > 0 || GameState.isStarted));
+            liveBanner.classList.toggle('hidden', !isLive);
+            if (isLive) {
+              const userRole = this.getUserRole();
+              const eatenNow = (GameState.capturedBy && GameState.capturedBy[userRole]) || 0;
+              const lostNow = (GameState.capturedBy && GameState.capturedBy[userRole === 1 ? 2 : 1]) || 0;
+              setTxt('statsLiveMatchTitle', `⚡ Live: ${this.getGameTitle(GameState.gridPreset)} (${GameState.vsAI ? 'vs ' + GameState.aiDifficulty.toUpperCase() + ' AI' : '2P Match'})`);
+              setTxt('statsLiveMatchMetrics', `Time: ${this.formatDuration(this.getCurrentSessionDurationMs())} • Your Moves: ${this.session.userMoves} • Eaten: ${eatenNow} / Lost: ${lostNow}`);
+            }
+          }
+
+          document.querySelectorAll('.stats-range-chip').forEach((btn) => {
+            const r = btn.getAttribute('data-stats-range');
+            if (r === this.activeFilter) {
+              btn.className = 'stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-teal-600 text-white shadow-sm';
+            } else {
+              btn.className = r === 'custom'
+                ? 'stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300'
+                : 'stats-range-chip android-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-parchment-100 text-walnut-800 border border-parchment-300';
+            }
+          });
+          const customBox = document.getElementById('statsCustomDateBox');
+          if (customBox) customBox.classList.toggle('hidden', this.activeFilter !== 'custom');
+
+          setTxt('statsActiveRangeBadge', `${sum.label} • ${sum.started} Sessions`);
+
+          const compRate = sum.started > 0 ? Math.round((sum.completed / sum.started) * 100) : 100;
+          const winRate = sum.completed > 0 ? Math.round((sum.wins / sum.completed) * 100) : 0;
+          setTxt('stCompletionBadge', `${compRate}% Completion Rate`);
+          setTxt('stStartedCompleted', `${sum.started} / ${sum.completed}`);
+          setTxt('stDrawsSub', `${sum.draws} Draw(s)`);
+          setTxt('stTotalWins', `${sum.wins} (${winRate}%)`);
+          setTxt('stWinStreakSub', `Cur: ${sum.curWinStreak} • Best: ${sum.bestWinStreak}🔥`);
+          setTxt('stLossesToAI', `${sum.lossesToAI} AI / ${sum.losses} Tot`);
+          setTxt('stLossHumanSub', `${sum.lossesToHuman} vs 2P • Worst Streak: ${sum.worstLossStreak}`);
+          setTxt('stQuitsAndRestarts', `${sum.quitsMidGame} Q / ${sum.restartsMidGame} R`);
+          setTxt('stRageQuitSub', `${sum.quitsWhileBehind + sum.restartsWhileBehind} while trailing • ${sum.totalRestarts} all restarts`);
+
+          // AI Difficulty Table
+          const aiTbody = document.getElementById('stAiDifficultyTableBody');
+          if (aiTbody) {
+            const rows = ['easy', 'medium', 'hard', 'hardest', 'puter', 'human2p'].map((k) => {
+              const b = sum.byDiff[k];
+              const wr = b.played > 0 ? Math.round((b.wins / b.played) * 100) + '%' : '—';
+              return `<tr class="hover:bg-parchment-100/70">
+                <td class="py-1.5 pr-2 font-sans font-extrabold text-walnut-900">${b.label}</td>
+                <td class="py-1.5 px-2 text-center font-bold">${b.played}</td>
+                <td class="py-1.5 px-2 text-center font-extrabold text-teal-700">${b.wins}</td>
+                <td class="py-1.5 px-2 text-center font-extrabold text-rose-600">${b.losses}</td>
+                <td class="py-1.5 px-2 text-center text-walnut-600">${b.draws}</td>
+                <td class="py-1.5 px-2 text-center text-amber-800 font-bold">${b.quits}Q / ${b.restarts}R</td>
+                <td class="py-1.5 pl-2 text-right font-extrabold text-walnut-900">${wr}</td>
+              </tr>`;
+            });
+            aiTbody.innerHTML = rows.join('');
+          }
+          setTxt('stAiEngineSummary', `Vs AI: ${sum.winsVsAI}W - ${sum.lossesToAI}L - ${sum.drawsVsAI}D (${sum.quitsVsAI + sum.restartsVsAI} Quit/Rst)`);
+
+          // Duration & Think Time
+          const avgMatchMs = sum.started > 0 ? Math.round(sum.totalPlayTimeMs / sum.started) : 0;
+          const avgMoveMs = sum.userMoves > 0 ? Math.round(sum.userThinkMs / sum.userMoves) : 0;
+          setTxt('stAvgMoveSpeedBadge', `Avg Move: ${this.formatMoveTime(avgMoveMs)}`);
+          setTxt('stTotalPlayTime', this.formatDuration(sum.totalPlayTimeMs));
+          setTxt('stAvgMatchTimeSub', `Avg Match: ${this.formatDuration(avgMatchMs)}`);
+          setTxt('stUserThinkTime', this.formatDuration(sum.userThinkMs));
+          setTxt('stOppThinkTimeSub', `AI/Opp Think: ${this.formatDuration(sum.oppThinkMs)}`);
+          setTxt('stFastestLongestMove', `${this.formatMoveTime(sum.fastestSingleMoveMs)} / ${this.formatMoveTime(sum.longestSingleThinkMs)}`);
+          setTxt('stAvgMoveTimeSub', `Avg Turn Think: ${this.formatMoveTime(avgMoveMs)}`);
+          setTxt('stFastestLongestMatch', `${sum.fastestWinMs ? this.formatDuration(sum.fastestWinMs, true) : '—'} / ${sum.longestMatchMs ? this.formatDuration(sum.longestMatchMs, true) : '—'}`);
+
+          // Bead Movements & Combat
+          const kd = sum.beadsLost > 0 ? (sum.beadsEaten / sum.beadsLost).toFixed(2) : (sum.beadsEaten > 0 ? `${sum.beadsEaten}.00` : '1.00');
+          setTxt('stKdRatioBadge', `Eaten/Lost Ratio: ${kd}`);
+          setTxt('stTotalUserMoves', sum.userMoves.toLocaleString());
+          setTxt('stOppMovesSub', `Opp/AI Moves: ${sum.oppMoves.toLocaleString()}`);
+          setTxt('stDropsAndSlides', `${sum.drops} / ${sum.steps}`);
+          setTxt('stJumpsAndChains', `${sum.jumps} / ${sum.chains}`);
+          setTxt('stMaxChainSub', `Max Chain: ${sum.maxChain}x • Kings: ${sum.kings}👑`);
+          setTxt('stEatenVsLost', `${sum.beadsEaten} / ${sum.beadsLost}`);
+          setTxt('stMillsAndAssistsSub', `Katars: ${sum.mills} (Opp: ${sum.oppMills}) • Undo: ${sum.undos} • Hint: ${sum.hints}`);
+
+          // Date-by-Date Table
+          const dailyBody = document.getElementById('stDailySummaryTableBody');
+          if (dailyBody) {
+            const dayRows = Array.from(sum.byDateMap.values()).sort((a, b) => b.dateKey.localeCompare(a.dateKey));
+            if (dayRows.length === 0) {
+              dailyBody.innerHTML = '<tr><td colspan="7" class="py-3 text-center font-sans text-walnut-500 italic">No match sessions recorded in this date range yet.</td></tr>';
+            } else {
+              dailyBody.innerHTML = dayRows.map((d) => `<tr class="hover:bg-parchment-100/70">
+                <td class="py-1.5 pr-2 font-bold text-walnut-900">${d.dateKey}</td>
+                <td class="py-1.5 px-1.5 text-center font-bold">${d.started}</td>
+                <td class="py-1.5 px-1.5 text-center"><span class="text-teal-700 font-extrabold">${d.wins}W</span> / <span class="text-rose-600 font-extrabold">${d.losses}L (${d.lossesAI} AI)</span> / ${d.draws}D</td>
+                <td class="py-1.5 px-1.5 text-center text-amber-800 font-bold">${d.quits}Q / ${d.restarts}R</td>
+                <td class="py-1.5 px-1.5 text-center text-walnut-700">${this.formatDuration(d.timeMs, true)}</td>
+                <td class="py-1.5 px-1.5 text-center">${d.moves}</td>
+                <td class="py-1.5 pl-1.5 text-right"><span class="text-teal-700 font-bold">${d.eaten}</span> / <span class="text-rose-600">${d.lost}</span></td>
+              </tr>`).join('');
+            }
+          }
+
+          // Per-Game Variant Table
+          const varBody = document.getElementById('stVariantSummaryTableBody');
+          if (varBody) {
+            const varRows = Array.from(sum.byVariantMap.values()).sort((a, b) => b.started - a.started);
+            if (varRows.length === 0) {
+              varBody.innerHTML = '<tr><td colspan="7" class="py-3 text-center font-sans text-walnut-500 italic">No game variants played in this date range yet.</td></tr>';
+            } else {
+              varBody.innerHTML = varRows.map((v) => `<tr class="hover:bg-parchment-100/70">
+                <td class="py-1.5 pr-2 font-sans font-extrabold text-walnut-900">${v.title}</td>
+                <td class="py-1.5 px-1.5 text-center font-bold">${v.started}</td>
+                <td class="py-1.5 px-1.5 text-center"><span class="text-teal-700 font-extrabold">${v.wins}W</span> / <span class="text-rose-600 font-extrabold">${v.losses}L (${v.lossesAI} AI)</span></td>
+                <td class="py-1.5 px-1.5 text-center text-amber-800 font-bold">${v.quits}Q / ${v.restarts}R</td>
+                <td class="py-1.5 px-1.5 text-center text-walnut-700">${this.formatDuration(v.timeMs, true)}</td>
+                <td class="py-1.5 px-1.5 text-center">${v.moves}</td>
+                <td class="py-1.5 pl-1.5 text-right"><span class="text-teal-700 font-bold">${v.eaten}</span> / <span class="text-rose-600">${v.lost}</span></td>
+              </tr>`).join('');
+            }
+          }
+
+          // Recent Sessions Feed
+          const feedEl = document.getElementById('stRecentSessionsFeed');
+          if (feedEl) {
+            if (sum.recentEvents.length === 0) {
+              feedEl.innerHTML = '<div class="text-[11px] text-walnut-500 italic py-2 text-center">No sessions recorded in this date range yet — play, restart, or finish a match to see live telemetry!</div>';
+            } else {
+              feedEl.innerHTML = sum.recentEvents.map((ev) => {
+                const dt = new Date(ev.ts || Date.now());
+                const timeStr = dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                let badgeCls = 'bg-amber-100 text-amber-900 border-amber-300';
+                let badgeTxt = '🤝 DRAW';
+                if (ev.status === 'win') {
+                  badgeCls = 'bg-teal-100 text-teal-900 border-teal-300';
+                  badgeTxt = '🏆 WON';
+                } else if (ev.status === 'loss_ai') {
+                  badgeCls = 'bg-rose-100 text-rose-900 border-rose-300';
+                  badgeTxt = `💀 LOST TO ${String(ev.aiDiff || 'AI').toUpperCase()} AI`;
+                } else if (ev.status === 'loss_human') {
+                  badgeCls = 'bg-rose-100 text-rose-900 border-rose-300';
+                  badgeTxt = '💔 LOST (2P)';
+                } else if (ev.status === 'restarted') {
+                  badgeCls = 'bg-indigo-100 text-indigo-900 border-indigo-300';
+                  badgeTxt = ev.wasBehind ? '🔄 RESTARTED (TRAILING)' : '🔄 RESTARTED MID-GAME';
+                } else if (ev.status === 'quit') {
+                  badgeCls = 'bg-orange-100 text-orange-900 border-orange-300';
+                  badgeTxt = ev.wasBehind ? '🚪 QUIT (TRAILING)' : '🚪 QUIT MID-GAME';
+                }
+                const oppTag = ev.vsAI ? `vs ${ev.aiEngine === 'puter' ? 'Real AI' : ev.aiDiff.toUpperCase() + ' AI'}` : '2P Match';
+                const avgMv = ev.userMoves > 0 ? this.formatMoveTime(Math.round((ev.userThinkMs || 0) / ev.userMoves)) : '—';
+                return `<div class="bg-parchment-100/90 border border-parchment-300 rounded-xl px-2.5 py-1.5 space-y-0.5">
+                  <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span class="text-[9.5px] font-extrabold px-1.5 py-0.5 rounded-md border ${badgeCls}">${badgeTxt}</span>
+                      <span class="text-[11px] font-extrabold text-walnut-900">${ev.title || 'Katar'}</span>
+                      <span class="text-[10px] font-semibold text-walnut-600">(${oppTag})</span>
+                    </div>
+                    <span class="text-[10px] font-mono text-walnut-500">${timeStr}</span>
+                  </div>
+                  <div class="text-[10px] font-mono text-walnut-700 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <span>⏱️ ${this.formatDuration(ev.durationMs)} (Avg ${avgMv}/mv)</span>
+                    <span>•</span>
+                    <span>📿 ${ev.userMoves} mv (${ev.drops}D / ${ev.steps}S / ${ev.jumps}J${ev.mills ? ' / ' + ev.mills + '★' : ''})</span>
+                    <span>•</span>
+                    <span>⚔️ Eaten ${ev.beadsEaten} / Lost ${ev.beadsLost}</span>
+                  </div>
+                </div>`;
+              }).join('');
+            }
+          }
+        }
+      };
+
       const ProfileManager = {
         storageKey: 'katar_player_profile_v1',
         data: null,
@@ -6333,15 +7423,16 @@
         recordMatchResult(winner) {
           if (!this.hasProfile()) return;
           const c = this.data.career;
+          const userRole = PlayerAnalytics.getUserRole();
           c.totalMatches = (c.totalMatches || 0) + 1;
-          c.beadsEaten = (c.beadsEaten || 0) + (GameState.capturedBy[1] || 0);
-          if (winner === 1) {
+          c.beadsEaten = (c.beadsEaten || 0) + (GameState.capturedBy[userRole] || 0);
+          if (winner === userRole) {
             c.wins = (c.wins || 0) + 1;
             c.currentStreak = (c.currentStreak || 0) + 1;
             if (c.currentStreak > (c.bestStreak || 0)) {
               c.bestStreak = c.currentStreak;
             }
-          } else if (winner === 2) {
+          } else if (winner !== 0 && winner !== null) {
             c.losses = (c.losses || 0) + 1;
             c.currentStreak = 0;
           } else {
@@ -6387,15 +7478,31 @@
           });
 
           const c = (this.data && this.data.career) || { totalMatches: 0, wins: 0, bestStreak: 0, beadsEaten: 0 };
+          const allTimeSum = PlayerAnalytics.computeSummary('all');
+          const totalCompleted = Math.max(c.totalMatches || 0, allTimeSum.completed || 0);
+          const totalWins = Math.max(c.wins || 0, allTimeSum.wins || 0);
+          const bestStreak = Math.max(c.bestStreak || 0, allTimeSum.bestWinStreak || 0);
+          const totalBeads = Math.max(c.beadsEaten || 0, allTimeSum.beadsEaten || 0);
+          const winPct = totalCompleted > 0 ? Math.round((totalWins / totalCompleted) * 100) : 0;
+
           const elTotal = document.getElementById('careerTotalMatches');
           const elWins = document.getElementById('careerWins');
+          const elLossAI = document.getElementById('careerLossesToAI');
           const elStreak = document.getElementById('careerBestStreak');
+          const elQuits = document.getElementById('careerQuitsMidGame');
+          const elRestarts = document.getElementById('careerRestarts');
+          const elTime = document.getElementById('careerTotalPlayTime');
           const elBeads = document.getElementById('careerBeadsEaten');
           const elDate = document.getElementById('lblProfileCreatedDate');
-          if (elTotal) elTotal.textContent = String(c.totalMatches || 0);
-          if (elWins) elWins.textContent = String(c.wins || 0);
-          if (elStreak) elStreak.textContent = `${c.bestStreak || 0}🔥`;
-          if (elBeads) elBeads.textContent = String(c.beadsEaten || 0);
+
+          if (elTotal) elTotal.textContent = String(totalCompleted);
+          if (elWins) elWins.textContent = `${totalWins} (${winPct}%)`;
+          if (elLossAI) elLossAI.textContent = String(allTimeSum.lossesToAI || 0);
+          if (elStreak) elStreak.textContent = `${bestStreak}🔥`;
+          if (elQuits) elQuits.textContent = String(allTimeSum.quitsMidGame || 0);
+          if (elRestarts) elRestarts.textContent = String(allTimeSum.totalRestarts || 0);
+          if (elTime) elTime.textContent = PlayerAnalytics.formatDuration(allTimeSum.totalPlayTimeMs || 0, true);
+          if (elBeads) elBeads.textContent = String(totalBeads);
           if (elDate && this.data && this.data.createdAt) {
             const d = new Date(this.data.createdAt);
             elDate.textContent = `${this.data.title} • Since ${d.toLocaleDateString()}`;
@@ -6404,6 +7511,7 @@
 
         openModal(isFirstTimeOnboarding = false) {
           this.syncHeaderAndFormUI();
+          PlayerAnalytics.renderDashboard();
           if (typeof MatchHistoryManager !== 'undefined') {
             MatchHistoryManager.renderLists();
           }
@@ -6424,7 +7532,7 @@
           if (subEl) {
             subEl.textContent = mustOnboard
               ? 'Required once before your first match (or restore from backup)'
-              : 'Manage your player identity, career record & data backups';
+              : 'Player Identity, Full Career & Date-Range Analytics & Data Backups';
           }
           if (modal) {
             modal.classList.remove('hidden');
@@ -6456,6 +7564,7 @@
             version: 1,
             exportedAt: new Date().toISOString(),
             profile: this.data,
+            playerAnalytics: PlayerAnalytics.exportData(),
             sessionStats: GameState.sessionStats,
             settings: {
               gridPreset: GameState.gridPreset,
@@ -6532,6 +7641,9 @@
               p2Wins: bundle.sessionStats.p2Wins || 0,
               draws: bundle.sessionStats.draws || 0
             };
+          }
+          if (bundle.playerAnalytics) {
+            PlayerAnalytics.restoreData(bundle.playerAnalytics);
           }
           this.selectedAvatar = bundle.profile.avatar || '👑';
           this.save(bundle.profile);
@@ -7059,12 +8171,18 @@
         if (typeof MorrisLearner !== 'undefined') {
           MorrisLearner.onMatchEnd(winner);
         }
+        if (typeof PlayerAnalytics !== 'undefined') {
+          PlayerAnalytics.recordMatchEnd('completed', winner);
+        }
         ProfileManager.recordMatchResult(winner);
         MatchHistoryManager.saveCompletedMatch(winner);
         updateMoveLogUI();
       }
 
       function appendMoveLog(entryText) {
+        if (typeof PlayerAnalytics !== 'undefined') {
+          PlayerAnalytics.recordMoveExecuted(GameState.lastMove, entryText);
+        }
         const moveNum = GameState.moveLog.length + 1;
         const fullLabel = `${moveNum}. ${entryText}`;
         GameState.moveLog.push(fullLabel);
@@ -7713,6 +8831,9 @@
           if ((player === 1 && Math.round(toNode.r) === 0) || (player === 2 && Math.round(toNode.r) === GameState.rows - 1)) {
             GameState.kings[action.to] = true;
             justPromotedKing = true;
+            if (typeof PlayerAnalytics !== 'undefined') {
+              PlayerAnalytics.recordKingCrowned(player);
+            }
             SoundEngine.millFormed();
             showBoardToast(GameState.gridPreset === 'turkish_dama'
               ? `👑 Crowned Flying Sultan at ${toNode.label || (action.to + 1)}!`
@@ -19992,6 +21113,9 @@
         GameState.lastMove = snap.lastMove || null;
         hideFanoronaChoiceBar();
         SoundEngine.select();
+        if (typeof PlayerAnalytics !== 'undefined') {
+          PlayerAnalytics.recordUndoUsed();
+        }
         resetTurnTimer();
         showBoardToast('Undid last move');
         updateHUD();
@@ -20021,6 +21145,9 @@
         if (!pick) {
           showBoardToast('No legal moves available!');
           return;
+        }
+        if (typeof PlayerAnalytics !== 'undefined') {
+          PlayerAnalytics.recordHintUsed();
         }
         GameState.selectedNode = pick.from >= 0 ? pick.from : null;
         VisualFX.hintHighlight = { from: pick.from, to: pick.to };
@@ -21831,6 +22958,9 @@
         },
 
         openStandby(asRemote = false) {
+          if (typeof PlayerAnalytics !== 'undefined') {
+            PlayerAnalytics.onMatchPause();
+          }
           GameState.isStarted = false;
           GameState.isPaused = false;
           this.isOpen = true;
@@ -21855,6 +22985,9 @@
               return;
             }
           }
+          if (typeof PlayerAnalytics !== 'undefined') {
+            PlayerAnalytics.onMatchPause();
+          }
           GameState.isPaused = true;
           this.isOpen = true;
           resetTurnTimer();
@@ -21874,6 +23007,9 @@
           }
           GameState.isPaused = false;
           this.isOpen = false;
+          if (typeof PlayerAnalytics !== 'undefined') {
+            PlayerAnalytics.onMatchPlayOrResume();
+          }
           if (GameState.aiVsAi) {
             GameState.vsAI = true;
             GameState.aiPlayerRole = GameState.currentTurn;
@@ -21895,6 +23031,9 @@
           GameState.isStarted = true;
           GameState.isPaused = false;
           this.isOpen = false;
+          if (typeof PlayerAnalytics !== 'undefined') {
+            PlayerAnalytics.onMatchPlayOrResume();
+          }
           if (GameState.aiVsAi) {
             GameState.vsAI = true;
             GameState.aiPlayerRole = GameState.currentTurn;
@@ -21932,6 +23071,7 @@
           this.isOpen = (!wantStarted || wantPaused);
 
           if (!this.isOpen && (prevOpen || !prevStarted || prevPaused)) {
+            if (typeof PlayerAnalytics !== 'undefined') PlayerAnalytics.onMatchPlayOrResume();
             if (Immersive.active) updateImmersiveHUD();
             resetTurnTimer();
             resetMatchTimer(true);
@@ -21943,6 +23083,7 @@
               showBoardToast('▶️ Match resumed!');
             }
           } else if (this.isOpen && !prevOpen && wantStarted && wantPaused) {
+            if (typeof PlayerAnalytics !== 'undefined') PlayerAnalytics.onMatchPause();
             if (aiTurnTimeoutId) {
               clearTimeout(aiTurnTimeoutId);
               aiTurnTimeoutId = null;
@@ -21951,6 +23092,7 @@
             resetMatchTimer(true);
             showBoardToast('⏸ Match paused by opponent');
           } else if (!wantStarted && prevStarted) {
+            if (typeof PlayerAnalytics !== 'undefined') PlayerAnalytics.onMatchPause();
             resetTurnTimer();
             resetMatchTimer(false);
           }
@@ -21969,6 +23111,7 @@
             }
             return;
           }
+          GameState._nextInitReason = 'restarted';
           GameState.isStarted = true;
           GameState.isPaused = false;
           this.isOpen = false;
@@ -21983,6 +23126,7 @@
             showBoardToast('🏠 Returned to Menu — tap Close Room to leave or Restart to request rematch.');
             return;
           }
+          GameState._nextInitReason = 'quit';
           GameState.isStarted = false;
           GameState.isPaused = false;
           this.isOpen = true;
@@ -23517,7 +24661,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=5ca37767ed', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=93bd5897ae', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
@@ -23612,28 +24756,96 @@
       }
 
       const tabProfId = document.getElementById('tabProfileIdentity');
+      const tabProfAn = document.getElementById('tabProfileAnalytics');
       const tabProfBk = document.getElementById('tabProfileBackup');
       const panelProfId = document.getElementById('panelProfileIdentity');
+      const panelProfAn = document.getElementById('panelProfileAnalytics');
       const panelProfBk = document.getElementById('panelProfileBackup');
 
-      if (tabProfId && tabProfBk) {
+      function switchProfileModalTab(targetTab) {
+        const activeCls = 'android-btn py-2 px-2 sm:px-3 rounded-xl text-[11px] sm:text-xs font-extrabold bg-teal-600 text-white shadow-sm flex items-center justify-center gap-1';
+        const idleCls = 'android-btn py-2 px-2 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold text-walnut-800 hover:text-walnut-900 flex items-center justify-center gap-1';
+        if (tabProfId) tabProfId.className = targetTab === 'identity' ? activeCls : idleCls;
+        if (tabProfAn) tabProfAn.className = targetTab === 'analytics' ? activeCls : idleCls;
+        if (tabProfBk) tabProfBk.className = targetTab === 'backup' ? activeCls : idleCls;
+        if (panelProfId) panelProfId.classList.toggle('hidden', targetTab !== 'identity');
+        if (panelProfAn) panelProfAn.classList.toggle('hidden', targetTab !== 'analytics');
+        if (panelProfBk) panelProfBk.classList.toggle('hidden', targetTab !== 'backup');
+        if (targetTab === 'analytics') {
+          PlayerAnalytics.renderDashboard();
+        } else if (targetTab === 'backup' && ProfileManager.hasProfile()) {
+          const out = document.getElementById('txtBackupExportCode');
+          if (out) out.value = ProfileManager.encodeBackupToken();
+        }
+      }
+
+      if (tabProfId) {
         tabProfId.addEventListener('click', () => {
           SoundEngine.select();
-          tabProfId.className = 'android-btn py-2 px-3 rounded-xl text-xs font-extrabold bg-teal-600 text-white shadow-sm flex items-center justify-center gap-1.5';
-          tabProfBk.className = 'android-btn py-2 px-3 rounded-xl text-xs font-bold text-walnut-800 hover:text-walnut-900 flex items-center justify-center gap-1.5';
-          if (panelProfId) panelProfId.classList.remove('hidden');
-          if (panelProfBk) panelProfBk.classList.add('hidden');
+          switchProfileModalTab('identity');
         });
+      }
+      if (tabProfAn) {
+        tabProfAn.addEventListener('click', () => {
+          SoundEngine.select();
+          switchProfileModalTab('analytics');
+        });
+      }
+      if (tabProfBk) {
         tabProfBk.addEventListener('click', () => {
           SoundEngine.select();
-          tabProfBk.className = 'android-btn py-2 px-3 rounded-xl text-xs font-extrabold bg-teal-600 text-white shadow-sm flex items-center justify-center gap-1.5';
-          tabProfId.className = 'android-btn py-2 px-3 rounded-xl text-xs font-bold text-walnut-800 hover:text-walnut-900 flex items-center justify-center gap-1.5';
-          if (panelProfBk) panelProfBk.classList.remove('hidden');
-          if (panelProfId) panelProfId.classList.add('hidden');
-          if (ProfileManager.hasProfile()) {
-            const out = document.getElementById('txtBackupExportCode');
-            if (out) out.value = ProfileManager.encodeBackupToken();
+          switchProfileModalTab('backup');
+        });
+      }
+
+      const btnJumpAnalytics = document.getElementById('btnJumpToFullAnalytics');
+      if (btnJumpAnalytics) {
+        btnJumpAnalytics.addEventListener('click', () => {
+          SoundEngine.select();
+          switchProfileModalTab('analytics');
+        });
+      }
+
+      document.querySelectorAll('.stats-range-chip').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const r = btn.getAttribute('data-stats-range') || 'all';
+          SoundEngine.select();
+          PlayerAnalytics.activeFilter = r;
+          if (r === 'custom') {
+            const inpFrom = document.getElementById('inpStatsDateFrom');
+            const inpTo = document.getElementById('inpStatsDateTo');
+            const todayStr = PlayerAnalytics.getLocalDateKey();
+            const weekAgoStr = PlayerAnalytics.getLocalDateKey(Date.now() - 6 * 86400000);
+            if (inpFrom && !inpFrom.value) inpFrom.value = weekAgoStr;
+            if (inpTo && !inpTo.value) inpTo.value = todayStr;
+            PlayerAnalytics.customFrom = inpFrom ? inpFrom.value : weekAgoStr;
+            PlayerAnalytics.customTo = inpTo ? inpTo.value : todayStr;
           }
+          PlayerAnalytics.renderDashboard();
+        });
+      });
+
+      const btnApplyCustomDates = document.getElementById('btnApplyCustomStatsDates');
+      if (btnApplyCustomDates) {
+        btnApplyCustomDates.addEventListener('click', () => {
+          SoundEngine.select();
+          const inpFrom = document.getElementById('inpStatsDateFrom');
+          const inpTo = document.getElementById('inpStatsDateTo');
+          PlayerAnalytics.activeFilter = 'custom';
+          PlayerAnalytics.customFrom = inpFrom ? inpFrom.value : '';
+          PlayerAnalytics.customTo = inpTo ? inpTo.value : '';
+          PlayerAnalytics.renderDashboard();
+          showBoardToast('📅 Filtered stats by custom date range');
+        });
+      }
+
+      const btnResetAnalytics = document.getElementById('btnResetPlayerAnalytics');
+      if (btnResetAnalytics) {
+        btnResetAnalytics.addEventListener('click', () => {
+          SoundEngine.select();
+          PlayerAnalytics.resetAll();
+          ProfileManager.syncHeaderAndFormUI();
+          showBoardToast('Cleared player analytics & session history');
         });
       }
 
