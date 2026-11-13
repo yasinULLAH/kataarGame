@@ -8038,30 +8038,76 @@
       let NodeMillPairs = [];
       let NodeDegreeWeights = [];
 
+      let _cachedMorrisDiagFlag = null;
+      let MillBitMasks = [];
+      let NodeAdjBitMasks = new Int32Array(0);
+      let MillSliderBitMasks = [];
+
       function ensureMorrisTopologyCache() {
-        if (_cachedMorrisLinesRef === MillLines && NodeMillPairs.length === Nodes.length) {
+        if (
+          _cachedMorrisLinesRef === MillLines &&
+          _cachedMorrisDiagFlag === Boolean(GameState.morrisDiagonals) &&
+          NodeMillPairs.length === Nodes.length
+        ) {
           return;
         }
         _cachedMorrisLinesRef = MillLines;
+        _cachedMorrisDiagFlag = Boolean(GameState.morrisDiagonals);
         NodeMillPairs = Array.from({ length: Nodes.length }, () => []);
         NodeDegreeWeights = new Int32Array(Nodes.length);
+        MillBitMasks = new Int32Array(MillLines.length);
+        NodeAdjBitMasks = new Int32Array(Nodes.length);
+        MillSliderBitMasks = Array.from({ length: MillLines.length }, () => ({}));
+
+        for (let i = 0; i < Nodes.length; i++) {
+          let aMask = 0;
+          if (Adjacency[i]) {
+            for (const nb of Adjacency[i]) {
+              if (nb < 30) aMask |= (1 << nb);
+            }
+          }
+          NodeAdjBitMasks[i] = aMask;
+        }
+
         for (let lineIdx = 0; lineIdx < MillLines.length; lineIdx++) {
           const [a, b, c] = MillLines[lineIdx];
           if (a < Nodes.length && b < Nodes.length && c < Nodes.length) {
             NodeMillPairs[a].push([b, c, lineIdx]);
             NodeMillPairs[b].push([a, c, lineIdx]);
             NodeMillPairs[c].push([a, b, lineIdx]);
+            if (a < 30 && b < 30 && c < 30) {
+              const lMask = (1 << a) | (1 << b) | (1 << c);
+              MillBitMasks[lineIdx] = lMask;
+              MillSliderBitMasks[lineIdx][a] = NodeAdjBitMasks[a] & ~lMask;
+              MillSliderBitMasks[lineIdx][b] = NodeAdjBitMasks[b] & ~lMask;
+              MillSliderBitMasks[lineIdx][c] = NodeAdjBitMasks[c] & ~lMask;
+            }
           }
         }
+
         for (let i = 0; i < Nodes.length; i++) {
           const deg = Adjacency[i] ? Adjacency[i].size : 2;
           const mCount = NodeMillPairs[i].length;
-          NodeDegreeWeights[i] = deg * 12 + mCount * 14;
+          const starBonus = (mCount >= 3 && deg >= 4)
+            ? 38
+            : (mCount >= 3 ? 22 : (deg >= 4 ? 12 : 0));
+          NodeDegreeWeights[i] = deg * 13 + mCount * 20 + starBonus;
         }
       }
 
       function getMorrisRuleSignature() {
         return `${GameState.gridPreset}|${GameState.morrisDiagonals ? 1 : 0}|${GameState.piecesPerPlayer}|${GameState.morrisDropOrder}|${GameState.morrisDropMillRule}|${GameState.morrisMillRemovalRule}|${GameState.morrisFlyingRule}`;
+      }
+
+      function getSlidePhaseFirstMover(res1, res2, turnPlayer) {
+        if (res1 === 0 && res2 === 0) return turnPlayer;
+        if (GameState.morrisDropOrder === 'all_at_once') {
+          if (res1 === 0 && res2 > 0) return 1;
+          if (res2 === 0 && res1 > 0) return 2;
+          return turnPlayer;
+        }
+        if (res1 === res2) return turnPlayer;
+        return res1 < res2 ? 1 : 2;
       }
 
       function fastCountMillsAtNode(nodeId, player, board) {
@@ -8089,7 +8135,16 @@
         let count = 0;
         for (let i = 0; i < pairs.length; i++) {
           const p = pairs[i];
-          if (board[p[0]] === player && board[p[1]] === player) count++;
+          if (board[p[0]] === player && board[p[1]] === player) {
+            if (GameState.gridPreset === 'dara') {
+              const prev = board[nodeId];
+              board[nodeId] = player;
+              const over = isDaraOverline(MillLines[p[2]], player, board);
+              board[nodeId] = prev;
+              if (over) continue;
+            }
+            count++;
+          }
         }
         return count;
       }
@@ -8288,7 +8343,7 @@
         }
       };
 
-      // 12 Mathematically Proven Grandmaster 9-Bead / 12-Bead Formation Archetypes (16/16 Line Lockout + Multi-Forks)
+      // 12 Mathematically Proven Grandmaster 9-Men's Morris Archetypes (16/16 Line Lockout + Multi-Forks)
       const GRANDMASTER_MORRIS_ARCHETYPES = [
         {
           id: 'iron_cross_bastion',
@@ -8352,9 +8407,56 @@
         }
       ];
 
+      // 8 Mathematically Proven 20/20 Line-Lockout + 3-Mill Star-Hub Archetypes for 12-Men's Katar Mill (with Diagonals)
+      // Every first-10 subset covers 100% of all 20 MillLines (8 horiz, 8 vert, 4 diag) with ZERO 3-in-a-row mills on landing!
+      const GRANDMASTER_MORRIS_12_ARCHETYPES = [
+        {
+          id: 'm12_star_bastion_a',
+          name: 'Star Hub 20-Line Lockout A',
+          nodes: [3, 5, 18, 20, 6, 17, 1, 9, 14, 22, 7, 16]
+        },
+        {
+          id: 'm12_star_bastion_b',
+          name: 'Star Hub 20-Line Lockout B',
+          nodes: [3, 5, 18, 20, 8, 15, 1, 9, 14, 22, 7, 16]
+        },
+        {
+          id: 'm12_outer_citadel_a',
+          name: 'Outer-Corner 20-Line Lockout A',
+          nodes: [3, 5, 18, 20, 0, 23, 1, 9, 14, 22, 11, 12]
+        },
+        {
+          id: 'm12_outer_citadel_b',
+          name: 'Outer-Corner 20-Line Lockout B',
+          nodes: [3, 5, 18, 20, 2, 21, 1, 9, 14, 22, 11, 12]
+        },
+        {
+          id: 'm12_diagonal_fortress_a',
+          name: 'Diagonal Fortress 20-Line Net A',
+          nodes: [4, 10, 13, 19, 0, 2, 21, 23, 6, 17, 8, 15]
+        },
+        {
+          id: 'm12_diagonal_fortress_b',
+          name: 'Diagonal Fortress 20-Line Net B',
+          nodes: [4, 10, 13, 19, 0, 2, 21, 23, 8, 15, 6, 17]
+        },
+        {
+          id: 'm12_inner_sanctum_20',
+          name: 'Inner-Corner 20-Line Lockout',
+          nodes: [4, 10, 13, 19, 6, 8, 15, 17, 0, 23, 2, 21]
+        },
+        {
+          id: 'm12_hybrid_star_ring',
+          name: 'Hybrid Star-Ring 20-Line Web',
+          nodes: [3, 5, 18, 20, 0, 23, 7, 11, 12, 16, 1, 22]
+        }
+      ];
+
       const MorrisLearner = {
         storageKey: 'katar_ai_brain_v4',
+        brainSchema: 2,
         table: new Map(),
+        patternTable: new Map(),
         blunderKeys: new Set(),
         episode: [],
         loaded: false,
@@ -8369,8 +8471,10 @@
         recentFormationSignatures: [],
         tabooFormationSignatures: new Set(),
         humanNodeFreq: new Array(24).fill(0),
+        humanPivotFreq: new Array(24).fill(0),
         humanPresetFreq: {},
         currentDropSequence: [],
+        cachedSecondPlacerPlan: null,
         permCache: {},
 
         getGridPermutations(preset, R, C, tfList) {
@@ -8409,16 +8513,28 @@
             if (!raw) return;
             const data = JSON.parse(raw);
             if (data && typeof data === 'object') {
+              const sameSchema = (data.brainSchema === this.brainSchema);
               if (Array.isArray(data.entries)) {
                 for (const [k, v] of data.entries) {
                   if (typeof k === 'string' && typeof v === 'number') {
+                    if (!sameSchema && k.startsWith('navakankari_12:')) continue;
                     const clamped = isLegacy ? Math.max(-2500, Math.min(2500, Math.round(v * 0.08))) : Math.max(-6000, Math.min(6000, v));
                     if (Math.abs(clamped) >= 25) this.table.set(k, clamped);
                   }
                 }
               }
+              if (sameSchema && Array.isArray(data.patternEntries)) {
+                for (const [k, v] of data.patternEntries) {
+                  if (typeof k === 'string' && typeof v === 'number' && Math.abs(v) >= 20) {
+                    this.patternTable.set(k, Math.max(-4500, Math.min(4500, v)));
+                  }
+                }
+              }
               if (!isLegacy && Array.isArray(data.blunderKeys)) {
-                this.blunderKeys = new Set(data.blunderKeys.slice(-500));
+                const filteredBlunders = sameSchema
+                  ? data.blunderKeys
+                  : data.blunderKeys.filter((k) => typeof k === 'string' && !k.startsWith('navakankari_12:'));
+                this.blunderKeys = new Set(filteredBlunders.slice(-600));
               }
               this.gamesLearned = Number(data.gamesLearned) || 0;
               this.mistakesCorrected = Number(data.mistakesCorrected) || 0;
@@ -8430,15 +8546,18 @@
                 this.recentFormationSignatures = data.recentFormationSignatures.slice(-12);
               }
               if (Array.isArray(data.tabooFormationSignatures)) {
-                this.tabooFormationSignatures = new Set(data.tabooFormationSignatures.slice(-40));
+                this.tabooFormationSignatures = new Set(data.tabooFormationSignatures.slice(-50));
               }
               if (Array.isArray(data.humanNodeFreq) && data.humanNodeFreq.length === 24) {
                 this.humanNodeFreq = data.humanNodeFreq.map((n) => Number(n) || 0);
               }
+              if (Array.isArray(data.humanPivotFreq) && data.humanPivotFreq.length === 24) {
+                this.humanPivotFreq = data.humanPivotFreq.map((n) => Number(n) || 0);
+              }
               if (data.humanPresetFreq && typeof data.humanPresetFreq === 'object') {
                 this.humanPresetFreq = data.humanPresetFreq;
               }
-              if (isLegacy) this.save();
+              if (isLegacy || !sameSchema) this.save();
             }
           } catch (e) {}
         },
@@ -8451,9 +8570,17 @@
                 .slice(0, 6000);
               this.table = new Map(sorted);
             }
+            if (this.patternTable.size > 5000) {
+              const sortedP = Array.from(this.patternTable.entries())
+                .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+                .slice(0, 3500);
+              this.patternTable = new Map(sortedP);
+            }
             const payload = {
+              brainSchema: this.brainSchema,
               entries: Array.from(this.table.entries()),
-              blunderKeys: Array.from(this.blunderKeys).slice(-500),
+              patternEntries: Array.from(this.patternTable.entries()),
+              blunderKeys: Array.from(this.blunderKeys).slice(-600),
               gamesLearned: this.gamesLearned,
               mistakesCorrected: this.mistakesCorrected,
               archetypeStats: this.archetypeStats,
@@ -8461,8 +8588,9 @@
               lastArchetypeId: this.lastArchetypeId,
               lastSymmetryIdx: this.lastSymmetryIdx,
               recentFormationSignatures: this.recentFormationSignatures.slice(-12),
-              tabooFormationSignatures: Array.from(this.tabooFormationSignatures).slice(-40),
+              tabooFormationSignatures: Array.from(this.tabooFormationSignatures).slice(-50),
               humanNodeFreq: this.humanNodeFreq,
+              humanPivotFreq: this.humanPivotFreq,
               humanPresetFreq: this.humanPresetFreq
             };
             SafeStorage.setItem(this.storageKey, JSON.stringify(payload));
@@ -8471,9 +8599,11 @@
 
         resetBrain() {
           this.table.clear();
+          this.patternTable.clear();
           this.blunderKeys.clear();
           this.episode = [];
           this.currentDropSequence = [];
+          this.cachedSecondPlacerPlan = null;
           this.gamesLearned = 0;
           this.mistakesCorrected = 0;
           this.archetypeStats = {};
@@ -8483,6 +8613,7 @@
           this.tabooFormationSignatures.clear();
           this.recentFormationSignatures = [];
           this.humanNodeFreq = new Array(24).fill(0);
+          this.humanPivotFreq = new Array(24).fill(0);
           this.humanPresetFreq = {};
           SafeStorage.removeItem(this.storageKey);
           SafeStorage.removeItem('katar_ai_brain_v3');
@@ -8492,21 +8623,30 @@
 
         getIntelligenceLevel() {
           const pts = (this.gamesLearned * 2) + (this.mistakesCorrected * 3);
-          if (pts >= 100) return { level: 5, title: 'Supreme Overlord AI', depthBonus: 3, bonusFactor: 1.0 };
-          if (pts >= 45) return { level: 4, title: 'Apex Grandmaster', depthBonus: 2, bonusFactor: 0.9 };
-          if (pts >= 20) return { level: 3, title: 'Strategic Master', depthBonus: 2, bonusFactor: 0.8 };
-          if (pts >= 8) return { level: 2, title: 'Tactical Veteran', depthBonus: 1, bonusFactor: 0.7 };
-          return { level: 1, title: 'Grandmaster Khan', depthBonus: 1, bonusFactor: 0.6 };
+          if (pts >= 100) return { level: 5, title: 'Supreme Overlord AI', depthBonus: 3, bonusFactor: 1.05 };
+          if (pts >= 45) return { level: 4, title: 'Apex Grandmaster', depthBonus: 2, bonusFactor: 0.95 };
+          if (pts >= 20) return { level: 3, title: 'Strategic Master', depthBonus: 2, bonusFactor: 0.85 };
+          if (pts >= 8) return { level: 2, title: 'Tactical Veteran', depthBonus: 1, bonusFactor: 0.75 };
+          return { level: 1, title: 'Grandmaster Khan', depthBonus: 1, bonusFactor: 0.65 };
+        },
+
+        getActiveArchetypePool() {
+          if (GameState.gameFamily === 'morris' && GameState.morrisDiagonals) {
+            return GRANDMASTER_MORRIS_12_ARCHETYPES;
+          }
+          return GRANDMASTER_MORRIS_ARCHETYPES;
         },
 
         onMatchStart() {
           this.load();
           this.episode = [];
           this.currentDropSequence = [];
+          this.cachedSecondPlacerPlan = null;
           MorrisKillerMoves = [];
           MorrisHistoryTable = { 1: new Int32Array(3000), 2: new Int32Array(3000) };
+          const pool = this.getActiveArchetypePool();
           const candidates = [];
-          for (const arch of GRANDMASTER_MORRIS_ARCHETYPES) {
+          for (const arch of pool) {
             const st = this.archetypeStats[arch.id] || { wins: 0, losses: 0, draws: 0, plays: 0 };
             const winRate = (st.wins + 1.5) / (st.plays + 2.2);
             const exploreBonus = Math.sqrt(Math.log((this.gamesLearned || 1) + 2) / (st.plays + 1)) * 0.38;
@@ -8557,9 +8697,106 @@
           if (Nodes.length === 30) {
             return [14, 15, 8, 9, 20, 21, 13, 16, 7, 10, 19, 22];
           }
-          const arch = GRANDMASTER_MORRIS_ARCHETYPES.find((a) => a.id === this.activeArchetypeId) || GRANDMASTER_MORRIS_ARCHETYPES[0];
+          const pool = this.getActiveArchetypePool();
+          const arch = pool.find((a) => a.id === this.activeArchetypeId) || pool[0];
           const sym = this.activeSymmetryIdx || 0;
           return arch.nodes.map((nid) => MorrisSymmetry.transformNode(nid, sym));
+        },
+
+        makePatternKey(board, action, aiP, resAi = 0, resHuman = 0) {
+          if (GameState.gameFamily !== 'morris' || !action) return '';
+          ensureMorrisTopologyCache();
+          const target = action.type === 'remove_opponent' ? action.capturedId : action.to;
+          if (target === undefined || target < 0 || target >= Nodes.length) return '';
+          const maps = MorrisSymmetry.ensureMaps();
+          const phaseTag = (resAi > 0 || resHuman > 0) ? 'D' : 'M';
+          const ruleTag = `${GameState.gridPreset}:${GameState.morrisDiagonals ? 1 : 0}:${GameState.morrisDropOrder === 'all_at_once' ? 'A' : (GameState.morrisDropMillRule === 'forbid_mill' ? 'F' : 'S')}`;
+
+          const buildLocalSig = (perm) => {
+            const inv = new Array(board.length);
+            for (let i = 0; i < board.length; i++) inv[perm[i]] = i;
+            const tMapped = perm[target];
+            const fMapped = (action.type === 'step' && action.from >= 0) ? perm[action.from] : -1;
+            const pairs = NodeMillPairs[target] || [];
+            const lineSigs = [];
+            for (let i = 0; i < pairs.length; i++) {
+              const [o1, o2] = pairs[i];
+              const m1 = perm[o1], m2 = perm[o2];
+              const v1 = board[o1] === 0 ? '0' : (board[o1] === aiP ? '1' : '2');
+              const v2 = board[o2] === 0 ? '0' : (board[o2] === aiP ? '1' : '2');
+              lineSigs.push(m1 < m2 ? `${m1}${v1}.${m2}${v2}` : `${m2}${v2}.${m1}${v1}`);
+            }
+            lineSigs.sort();
+            return `${action.type[0]}:${fMapped}>${tMapped}[${lineSigs.join(';')}]`;
+          };
+
+          if (!maps || maps.length === 0) {
+            const idPerm = Array.from({ length: board.length }, (_, i) => i);
+            return `PAT:${ruleTag}:${phaseTag}:${buildLocalSig(idPerm)}`;
+          }
+          let bestSig = null;
+          for (let s = 0; s < maps.length; s++) {
+            const sig = buildLocalSig(maps[s]);
+            if (bestSig === null || sig < bestSig) bestSig = sig;
+          }
+          return `PAT:${ruleTag}:${phaseTag}:${bestSig}`;
+        },
+
+        adjustPatternWeight(patKey, delta) {
+          if (!patKey) return;
+          const prev = this.patternTable.get(patKey) || 0;
+          const next = Math.max(-4500, Math.min(4500, Math.round(prev * 0.85 + delta)));
+          if (Math.abs(next) < 20) this.patternTable.delete(patKey);
+          else this.patternTable.set(patKey, next);
+        },
+
+        learnCounterfactualFix(humanAction, humanP, boardAfterHumanMove) {
+          if (!this.episode || this.episode.length === 0 || !humanAction) return;
+          const aiP = humanP === 1 ? 2 : 1;
+          const lastIdx = this.episode.length - 1;
+          const ep = this.episode[lastIdx];
+          if (!ep || !ep.board) return;
+
+          this.blunderKeys.add(ep.fullKey);
+          this.adjustWeight(ep.fullKey, -2600);
+          if (ep.patternKey) this.adjustPatternWeight(ep.patternKey, -1100);
+          if (lastIdx >= 1) {
+            const epPrev = this.episode[lastIdx - 1];
+            this.adjustWeight(epPrev.fullKey, -1350);
+            if (epPrev.patternKey) this.adjustPatternWeight(epPrev.patternKey, -550);
+          }
+
+          // Identify which critical squares would have refuted Human's mill or double-threat fork
+          const refuteSquares = new Set();
+          if (humanAction.to >= 0) refuteSquares.add(humanAction.to);
+          if (boardAfterHumanMove && humanAction.to >= 0) {
+            const pairs = NodeMillPairs[humanAction.to] || [];
+            for (let i = 0; i < pairs.length; i++) {
+              const [o1, o2] = pairs[i];
+              if (boardAfterHumanMove[o1] === humanP && boardAfterHumanMove[o2] === 0) refuteSquares.add(o2);
+              if (boardAfterHumanMove[o2] === humanP && boardAfterHumanMove[o1] === 0) refuteSquares.add(o1);
+            }
+          }
+
+          const resObj = { 1: aiP === 1 ? ep.resAi : ep.resHuman, 2: aiP === 2 ? ep.resAi : ep.resHuman };
+          const legalOnPrev = getAllLegalActionsForPlayer(aiP, ep.board, resObj).allSteps;
+          const forbidM = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill' || GameState.gridPreset === 'dara');
+
+          for (const alt of legalOnPrev) {
+            if (alt.type === ep.action.type && alt.from === ep.action.from && alt.to === ep.action.to) continue;
+            const sim = [...ep.board];
+            if (alt.type === 'step' && alt.from >= 0) sim[alt.from] = 0;
+            sim[alt.to] = aiP;
+            const formsAiMill = !(alt.type === 'drop' && forbidM) && fastCountMillsAtNode(alt.to, aiP, sim) > 0;
+            const blocksRefuteSquare = refuteSquares.has(alt.to);
+            if (formsAiMill || blocksRefuteSquare) {
+              const { fullKey: altFullKey } = this.makeStateKey(ep.board, alt, aiP, ep.resAi, ep.resHuman);
+              const altPatKey = this.makePatternKey(ep.board, alt, aiP, ep.resAi, ep.resHuman);
+              const boost = (formsAiMill && blocksRefuteSquare) ? 2800 : (formsAiMill ? 2100 : 1950);
+              this.adjustWeight(altFullKey, boost);
+              this.adjustPatternWeight(altPatKey, Math.round(boost * 0.45));
+            }
+          }
         },
 
         recordHumanAction(board, action, humanP) {
@@ -8573,19 +8810,36 @@
             if (!this.humanPresetFreq[preset]) this.humanPresetFreq[preset] = {};
             this.humanPresetFreq[preset][action.to] = (this.humanPresetFreq[preset][action.to] || 0) + 1;
           }
-          // Positive imitation learning: remember strong human moves that form mills or double threats
           if (GameState.gameFamily === 'morris' && (action.type === 'drop' || action.type === 'step')) {
+            ensureMorrisTopologyCache();
             const opp = humanP === 1 ? 2 : 1;
             const resH = (GameState.reserves && GameState.reserves[humanP]) || 0;
             const resA = (GameState.reserves && GameState.reserves[opp]) || 0;
             const sim = [...board];
             if (action.type === 'step' && action.from >= 0) sim[action.from] = 0;
             sim[action.to] = humanP;
-            const forbidM = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
+            const forbidM = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill' || GameState.gridPreset === 'dara');
             const formed = !(action.type === 'drop' && forbidM) && fastCountMillsAtNode(action.to, humanP, sim) > 0;
-            if (formed) {
+
+            let openTwosCreated = 0;
+            const pairs = NodeMillPairs[action.to] || [];
+            for (let i = 0; i < pairs.length; i++) {
+              const [o1, o2] = pairs[i];
+              if ((sim[o1] === humanP && sim[o2] === 0) || (sim[o2] === humanP && sim[o1] === 0)) {
+                openTwosCreated++;
+              }
+            }
+
+            if (formed || openTwosCreated >= 2) {
+              if (action.to < 24) {
+                this.humanPivotFreq[action.to] = (this.humanPivotFreq[action.to] || 0) + (formed ? 2 : 3);
+              }
               const { fullKey } = this.makeStateKey(board, action, humanP, resH, resA);
-              this.adjustWeight(fullKey, 420);
+              const patKey = this.makePatternKey(board, action, humanP, resH, resA);
+              this.adjustWeight(fullKey, formed ? 680 : 920);
+              this.adjustPatternWeight(patKey, formed ? 320 : 480);
+              this.learnCounterfactualFix(action, humanP, sim);
+              this.save();
             }
           }
         },
@@ -8660,9 +8914,11 @@
         getBonus(board, action, aiP, resAi = 0, resHuman = 0) {
           this.load();
           const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
-          if (this.blunderKeys.has(fullKey)) return -4500;
+          if (this.blunderKeys.has(fullKey)) return -5500;
           const w = this.table.get(fullKey) || 0;
-          return Math.max(-2200, Math.min(2200, w));
+          const patKey = this.makePatternKey(board, action, aiP, resAi, resHuman);
+          const pw = patKey ? (this.patternTable.get(patKey) || 0) : 0;
+          return Math.max(-2800, Math.min(2800, w + Math.round(pw * 0.55)));
         },
 
         isBlunder(board, action, aiP, resAi = 0, resHuman = 0) {
@@ -8670,17 +8926,19 @@
           const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
           if (this.blunderKeys.has(fullKey)) return true;
           const w = this.table.get(fullKey) || 0;
-          return w <= -2800;
+          return w <= -2400;
         },
 
         getHardestBonus(board, action, aiP, resAi = 0, resHuman = 0) {
           this.load();
           const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
-          if (this.blunderKeys.has(fullKey)) return -6500;
+          if (this.blunderKeys.has(fullKey)) return -8500;
           const w = this.table.get(fullKey) || 0;
-          if (w <= -2800) return -5500;
+          if (w <= -2400) return -6500;
+          const patKey = this.makePatternKey(board, action, aiP, resAi, resHuman);
+          const pw = patKey ? (this.patternTable.get(patKey) || 0) : 0;
           const lvl = this.getIntelligenceLevel();
-          return Math.max(-2800, Math.min(2800, Math.round(w * lvl.bonusFactor)));
+          return Math.max(-3600, Math.min(3600, Math.round((w + pw * 0.65) * lvl.bonusFactor)));
         },
 
         recordStep(board, action, aiP, resAi = 0, resHuman = 0) {
@@ -8690,11 +8948,13 @@
             this.currentDropSequence.push(action.to);
           }
           const { fullKey } = this.makeStateKey(board, action, aiP, resAi, resHuman);
-          this.episode.push({ fullKey, action, board: [...board], aiP, resAi, resHuman });
+          const patternKey = this.makePatternKey(board, action, aiP, resAi, resHuman);
+          this.episode.push({ fullKey, patternKey, action, board: [...board], aiP, resAi, resHuman });
           if (this.episode.length > 90) this.episode.shift();
         },
 
         adjustWeight(fullKey, delta) {
+          if (!fullKey) return;
           const prev = this.table.get(fullKey) || 0;
           const next = Math.max(-6000, Math.min(6000, Math.round(prev * 0.85 + delta)));
           if (Math.abs(next) < 25) this.table.delete(fullKey);
@@ -8708,12 +8968,16 @@
           const lastIdx = this.episode.length - 1;
           const lastMove = this.episode[lastIdx];
           this.blunderKeys.add(lastMove.fullKey);
-          this.adjustWeight(lastMove.fullKey, -1600 * count);
+          this.adjustWeight(lastMove.fullKey, -1800 * count);
+          if (lastMove.patternKey) this.adjustPatternWeight(lastMove.patternKey, -800 * count);
           if (lastIdx >= 1) {
-            this.adjustWeight(this.episode[lastIdx - 1].fullKey, -850 * count);
+            this.adjustWeight(this.episode[lastIdx - 1].fullKey, -950 * count);
+            if (this.episode[lastIdx - 1].patternKey) {
+              this.adjustPatternWeight(this.episode[lastIdx - 1].patternKey, -450 * count);
+            }
           }
           if (lastIdx >= 2) {
-            this.adjustWeight(this.episode[lastIdx - 2].fullKey, -420 * count);
+            this.adjustWeight(this.episode[lastIdx - 2].fullKey, -480 * count);
           }
           this.save();
         },
@@ -8745,15 +9009,17 @@
               for (let i = this.episode.length - 1; i >= 0; i--) {
                 const ep = this.episode[i];
                 if (!ep.aiP || ep.aiP === winner) {
-                  const stepDelta = Math.round(900 * discountWin);
+                  const stepDelta = Math.round(950 * discountWin);
                   if (Math.abs(stepDelta) >= 25) {
                     this.adjustWeight(ep.fullKey, stepDelta);
+                    if (ep.patternKey) this.adjustPatternWeight(ep.patternKey, Math.round(stepDelta * 0.4));
                   }
                   discountWin *= 0.9;
                 } else if (GameState.aiVsAi) {
-                  const penDelta = Math.round(-1100 * discountLoss);
+                  const penDelta = Math.round(-1150 * discountLoss);
                   if (Math.abs(penDelta) >= 25) {
                     this.adjustWeight(ep.fullKey, penDelta);
+                    if (ep.patternKey) this.adjustPatternWeight(ep.patternKey, Math.round(penDelta * 0.4));
                   }
                   discountLoss *= 0.88;
                 }
@@ -8781,20 +9047,26 @@
             if (this.episode.length > 0) {
               const lastIdx = this.episode.length - 1;
               this.blunderKeys.add(this.episode[lastIdx].fullKey);
-              this.adjustWeight(this.episode[lastIdx].fullKey, -2400);
+              this.adjustWeight(this.episode[lastIdx].fullKey, -2600);
+              if (this.episode[lastIdx].patternKey) this.adjustPatternWeight(this.episode[lastIdx].patternKey, -1100);
               if (lastIdx >= 1) {
                 this.blunderKeys.add(this.episode[lastIdx - 1].fullKey);
-                this.adjustWeight(this.episode[lastIdx - 1].fullKey, -1600);
+                this.adjustWeight(this.episode[lastIdx - 1].fullKey, -1800);
+                if (this.episode[lastIdx - 1].patternKey) this.adjustPatternWeight(this.episode[lastIdx - 1].patternKey, -750);
               }
               if (lastIdx >= 2) {
                 this.blunderKeys.add(this.episode[lastIdx - 2].fullKey);
-                this.adjustWeight(this.episode[lastIdx - 2].fullKey, -1000);
+                this.adjustWeight(this.episode[lastIdx - 2].fullKey, -1100);
+                if (this.episode[lastIdx - 2].patternKey) this.adjustPatternWeight(this.episode[lastIdx - 2].patternKey, -480);
               }
               let discount = 0.86;
               for (let i = lastIdx - 3; i >= 0; i--) {
-                const stepDelta = Math.round(-750 * discount);
+                const stepDelta = Math.round(-800 * discount);
                 if (Math.abs(stepDelta) >= 25) {
                   this.adjustWeight(epSafeKey(this.episode[i]), stepDelta);
+                  if (this.episode[i].patternKey) {
+                    this.adjustPatternWeight(this.episode[i].patternKey, Math.round(stepDelta * 0.35));
+                  }
                 }
                 discount *= 0.86;
               }
@@ -8803,6 +9075,7 @@
           this.archetypeStats[archId] = st;
           this.episode = [];
           this.currentDropSequence = [];
+          this.cachedSecondPlacerPlan = null;
           this.save();
           if (typeof PuterAIManager !== 'undefined') {
             PuterAIManager.syncModalUI();
@@ -8842,14 +9115,22 @@
 
       function canPlayerFlyOnBoard(player, board, reserves) {
         if (GameState.morrisFlyingRule !== 'enabled') return false;
-        if (GameState.gridPreset === 'three_morris' || GameState.gridPreset === 'six_morris') return false;
+        if (
+          GameState.gridPreset === 'three_morris' ||
+          GameState.gridPreset === 'six_morris' ||
+          GameState.gridPreset === 'picaria' ||
+          GameState.gridPreset === 'saat_guti' ||
+          GameState.gridPreset === 'dara'
+        ) {
+          return false;
+        }
         if (reserves && reserves[player] > 0) return false;
         return countPlayerTotalPieces(player, board, reserves) === 3;
       }
 
       function canPlayerCloseMillAt(emptyNodeId, line, player, board, reserves) {
         if (reserves && reserves[player] > 0) {
-          const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
+          const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill' || GameState.gridPreset === 'dara');
           if (!forbidLandingMill) return true;
           return hasReadySliderForMill(emptyNodeId, line, player, board);
         }
@@ -8857,33 +9138,79 @@
         return hasReadySliderForMill(emptyNodeId, line, player, board);
       }
 
-      // Count how many open 2-in-a-row threats dropping at `nodeId` creates for `player`
+      function countLiveHalfThreatsAtEmptyNode(emptyNodeId, player, board) {
+        ensureMorrisTopologyCache();
+        if (board[emptyNodeId] !== 0) return 0;
+        const pairs = NodeMillPairs[emptyNodeId];
+        if (!pairs) return 0;
+        let liveLines = 0;
+        for (let i = 0; i < pairs.length; i++) {
+          const [o1, o2] = pairs[i];
+          const v1 = board[o1];
+          const v2 = board[o2];
+          if ((v1 === player && v2 === 0) || (v2 === player && v1 === 0)) {
+            liveLines++;
+          }
+        }
+        return liveLines;
+      }
+
       function analyzeDropForkPotential(nodeId, player, board, reserves) {
         ensureMorrisTopologyCache();
         const pairs = NodeMillPairs[nodeId];
-        if (!pairs) return { millCount: 0, openTwoTargets: [], loadedTargets: [] };
-        const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill');
+        if (!pairs) {
+          return {
+            millCount: 0,
+            rawMillCount: 0,
+            openTwoTargets: [],
+            loadedTargets: [],
+            immuneTargets: [],
+            futureForkPivots: 0,
+            cleanLineDevelopments: 0
+          };
+        }
+        const opp = player === 1 ? 2 : 1;
+        const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill' || GameState.gridPreset === 'dara');
         let millCount = 0;
         const openTwoTargets = [];
         const loadedTargets = [];
+        const immuneTargets = [];
+        let futureForkPivots = 0;
+        let cleanLineDevelopments = 0;
 
         for (let i = 0; i < pairs.length; i++) {
           const [o1, o2, lineIdx] = pairs[i];
           const v1 = board[o1];
           const v2 = board[o2];
           if (v1 === player && v2 === player) {
-            millCount++;
+            if (GameState.gridPreset === 'dara') {
+              const prev = board[nodeId];
+              board[nodeId] = player;
+              const over = isDaraOverline(MillLines[lineIdx], player, board);
+              board[nodeId] = prev;
+              if (!over) millCount++;
+            } else {
+              millCount++;
+            }
           } else if ((v1 === player && v2 === 0) || (v2 === player && v1 === 0)) {
             const empId = v1 === 0 ? o1 : o2;
-            openTwoTargets.push(empId);
+            if (!openTwoTargets.includes(empId)) openTwoTargets.push(empId);
             const line = MillLines[lineIdx];
             if (hasReadySliderForMill(empId, line, player, board)) {
-              loadedTargets.push(empId);
+              if (!loadedTargets.includes(empId)) loadedTargets.push(empId);
             }
+            if (forbidLandingMill && fastWouldCompleteMill(empId, opp, board) > 0) {
+              if (!immuneTargets.includes(empId)) immuneTargets.push(empId);
+            }
+          } else if (v1 === 0 && v2 === 0) {
+            cleanLineDevelopments++;
+            // Check if o1 or o2 already has another live half-threat line for `player`, making it a future fork pivot!
+            if (countLiveHalfThreatsAtEmptyNode(o1, player, board) >= 1) futureForkPivots++;
+            if (countLiveHalfThreatsAtEmptyNode(o2, player, board) >= 1) futureForkPivots++;
           }
         }
 
-        // Also check if dropping at `nodeId` acts as the outside SLIDER that arms an existing 2-in-a-row!
+        // Check if dropping at `nodeId` acts as the outside SLIDER that arms an existing 2-in-a-row
         if (Adjacency[nodeId]) {
           for (const nb of Adjacency[nodeId]) {
             if (board[nb] !== 0) continue;
@@ -8894,6 +9221,9 @@
               if (p1 === nodeId || p2 === nodeId) continue;
               if (board[p1] === player && board[p2] === player) {
                 if (!loadedTargets.includes(nb)) loadedTargets.push(nb);
+                if (forbidLandingMill && fastWouldCompleteMill(nb, opp, board) > 0) {
+                  if (!immuneTargets.includes(nb)) immuneTargets.push(nb);
+                }
               }
             }
           }
@@ -8903,22 +9233,25 @@
           millCount: forbidLandingMill ? 0 : millCount,
           rawMillCount: millCount,
           openTwoTargets,
-          loadedTargets
+          loadedTargets,
+          immuneTargets,
+          futureForkPivots,
+          cleanLineDevelopments
         };
       }
 
       function scoreMorrisRemovalTarget(cid, board, aiP, humanP, res1 = GameState.reserves[1], res2 = GameState.reserves[2]) {
         ensureMorrisTopologyCache();
         const res = { 1: res1, 2: res2 };
-        let score = getMorrisNodeWeight(cid) * 30;
+        let score = getMorrisNodeWeight(cid) * 38;
 
         const simB = [...board];
         simB[cid] = 0;
         const hmRemaining = countPlayerTotalPieces(humanP, simB, res);
-        if (hmRemaining <= 2) return 400000;
+        if (hmRemaining <= 2) return 450000;
         if (res[humanP] === 0) {
           const oppActs = getAllLegalActionsForPlayer(humanP, simB, res);
-          if (oppActs.total === 0) return 380000;
+          if (oppActs.total === 0) return 420000;
         }
 
         const oppWillFlyAfterRemoval = canPlayerFlyOnBoard(humanP, simB, res);
@@ -8942,11 +9275,10 @@
 
           if (oppC === 2 && empId !== -1 && aiC === 0) {
             inOpenTwo++;
-            // Check both current board AND post-removal board (in case removal unlocks flying!)
             if (canPlayerCloseMillAt(empId, line, humanP, board, res) || canPlayerCloseMillAt(empId, line, humanP, simB, res)) {
-              score += 85000;
+              score += 95000;
             } else {
-              score += 28000;
+              score += 34000;
             }
           } else if (oppC === 1 && aiC === 0) {
             inOneWithTwoEmpty++;
@@ -8955,18 +9287,15 @@
           // Removing `cid` unblocks an AI 2-in-a-row on this exact line!
           if (aiC === 2 && oppC === 1) {
             if (canPlayerCloseMillAt(cid, line, aiP, simB, res)) {
-              score += 72000;
+              score += 82000;
             } else {
-              score += 26000;
+              score += 31000;
             }
           } else if (aiC === 1 && oppC === 1 && empId !== -1) {
-            // Opens a full mill line for AI
-            score += 6500;
+            score += 7800;
           }
         }
 
-        // CRITICAL FLYING RULE AWARENESS: If removing `cid` reduces opponent to 3 beads in Flying Mode,
-        // check if the OTHER 3 remaining opponent beads on `simB` form any 2-in-a-row that can now fly-close!
         if (oppWillFlyAfterRemoval) {
           let survivingTwoInRows = 0;
           for (let lIdx = 0; lIdx < MillLines.length; lIdx++) {
@@ -8978,14 +9307,15 @@
             if (hC === 2 && eC === 1) survivingTwoInRows++;
           }
           if (survivingTwoInRows > 0) {
-            score -= survivingTwoInRows * 90000;
+            score -= survivingTwoInRows * 95000;
           } else {
-            score += 35000;
+            score += 38000;
           }
         }
 
-        if (inOpenTwo >= 2) score += 65000;
-        if (inOneWithTwoEmpty >= 2) score += 9500; // Break opponent L-fork pivot
+        if (inOpenTwo >= 2) score += 75000;
+        if (inOneWithTwoEmpty >= 2) score += 14500;
+        if (inOneWithTwoEmpty >= 3) score += 26000;
 
         // Check if `cid` is the outside slider about to slide into an empty node `nb` to complete a mill
         for (const nb of Adjacency[cid]) {
@@ -8996,13 +9326,12 @@
               if (p1 === cid || p2 === cid) continue;
               if (board[p1] === humanP && board[p2] === humanP) {
                 const otherSliders = countReadySlidersForMill(nb, MillLines[lIdx], humanP, simB);
-                score += otherSliders === 0 ? 78000 : 28000;
+                score += otherSliders === 0 ? 84000 : 30000;
               }
             }
           }
         }
 
-        // In 'any' mode (or when all opponent beads are in mills), breaking an active/running mill or see-saw
         if (fastCountMillsAtNode(cid, humanP, board) > 0) {
           let canReopenSafely = false;
           let partOfSeeSaw = false;
@@ -9021,9 +9350,13 @@
               }
             }
           }
-          if (partOfSeeSaw) score += 92000;
-          else if (canReopenSafely) score += 44000;
-          else score += 18000;
+          if (partOfSeeSaw) score += 98000;
+          else if (canReopenSafely) score += 48000;
+          else score += 21000;
+        }
+
+        if (cid < MorrisLearner.humanPivotFreq.length && MorrisLearner.humanPivotFreq[cid] > 0) {
+          score += Math.min(9500, MorrisLearner.humanPivotFreq[cid] * 1200);
         }
 
         let oppEmptyNeighbors = 0;
@@ -9036,7 +9369,7 @@
             if (libBefore === 0) friendlyTrappedFreed++;
           }
         }
-        score += oppEmptyNeighbors * 350 + friendlyTrappedFreed * 8500;
+        score += oppEmptyNeighbors * 420 + friendlyTrappedFreed * 9500;
         return score;
       }
 
@@ -9066,18 +9399,219 @@
         return scored.slice(0, maxCount).map((x) => x.cid);
       }
 
-      // Grandmaster evaluation for "Lay All Beads First" (both 1st-Placer and 2nd-Placer)
+      // Exact Combinatorial Bitmask Subset Solver when AI places all N beads second in `all_at_once` mode (resHuman === 0)
+      function solveOptimalSecondPlacerSubset(board, aiP, humanP, resAi, diff) {
+        ensureMorrisTopologyCache();
+        if (Nodes.length > 24 || resAi <= 0) return null;
+
+        if (
+          MorrisLearner.cachedSecondPlacerPlan &&
+          MorrisLearner.cachedSecondPlacerPlan.ruleSig === getMorrisRuleSignature() &&
+          MorrisLearner.cachedSecondPlacerPlan.targets.length > 0
+        ) {
+          const plan = MorrisLearner.cachedSecondPlacerPlan;
+          const remainingTargets = plan.targets.filter((nid) => board[nid] === 0);
+          const allValid = plan.targets.every((nid) => board[nid] === 0 || board[nid] === aiP);
+          if (allValid && remainingTargets.length === resAi) {
+            remainingTargets.sort((a, b) => getMorrisNodeWeight(b) - getMorrisNodeWeight(a));
+            return { from: -1, to: remainingTargets[0], type: 'drop' };
+          }
+        }
+
+        const emptyList = [];
+        let curAiMask = 0;
+        let hmMask = 0;
+        let allEmptyMask = 0;
+        for (let i = 0; i < Nodes.length; i++) {
+          if (board[i] === 0) {
+            emptyList.push(i);
+            allEmptyMask |= (1 << i);
+          } else if (board[i] === aiP) {
+            curAiMask |= (1 << i);
+          } else if (board[i] === humanP) {
+            hmMask |= (1 << i);
+          }
+        }
+
+        const E = emptyList.length;
+        const K = E - resAi;
+        if (K < 0 || K > 7 || E > 17) return null;
+
+        const hmNodes = [];
+        for (let i = 0; i < Nodes.length; i++) {
+          if (board[i] === humanP) hmNodes.push(i);
+        }
+
+        const numMills = MillBitMasks.length;
+        const topSubsets = [];
+
+        const evaluateMaskCandidate = (emptyKeepMask, allowMillFallback) => {
+          const finalAiMask = curAiMask | (allEmptyMask ^ emptyKeepMask);
+          if (!allowMillFallback) {
+            for (let m = 0; m < numMills; m++) {
+              const mm = MillBitMasks[m];
+              if ((finalAiMask & mm) === mm) return;
+            }
+          }
+
+          // 1. Check Human Mobility (if 0, Human has ZERO legal moves on Turn 1 of Slide Phase = INSTANT AI WIN!)
+          let hmMoves = 0;
+          let hmMovableBeads = 0;
+          for (let i = 0; i < hmNodes.length; i++) {
+            const hId = hmNodes[i];
+            const mBits = NodeAdjBitMasks[hId] & emptyKeepMask;
+            if (mBits !== 0) {
+              hmMovableBeads++;
+              let tmp = mBits;
+              while (tmp) { hmMoves++; tmp &= (tmp - 1); }
+            }
+          }
+          if (hmMoves === 0) {
+            topSubsets.push({ emptyKeepMask, finalAiMask, fastScore: 50000000 });
+            return;
+          }
+
+          let fastScore = -hmMoves * 3600 - hmMovableBeads * 4800;
+
+          // 2. Check Human & AI 1-step slide mills on the K empty nodes
+          let hmReadyMills = 0;
+          let aiReadyMills = 0;
+          let aiUncontestedMills = 0;
+          let aiCoveredLines = 0;
+
+          for (let m = 0; m < numMills; m++) {
+            const mm = MillBitMasks[m];
+            const aBits = finalAiMask & mm;
+            const hBits = hmMask & mm;
+            const eBits = emptyKeepMask & mm;
+            if (aBits !== 0 && hBits === 0) aiCoveredLines++;
+
+            if (eBits !== 0 && (eBits & (eBits - 1)) === 0) {
+              // Exactly 1 empty node on this mill line
+              const line = MillLines[m];
+              const empId = (eBits & (1 << line[0])) ? line[0] : ((eBits & (1 << line[1])) ? line[1] : line[2]);
+              const sliderMask = MillSliderBitMasks[m][empId] || 0;
+              if (aBits === 0 && hBits !== 0 && (hBits & (hBits - 1)) !== 0) {
+                // Human has 2 beads + 1 empty
+                if ((hmMask & sliderMask) !== 0) {
+                  hmReadyMills++;
+                } else {
+                  fastScore -= 18000;
+                }
+              } else if (hBits === 0 && aBits !== 0 && (aBits & (aBits - 1)) !== 0) {
+                // AI has 2 beads + 1 empty
+                if ((finalAiMask & sliderMask) !== 0) {
+                  aiReadyMills++;
+                  if ((hmMask & NodeAdjBitMasks[empId]) === 0) {
+                    aiUncontestedMills++;
+                  }
+                } else {
+                  fastScore += 12000;
+                }
+              }
+            }
+          }
+
+          fastScore -= hmReadyMills * 420000;
+          fastScore += aiReadyMills * 55000 + aiUncontestedMills * 135000 + aiCoveredLines * 9500;
+
+          // 3. Node weights & AI mobility
+          let aiMoves = 0;
+          for (let i = 0; i < Nodes.length; i++) {
+            if (finalAiMask & (1 << i)) {
+              fastScore += NodeDegreeWeights[i] * 90;
+              if ((NodeAdjBitMasks[i] & emptyKeepMask) !== 0) aiMoves++;
+            }
+          }
+          fastScore += aiMoves * 2800;
+
+          if (topSubsets.length < 14 || fastScore > topSubsets[topSubsets.length - 1].fastScore) {
+            topSubsets.push({ emptyKeepMask, finalAiMask, fastScore });
+            topSubsets.sort((a, b) => b.fastScore - a.fastScore);
+            if (topSubsets.length > 14) topSubsets.pop();
+          }
+        };
+
+        const chooseEmptyRec = (startIdx, left, curMask, allowMillFallback) => {
+          if (left === 0) {
+            evaluateMaskCandidate(curMask, allowMillFallback);
+            return;
+          }
+          for (let i = startIdx; i <= E - left; i++) {
+            chooseEmptyRec(i + 1, left - 1, curMask | (1 << emptyList[i]), allowMillFallback);
+          }
+        };
+
+        chooseEmptyRec(0, K, 0, false);
+        if (topSubsets.length === 0) {
+          chooseEmptyRec(0, K, 0, true);
+        }
+        if (topSubsets.length === 0) return null;
+
+        let bestSub = topSubsets[0];
+        if (bestSub.fastScore < 40000000 && (diff === 'hard' || diff === 'hardest') && topSubsets.length > 1) {
+          if (MorrisTT.size > 120000) MorrisTT.clear();
+          morrisSearchAborted = false;
+          morrisSearchDeadline = performance.now() + (diff === 'hardest' ? 420 : 240);
+          let bestCombined = -Infinity;
+          const verifyCount = Math.min(diff === 'hardest' ? 8 : 5, topSubsets.length);
+          for (let idx = 0; idx < verifyCount; idx++) {
+            const cand = topSubsets[idx];
+            const simB = [...board];
+            for (let i = 0; i < Nodes.length; i++) {
+              if (cand.finalAiMask & (1 << i)) simB[i] = aiP;
+            }
+            const mmVal = minimaxMorris(
+              simB,
+              0,
+              0,
+              diff === 'hardest' ? 7 : 5,
+              -Infinity,
+              Infinity,
+              humanP,
+              aiP,
+              humanP,
+              new Set()
+            );
+            const total = cand.fastScore + mmVal * 14;
+            if (total > bestCombined) {
+              bestCombined = total;
+              bestSub = cand;
+            }
+            if (morrisSearchAborted) break;
+          }
+        }
+
+        const chosenTargets = [];
+        const dropMask = bestSub.finalAiMask & ~curAiMask;
+        for (let i = 0; i < Nodes.length; i++) {
+          if (dropMask & (1 << i)) chosenTargets.push(i);
+        }
+        if (chosenTargets.length === 0) return null;
+
+        MorrisLearner.cachedSecondPlacerPlan = {
+          ruleSig: getMorrisRuleSignature(),
+          targets: chosenTargets
+        };
+
+        // Order chosen targets so we block urgent Human 2-in-a-rows and grab 3-mill hubs first
+        chosenTargets.sort((a, b) => {
+          const bA = fastWouldCompleteMill(a, humanP, board) * 500 + getMorrisNodeWeight(a);
+          const bB = fastWouldCompleteMill(b, humanP, board) * 500 + getMorrisNodeWeight(b);
+          return bB - bA;
+        });
+        return { from: -1, to: chosenTargets[0], type: 'drop' };
+      }
+
       function evaluateAllAtOnceBoard(board, aiP, humanP, resAi, resHuman) {
         ensureMorrisTopologyCache();
         const blueprint = MorrisLearner.getActiveBlueprintNodes();
         const humanFreq = MorrisLearner.humanNodeFreq || [];
         const totalLines = MillLines.length;
 
-        // CASE A: AI is laying all beads FIRST (resHuman > 0, human hasn't placed yet)
         if (resHuman > 0) {
           let score = 0;
           let linesCovered = 0;
-          let linesWithTwo = 0;
           const readyTargets = new Set();
           const multiSliderTargets = new Set();
           const cageTrapTargets = new Set();
@@ -9089,15 +9623,15 @@
           for (let i = 0; i < Nodes.length; i++) {
             if (board[i] !== aiP) continue;
             placedNodes.push(i);
-            score += getMorrisNodeWeight(i) * 320;
+            score += getMorrisNodeWeight(i) * 340;
 
             const bpIdx = blueprint.indexOf(i);
             if (bpIdx !== -1 && bpIdx < GameState.piecesPerPlayer) {
-              score += 22000 + (12 - bpIdx) * 1600;
+              score += 26000 + (12 - bpIdx) * 1800;
             }
 
             if (i < humanFreq.length && humanFreq[i] > 0) {
-              score += Math.min(4500, humanFreq[i] * 650);
+              score += Math.min(4800, humanFreq[i] * 680);
             }
 
             let empNb = 0;
@@ -9111,8 +9645,8 @@
               }
             }
             if (empNb === 0) score -= 85000;
-            else if (empNb === 1) score -= 26000;
-            else score += empNb * 2400;
+            else if (empNb === 1) score -= 24000;
+            else score += empNb * 2600;
 
             const deg = Adjacency[i] ? Adjacency[i].size : 2;
             if (deg === 2 && friendlyNb >= 2) {
@@ -9123,11 +9657,11 @@
           if (resAi === 0 && placedNodes.length >= 6) {
             const dropSig = `DROP:${placedNodes.slice().sort((a, b) => a - b).join(',')}`;
             if (MorrisLearner.tabooFormationSignatures.has(dropSig)) {
-              score -= 220000;
+              score -= 260000;
             }
           }
 
-          score += frontierSet.size * 4200;
+          score += frontierSet.size * 4400;
 
           for (const line of MillLines) {
             let aC = 0, hC = 0, empNode = -1;
@@ -9140,7 +9674,6 @@
               linesCovered++;
             }
             if (aC === 2 && hC === 0 && empNode !== -1) {
-              linesWithTwo++;
               openTwoTargets.add(empNode);
               targetShareCount.set(empNode, (targetShareCount.get(empNode) || 0) + 1);
               const sliders = countReadySlidersForMill(empNode, line, aiP, board);
@@ -9177,22 +9710,20 @@
             }
           }
 
-          score += linesCovered * 26000;
-          if (linesCovered >= totalLines - 2) score += 65000;
-          if (linesCovered >= totalLines - 1) score += 95000;
-          if (linesCovered >= totalLines) score += 175000;
+          score += linesCovered * 29000;
+          if (linesCovered >= totalLines - 2) score += 75000;
+          if (linesCovered >= totalLines - 1) score += 120000;
+          if (linesCovered >= totalLines) score += 280000;
 
-          score += openTwoTargets.size * 10000;
-          score += readyTargets.size * 38000;
-          score += multiSliderTargets.size * 25000;
-          score += cageTrapTargets.size * 62000;
+          score += openTwoTargets.size * 12000;
+          score += readyTargets.size * 42000;
+          score += multiSliderTargets.size * 28000;
+          score += cageTrapTargets.size * 68000;
 
           for (const [, count] of targetShareCount) {
             if (count > 1) score -= (count - 1) * 18000;
           }
 
-          // When AI finishes placing its Nth bead first, simulate Human's best N counter-drops,
-          // and then evaluate with `turnPlayer = aiP` because AI moves FIRST in the Slide Phase!
           if (resAi === 0) {
             const simBoard = [...board];
             let hmLeft = Math.min(resHuman, GameState.piecesPerPlayer);
@@ -9206,9 +9737,9 @@
                   simBoard[i] = 0;
                   continue;
                 }
-                let hVal = getMorrisNodeWeight(i) * 40;
-                if (readyTargets.has(i)) hVal += 55000;
-                else if (openTwoTargets.has(i)) hVal += 22000;
+                let hVal = getMorrisNodeWeight(i) * 45;
+                if (readyTargets.has(i)) hVal += 62000;
+                else if (openTwoTargets.has(i)) hVal += 24000;
                 for (const line of MillLines) {
                   if (!line.includes(i)) continue;
                   let hC = 0, aC = 0, emp = -1;
@@ -9218,12 +9749,11 @@
                     else emp = id;
                   }
                   if (hC === 2 && aC === 0 && emp !== -1) {
-                    hVal += hasReadySliderForMill(emp, line, humanP, simBoard) ? 34000 : 11000;
+                    hVal += hasReadySliderForMill(emp, line, humanP, simBoard) ? 38000 : 12000;
                   }
                 }
-                // Human also tries to block AI liberties
                 for (const nb of Adjacency[i]) {
-                  if (simBoard[nb] === aiP) hVal += 2500;
+                  if (simBoard[nb] === aiP) hVal += 2600;
                 }
                 simBoard[i] = 0;
                 if (hVal > bestHVal) {
@@ -9236,16 +9766,13 @@
               hmLeft--;
             }
             const postEval = evaluateMorrisBoardState(simBoard, 0, 0, aiP, aiP, humanP);
-            score += postEval * 3.2;
+            score += postEval * 3.5;
           }
 
           return score;
         }
 
-        // CASE B: Human already placed all N beads first (resHuman === 0), now AI places its N beads!
-        // Note: Human's beads are 100% frozen until AI finishes all N drops, and then Human slides first
-        // (UNLESS Human has 0 legal moves, in which case AI wins immediately on its final drop!).
-        let score = evaluateMorrisBoardState(board, 0, 0, humanP, aiP, humanP) * 4.5;
+        let score = evaluateMorrisBoardState(board, 0, 0, humanP, aiP, humanP) * 4.8;
         const hmReadyTargets = new Set();
         const hmTwoStepTargets = new Set();
         const hmOpenTwoWithoutSlider = new Set();
@@ -9264,7 +9791,6 @@
               hmReadyTargets.add(emp);
             } else {
               hmOpenTwoWithoutSlider.add(emp);
-              // Check if a human bead is 2 steps away from `emp`
               for (const nb of Adjacency[emp]) {
                 if (board[nb] === 0 && !line.includes(nb)) {
                   for (const nb2 of Adjacency[nb]) {
@@ -9291,15 +9817,14 @@
           }
         }
 
-        score -= hmReadyTargets.size * 260000;
-        score -= hmTwoStepTargets.size * 48000;
-        score -= hmOpenTwoWithoutSlider.size * 22000;
-        score += aiReadyTargets.size * 46000;
-        score += aiUncontestedTargets.size * 92000;
-        if (aiUncontestedTargets.size >= 1 && hmReadyTargets.size === 0) score += 115000;
-        if (aiUncontestedTargets.size >= 2) score += 140000;
+        score -= hmReadyTargets.size * 280000;
+        score -= hmTwoStepTargets.size * 52000;
+        score -= hmOpenTwoWithoutSlider.size * 25000;
+        score += aiReadyTargets.size * 48000;
+        score += aiUncontestedTargets.size * 98000;
+        if (aiUncontestedTargets.size >= 1 && hmReadyTargets.size === 0) score += 125000;
+        if (aiUncontestedTargets.size >= 2) score += 155000;
 
-        // Calculate Human's Liberty Frontier for Encirclement / Immobilization Win!
         const hmLibertyNodes = new Set();
         let hmMob = 0;
         let hmTrapped = 0;
@@ -9316,19 +9841,17 @@
             if (lib === 0) hmTrapped++;
           }
         }
-        if (hmMob === 0) return 1500000; // Instant immobilization victory!
+        if (hmMob === 0) return 1800000;
         if (hmLibertyNodes.size <= resAi) {
-          // AI has enough beads left in hand to plug EVERY remaining human liberty and win immediately!
-          score += (resAi - hmLibertyNodes.size + 1) * 180000;
+          score += (resAi - hmLibertyNodes.size + 1) * 195000;
         }
-        score += hmTrapped * 28000;
-        score -= hmMob * 2400;
-        score -= hmLibertyNodes.size * 4200;
+        score += hmTrapped * 30000;
+        score -= hmMob * 2600;
+        score -= hmLibertyNodes.size * 4500;
 
         return score;
       }
 
-      // Grandmaster Single-Drop Evaluator (aware of allow_mill, forbid_mill, all_at_once, 9/12/6/3 variants)
       function scoreMorrisPlacement(nodeId, board, aiP, humanP, isAllAtOnce, resAi, resHuman) {
         ensureMorrisTopologyCache();
         const landingMillForbidden = (isAllAtOnce || GameState.morrisDropMillRule === 'forbid_mill' || GameState.gridPreset === 'dara');
@@ -9346,34 +9869,45 @@
           const myMills = myForkInfo.rawMillCount;
           const oppMills = oppForkInfo.rawMillCount;
           if (myMills > 0) {
-            return 420000 + myMills * 55000 + oppMills * 35000 + myForkInfo.openTwoTargets.length * 18000;
+            return 480000 + myMills * 65000 + oppMills * 42000 + myForkInfo.openTwoTargets.length * 24000;
           }
-          if (oppMills > 0) {
-            return 340000 + oppMills * 48000 + myForkInfo.openTwoTargets.length * 16000;
+          if (oppMills > 0 && resHuman > 0) {
+            return 390000 + oppMills * 55000 + myForkInfo.openTwoTargets.length * 26000 + myForkInfo.futureForkPivots * 12000;
           }
         }
 
-        let score = getMorrisNodeWeight(nodeId) * 190;
+        let score = getMorrisNodeWeight(nodeId) * 210;
+
+        // Extra Star-Hub priority in 12-Men's Katar Mill (where middle corners [3,5,18,20] control 3 mills & 4 directions)
+        if (GameState.morrisDiagonals && Nodes.length === 24) {
+          if (nodeId === 3 || nodeId === 5 || nodeId === 18 || nodeId === 20) {
+            score += 6800;
+          } else if (NodeMillPairs[nodeId] && NodeMillPairs[nodeId].length === 3) {
+            score += 3600;
+          }
+        }
 
         const blueprint = MorrisLearner.getActiveBlueprintNodes();
         const bpIdx = blueprint.indexOf(nodeId);
-        if (bpIdx !== -1 && bpIdx < 8) {
-          score += (9 - bpIdx) * 650;
+        if (bpIdx !== -1 && bpIdx < 10) {
+          score += (11 - bpIdx) * 620;
         }
         const hFreq = (nodeId < MorrisLearner.humanNodeFreq.length && MorrisLearner.humanNodeFreq[nodeId]) || 0;
         if (hFreq > 0) {
-          score += Math.min(3200, hFreq * 480);
+          score += Math.min(3400, hFreq * 480);
+        }
+        const pFreq = (nodeId < MorrisLearner.humanPivotFreq.length && MorrisLearner.humanPivotFreq[nodeId]) || 0;
+        if (pFreq > 0) {
+          score += Math.min(7500, pFreq * 1100);
         }
 
         let liberties = 0;
-        let friendlyAdj = 0;
         for (const nb of Adjacency[nodeId]) {
           if (sim[nb] === 0) liberties++;
-          else if (sim[nb] === aiP) friendlyAdj++;
         }
         if (liberties === 0) score -= 28000;
-        else if (liberties === 1) score -= 5500;
-        else score += liberties * 1450;
+        else if (liberties === 1) score -= 4800;
+        else score += liberties * 1500;
 
         for (const nb of Adjacency[nodeId]) {
           if (board[nb] === humanP) {
@@ -9381,30 +9915,59 @@
             for (const onb of Adjacency[nb]) {
               if (sim[onb] === 0) oppLib++;
             }
-            if (oppLib === 0) score += 18500;
-            else if (oppLib === 1) score += 6200;
+            if (oppLib === 0) score += 19500;
+            else if (oppLib === 1) score += 6500;
           }
         }
 
         if (!landingMillForbidden) {
-          // Offensive & Defensive Double-Threat Fork Detection
           const myNewTwos = myForkInfo.openTwoTargets.length;
           const oppNewTwosIfOppDropsHere = oppForkInfo.openTwoTargets.length;
 
-          score += myNewTwos * 16500;
-          score += myForkInfo.loadedTargets.length * 14000;
-          if (myNewTwos >= 2) {
-            // Dropping here creates an unstoppable Double 2-in-a-Row Fork for AI!
-            score += 135000;
+          // 1. Offensive Double/Triple-Mill Fork Creation
+          if (myNewTwos >= 3) {
+            score += 245000;
+          } else if (myNewTwos === 2) {
+            score += 185000;
+          } else if (myNewTwos === 1) {
+            // Smart Initiative / Boomerang Analysis for a single 2-in-a-row threat:
+            const empId = myForkInfo.openTwoTargets[0];
+            const oppWouldMillOnBlock = fastWouldCompleteMill(empId, humanP, sim);
+            const oppHalfThreatsOnBlock = countLiveHalfThreatsAtEmptyNode(empId, humanP, sim);
+
+            if (oppWouldMillOnBlock > 0 && resHuman > 0) {
+              // Boomerang blunder: forcing Human onto `empId` completes a Human mill!
+              score -= 95000;
+            } else if (oppHalfThreatsOnBlock >= 2 && resHuman > 0) {
+              // Forcing Human onto `empId` hands Human a Double-Mill Fork!
+              score -= 58000;
+            } else if (oppHalfThreatsOnBlock === 1 && myForkInfo.futureForkPivots === 0 && resHuman > 2) {
+              // Single easily-blocked threat that gives Human a counter-threat and wastes our line
+              score -= 3500;
+            } else if (oppHalfThreatsOnBlock === 0 && myForkInfo.futureForkPivots >= 1) {
+              // Grandmaster Forcing Tempo Move: Human is forced to play a dead blocking stone at `empId` while we set up a Fork Pivot!
+              score += 36000 + myForkInfo.futureForkPivots * 14000;
+            } else {
+              score += 7500 + myForkInfo.loadedTargets.length * 9500;
+            }
           }
-          if (oppNewTwosIfOppDropsHere >= 2) {
-            // CRITICAL: `nodeId` is a Human Fork Point! If AI doesn't take it, Human drops here and creates a Double-Mill Fork!
-            score += 125000 + oppNewTwosIfOppDropsHere * 15000;
+
+          // 2. Defensive Fork Prevention: If `nodeId` is an Active Fork Intersection for Human, SEIZE IT!
+          if (oppNewTwosIfOppDropsHere >= 3) {
+            score += 225000;
+          } else if (oppNewTwosIfOppDropsHere === 2) {
+            score += 172000;
           } else if (oppNewTwosIfOppDropsHere === 1) {
-            score += 9500;
+            score += 8800 + oppForkInfo.futureForkPivots * 6500;
           }
+
+          // 3. Building 2-Turn Triangle / Star-Hub Fork Setups
+          score += myForkInfo.futureForkPivots * 13500;
+          score += myForkInfo.cleanLineDevelopments * 2200;
+          score += oppForkInfo.cleanLineDevelopments * 1600;
         } else {
-          // `forbid_mill` ("No Katar on Landing") specialized Grandmaster heuristics:
+          // `forbid_mill` ("No Katar on Landing" / Dara) Grandmaster Heuristics:
+          const slideFirst = getSlidePhaseFirstMover(resAi - 1, resHuman, humanP);
           const oppRawMillsHere = oppForkInfo.rawMillCount;
           const pairs = NodeMillPairs[nodeId] || [];
 
@@ -9420,38 +9983,53 @@
                   if (!line.includes(nb) && board[nb] === 0) emptySliderSpots++;
                 }
                 if (hasSlider) {
-                  // Opponent already has a ready slider into `nodeId`!
-                  score += (resHuman <= 4) ? 145000 : 88000;
+                  score += (resHuman <= 4) ? 165000 : (slideFirst === humanP ? 105000 : 72000);
                 } else if (emptySliderSpots > 0) {
-                  // Opponent can drop a slider adjacent to `nodeId` unless we plug `nodeId`!
-                  score += (resHuman <= 4) ? 68000 : 38000;
+                  score += (resHuman <= 3) ? 78000 : 32000;
                 } else {
-                  score += 6000;
+                  score += 5000;
                 }
               }
             }
           }
 
-          // 2. Building AI's own Loaded Slide-Mills & Immune Targets
-          score += myForkInfo.openTwoTargets.length * 9500;
-          score += myForkInfo.loadedTargets.length * 44000;
-          if (myForkInfo.loadedTargets.length >= 2) {
-            score += 96000;
-          }
-
-          // IMMUNE TARGET THEOREM: If `empId` in `myForkInfo.openTwoTargets` is ALSO an opponent 2-in-a-row,
-          // the opponent is legally FORBIDDEN from dropping on `empId` to block AI's mill!
+          // 2. Avoid the "Forbid-Mill Self-Lock Trap" when Human moves first in Slide Phase
           for (const empId of myForkInfo.openTwoTargets) {
             if (fastWouldCompleteMill(empId, humanP, board) > 0) {
-              score += myForkInfo.loadedTargets.includes(empId) ? 75000 : 34000;
+              // Both players have 2-in-a-row pointing at `empId`, so `empId` is mutually forbidden during Drop Phase!
+              const aiReady = myForkInfo.loadedTargets.includes(empId);
+              let hmReady = false;
+              for (const [ho1, ho2, hlIdx] of (NodeMillPairs[empId] || [])) {
+                if (board[ho1] === humanP && board[ho2] === humanP && hasReadySliderForMill(empId, MillLines[hlIdx], humanP, board)) {
+                  hmReady = true;
+                  break;
+                }
+              }
+              if (hmReady && (slideFirst === humanP || !aiReady)) {
+                // Self-Lock Trap: making `empId` illegal for AI to plug guarantees Human's loaded mill survives!
+                score -= 115000;
+              } else if (aiReady && (slideFirst === aiP || !hmReady)) {
+                // Immune Target Theorem: Human is forbidden from plugging `empId` and AI slides in first!
+                score += 92000;
+              } else {
+                score += 28000;
+              }
             }
           }
 
-          // 3. Blocking Human from arming a Loaded Slide-Mill
+          // 3. Building AI's Loaded Slide-Mills & 20-Line Lockout
+          score += myForkInfo.openTwoTargets.length * (resAi <= 4 ? 14000 : 7500);
+          score += myForkInfo.loadedTargets.length * (resAi <= 5 ? 52000 : 34000);
+          if (myForkInfo.loadedTargets.length >= 2) {
+            score += 105000;
+          }
+          score += myForkInfo.cleanLineDevelopments * 4500;
+
+          // 4. Blocking Human from arming a Loaded Slide-Mill
           if (oppForkInfo.loadedTargets.length >= 2) {
-            score += 92000;
+            score += 98000;
           } else if (oppForkInfo.loadedTargets.length === 1) {
-            score += 42000;
+            score += (resHuman <= 4) ? 58000 : 32000;
           }
         }
 
@@ -9460,8 +10038,15 @@
 
       function chooseBestMorrisDrop(allSteps, board, aiP, humanP, isAllAtOnce, resAi, resHuman, diff) {
         if (isAllAtOnce && diff !== 'easy' && resAi >= 1) {
+          if (resHuman === 0 && (diff === 'hard' || diff === 'hardest')) {
+            const exactMove = solveOptimalSecondPlacerSubset(board, aiP, humanP, resAi, diff);
+            if (exactMove && allSteps.some((s) => s.to === exactMove.to)) {
+              return exactMove;
+            }
+          }
+
           const forbidLandingMill = true;
-          const beamWidth = diff === 'hardest' ? 16 : (diff === 'hard' ? 10 : 4);
+          const beamWidth = diff === 'hardest' ? 18 : (diff === 'hard' ? 12 : 5);
           let beam = [{
             board: [...board],
             firstMove: null,
@@ -9494,7 +10079,7 @@
               for (const nid of legalIds) {
                 const nb = [...state.board];
                 nb[nid] = aiP;
-                const key = computeMorrisStateKey(nb, 0, 0, aiP);
+                const key = computeMorrisStateKey(nb, 0, 0, aiP, aiP);
                 if (seenKeys.has(key)) continue;
                 seenKeys.add(key);
                 const stepMove = { from: -1, to: nid, type: 'drop' };
@@ -9576,20 +10161,23 @@
         if (hmTotal <= 2) return 95000;
         if (aiTotal <= 2) return -95000;
 
+        const isDropPhase = (res1 > 0 || res2 > 0);
         const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill' || GameState.gridPreset === 'dara');
         const protectMills = (GameState.morrisMillRemovalRule === 'protect_mills');
         const aiCanFly = canPlayerFlyOnBoard(aiP, board, res);
         const hmCanFly = canPlayerFlyOnBoard(humanP, board, res);
+        const slideFirst = getSlidePhaseFirstMover(res1, res2, turnPlayer);
 
-        let score = (aiTotal - hmTotal) * 6800;
-        if (hmTotal === 3 && res[humanP] === 0) score += hmCanFly ? 2600 : 4800;
-        if (aiTotal === 3 && res[aiP] === 0) score -= aiCanFly ? 2600 : 4800;
+        let score = (aiTotal - hmTotal) * 7200;
+        if (hmTotal === 3 && res[humanP] === 0) score += hmCanFly ? 2800 : 5600;
+        if (aiTotal === 3 && res[aiP] === 0) score -= aiCanFly ? 2800 : 5600;
 
         let aiRepeatableMills = 0, hmRepeatableMills = 0;
         let aiLockedMills = 0, hmLockedMills = 0;
         let aiSeeSaw = 0, hmSeeSaw = 0;
         let aiPinnedOppMills = 0, hmPinnedAiMills = 0;
         let aiBlockedTwo = 0, hmBlockedTwo = 0;
+        let aiCoveredLines = 0, hmCoveredLines = 0;
 
         const aiOpenEmptySet = new Set();
         const hmOpenEmptySet = new Set();
@@ -9599,6 +10187,8 @@
         const hmUncontestedReadySet = new Set();
         const aiTwoShare = new Int32Array(Nodes.length);
         const hmTwoShare = new Int32Array(Nodes.length);
+        const aiLiveHalfAtEmpty = new Int32Array(Nodes.length);
+        const hmLiveHalfAtEmpty = new Int32Array(Nodes.length);
 
         for (let lIdx = 0; lIdx < MillLines.length; lIdx++) {
           const line = MillLines[lIdx];
@@ -9611,7 +10201,11 @@
             else { e++; empNode = id; }
           }
 
+          if (a >= 1 && h === 0) aiCoveredLines++;
+          else if (h >= 1 && a === 0) hmCoveredLines++;
+
           if (a === 3) {
+            if (GameState.gridPreset === 'dara' && isDaraOverline(line, aiP, board)) continue;
             let canSafelyOpen = false;
             let isPinnedByHuman = false;
             for (let k = 0; k < 3; k++) {
@@ -9637,6 +10231,7 @@
             else aiLockedMills++;
             if (isPinnedByHuman && protectMills) hmPinnedAiMills++;
           } else if (h === 3) {
+            if (GameState.gridPreset === 'dara' && isDaraOverline(line, humanP, board)) continue;
             let canSafelyOpen = false;
             let isPinnedByAi = false;
             for (let k = 0; k < 3; k++) {
@@ -9671,7 +10266,6 @@
               aiReadyEmptySet.add(empNode);
               let oppCanBlock = false;
               if (res[humanP] > 0) {
-                // In forbidLandingMill mode, if `empNode` would complete a human mill, human CANNOT drop on `empNode`!
                 oppCanBlock = !(forbidLandingMill && fastWouldCompleteMill(empNode, humanP, board) > 0);
               } else if (hmCanFly) {
                 oppCanBlock = true;
@@ -9708,6 +10302,16 @@
               }
               if (!aiCanBlock) hmUncontestedReadySet.add(empNode);
             }
+          } else if (a === 1 && e === 2 && h === 0) {
+            for (let k = 0; k < 3; k++) {
+              const id = line[k];
+              if (board[id] === 0) aiLiveHalfAtEmpty[id]++;
+            }
+          } else if (h === 1 && e === 2 && a === 0) {
+            for (let k = 0; k < 3; k++) {
+              const id = line[k];
+              if (board[id] === 0) hmLiveHalfAtEmpty[id]++;
+            }
           } else if (a === 2 && h === 1) {
             hmBlockedTwo++;
           } else if (h === 2 && a === 1) {
@@ -9716,66 +10320,113 @@
         }
 
         let aiForks = 0, hmForks = 0;
+        let aiEmptyForkIntersections = 0, hmEmptyForkIntersections = 0;
+        let aiTripleForkIntersections = 0, hmTripleForkIntersections = 0;
         let aiMob = 0, hmMob = 0;
         let aiTrapped = 0, hmTrapped = 0;
+        let aiFrontierMask = 0, hmFrontierMask = 0;
 
         for (let i = 0; i < Nodes.length; i++) {
           if (aiTwoShare[i] >= 2) aiForks++;
           if (hmTwoShare[i] >= 2) hmForks++;
 
           const occ = board[i];
-          if (occ === aiP) {
-            score += getMorrisNodeWeight(i);
+          if (occ === 0) {
+            if (aiLiveHalfAtEmpty[i] >= 2) {
+              aiEmptyForkIntersections++;
+              if (aiLiveHalfAtEmpty[i] >= 3) aiTripleForkIntersections++;
+            }
+            if (hmLiveHalfAtEmpty[i] >= 2) {
+              hmEmptyForkIntersections++;
+              if (hmLiveHalfAtEmpty[i] >= 3) hmTripleForkIntersections++;
+            }
+          } else if (occ === aiP) {
+            score += getMorrisNodeWeight(i) * 1.4;
             let degEmpty = 0;
-            for (const nb of Adjacency[i]) if (board[nb] === 0) degEmpty++;
+            for (const nb of Adjacency[i]) {
+              if (board[nb] === 0) {
+                degEmpty++;
+                if (nb < 30) aiFrontierMask |= (1 << nb);
+              }
+            }
             aiMob += degEmpty;
             if (degEmpty === 0 && !aiCanFly) aiTrapped++;
           } else if (occ === humanP) {
-            score -= getMorrisNodeWeight(i);
+            score -= getMorrisNodeWeight(i) * 1.4;
             let degEmpty = 0;
-            for (const nb of Adjacency[i]) if (board[nb] === 0) degEmpty++;
+            for (const nb of Adjacency[i]) {
+              if (board[nb] === 0) {
+                degEmpty++;
+                if (nb < 30) hmFrontierMask |= (1 << nb);
+              }
+            }
             hmMob += degEmpty;
             if (degEmpty === 0 && !hmCanFly) hmTrapped++;
           }
         }
 
-        if (res1 === 0 && res2 === 0) {
+        let aiFrontierCount = 0;
+        let hmFrontierCount = 0;
+        let tmpA = aiFrontierMask;
+        while (tmpA) { aiFrontierCount++; tmpA &= (tmpA - 1); }
+        let tmpH = hmFrontierMask;
+        while (tmpH) { hmFrontierCount++; tmpH &= (tmpH - 1); }
+
+        if (!isDropPhase) {
           if (!hmCanFly && hmMob === 0) return 93000;
           if (!aiCanFly && aiMob === 0) return -93000;
           if (!hmCanFly) {
-            if (hmMob === 1) score += 7200;
-            else if (hmMob === 2) score += 3600;
+            if (hmFrontierCount === 1 || hmMob === 1) score += 16500;
+            else if (hmFrontierCount === 2 || hmMob === 2) score += 6400;
           }
           if (!aiCanFly) {
-            if (aiMob === 1) score -= 7200;
-            else if (aiMob === 2) score -= 3600;
+            if (aiFrontierCount === 1 || aiMob === 1) score -= 16500;
+            else if (aiFrontierCount === 2 || aiMob === 2) score -= 6400;
           }
         }
 
-        score += (aiSeeSaw - hmSeeSaw) * 9500;
-        score += (aiRepeatableMills - hmRepeatableMills) * 3400;
-        score += (aiLockedMills - hmLockedMills) * (protectMills ? 1250 : 600);
-        score += (aiPinnedOppMills - hmPinnedAiMills) * 1800;
-        score += (aiUncontestedReadySet.size - hmUncontestedReadySet.size) * 5800;
-        score += ((aiReadyEmptySet.size - aiUncontestedReadySet.size) - (hmReadyEmptySet.size - hmUncontestedReadySet.size)) * 2200;
-        score += (aiOpenEmptySet.size - hmOpenEmptySet.size) * 750;
-        score += (aiForks - hmForks) * 3400;
-        score += (aiBlockedTwo - hmBlockedTwo) * 420;
-        score += (aiMob - hmMob) * 180;
-        score += (hmTrapped - aiTrapped) * 1500;
+        score += (aiSeeSaw - hmSeeSaw) * 10500;
+        score += (aiRepeatableMills - hmRepeatableMills) * (protectMills ? 4400 : 3400);
+        score += (aiLockedMills - hmLockedMills) * (protectMills ? 2600 : 650);
+        score += (aiPinnedOppMills - hmPinnedAiMills) * 2100;
+        score += (aiUncontestedReadySet.size - hmUncontestedReadySet.size) * 6500;
+        score += ((aiReadyEmptySet.size - aiUncontestedReadySet.size) - (hmReadyEmptySet.size - hmUncontestedReadySet.size)) * 2400;
+        score += (aiOpenEmptySet.size - hmOpenEmptySet.size) * 850;
+        score += (aiForks - hmForks) * 4200;
+        score += (aiCoveredLines - hmCoveredLines) * 340;
+        score += (aiBlockedTwo - hmBlockedTwo) * (isDropPhase ? 1250 : 520);
+        score += (aiMob - hmMob) * 210;
+        score += (aiFrontierCount - hmFrontierCount) * 380;
+        score += (hmTrapped - aiTrapped) * 1750;
 
-        // Turn-aware immediate threat evaluation
+        // Drop-Phase Fork Intersection Evaluation (crucial for 12-Men's Mill diagonal/corner forks!)
+        if (isDropPhase && !forbidLandingMill) {
+          score += (aiEmptyForkIntersections - hmEmptyForkIntersections) * 3200;
+          score += (aiTripleForkIntersections - hmTripleForkIntersections) * 4800;
+          if (turnPlayer === aiP) {
+            if (aiEmptyForkIntersections >= 1 && hmReadyEmptySet.size === 0) score += 8500;
+            if (hmEmptyForkIntersections >= 2 && aiReadyEmptySet.size === 0) score -= 9500;
+          } else {
+            if (hmEmptyForkIntersections >= 1 && aiReadyEmptySet.size === 0) score -= 8500;
+            if (aiEmptyForkIntersections >= 2 && hmReadyEmptySet.size === 0) score += 9500;
+          }
+        } else if (isDropPhase && forbidLandingMill) {
+          // In forbid_mill Drop Phase, reward whoever holds uncontested loaded targets for the Slide Phase
+          if (slideFirst === aiP && aiReadyEmptySet.size >= 1) score += 4500;
+          else if (slideFirst === humanP && hmReadyEmptySet.size >= 1) score -= 4500;
+        }
+
+        // Turn-aware immediate mill & double-threat fork evaluation
         if (turnPlayer === aiP) {
-          if (aiReadyEmptySet.size >= 1) score += 8200;
-          if (aiReadyEmptySet.size >= 2) score += 6500;
-          // If Human has >= 2 distinct ready threats, AI can only block 1 on this turn unless AI forms a mill!
-          if (hmReadyEmptySet.size >= 2 && aiReadyEmptySet.size === 0) score -= 9500;
-          if (hmUncontestedReadySet.size >= 1 && aiReadyEmptySet.size === 0) score -= 7800;
+          if (aiReadyEmptySet.size >= 1 && (!isDropPhase || !forbidLandingMill)) score += 14500;
+          if (aiReadyEmptySet.size >= 2) score += 8500;
+          if (hmReadyEmptySet.size >= 2 && aiReadyEmptySet.size === 0) score -= 14000;
+          if (hmUncontestedReadySet.size >= 1 && aiReadyEmptySet.size === 0) score -= 9500;
         } else {
-          if (hmReadyEmptySet.size >= 1) score -= 8200;
-          if (hmReadyEmptySet.size >= 2) score -= 6500;
-          if (aiReadyEmptySet.size >= 2 && hmReadyEmptySet.size === 0) score += 9500;
-          if (aiUncontestedReadySet.size >= 1 && hmReadyEmptySet.size === 0) score += 7800;
+          if (hmReadyEmptySet.size >= 1 && (!isDropPhase || !forbidLandingMill)) score -= 14500;
+          if (hmReadyEmptySet.size >= 2) score -= 8500;
+          if (aiReadyEmptySet.size >= 2 && hmReadyEmptySet.size === 0) score += 14000;
+          if (aiUncontestedReadySet.size >= 1 && hmReadyEmptySet.size === 0) score += 9500;
         }
 
         return score;
@@ -9829,24 +10480,28 @@
         const canFly = canPlayerFlyOnBoard(player, board, res);
         const killerPair = MorrisKillerMoves[depth] || null;
         const histTbl = MorrisHistoryTable[player] || null;
+        const isHardest = (GameState.aiDifficulty === 'hardest');
 
         for (const m of moves) {
           if (m.type === 'step' && !canFly && !Adjacency[m.from].has(m.to)) {
             continue;
           }
           const mKey = encodeMorrisMoveKey(m);
-          const pvBonus = (ttBestMoveKey && mKey === ttBestMoveKey) ? 600000 : 0;
-          const killerBonus = (killerPair && (mKey === killerPair[0] || mKey === killerPair[1])) ? 35000 : 0;
-          const histBonus = (histTbl && mKey > 0 && mKey < histTbl.length) ? Math.min(18000, histTbl[mKey]) : 0;
+          const pvBonus = (ttBestMoveKey && mKey === ttBestMoveKey) ? 750000 : 0;
+          const killerBonus = (killerPair && (mKey === killerPair[0] || mKey === killerPair[1])) ? 40000 : 0;
+          const histBonus = (histTbl && mKey > 0 && mKey < histTbl.length) ? Math.min(22000, histTbl[mKey]) : 0;
+          const learnedBonus = (depth <= 2)
+            ? ((isHardest ? MorrisLearner.getHardestBonus(board, m, player, res[player], res[opp]) : MorrisLearner.getBonus(board, m, player, res[player], res[opp])) * 4)
+            : 0;
 
           if (m.type === 'drop') {
             const p = scoreMorrisPlacement(m.to, board, player, opp, GameState.morrisDropOrder === 'all_at_once', res[player], res[opp])
-              + pvBonus + killerBonus + histBonus;
+              + pvBonus + killerBonus + histBonus + learnedBonus;
             scored.push({ move: m, mKey, priority: p, isForbiddenLoop: false });
             continue;
           }
 
-          let priority = getMorrisNodeWeight(m.to) * 10 + pvBonus + killerBonus + histBonus;
+          let priority = getMorrisNodeWeight(m.to) * 14 + pvBonus + killerBonus + histBonus + learnedBonus;
           const sim = [...board];
           sim[m.from] = 0;
           sim[m.to] = player;
@@ -9855,8 +10510,8 @@
           const wasInMill = fastCountMillsAtNode(m.from, player, board) > 0;
 
           if (myMillsCount > 0) {
-            priority += 110000 * myMillsCount;
-            if (wasInMill) priority += 125000; // See-saw double mill!
+            priority += 135000 * myMillsCount;
+            if (wasInMill) priority += 140000; // See-saw double mill!
           }
 
           if (wasInMill && myMillsCount === 0) {
@@ -9866,8 +10521,8 @@
                 if (board[nb] === opp) { oppCanEnterFrom = true; break; }
               }
             }
-            if (!oppCanEnterFrom) priority += 36000; // Safe opening of running mill
-            else priority -= 34000;
+            if (!oppCanEnterFrom) priority += 42000; // Safe opening of running mill
+            else priority -= 38000;
           }
 
           // Blocking opponent 1-step mill at `m.to`
@@ -9881,7 +10536,7 @@
                 if (hasReadySliderForMill(m.to, MillLines[lIdx], opp, board)) hasSlider = true;
               }
             }
-            priority += hasSlider ? 82000 : 22000;
+            priority += hasSlider ? 95000 : 24000;
           }
 
           // Penalty for vacating `m.from` when `m.from` was blocking an opponent 2-in-a-row!
@@ -9896,43 +10551,55 @@
                   if (hasReadySliderForMill(m.from, MillLines[lIdx], opp, sim)) oppReady = true;
                 }
               }
-              if (oppReady) priority -= 86000;
+              if (oppReady) priority -= 96000;
             }
           }
 
-          // Creating our own 1-step ready mill
+          // Creating our own 1-step ready mill (either as 2nd stone in line OR as outside slider arming an existing 2-in-a-row!)
           const toPairs = NodeMillPairs[m.to] || [];
-          let createdReady = 0;
+          const armedTargetSet = new Set();
           for (let i = 0; i < toPairs.length; i++) {
             const [o1, o2, lIdx] = toPairs[i];
             const v1 = sim[o1], v2 = sim[o2];
             if ((v1 === player && v2 === 0) || (v2 === player && v1 === 0)) {
               const emp = v1 === 0 ? o1 : o2;
               if (canPlayerCloseMillAt(emp, MillLines[lIdx], player, sim, res)) {
-                createdReady++;
-                priority += 28000;
+                armedTargetSet.add(emp);
+                priority += 32000;
               } else {
-                priority += 6500;
+                priority += 7200;
               }
             }
           }
-          if (createdReady >= 2) priority += 55000; // Double-mill slide fork!
+          for (const nb of Adjacency[m.to]) {
+            if (sim[nb] !== 0) continue;
+            const nbPairs = NodeMillPairs[nb] || [];
+            for (let j = 0; j < nbPairs.length; j++) {
+              const [p1, p2] = nbPairs[j];
+              if (p1 === m.to || p2 === m.to) continue;
+              if (sim[p1] === player && sim[p2] === player) {
+                armedTargetSet.add(nb);
+                priority += 28000;
+              }
+            }
+          }
+          if (armedTargetSet.size >= 2) priority += 68000; // Double-mill slide fork!
 
           let myLib = 0;
           for (const nb of Adjacency[m.to]) {
             if (sim[nb] === 0) myLib++;
           }
           if (myLib === 0 && myMillsCount === 0 && !canFly) priority -= 16000;
-          else priority += myLib * 650;
+          else priority += myLib * 680;
 
           for (const nb of Adjacency[m.to]) {
             if (board[nb] === opp) {
               let oppLib = 0;
               for (const onb of Adjacency[nb]) if (sim[onb] === 0) oppLib++;
-              if (oppLib === 0) priority += 16500;
-              else if (oppLib === 1) priority += 5200;
+              if (oppLib === 0) priority += 19500;
+              else if (oppLib === 1) priority += 6200;
               if (GameState.morrisMillRemovalRule === 'protect_mills' && fastCountMillsAtNode(nb, opp, board) > 0) {
-                priority += 8500; // Pinning opponent's closed mill
+                priority += 9500;
               }
             }
           }
@@ -9959,10 +10626,10 @@
         return scored.map((s) => s.move);
       }
 
-      function computeMorrisStateKey(board, res1, res2, turnPlayer) {
+      function computeMorrisStateKey(board, res1, res2, turnPlayer, aiP = 2) {
         let bStr = '';
         for (let i = 0; i < board.length; i++) bStr += board[i];
-        return `${turnPlayer}:${res1}:${res2}:${bStr}`;
+        return `${aiP}:${turnPlayer}:${res1}:${res2}:${bStr}`;
       }
 
       function quiesceMorris(board, res1, res2, qDepth, alpha, beta, turnPlayer, aiP, humanP) {
@@ -9986,7 +10653,6 @@
           return turnPlayer === aiP ? -93000 : 93000;
         }
 
-        // Filter ONLY moves that immediately complete a 3-in-a-row Katar mill on this turn
         const millMoves = [];
         for (let i = 0; i < rawMoves.length; i++) {
           const m = rawMoves[i];
@@ -10018,7 +10684,7 @@
 
         for (let i = 0; i < Math.min(4, millMoves.length); i++) {
           const mv = millMoves[i];
-          const states = expandMorrisMoveStates(board, res1, res2, mv, turnPlayer, aiP, humanP, 1);
+          const states = expandMorrisMoveStates(board, res1, res2, mv, turnPlayer, aiP, humanP, 2);
           for (const st of states) {
             const nextTurn = (GameState.morrisDropOrder === 'all_at_once' && (turnPlayer === 1 ? st.res1 : st.res2) > 0)
               ? turnPlayer
@@ -10040,7 +10706,7 @@
         return bestVal;
       }
 
-      function minimaxMorris(board, res1, res2, depth, alpha, beta, turnPlayer, aiP, humanP, pathSet = null) {
+      function minimaxMorris(board, res1, res2, depth, alpha, beta, turnPlayer, aiP, humanP, pathSet = null, extBudget = 4) {
         if (morrisSearchDeadline && performance.now() > morrisSearchDeadline) {
           morrisSearchAborted = true;
           return evaluateMorrisBoardState(board, res1, res2, turnPlayer, aiP, humanP);
@@ -10052,7 +10718,7 @@
         if (hmTotal <= 2) return 95000 + depth * 250;
         if (aiTotal <= 2) return -95000 - depth * 250;
 
-        const ttKey = computeMorrisStateKey(board, res1, res2, turnPlayer);
+        const ttKey = computeMorrisStateKey(board, res1, res2, turnPlayer, aiP);
         if (pathSet && pathSet.has(ttKey)) {
           return 0;
         }
@@ -10088,10 +10754,63 @@
         const opp = turnPlayer === 1 ? 2 : 1;
         const ordered = orderMorrisMoves(rawMoves, board, turnPlayer, opp, res1, res2, false, depth, ttBestMoveKey);
         const isHardest = (GameState.aiDifficulty === 'hardest');
-        const maxMoves = isHardest
-          ? (depth >= 7 ? 14 : (depth >= 4 ? 18 : 24))
-          : (depth >= 5 ? 12 : (depth >= 3 ? 14 : 16));
-        const pool = ordered.slice(0, maxMoves);
+        const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill' || GameState.gridPreset === 'dara');
+
+        // Forced-Reply Pruning & Threat Extension in Drop & Slide Phase
+        let pool = null;
+        let forcedBlockSquares = null;
+
+        if ((res[turnPlayer] || 0) > 0 && !forbidLandingMill && GameState.gridPreset !== 'lasker_morris') {
+          const myWinningDrops = [];
+          const oppThreatBlocks = [];
+          for (let i = 0; i < ordered.length; i++) {
+            const mv = ordered[i];
+            if (mv.type !== 'drop') continue;
+            if (fastWouldCompleteMill(mv.to, turnPlayer, board) > 0) {
+              myWinningDrops.push(mv);
+            } else if ((res[opp] || 0) > 0 && fastWouldCompleteMill(mv.to, opp, board) > 0) {
+              oppThreatBlocks.push(mv);
+            }
+          }
+          if (myWinningDrops.length > 0) {
+            // Side to move can complete a Katar mill immediately: focus search on mill completions + top 3 forks
+            const extras = ordered.filter((m) => !myWinningDrops.includes(m)).slice(0, 3);
+            pool = [...myWinningDrops, ...extras];
+          } else if (oppThreatBlocks.length > 0) {
+            // Opponent threatens 1 or more immediate drop mills: side to move MUST block!
+            forcedBlockSquares = new Set(oppThreatBlocks.map((m) => m.to));
+            const extras = ordered.filter((m) => !forcedBlockSquares.has(m.to)).slice(0, 2);
+            pool = [...oppThreatBlocks, ...extras];
+          }
+        } else if (res1 === 0 && res2 === 0) {
+          // Slide Phase forced-block detection
+          const oppCanFly = canPlayerFlyOnBoard(opp, board, res);
+          const oppReadySquares = new Set();
+          for (let lIdx = 0; lIdx < MillLines.length; lIdx++) {
+            const line = MillLines[lIdx];
+            let oC = 0, eC = 0, emp = -1;
+            for (let k = 0; k < 3; k++) {
+              const v = board[line[k]];
+              if (v === opp) oC++;
+              else if (v === 0) { eC++; emp = line[k]; }
+            }
+            if (oC === 2 && eC === 1 && (oppCanFly || hasReadySliderForMill(emp, line, opp, board))) {
+              oppReadySquares.add(emp);
+            }
+          }
+          if (oppReadySquares.size === 1) {
+            forcedBlockSquares = oppReadySquares;
+          }
+        }
+
+        if (!pool) {
+          const isDrop = (res1 > 0 || res2 > 0);
+          const maxMoves = isHardest
+            ? (isDrop ? (depth >= 5 ? 11 : 14) : (depth >= 7 ? 13 : (depth >= 4 ? 16 : 22)))
+            : (isDrop ? (depth >= 4 ? 9 : 12) : (depth >= 5 ? 11 : (depth >= 3 ? 13 : 16)));
+          pool = ordered.slice(0, maxMoves);
+        }
+
         const remBranch = isHardest ? (depth >= 4 ? 3 : 2) : (depth >= 3 ? 2 : 1);
 
         let nextPathSet = pathSet;
@@ -10110,12 +10829,26 @@
           const mv = pool[i];
           const mvKey = encodeMorrisMoveKey(mv);
           const states = expandMorrisMoveStates(board, res1, res2, mv, turnPlayer, aiP, humanP, remBranch);
+
+          // Threat / Forced-Block Extension & Late Move Reduction (LMR)
+          const isForcedReply = Boolean(forcedBlockSquares && forcedBlockSquares.size === 1 && forcedBlockSquares.has(mv.to));
+          const extendPly = (isForcedReply && extBudget > 0) ? 1 : 0;
+          const lmrReduce = (!isForcedReply && !states[0].formedMill && depth >= 3 && i >= 5) ? 1 : 0;
+          const nextDepth = Math.max(0, depth - 1 + extendPly - lmrReduce);
+          const nextExtBudget = Math.max(0, extBudget - extendPly);
+
           for (let sIdx = 0; sIdx < states.length; sIdx++) {
             const st = states[sIdx];
             const nextTurn = (GameState.morrisDropOrder === 'all_at_once' && (turnPlayer === 1 ? st.res1 : st.res2) > 0)
               ? turnPlayer
               : opp;
-            const ev = minimaxMorris(st.board, st.res1, st.res2, depth - 1, alpha, beta, nextTurn, aiP, humanP, nextPathSet);
+            let ev = minimaxMorris(st.board, st.res1, st.res2, nextDepth, alpha, beta, nextTurn, aiP, humanP, nextPathSet, nextExtBudget);
+            if (!morrisSearchAborted && lmrReduce > 0) {
+              const needsReSearch = isMax ? (ev > alpha) : (ev < beta);
+              if (needsReSearch) {
+                ev = minimaxMorris(st.board, st.res1, st.res2, depth - 1, alpha, beta, nextTurn, aiP, humanP, nextPathSet, nextExtBudget);
+              }
+            }
             if (morrisSearchAborted) return bestVal === -Infinity || bestVal === Infinity ? ev : bestVal;
 
             if (isMax) {
@@ -10141,7 +10874,7 @@
                 }
                 const hTbl = MorrisHistoryTable[turnPlayer];
                 if (hTbl && mvKey > 0 && mvKey < hTbl.length) {
-                  hTbl[mvKey] += depth * depth * 40;
+                  hTbl[mvKey] += depth * depth * 45;
                 }
               }
               break;
@@ -10150,7 +10883,7 @@
           if (beta <= alpha) break;
         }
 
-        if (!morrisSearchAborted && MorrisTT.size < 160000) {
+        if (!morrisSearchAborted && MorrisTT.size < 180000) {
           let flag = 0;
           if (bestVal <= alphaOrig) flag = 2;
           else if (bestVal >= betaOrig) flag = 1;
@@ -10184,10 +10917,10 @@
             return { bestAction: act, ranked: candidates.map((c) => ({ action: { type: 'remove_opponent', capturedId: c }, score: scoreMorrisRemovalTarget(c, GameState.board, aiP, humanP) })) };
           }
 
-          if (MorrisTT.size > 140000) MorrisTT.clear();
+          if (MorrisTT.size > 150000) MorrisTT.clear();
           morrisSearchAborted = false;
           const intel = MorrisLearner.getIntelligenceLevel();
-          morrisSearchDeadline = performance.now() + (diff === 'hardest' ? 450 : 280);
+          morrisSearchDeadline = performance.now() + (diff === 'hardest' ? 480 : 300);
 
           let bestRem = candidates[0];
           let bestVal = -Infinity;
@@ -10215,7 +10948,7 @@
               humanP,
               new Set()
             );
-            const total = futureVal + immediateScore * 0.08 + learned * 0.4;
+            const total = futureVal + immediateScore * 0.11 + learned * 0.5;
             ranked.push({ action: remAct, score: Math.round(total) });
             if (total > bestVal) {
               bestVal = total;
@@ -10279,19 +11012,19 @@
           return { bestAction: bestMed, ranked };
         }
 
-        if (MorrisTT.size > 140000) MorrisTT.clear();
+        if (MorrisTT.size > 150000) MorrisTT.clear();
         morrisSearchAborted = false;
         const intel = MorrisLearner.getIntelligenceLevel();
         const isDropPhase = allSteps.every((m) => m.type === 'drop');
         const isSmallBoard = (Nodes.length <= 16);
         const timeBudgetMs = diff === 'hardest'
-          ? (isDropPhase ? 480 : (620 + intel.depthBonus * 110))
-          : (isDropPhase ? 290 : 360);
+          ? (isDropPhase ? 560 : (680 + intel.depthBonus * 110))
+          : (isDropPhase ? 330 : 410);
         morrisSearchDeadline = performance.now() + timeBudgetMs;
 
         const maxDepth = diff === 'hardest'
-          ? (isSmallBoard ? 12 : (isDropPhase ? (7 + Math.min(2, intel.depthBonus)) : (10 + intel.depthBonus)))
-          : (isSmallBoard ? 8 : (isDropPhase ? 5 : 7));
+          ? (isSmallBoard ? 12 : (isDropPhase ? (8 + Math.min(2, intel.depthBonus)) : (11 + intel.depthBonus)))
+          : (isSmallBoard ? 8 : (isDropPhase ? 6 : 8));
         const rootPool = orderedMoves.slice(0, Math.min(isDropPhase ? 18 : 24, orderedMoves.length));
         let bestMove = rootPool[0];
         let latestScores = new Map();
@@ -10309,12 +11042,12 @@
               ? MorrisLearner.getHardestBonus(GameState.board, mv, aiP, GameState.reserves[aiP], GameState.reserves[humanP])
               : MorrisLearner.getBonus(GameState.board, mv, aiP, GameState.reserves[aiP], GameState.reserves[humanP]);
             const placementTieBreaker = mv.type === 'drop'
-              ? Math.max(-1800, Math.min(2200, scoreMorrisPlacement(mv.to, GameState.board, aiP, humanP, false, GameState.reserves[aiP], GameState.reserves[humanP]) * 0.0045))
+              ? Math.max(-4500, Math.min(6500, scoreMorrisPlacement(mv.to, GameState.board, aiP, humanP, false, GameState.reserves[aiP], GameState.reserves[humanP]) * 0.015))
               : 0;
 
             for (const st of states) {
               const nextTurn = humanP;
-              const millBonus = st.formedMill ? 1800 : 0;
+              const millBonus = st.formedMill ? 2600 : 0;
               const loopInfo = LoopTracker.evaluateLoopPenalty(mv, GameState.board, st.board, aiP, st.res1, st.res2, st.formedMill);
               const rootAdditive = millBonus + placementTieBreaker + learnedBias - loopInfo.penalty + loopInfo.breakthroughBonus;
               const childAlpha = (rawAlpha > -900000) ? (rawAlpha - rootAdditive - 100) : -Infinity;
@@ -10328,7 +11061,8 @@
                 nextTurn,
                 aiP,
                 humanP,
-                new Set()
+                new Set(),
+                4
               );
               const v = mmVal + rootAdditive;
               if (v > bestBranchVal) bestBranchVal = v;
@@ -22783,7 +23517,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=c77a6a0cb6', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=5ca37767ed', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
