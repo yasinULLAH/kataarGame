@@ -34,7 +34,8 @@ const ignoredFiles = new Set([
   'package-lock.json',
   'capacitor.config.json',
   'prepare-www.js',
-  'sw-template.js'
+  'sw-template.js',
+  'main.js'
 ]);
 
 const allowedExtensions = new Set([

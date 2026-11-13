@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "description": "Katar & Navakankari — Royal Board Game. Copyright © 2026 Yasin Ullah. All rights reserved.",
-  "main": "prepare-www.js",
+  "main": "main.js",
   "scripts": {
     "prepare-www": "node prepare-www.js",
-    "build": "node prepare-www.js && cap sync android"
+    "build": "node prepare-www.js && cap sync android",
+    "start": "electron .",
+    "dist:win": "node prepare-www.js && electron-builder --win portable"
   },
   "repository": {
     "type": "git",
@@ -22,5 +24,29 @@
     "@capacitor/android": "^6.2.0",
     "@capacitor/cli": "^6.2.0",
     "@capacitor/core": "^6.2.0"
+  },
+  "devDependencies": {
+    "electron": "^45.3.1",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.yasin.katargame",
+    "productName": "Katar Game",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "portable",
+      "icon": "icon-512.png"
+    },
+    "portable": {
+      "artifactName": "Katar-Game-Portable.exe"
+    },
+    "files": [
+      "main.js",
+      "www/**/*",
+      "icon-512.png"
+    ]
   }
 }

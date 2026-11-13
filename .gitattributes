@@ -8,3 +8,5 @@ android/gradlew.bat text eol=crlf
 *.woff binary
 *.woff2 binary
 *.ttf binary
+*.keystore binary
+*.jks binary
