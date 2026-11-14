@@ -1855,6 +1855,10 @@
         </div>
         <div class="flex items-center gap-1 shrink-0">
           <span id="replayFrameCount" class="font-mono text-[10px] sm:text-xs font-extrabold text-parchment-200 bg-white/10 px-1.5 py-0.5 rounded-lg border border-white/15">0 / 0</span>
+          <button id="btnReplayExportVideo" type="button" class="android-btn h-6 sm:h-7 px-2 rounded-lg bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 border border-amber-600 text-[10px] sm:text-[11px] font-black shadow flex items-center gap-1" title="Export Replay as Video (Small / Mid / High Res)">
+            <span>📹</span>
+            <span class="hidden xs:inline sm:inline">Export</span>
+          </button>
           <button id="btnReplayFlip" type="button" class="android-btn h-6 sm:h-7 px-1.5 sm:px-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-[10px] font-extrabold flex items-center justify-center" title="Rotate Board Perspective">🔄</button>
           <button id="btnReplayCollapseBody" type="button" class="android-btn h-6 sm:h-7 px-1.5 sm:px-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-[10px] font-extrabold flex items-center justify-center" title="Minimize / Expand Replay Controls">▼</button>
           <button id="btnReplayExit" type="button" class="android-btn h-6 sm:h-7 px-2 sm:px-2.5 rounded-lg bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white border border-teal-300/40 text-[10px] sm:text-[11px] font-black shadow flex items-center gap-1" title="Exit Replay">
@@ -2968,10 +2972,16 @@
       </div>
 
       <div class="space-y-2 pt-0.5">
-        <button id="btnVictoryWatchReplay" type="button" class="android-btn w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-teal-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-extrabold text-xs sm:text-sm shadow-[0_3px_0_#115E59] flex items-center justify-center gap-2 border border-teal-300/40">
-          <span>🎬</span>
-          <span>Watch Fullscreen Match Replay</span>
-        </button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button id="btnVictoryWatchReplay" type="button" class="android-btn w-full py-2.5 px-3 rounded-2xl bg-gradient-to-r from-indigo-600 via-teal-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-extrabold text-xs sm:text-sm shadow-[0_3px_0_#115E59] flex items-center justify-center gap-1.5 border border-teal-300/40">
+            <span>🎬</span>
+            <span>Watch Replay</span>
+          </button>
+          <button id="btnVictoryExportVideo" type="button" class="android-btn w-full py-2.5 px-3 rounded-2xl bg-gradient-to-b from-purple-600 to-indigo-800 hover:from-purple-500 hover:to-indigo-700 text-white font-extrabold text-xs sm:text-sm shadow-[0_3px_0_#312E81] flex items-center justify-center gap-1.5 border border-indigo-400/40">
+            <span>📹</span>
+            <span>Export Video</span>
+          </button>
+        </div>
         <div class="flex gap-2">
           <button id="btnVictoryPlayAgain" type="button" class="android-btn flex-1 py-2.5 rounded-2xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-xs sm:text-sm shadow-[0_3px_0_#B45309]">
             Play Rematch
@@ -3709,6 +3719,80 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 7: EXPORT REPLAY AS VIDEO (SMALL / MID / HIGH RESOLUTION)       -->
+  <!-- ===================================================================== -->
+  <div id="modalExportVideo" class="fixed inset-0 z-[60] bg-walnut-900/80 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4">
+    <div class="w-full max-w-md bg-parchment-50 border-4 border-amber-500 rounded-3xl p-4 sm:p-5 shadow-2xl space-y-3.5 text-walnut-900">
+      <div class="flex items-center justify-between gap-2 border-b border-parchment-300 pb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-walnut-900 flex items-center justify-center text-base shadow">📹</span>
+          <div>
+            <h3 class="font-display text-sm sm:text-base font-extrabold text-walnut-900 leading-tight">Export Replay as Video</h3>
+            <p id="exportVideoSubtitle" class="text-[10.5px] font-semibold text-walnut-600">Choose video resolution &amp; speed</p>
+          </div>
+        </div>
+        <button id="btnCloseExportVideoModal" type="button" class="android-btn p-1.5 rounded-xl bg-white border border-parchment-300 text-walnut-700 hover:text-walnut-900" aria-label="Close Video Export">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div id="exportVideoConfigBody" class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-extrabold uppercase tracking-wider text-walnut-700 mb-1.5">1. Select Resolution</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" data-export-res="small" class="export-res-card android-btn p-2.5 rounded-2xl border-2 border-parchment-300 bg-white text-center space-y-0.5">
+              <div class="text-xs font-black text-walnut-900">Small</div>
+              <div class="text-[10px] font-mono font-bold text-teal-800">480×560</div>
+              <div class="text-[9.5px] text-walnut-500 font-semibold">Fast • Compact</div>
+            </button>
+            <button type="button" data-export-res="mid" class="export-res-card android-btn p-2.5 rounded-2xl border-2 border-teal-600 bg-teal-50 text-center space-y-0.5 shadow-sm">
+              <div class="text-xs font-black text-teal-950">Mid (HD)</div>
+              <div class="text-[10px] font-mono font-bold text-teal-800">720×840</div>
+              <div class="text-[9.5px] text-teal-700 font-semibold">Balanced • Crisp</div>
+            </button>
+            <button type="button" data-export-res="high" class="export-res-card android-btn p-2.5 rounded-2xl border-2 border-parchment-300 bg-white text-center space-y-0.5">
+              <div class="text-xs font-black text-walnut-900">High (FHD)</div>
+              <div class="text-[10px] font-mono font-bold text-amber-800">1080×1260</div>
+              <div class="text-[9.5px] text-walnut-500 font-semibold">Ultra Sharp</div>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-extrabold uppercase tracking-wider text-walnut-700 mb-1.5">2. Replay Speed in Video</label>
+          <div class="grid grid-cols-3 gap-1.5 p-1 bg-parchment-200 rounded-xl border border-parchment-300">
+            <button type="button" data-export-spd="1" class="export-spd-btn android-btn py-1.5 rounded-lg text-xs font-bold text-walnut-800">1× Normal</button>
+            <button type="button" data-export-spd="2" class="export-spd-btn android-btn py-1.5 rounded-lg text-xs font-extrabold bg-amber-500 text-walnut-900 shadow-sm">2× Fast</button>
+            <button type="button" data-export-spd="4" class="export-spd-btn android-btn py-1.5 rounded-lg text-xs font-bold text-walnut-800">4× Turbo</button>
+          </div>
+        </div>
+
+        <button id="btnStartVideoExport" type="button" class="android-btn w-full py-3 rounded-2xl bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white font-black text-xs sm:text-sm shadow-[0_4px_0_#115E59] flex items-center justify-center gap-2">
+          <span>⬇️</span>
+          <span id="lblStartVideoExport">Export Mid (720p HD) Video</span>
+        </button>
+      </div>
+
+      <div id="exportVideoProgressBox" class="hidden space-y-2.5 pt-1">
+        <div class="flex items-center justify-between text-xs font-extrabold">
+          <span id="exportVideoStatusText" class="text-teal-900 truncate">Rendering Move 1 / 10...</span>
+          <span id="exportVideoPctLabel" class="font-mono text-amber-800">0%</span>
+        </div>
+        <div class="w-full h-3 bg-parchment-200 rounded-full overflow-hidden border border-parchment-400">
+          <div id="exportVideoProgressBar" class="h-full bg-gradient-to-r from-teal-500 via-emerald-500 to-amber-500 transition-all duration-150" style="width: 0%"></div>
+        </div>
+        <p class="text-[10.5px] text-walnut-600 text-center">Keep this window open while the video encodes…</p>
+        <button id="btnCancelVideoExport" type="button" class="android-btn w-full py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-900 font-extrabold text-xs border border-rose-300">
+          ✕ Cancel Export
+        </button>
       </div>
     </div>
   </div>
@@ -8393,8 +8477,11 @@
                     </div>
                   </div>
                   <div class="flex items-center gap-1 shrink-0">
-                    <button type="button" data-watch-match-id="${m.id}" data-source-modal="${sourceModal}" class="btn-watch-saved-replay android-btn px-2.5 py-1 rounded-lg bg-gradient-to-b from-indigo-500 to-indigo-700 hover:from-indigo-400 hover:to-indigo-600 text-white text-[10px] font-extrabold shadow flex items-center gap-1">
+                    <button type="button" data-watch-match-id="${m.id}" data-source-modal="${sourceModal}" class="btn-watch-saved-replay android-btn px-2 py-1 rounded-lg bg-gradient-to-b from-indigo-500 to-indigo-700 hover:from-indigo-400 hover:to-indigo-600 text-white text-[10px] font-extrabold shadow flex items-center gap-1" title="Watch Fullscreen Replay">
                       <span>🎬</span><span>Replay</span>
+                    </button>
+                    <button type="button" data-export-match-id="${m.id}" class="btn-export-saved-replay android-btn px-2 py-1 rounded-lg bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-walnut-900 border border-amber-600 text-[10px] font-extrabold shadow flex items-center gap-0.5" title="Export Replay as Video (Small / Mid / High Res)">
+                      <span>📹</span><span class="hidden sm:inline">Video</span>
                     </button>
                     <button type="button" data-del-match-id="${m.id}" class="btn-del-saved-replay android-btn w-6 h-6 rounded-lg bg-white hover:bg-rose-50 text-walnut-500 hover:text-rose-700 border border-parchment-300 flex items-center justify-center text-[10px] font-bold" title="Delete Saved Replay">✕</button>
                   </div>
@@ -8408,6 +8495,15 @@
                 const src = btn.getAttribute('data-source-modal');
                 SoundEngine.select();
                 ReplayManager.playSavedMatchById(id, src);
+              });
+            });
+
+            el.querySelectorAll('.btn-export-saved-replay').forEach((btn) => {
+              btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.getAttribute('data-export-match-id');
+                SoundEngine.select();
+                VideoExporter.openModal(id);
               });
             });
 
@@ -17677,10 +17773,14 @@
           if (GameState.gomokuWinningLine) lastFrame.gomokuWinningLine = [...GameState.gomokuWinningLine];
         }
 
+        const hasReplay = Array.isArray(GameState.replayFrames) && GameState.replayFrames.length > 1;
         const btnWatchReplay = document.getElementById('btnVictoryWatchReplay');
         if (btnWatchReplay) {
-          const hasReplay = Array.isArray(GameState.replayFrames) && GameState.replayFrames.length > 1;
           btnWatchReplay.classList.toggle('hidden', !hasReplay);
+        }
+        const btnExpVideo = document.getElementById('btnVictoryExportVideo');
+        if (btnExpVideo) {
+          btnExpVideo.classList.toggle('hidden', !hasReplay);
         }
 
         const inspectBar = document.getElementById('victoryInspectBar');
@@ -22517,6 +22617,465 @@
           ReplayManager.close(true);
         });
       }
+
+      const VideoExporter = {
+        selectedRes: 'mid',
+        selectedSpeed: 2,
+        targetMatchId: null,
+        isExporting: false,
+        abortRequested: false,
+        activeRecorder: null,
+
+        resolutions: {
+          small: { label: 'Small (480p SD)', width: 480, height: 560, bitrate: 1200000, tag: 'small-480p' },
+          mid: { label: 'Mid (720p HD)', width: 720, height: 840, bitrate: 3000000, tag: 'mid-720p' },
+          high: { label: 'High (1080p FHD)', width: 1080, height: 1260, bitrate: 6500000, tag: 'high-1080p' }
+        },
+
+        openModal(savedMatchId = null) {
+          if (this.isExporting) return;
+          this.targetMatchId = savedMatchId;
+          let frames = GameState.replayFrames;
+          let titleTxt = 'Current Match Replay';
+          if (savedMatchId) {
+            const found = MatchHistoryManager.getAll().find((m) => m && m.id === savedMatchId);
+            if (!found || !Array.isArray(found.frames) || found.frames.length < 2) {
+              SoundEngine.invalid();
+              showBoardToast('Replay frames unavailable for video export.');
+              return;
+            }
+            frames = found.frames;
+            titleTxt = `${found.gameTitle || 'Katar'} • ${found.p1Name || 'P1'} vs ${found.p2Name || 'P2'} (${found.movesCount || (frames.length - 1)} moves)`;
+          } else if (!Array.isArray(frames) || frames.length < 2) {
+            SoundEngine.invalid();
+            showBoardToast('Play at least 1 move to export a replay video!');
+            return;
+          } else {
+            const [p1, p2] = getThemePlayerNames();
+            titleTxt = `${p1} vs ${p2} (${frames.length - 1} moves)`;
+          }
+
+          const sub = document.getElementById('exportVideoSubtitle');
+          if (sub) sub.textContent = titleTxt;
+          document.getElementById('exportVideoConfigBody')?.classList.remove('hidden');
+          document.getElementById('exportVideoProgressBox')?.classList.add('hidden');
+          this.syncUI();
+
+          const modal = document.getElementById('modalExportVideo');
+          if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            ensureBackGuardState();
+          }
+        },
+
+        closeModal() {
+          if (this.isExporting) {
+            this.cancelExport();
+            return;
+          }
+          const modal = document.getElementById('modalExportVideo');
+          if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+          }
+        },
+
+        syncUI() {
+          const resCfg = this.resolutions[this.selectedRes] || this.resolutions.mid;
+          document.querySelectorAll('.export-res-card').forEach((btn) => {
+            const r = btn.getAttribute('data-export-res');
+            const active = (r === this.selectedRes);
+            btn.className = active
+              ? 'export-res-card android-btn p-2.5 rounded-2xl border-2 border-teal-600 bg-teal-50 text-center space-y-0.5 shadow-sm scale-[1.02]'
+              : 'export-res-card android-btn p-2.5 rounded-2xl border-2 border-parchment-300 bg-white hover:bg-parchment-50 text-center space-y-0.5';
+          });
+          document.querySelectorAll('.export-spd-btn').forEach((btn) => {
+            const s = Number(btn.getAttribute('data-export-spd'));
+            const active = (s === this.selectedSpeed);
+            btn.className = active
+              ? 'export-spd-btn android-btn py-1.5 rounded-lg text-xs font-extrabold bg-amber-500 text-walnut-900 shadow-sm'
+              : 'export-spd-btn android-btn py-1.5 rounded-lg text-xs font-bold text-walnut-800 hover:bg-white/60';
+          });
+          const lbl = document.getElementById('lblStartVideoExport');
+          if (lbl) lbl.textContent = `Export ${resCfg.label} Video (${this.selectedSpeed}×)`;
+        },
+
+        pickSupportedMime() {
+          if (typeof MediaRecorder === 'undefined') return null;
+          const types = [
+            { mime: 'video/mp4;codecs=avc1.42E01E', ext: 'mp4' },
+            { mime: 'video/mp4', ext: 'mp4' },
+            { mime: 'video/webm;codecs=vp9', ext: 'webm' },
+            { mime: 'video/webm;codecs=vp8', ext: 'webm' },
+            { mime: 'video/webm', ext: 'webm' }
+          ];
+          for (const item of types) {
+            try {
+              if (typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(item.mime)) {
+                return item;
+              }
+            } catch (e) {}
+          }
+          return { mime: '', ext: 'webm' };
+        },
+
+        cancelExport() {
+          this.abortRequested = true;
+          try {
+            if (this.activeRecorder && this.activeRecorder.state === 'recording') {
+              this.activeRecorder.stop();
+            }
+          } catch (e) {}
+        },
+
+        async startExport() {
+          if (this.isExporting) return;
+          const mimeInfo = this.pickSupportedMime();
+          if (!mimeInfo || typeof HTMLCanvasElement.prototype.captureStream !== 'function') {
+            SoundEngine.invalid();
+            showBoardToast('Video recording is not supported in this browser.');
+            return;
+          }
+
+          const wasReplayActive = ReplayManager.active;
+          if (wasReplayActive) ReplayManager.pause();
+
+          const liveBackup = ReplayManager.captureLiveSnapshot();
+          let matchMeta = null;
+          if (this.targetMatchId) {
+            matchMeta = MatchHistoryManager.getAll().find((m) => m && m.id === this.targetMatchId) || null;
+          }
+
+          const frames = matchMeta
+            ? matchMeta.frames
+            : (Array.isArray(GameState.replayFrames) ? GameState.replayFrames : []);
+          if (!frames || frames.length < 2) {
+            SoundEngine.invalid();
+            showBoardToast('No replay frames to export.');
+            return;
+          }
+
+          if (matchMeta) {
+            GameState.gameFamily = matchMeta.gameFamily || 'leap';
+            GameState.morrisVariant = matchMeta.morrisVariant || 'nine';
+            GameState.morrisDiagonals = Boolean(matchMeta.morrisDiagonals);
+            GameState.gridPreset = matchMeta.gridPreset || '6x6';
+            GameState.rows = matchMeta.rows || 6;
+            GameState.cols = matchMeta.cols || 6;
+            GameState.hasTriangularCamps = Boolean(matchMeta.hasTriangularCamps);
+            GameState.diagonalMode = matchMeta.diagonalMode || 'full';
+            GameState.piecesPerPlayer = matchMeta.piecesPerPlayer || 18;
+            GameState.tigerCaptureTarget = matchMeta.tigerCaptureTarget || 5;
+            buildDynamicBoardGraph();
+            resizeCanvas();
+          }
+
+          const [liveP1, liveP2] = getThemePlayerNames();
+          const p1Name = matchMeta ? (matchMeta.p1Name || 'Player 1') : liveP1;
+          const p2Name = matchMeta ? (matchMeta.p2Name || 'Player 2') : liveP2;
+          const gameTitle = matchMeta
+            ? (matchMeta.gameTitle || 'Katar Match')
+            : (document.getElementById('modeSubtitle')?.textContent?.split('•').pop()?.trim() || 'Katar Match');
+          const finalWinner = matchMeta ? matchMeta.winner : GameState.winner;
+          const finalReason = matchMeta ? (matchMeta.winReason || '') : (GameState.winReason || '');
+          const winCapP1 = getWinCaptureTargetForPlayer(1);
+          const winCapP2 = getWinCaptureTargetForPlayer(2);
+
+          const resCfg = this.resolutions[this.selectedRes] || this.resolutions.mid;
+          const W = resCfg.width;
+          const H = resCfg.height;
+          const scale = W / 720;
+
+          const outCanvas = document.createElement('canvas');
+          outCanvas.width = W;
+          outCanvas.height = H;
+          const octx = outCanvas.getContext('2d');
+
+          this.isExporting = true;
+          this.abortRequested = false;
+          document.getElementById('exportVideoConfigBody')?.classList.add('hidden');
+          document.getElementById('exportVideoProgressBox')?.classList.remove('hidden');
+
+          const statusEl = document.getElementById('exportVideoStatusText');
+          const pctEl = document.getElementById('exportVideoPctLabel');
+          const barEl = document.getElementById('exportVideoProgressBar');
+
+          const drawCompositeFrame = (frameObj, idx, totalMoves, isFinalBanner = false) => {
+            const bg = octx.createLinearGradient(0, 0, 0, H);
+            bg.addColorStop(0, '#2B170A');
+            bg.addColorStop(0.5, '#1C1008');
+            bg.addColorStop(1, '#120904');
+            octx.fillStyle = bg;
+            octx.fillRect(0, 0, W, H);
+
+            const pad = Math.round(12 * scale);
+            octx.strokeStyle = '#F59E0B';
+            octx.lineWidth = Math.max(2, Math.round(4 * scale));
+            octx.strokeRect(pad, pad, W - pad * 2, H - pad * 2);
+
+            octx.textAlign = 'center';
+            octx.fillStyle = '#FBBF24';
+            octx.font = `800 ${Math.round(22 * scale)}px Cinzel, Georgia, serif`;
+            octx.fillText(gameTitle, W / 2, Math.round(42 * scale));
+
+            const c1 = (frameObj.capturedBy && frameObj.capturedBy[1]) || 0;
+            const c2 = (frameObj.capturedBy && frameObj.capturedBy[2]) || 0;
+            octx.fillStyle = '#FBF5EA';
+            octx.font = `700 ${Math.round(15 * scale)}px "JetBrains Mono", monospace`;
+            octx.fillText(`${p1Name}: ${c1}/${winCapP1}   •   ${p2Name}: ${c2}/${winCapP2}`, W / 2, Math.round(68 * scale));
+
+            const moveText = isFinalBanner
+              ? (finalWinner === 1 ? `🏆 ${p1Name} Wins! ${finalReason}` : (finalWinner === 2 ? `🏆 ${p2Name} Wins! ${finalReason}` : `🤝 Match Finished • ${finalReason}`))
+              : `Move ${idx} / ${totalMoves} — ${frameObj.label || 'Initial Setup'}`;
+            octx.fillStyle = isFinalBanner ? '#34D399' : '#FDE68A';
+            octx.font = `700 ${Math.round(14 * scale)}px Inter, system-ui, sans-serif`;
+            octx.fillText(String(moveText).slice(0, 68), W / 2, Math.round(92 * scale));
+
+            const boardSize = Math.round(W - 48 * scale);
+            const bx = Math.round((W - boardSize) / 2);
+            const by = Math.round(108 * scale);
+            octx.fillStyle = '#4A2A14';
+            octx.fillRect(bx - Math.round(6 * scale), by - Math.round(6 * scale), boardSize + Math.round(12 * scale), boardSize + Math.round(12 * scale));
+            octx.strokeStyle = '#D97706';
+            octx.lineWidth = Math.max(1.5, Math.round(2.5 * scale));
+            octx.strokeRect(bx - Math.round(6 * scale), by - Math.round(6 * scale), boardSize + Math.round(12 * scale), boardSize + Math.round(12 * scale));
+
+            if (canvas && canvas.width > 0) {
+              octx.drawImage(canvas, bx, by, boardSize, boardSize);
+            }
+
+            octx.fillStyle = '#CFB28A';
+            octx.font = `600 ${Math.round(12 * scale)}px Inter, system-ui, sans-serif`;
+            octx.fillText(`Katar & Navakankari — By Yasin Ullah • ${resCfg.width}×${resCfg.height}`, W / 2, H - Math.round(22 * scale));
+          };
+
+          const applyFrameStateToBoard = (f, prevF) => {
+            GameState.board = [...f.board];
+            GameState.kings = [...f.kings];
+            GameState.reserves = { ...f.reserves };
+            GameState.capturedBy = { ...f.capturedBy };
+            GameState.currentTurn = f.currentTurn;
+            GameState.selectedNode = null;
+            GameState.chainJumpingNode = null;
+            GameState.morrisPendingRemove = false;
+            GameState.lastMove = f.lastMove ? { ...f.lastMove } : null;
+            GameState.lastFormedMill = f.lastFormedMill ? [...f.lastFormedMill] : null;
+            GameState.gomokuWinningLine = f.gomokuWinningLine ? [...f.gomokuWinningLine] : null;
+            VisualFX.particles = [];
+            VisualFX.pulseRings = [];
+            VisualFX.movingPiece = null;
+
+            if (prevF && f.lastMove) {
+              const lm = f.lastMove;
+              if (lm.from !== null && lm.from !== undefined && lm.from >= 0 && lm.to !== null && lm.to !== undefined && lm.to >= 0) {
+                const fn = Nodes[lm.from];
+                const tn = Nodes[lm.to];
+                if (fn && tn) {
+                  VisualFX.movingPiece = {
+                    player: lm.player,
+                    fromX: fn.x,
+                    fromY: fn.y,
+                    toX: tn.x,
+                    toY: tn.y,
+                    toId: tn.id,
+                    isJump: lm.type === 'jump',
+                    startTime: performance.now(),
+                    duration: Math.max(90, Math.round(260 / this.selectedSpeed))
+                  };
+                }
+              }
+              if (Array.isArray(lm.capturedIds) && lm.capturedIds.length > 0) {
+                const victim = lm.player === 1 ? 2 : 1;
+                for (const cid of lm.capturedIds) {
+                  if (Nodes[cid]) VisualFX.spawnCaptureBurst(Nodes[cid].x, Nodes[cid].y, victim);
+                }
+              }
+            }
+          };
+
+          let stream = null;
+          let recorder = null;
+          const chunks = [];
+          try {
+            stream = outCanvas.captureStream(30);
+            const recOpts = { videoBitsPerSecond: resCfg.bitrate };
+            if (mimeInfo.mime) recOpts.mimeType = mimeInfo.mime;
+            try {
+              recorder = new MediaRecorder(stream, recOpts);
+            } catch (e) {
+              recorder = new MediaRecorder(stream);
+            }
+            this.activeRecorder = recorder;
+            recorder.ondataavailable = (evt) => {
+              if (evt.data && evt.data.size > 0) chunks.push(evt.data);
+            };
+          } catch (err) {
+            this.isExporting = false;
+            SoundEngine.invalid();
+            showBoardToast('Could not initialize video encoder on this device.');
+            this.closeModal();
+            return;
+          }
+
+          const stopPromise = new Promise((resolve) => {
+            recorder.onstop = () => resolve();
+          });
+
+          recorder.start(100);
+
+          const totalMoves = Math.max(1, frames.length - 1);
+          const stepDurationMs = Math.max(140, Math.round(620 / this.selectedSpeed));
+          const frameIntervalMs = 33;
+
+          for (let i = 0; i < frames.length; i++) {
+            if (this.abortRequested) break;
+            const f = frames[i];
+            const prevF = i > 0 ? frames[i - 1] : null;
+            applyFrameStateToBoard(f, prevF);
+
+            const pct = Math.min(99, Math.round((i / totalMoves) * 95));
+            if (statusEl) statusEl.textContent = i === 0 ? 'Encoding Initial Board...' : `Encoding Move ${i} of ${totalMoves}...`;
+            if (pctEl) pctEl.textContent = `${pct}%`;
+            if (barEl) barEl.style.width = `${pct}%`;
+
+            const holdMs = (i === 0) ? Math.round(stepDurationMs * 0.7) : stepDurationMs;
+            const subSteps = Math.max(3, Math.round(holdMs / frameIntervalMs));
+            for (let s = 0; s < subSteps; s++) {
+              if (this.abortRequested) break;
+              renderBoardFrame(performance.now());
+              drawCompositeFrame(f, i, totalMoves, false);
+              await new Promise((r) => setTimeout(r, frameIntervalMs));
+            }
+          }
+
+          if (!this.abortRequested) {
+            const lastF = frames[frames.length - 1];
+            VisualFX.movingPiece = null;
+            VisualFX.particles = [];
+            if (statusEl) statusEl.textContent = 'Finalizing Victory Frame...';
+            if (pctEl) pctEl.textContent = '100%';
+            if (barEl) barEl.style.width = '100%';
+            for (let s = 0; s < 24; s++) {
+              if (this.abortRequested) break;
+              renderBoardFrame(performance.now());
+              drawCompositeFrame(lastF, totalMoves, totalMoves, true);
+              await new Promise((r) => setTimeout(r, frameIntervalMs));
+            }
+          }
+
+          try {
+            if (recorder.state === 'recording') recorder.stop();
+          } catch (e) {}
+          await stopPromise;
+          try {
+            if (stream) stream.getTracks().forEach((t) => t.stop());
+          } catch (e) {}
+
+          // Restore live board state
+          if (liveBackup) {
+            GameState.gameFamily = liveBackup.gameFamily;
+            GameState.morrisVariant = liveBackup.morrisVariant;
+            GameState.morrisDiagonals = liveBackup.morrisDiagonals;
+            GameState.gridPreset = liveBackup.gridPreset;
+            GameState.rows = liveBackup.rows;
+            GameState.cols = liveBackup.cols;
+            GameState.hasTriangularCamps = liveBackup.hasTriangularCamps;
+            GameState.diagonalMode = liveBackup.diagonalMode;
+            GameState.piecesPerPlayer = liveBackup.piecesPerPlayer;
+            GameState.tigerCaptureTarget = liveBackup.tigerCaptureTarget;
+            buildDynamicBoardGraph();
+            GameState.board = [...liveBackup.board];
+            GameState.kings = [...liveBackup.kings];
+            GameState.reserves = { ...liveBackup.reserves };
+            GameState.capturedBy = { ...liveBackup.capturedBy };
+            GameState.currentTurn = liveBackup.currentTurn;
+            GameState.lastMove = liveBackup.lastMove;
+            GameState.lastFormedMill = liveBackup.lastFormedMill;
+            GameState.gomokuWinningLine = liveBackup.gomokuWinningLine;
+            GameState.gameOver = liveBackup.gameOver;
+            GameState.winner = liveBackup.winner;
+            GameState.winReason = liveBackup.winReason;
+            GameState.isStarted = liveBackup.isStarted;
+            GameState.isPaused = liveBackup.isPaused;
+            GameState.replayFrames = liveBackup.replayFrames;
+            resizeCanvas();
+            if (wasReplayActive) {
+              ReplayManager.seekTo(ReplayManager.currentIndex, false);
+            } else {
+              updateHUD();
+              requestRender();
+            }
+          }
+
+          this.isExporting = false;
+          this.activeRecorder = null;
+          const wasAborted = this.abortRequested;
+          this.abortRequested = false;
+          this.closeModal();
+
+          if (wasAborted || chunks.length === 0) {
+            showBoardToast('Video export cancelled.');
+            return;
+          }
+
+          const blobType = (recorder && recorder.mimeType) || mimeInfo.mime || 'video/webm';
+          const ext = blobType.includes('mp4') ? 'mp4' : 'webm';
+          const blob = new Blob(chunks, { type: blobType });
+          const url = URL.createObjectURL(blob);
+          const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `katar-replay-${resCfg.tag}-${stamp}.${ext}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 4000);
+          SoundEngine.victory();
+          showBoardToast(`📹 Exported ${resCfg.label} video (.${ext})!`);
+        }
+      };
+
+      document.getElementById('btnReplayExportVideo')?.addEventListener('click', () => {
+        SoundEngine.select();
+        VideoExporter.openModal(null);
+      });
+      document.getElementById('btnVictoryExportVideo')?.addEventListener('click', () => {
+        SoundEngine.select();
+        VideoExporter.openModal(null);
+      });
+      document.getElementById('btnCloseExportVideoModal')?.addEventListener('click', () => {
+        SoundEngine.select();
+        VideoExporter.closeModal();
+      });
+      document.getElementById('btnCancelVideoExport')?.addEventListener('click', () => {
+        SoundEngine.select();
+        VideoExporter.cancelExport();
+      });
+      document.getElementById('btnStartVideoExport')?.addEventListener('click', () => {
+        SoundEngine.select();
+        VideoExporter.startExport();
+      });
+      document.querySelectorAll('.export-res-card').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const r = btn.getAttribute('data-export-res');
+          if (r) {
+            VideoExporter.selectedRes = r;
+            SoundEngine.select();
+            VideoExporter.syncUI();
+          }
+        });
+      });
+      document.querySelectorAll('.export-spd-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const s = Number(btn.getAttribute('data-export-spd'));
+          if (s) {
+            VideoExporter.selectedSpeed = s;
+            SoundEngine.select();
+            VideoExporter.syncUI();
+          }
+        });
+      });
       const btnMenuSavedReplays = document.getElementById('btnMenuSavedReplays');
       if (btnMenuSavedReplays) {
         btnMenuSavedReplays.addEventListener('click', () => {
@@ -25052,7 +25611,7 @@
             pushBackGuardState();
             return;
           }
-          for (const mid of ['modalRules', 'modalEncyclopedia', 'modalPuterStats']) {
+          for (const mid of ['modalExportVideo', 'modalRules', 'modalEncyclopedia', 'modalPuterStats']) {
             if (isShown(mid)) {
               const el = document.getElementById(mid);
               el.classList.add('hidden');
@@ -25360,7 +25919,7 @@
             }
             return;
           }
-          for (const mid of ['modalRules', 'modalEncyclopedia', 'modalPuterStats']) {
+          for (const mid of ['modalExportVideo', 'modalRules', 'modalEncyclopedia', 'modalPuterStats']) {
             if (isShown(mid)) {
               const el = document.getElementById(mid);
               el.classList.add('hidden');
@@ -25475,7 +26034,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=e456826aa4', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=d7e0086ba3', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {

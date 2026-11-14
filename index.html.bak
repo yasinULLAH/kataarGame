@@ -12391,8 +12391,8 @@
         const res = { 1: res1, 2: res2 };
         const aiTotal = countPlayerTotalPieces(aiP, board, res);
         const hmTotal = countPlayerTotalPieces(humanP, board, res);
-        if (hmTotal <= 2) return 95000 + depth * 250;
-        if (aiTotal <= 2) return -95000 - depth * 250;
+        if (hmTotal <= 2) return 500000 + depth * 15000;
+        if (aiTotal <= 2) return -500000 - depth * 15000;
 
         const ttKey = computeMorrisStateKey(board, res1, res2, turnPlayer, aiP);
         if (pathSet && pathSet.has(ttKey)) {
@@ -12411,7 +12411,8 @@
         }
 
         let ttBestMoveKey = 0;
-        const cached = MorrisTT.get(ttKey);
+        const canUseTT = (!pathSet || pathSet.size <= 1);
+        const cached = canUseTT ? MorrisTT.get(ttKey) : null;
         if (cached) {
           ttBestMoveKey = cached.bestMoveKey || 0;
           if (cached.depth >= depth) {
@@ -12424,7 +12425,7 @@
 
         const rawMoves = getAllLegalActionsForPlayer(turnPlayer, board, res).allSteps;
         if (rawMoves.length === 0) {
-          return turnPlayer === aiP ? (-93000 - depth * 200) : (93000 + depth * 200);
+          return turnPlayer === aiP ? (-490000 - depth * 15000) : (490000 + depth * 15000);
         }
 
         const opp = turnPlayer === 1 ? 2 : 1;
@@ -12554,7 +12555,7 @@
           if (beta <= alpha) break;
         }
 
-        if (!morrisSearchAborted && MorrisTT.size < 180000) {
+        if (!morrisSearchAborted && canUseTT && MorrisTT.size < 180000) {
           let flag = 0;
           if (bestVal <= alphaOrig) flag = 2;
           else if (bestVal >= betaOrig) flag = 1;
@@ -12566,11 +12567,8 @@
 
       function computeBestLocalMorrisAction(aiP = (GameState.aiPlayerRole || 2)) {
         ensureMorrisTopologyCache();
-        const curRuleSig = getMorrisRuleSignature();
-        if (curRuleSig !== morrisLastRuleSig) {
-          MorrisTT.clear();
-          morrisLastRuleSig = curRuleSig;
-        }
+        MorrisTT.clear();
+        morrisLastRuleSig = getMorrisRuleSignature();
 
         const humanP = aiP === 1 ? 2 : 1;
         const diff = GameState.aiDifficulty;
@@ -12578,6 +12576,15 @@
         if (GameState.morrisPendingRemove) {
           const candidates = getRemovableOpponentNodes(humanP);
           if (candidates.length === 0) return null;
+          const hmRemainingBefore = countPlayerTotalPieces(humanP, GameState.board, GameState.reserves);
+          if (hmRemainingBefore <= 3 && (GameState.reserves[humanP] || 0) === 0) {
+            const bestWinRem = pickBestMorrisRemoval(GameState.board, aiP, humanP);
+            const chosen = bestWinRem !== -1 ? bestWinRem : candidates[0];
+            return {
+              bestAction: { type: 'remove_opponent', capturedId: chosen },
+              ranked: candidates.map((c) => ({ action: { type: 'remove_opponent', capturedId: c }, score: 500000 }))
+            };
+          }
           if (diff === 'easy') {
             const pick = candidates[Math.floor(Math.random() * candidates.length)];
             return { bestAction: { type: 'remove_opponent', capturedId: pick }, ranked: candidates.map((c) => ({ action: { type: 'remove_opponent', capturedId: c }, score: 0 })) };
@@ -12588,7 +12595,6 @@
             return { bestAction: act, ranked: candidates.map((c) => ({ action: { type: 'remove_opponent', capturedId: c }, score: scoreMorrisRemovalTarget(c, GameState.board, aiP, humanP) })) };
           }
 
-          if (MorrisTT.size > 150000) MorrisTT.clear();
           morrisSearchAborted = false;
           const intel = MorrisLearner.getIntelligenceLevel();
           morrisSearchDeadline = performance.now() + (diff === 'hardest' ? 480 : 300);
@@ -12619,7 +12625,7 @@
               humanP,
               new Set()
             );
-            const total = futureVal + immediateScore * 0.11 + learned * 0.5;
+            const total = futureVal >= 400000 ? (futureVal + immediateScore * 0.01) : (futureVal + immediateScore * 0.11 + learned * 0.5);
             ranked.push({ action: remAct, score: Math.round(total) });
             if (total > bestVal) {
               bestVal = total;
@@ -25469,7 +25475,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=630429b021', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=e456826aa4', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
