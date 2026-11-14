@@ -619,6 +619,7 @@
       #modalEncyclopedia,
       #modalConnection,
       #modalPuterStats,
+      #modalBakhtiFun,
       #modalVictory {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
@@ -2896,6 +2897,10 @@
               <input id="chkEnableHaptics" type="checkbox" checked class="w-4 h-4 accent-teal-600 rounded" />
               <span class="text-xs text-walnut-900 font-bold">Android Haptic Vibration</span>
             </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input id="chkEnableBakhtiFun" type="checkbox" checked class="w-4 h-4 accent-amber-600 rounded" />
+              <span class="text-xs text-walnut-900 font-bold">Bakhti Fun Celebrations &amp; Memes</span>
+            </label>
           </div>
         </div>
 
@@ -3004,6 +3009,34 @@
         </div>
         <button id="btnVictoryExitToMenu" type="button" class="android-btn w-full py-2 rounded-xl bg-parchment-200 hover:bg-parchment-300 text-walnut-800 font-extrabold text-xs border border-parchment-400 shadow-[0_1.5px_0_#B8976C] flex items-center justify-center gap-1.5">
           <span>🏠</span> <span>Exit to Main Menu</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalBakhtiFun" class="fixed inset-0 z-50 bg-walnut-900/75 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div id="bakhtiCard" class="relative w-full max-w-sm bg-gradient-to-b from-parchment-50 via-parchment-100 to-amber-50 border-4 border-amber-500 rounded-3xl p-4 sm:p-5 text-center shadow-2xl space-y-3 text-walnut-900 my-auto">
+      <button id="btnCloseBakhtiFun" type="button" class="android-btn absolute top-3 right-3 w-8 h-8 rounded-full bg-walnut-900 text-amber-300 hover:bg-walnut-800 font-black text-base flex items-center justify-center shadow-md border border-amber-400" title="Close">
+        &times;
+      </button>
+      <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 border border-amber-600 text-walnut-950 font-black text-[11px] uppercase tracking-wider shadow-sm">
+        <span id="bakhtiBadgeIcon">&#128293;</span>
+        <span id="bakhtiBadgeText">Bakhti Celebration</span>
+      </div>
+      <div class="relative mx-auto w-48 h-48 sm:w-56 sm:h-56 rounded-2xl overflow-hidden border-4 border-amber-500 shadow-xl bg-black">
+        <img id="bakhtiImg" src="./bakhti.jpeg" alt="Bakhti Meme" class="w-full h-full object-cover" />
+      </div>
+      <div>
+        <h3 id="bakhtiTitle" class="font-display text-base sm:text-lg font-extrabold text-walnut-900 leading-tight">
+          3 Beads Captured Back-to-Back!
+        </h3>
+        <p id="bakhtiSubtitle" class="text-xs font-bold text-walnut-700 mt-1 leading-snug">
+          Bakhti is celebrating your legendary streak!
+        </p>
+      </div>
+      <div class="pt-1">
+        <button id="btnContinueBakhtiFun" type="button" class="android-btn w-full py-2.5 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-walnut-950 font-extrabold text-xs shadow-[0_3px_0_#B45309] uppercase tracking-wider flex items-center justify-center gap-1.5">
+          <span id="bakhtiBtnLabel">Continue Match</span>
         </button>
       </div>
     </div>
@@ -3959,6 +3992,7 @@
         boardSurface: 'sandstone',
         nodeLabels: 'off',
         showGuides: true,
+        enableBakhtiFun: true,
         damaKingMode: 'flying',
         aiDifficulty: 'medium',
         aiPlayerRole: 2,
@@ -6021,6 +6055,9 @@
         }
         const vibInit = document.getElementById('victoryInspectBar');
         if (vibInit) vibInit.classList.add('hidden');
+        if (typeof BakhtiFunManager !== 'undefined') {
+          BakhtiFunManager.resetMatchState();
+        }
         if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
           ReplayManager.close(false);
         }
@@ -8149,7 +8186,8 @@
             customAiDelayMs: GameState.customAiDelayMs,
             customAnimDurationMs: GameState.customAnimDurationMs,
             autoRotate: GameState.autoRotate,
-            lockSettingsMidGame: GameState.lockSettingsMidGame
+            lockSettingsMidGame: GameState.lockSettingsMidGame,
+            enableBakhtiFun: GameState.enableBakhtiFun !== undefined ? Boolean(GameState.enableBakhtiFun) : true
           };
           SafeStorage.setItem('katar_user_prefs_v1', JSON.stringify(prefs));
         } catch (err) {}
@@ -8207,6 +8245,7 @@
           if (p.customAnimDurationMs) GameState.customAnimDurationMs = Number(p.customAnimDurationMs) || 175;
           if (p.autoRotate !== undefined) GameState.autoRotate = Boolean(p.autoRotate);
           if (p.lockSettingsMidGame !== undefined) GameState.lockSettingsMidGame = Boolean(p.lockSettingsMidGame);
+          if (p.enableBakhtiFun !== undefined) GameState.enableBakhtiFun = Boolean(p.enableBakhtiFun);
           return true;
         } catch (err) {
           return false;
@@ -8591,6 +8630,9 @@
         }
         ProfileManager.recordMatchResult(winner);
         MatchHistoryManager.saveCompletedMatch(winner);
+        if (typeof BakhtiFunManager !== 'undefined') {
+          BakhtiFunManager.recordMatchFinished(winner);
+        }
         updateMoveLogUI();
       }
 
@@ -9016,6 +9058,9 @@
 
             const mills = forbidLandingMill ? [] : getMillsContainingNode(action.to, player);
             if (mills.length > 0 && getRemovableOpponentNodes(opponent).length > 0) {
+              if (typeof BakhtiFunManager !== 'undefined') {
+                BakhtiFunManager.checkDoubleMillOnMove(action, player, mills);
+              }
               GameState.morrisPendingRemove = true;
               GameState.lastFormedMill = mills[0];
               SoundEngine.millFormed();
@@ -9093,6 +9138,9 @@
 
             const mills = getMillsContainingNode(action.to, player);
             if (mills.length > 0 && getRemovableOpponentNodes(opponent).length > 0) {
+              if (typeof BakhtiFunManager !== 'undefined') {
+                BakhtiFunManager.checkDoubleMillOnMove(action, player, mills);
+              }
               GameState.morrisPendingRemove = true;
               GameState.lastFormedMill = mills[0];
               SoundEngine.millFormed();
@@ -9373,6 +9421,9 @@
       }
 
       function finishTurnAndCheckWin(playerJustMoved, isRemote = false, lastAction = null) {
+        if (typeof BakhtiFunManager !== 'undefined') {
+          BakhtiFunManager.onTurnFinished(playerJustMoved);
+        }
         const opponent = playerJustMoved === 1 ? 2 : 1;
         hideFanoronaChoiceBar();
         GameState.selectedNode = null;
@@ -17249,6 +17300,8 @@
         document.getElementById('selNodeLabels').value = GameState.nodeLabels;
         document.getElementById('chkShowGuides').checked = GameState.showGuides;
         document.getElementById('chkEnableHaptics').checked = SoundEngine.hapticsEnabled;
+        const chkBakhti = document.getElementById('chkEnableBakhtiFun');
+        if (chkBakhti) chkBakhti.checked = (GameState.enableBakhtiFun !== false);
         document.getElementById('selAIDifficulty').value = GameState.aiDifficulty;
 
         const selMorrisRule = document.getElementById('selMorrisRemovalRule');
@@ -18206,6 +18259,234 @@
         }
       };
 
+      const BakhtiFunManager = {
+        activeTimer: null,
+        pendingCallback: null,
+        turnStartCaptures: { 1: 0, 2: 0 },
+        consecutiveCaptureTurns: { 1: 0, 2: 0 },
+        cumulativeBackToBack: { 1: 0, 2: 0 },
+        hasFiredStreak: { 1: false, 2: false },
+        lastLossStreakMatchHandled: false,
+
+        resetMatchState() {
+          this.turnStartCaptures = { 1: (GameState.capturedBy && GameState.capturedBy[1]) || 0, 2: (GameState.capturedBy && GameState.capturedBy[2]) || 0 };
+          this.consecutiveCaptureTurns = { 1: 0, 2: 0 };
+          this.cumulativeBackToBack = { 1: 0, 2: 0 };
+          this.hasFiredStreak = { 1: false, 2: false };
+          this.lastLossStreakMatchHandled = false;
+        },
+
+        isFunEnabled() {
+          return GameState.enableBakhtiFun !== false;
+        },
+
+        getLossStreak() {
+          const raw = SafeStorage.getItem('katar_consecutive_losses');
+          const stored = raw !== null ? Number(raw) : 0;
+          let analyticsStreak = 0;
+          if (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.computeSummary) {
+            try {
+              const sum = PlayerAnalytics.computeSummary('all');
+              analyticsStreak = Number(sum.curLossStreak) || 0;
+            } catch (e) {}
+          }
+          return Math.max(stored, analyticsStreak);
+        },
+
+        recordMatchFinished(winner) {
+          const userRole = (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.getUserRole)
+            ? PlayerAnalytics.getUserRole()
+            : 1;
+          let losses = Number(SafeStorage.getItem('katar_consecutive_losses')) || 0;
+          if (winner !== 0 && winner !== null && winner !== userRole) {
+            losses++;
+            SafeStorage.setItem('katar_consecutive_losses', String(losses));
+          } else if (winner === userRole) {
+            SafeStorage.setItem('katar_consecutive_losses', '0');
+          }
+        },
+
+        shouldShowBakhti3() {
+          if (!this.isFunEnabled()) return false;
+          if (this.lastLossStreakMatchHandled) return false;
+          const userRole = (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.getUserRole)
+            ? PlayerAnalytics.getUserRole()
+            : 1;
+          if (GameState.winner === 0 || GameState.winner === null || GameState.winner === userRole) {
+            return false;
+          }
+          const streak = this.getLossStreak();
+          return streak >= 6;
+        },
+
+        showModal({ imgSrc, badgeText, badgeIcon, title, subtitle, btnLabel, autoCloseMs, onClose }) {
+          if (!this.isFunEnabled()) {
+            if (typeof onClose === 'function') onClose();
+            return;
+          }
+          if (this.activeTimer) {
+            clearTimeout(this.activeTimer);
+            this.activeTimer = null;
+          }
+          this.pendingCallback = onClose || null;
+
+          const modal = document.getElementById('modalBakhtiFun');
+          const img = document.getElementById('bakhtiImg');
+          const bText = document.getElementById('bakhtiBadgeText');
+          const bIcon = document.getElementById('bakhtiBadgeIcon');
+          const t = document.getElementById('bakhtiTitle');
+          const sub = document.getElementById('bakhtiSubtitle');
+          const bLbl = document.getElementById('bakhtiBtnLabel');
+
+          if (!modal || !img) {
+            if (typeof onClose === 'function') onClose();
+            return;
+          }
+
+          img.src = imgSrc;
+          if (bText) bText.textContent = badgeText;
+          if (bIcon) bIcon.textContent = badgeIcon;
+          if (t) t.textContent = title;
+          if (sub) sub.textContent = subtitle;
+          if (bLbl) bLbl.textContent = btnLabel;
+
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+          if (typeof ensureBackGuardState === 'function') {
+            ensureBackGuardState();
+          }
+
+          if (autoCloseMs && autoCloseMs > 0) {
+            this.activeTimer = setTimeout(() => {
+              this.closeModal();
+            }, autoCloseMs);
+          }
+        },
+
+        closeModal() {
+          if (this.activeTimer) {
+            clearTimeout(this.activeTimer);
+            this.activeTimer = null;
+          }
+          const modal = document.getElementById('modalBakhtiFun');
+          if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+          }
+          const cb = this.pendingCallback;
+          this.pendingCallback = null;
+          if (typeof cb === 'function') {
+            cb();
+          }
+        },
+
+        showFlash(variant) {
+          if (!this.isFunEnabled()) return;
+          if (variant === 1) {
+            try {
+              if (typeof SoundEngine !== 'undefined' && SoundEngine.capture) {
+                SoundEngine.capture(3);
+              }
+            } catch (e) {}
+            this.showModal({
+              imgSrc: './bakhti.jpeg',
+              badgeIcon: '🔥',
+              badgeText: 'Triple Kill Streak',
+              title: '3 Beads Captured Back-to-Back!',
+              subtitle: 'Bakhti salutes your lethal board dominance!',
+              btnLabel: 'Continue Match',
+              autoCloseMs: 2700
+            });
+          } else if (variant === 2) {
+            try {
+              if (typeof SoundEngine !== 'undefined' && SoundEngine.millFormed) {
+                SoundEngine.millFormed();
+              }
+            } catch (e) {}
+            this.showModal({
+              imgSrc: './bakhti2.jpeg',
+              badgeIcon: '⚡',
+              badgeText: 'Double Mill Mastery',
+              title: 'Running Mill Created (See-Saw)!',
+              subtitle: 'Bakhti: Unstoppable back-and-forth mill trap established!',
+              btnLabel: 'Continue Match',
+              autoCloseMs: 2900
+            });
+          }
+        },
+
+        showLossStreakModal(onContinue) {
+          this.lastLossStreakMatchHandled = true;
+          this.showModal({
+            imgSrc: './bakhti3.jpeg',
+            badgeIcon: '🎶',
+            badgeText: '6 Defeats in a Row',
+            title: '6 Matches Lost Back-to-Back!',
+            subtitle: 'Bakhti is playing the mournful flute for your 6 consecutive defeats... stay strong!',
+            btnLabel: 'View Match Results',
+            autoCloseMs: 6500,
+            onClose: onContinue
+          });
+        },
+
+        onTurnFinished(playerJustMoved) {
+          if (!this.isFunEnabled()) return;
+          const curCap = (GameState.capturedBy && GameState.capturedBy[playerJustMoved]) || 0;
+          const prevCap = this.turnStartCaptures[playerJustMoved] !== undefined ? this.turnStartCaptures[playerJustMoved] : 0;
+          const eatenThisTurn = Math.max(0, curCap - prevCap);
+          this.turnStartCaptures[playerJustMoved] = curCap;
+
+          if (eatenThisTurn > 0) {
+            this.consecutiveCaptureTurns[playerJustMoved] = (this.consecutiveCaptureTurns[playerJustMoved] || 0) + 1;
+            this.cumulativeBackToBack[playerJustMoved] = (this.cumulativeBackToBack[playerJustMoved] || 0) + eatenThisTurn;
+            if (!this.hasFiredStreak[playerJustMoved]) {
+              if (eatenThisTurn >= 3 || this.consecutiveCaptureTurns[playerJustMoved] >= 3 || this.cumulativeBackToBack[playerJustMoved] >= 3) {
+                this.hasFiredStreak[playerJustMoved] = true;
+                const userRole = (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.getUserRole)
+                  ? PlayerAnalytics.getUserRole()
+                  : 1;
+                const shouldShow = (GameState.mode === 'webrtc')
+                  ? (playerJustMoved === GameState.localPlayerRole)
+                  : (GameState.vsAI ? (playerJustMoved === userRole) : true);
+                if (shouldShow) {
+                  this.showFlash(1);
+                }
+              }
+            }
+          } else {
+            this.consecutiveCaptureTurns[playerJustMoved] = 0;
+            this.cumulativeBackToBack[playerJustMoved] = 0;
+            this.hasFiredStreak[playerJustMoved] = false;
+          }
+        },
+
+        checkDoubleMillOnMove(action, player, mills) {
+          if (!this.isFunEnabled()) return;
+          if (!mills || mills.length === 0) return;
+          let isDouble = (mills.length >= 2);
+          if (!isDouble && action && action.from !== null && action.from !== undefined) {
+            const sim = [...GameState.board];
+            sim[action.to] = 0;
+            sim[action.from] = player;
+            const fromMills = getMillsContainingNode(action.from, player, sim);
+            if (fromMills.length > 0) {
+              isDouble = true;
+            }
+          }
+          if (isDouble) {
+            const userRole = (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.getUserRole)
+              ? PlayerAnalytics.getUserRole()
+              : 1;
+            const shouldShow = (GameState.mode === 'webrtc')
+              ? (player === GameState.localPlayerRole)
+              : (GameState.vsAI ? (player === userRole) : true);
+            if (shouldShow) {
+              this.showFlash(2);
+            }
+          }
+        }
+      };
+
       let victoryModalDelayTimer = null;
 
       function populateAndOpenVictoryModal() {
@@ -18297,6 +18578,12 @@
           victoryModalDelayTimer = null;
         }
         if (immediate) {
+          if (GameState.gameOver && typeof BakhtiFunManager !== 'undefined' && BakhtiFunManager.shouldShowBakhti3()) {
+            BakhtiFunManager.showLossStreakModal(() => {
+              populateAndOpenVictoryModal();
+            });
+            return;
+          }
           populateAndOpenVictoryModal();
           return;
         }
@@ -18304,6 +18591,12 @@
         victoryModalDelayTimer = setTimeout(() => {
           victoryModalDelayTimer = null;
           if (GameState.gameOver) {
+            if (typeof BakhtiFunManager !== 'undefined' && BakhtiFunManager.shouldShowBakhti3()) {
+              BakhtiFunManager.showLossStreakModal(() => {
+                populateAndOpenVictoryModal();
+              });
+              return;
+            }
             populateAndOpenVictoryModal();
           }
         }, animWait);
@@ -22307,6 +22600,37 @@
         SoundEngine.hapticsEnabled = e.target.checked;
       });
 
+      const chkBakhti = document.getElementById('chkEnableBakhtiFun');
+      if (chkBakhti) {
+        chkBakhti.addEventListener('change', (e) => {
+          GameState.enableBakhtiFun = e.target.checked;
+          savePersistentPrefs();
+        });
+      }
+
+      const btnCloseBakhti = document.getElementById('btnCloseBakhtiFun');
+      if (btnCloseBakhti) {
+        btnCloseBakhti.addEventListener('click', () => {
+          BakhtiFunManager.closeModal();
+        });
+      }
+
+      const btnContinueBakhti = document.getElementById('btnContinueBakhtiFun');
+      if (btnContinueBakhti) {
+        btnContinueBakhti.addEventListener('click', () => {
+          BakhtiFunManager.closeModal();
+        });
+      }
+
+      const modalBakhti = document.getElementById('modalBakhtiFun');
+      if (modalBakhti) {
+        modalBakhti.addEventListener('click', (e) => {
+          if (e.target === modalBakhti) {
+            BakhtiFunManager.closeModal();
+          }
+        });
+      }
+
       document.getElementById('btnApplySettingsAndStart').addEventListener('click', () => {
         SoundEngine.select();
         document.getElementById('modalRules').classList.add('hidden');
@@ -22337,6 +22661,9 @@
         GameState.boardSurface = 'sandstone';
         GameState.nodeLabels = 'off';
         GameState.showGuides = true;
+        GameState.enableBakhtiFun = true;
+        const chkBakhtiRestore = document.getElementById('chkEnableBakhtiFun');
+        if (chkBakhtiRestore) chkBakhtiRestore.checked = true;
         applyGridPresetConfig('6x6');
         initMatch(true);
         showBoardToast('Restored classic 6×6 Katar defaults');
@@ -26170,6 +26497,11 @@
             pushBackGuardState();
             return;
           }
+          if (isShown('modalBakhtiFun')) {
+            BakhtiFunManager.closeModal();
+            pushBackGuardState();
+            return;
+          }
           for (const mid of ['modalExportVideo', 'modalRules', 'modalEncyclopedia', 'modalPuterStats']) {
             if (isShown(mid)) {
               const el = document.getElementById(mid);
@@ -26593,7 +26925,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=6150ba0b9e', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=97d7e0cf93', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
