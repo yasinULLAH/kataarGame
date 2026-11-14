@@ -774,7 +774,8 @@
 
     body.menu-open #gameRibbon,
     body.menu-open #modeBar,
-    body.menu-open #btnToggleTopBars {
+    body.menu-open #btnToggleTopBars,
+    body.menu-open #btnHeaderQuit {
       display: none !important;
     }
 
@@ -24677,6 +24678,8 @@
           if (btnResume) btnResume.classList.toggle('hidden', !isOngoing);
           if (btnReplay) btnReplay.classList.toggle('hidden', !GameState.isStarted && !hasMoves);
           if (btnExit) btnExit.classList.toggle('hidden', !GameState.isStarted);
+          const btnHeaderQuit = document.getElementById('btnHeaderQuit');
+          if (btnHeaderQuit) btnHeaderQuit.classList.toggle('hidden', !GameState.isStarted || Boolean(this.isOpen));
 
           const baseModeBtnClass = 'android-btn flex flex-col lg:flex-row items-center justify-center gap-0.5 lg:gap-1.5 py-2 lg:py-1.5 px-1 lg:px-2 rounded-xl transition-all';
           const activeModeClass = 'bg-gradient-to-b from-teal-500 to-teal-700 text-white shadow-md ring-1 ring-teal-900/25';
@@ -26093,7 +26096,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=3744310c8f', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=09ea29501e', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
