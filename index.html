@@ -18267,6 +18267,8 @@
         cumulativeBackToBack: { 1: 0, 2: 0 },
         hasFiredStreak: { 1: false, 2: false },
         lastLossStreakMatchHandled: false,
+        wasPausedBefore: false,
+        seenDoubleMills: [],
 
         resetMatchState() {
           this.turnStartCaptures = { 1: (GameState.capturedBy && GameState.capturedBy[1]) || 0, 2: (GameState.capturedBy && GameState.capturedBy[2]) || 0 };
@@ -18274,10 +18276,17 @@
           this.cumulativeBackToBack = { 1: 0, 2: 0 };
           this.hasFiredStreak = { 1: false, 2: false };
           this.lastLossStreakMatchHandled = false;
+          this.wasPausedBefore = false;
+          this.seenDoubleMills = [];
         },
 
         isFunEnabled() {
           return GameState.enableBakhtiFun !== false;
+        },
+
+        isOpen() {
+          const modal = document.getElementById('modalBakhtiFun');
+          return Boolean(modal && !modal.classList.contains('hidden'));
         },
 
         getLossStreak() {
@@ -18319,7 +18328,7 @@
           return streak >= 6;
         },
 
-        showModal({ imgSrc, badgeText, badgeIcon, title, subtitle, btnLabel, autoCloseMs, onClose }) {
+        showModal({ imgSrc, badgeText, badgeIcon, title, subtitle, btnLabel, autoCloseMs, onClose, fromRemote = false }) {
           if (!this.isFunEnabled()) {
             if (typeof onClose === 'function') onClose();
             return;
@@ -18343,6 +18352,9 @@
             return;
           }
 
+          this.wasPausedBefore = Boolean(GameState.isPaused);
+          GameState.isPaused = true;
+
           img.src = imgSrc;
           if (bText) bText.textContent = badgeText;
           if (bIcon) bIcon.textContent = badgeIcon;
@@ -18358,12 +18370,12 @@
 
           if (autoCloseMs && autoCloseMs > 0) {
             this.activeTimer = setTimeout(() => {
-              this.closeModal();
+              this.closeModal(false);
             }, autoCloseMs);
           }
         },
 
-        closeModal() {
+        closeModal(fromRemote = false) {
           if (this.activeTimer) {
             clearTimeout(this.activeTimer);
             this.activeTimer = null;
@@ -18373,6 +18385,20 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
           }
+          if (!this.wasPausedBefore) {
+            GameState.isPaused = false;
+            resetTurnTimer();
+            resetMatchTimer(true);
+            if (GameState.vsAI && (GameState.aiVsAi || GameState.currentTurn === GameState.aiPlayerRole) && !GameState.gameOver) {
+              scheduleAITurn(300);
+            }
+          }
+          if (!fromRemote && GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
+            WebRTCManager.send({
+              type: 'BAKHTI_FUN',
+              subType: 'CLOSE'
+            });
+          }
           const cb = this.pendingCallback;
           this.pendingCallback = null;
           if (typeof cb === 'function') {
@@ -18380,8 +18406,19 @@
           }
         },
 
-        showFlash(variant) {
+        showFlash(variant, key = '') {
           if (!this.isFunEnabled()) return;
+          const autoCloseMs = (variant === 1) ? 2700 : 2900;
+          if (GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
+            WebRTCManager.send({
+              type: 'BAKHTI_FUN',
+              subType: 'SHOW',
+              variant,
+              key: key || '',
+              authorRole: GameState.localPlayerRole || 1,
+              autoCloseMs
+            });
+          }
           if (variant === 1) {
             try {
               if (typeof SoundEngine !== 'undefined' && SoundEngine.capture) {
@@ -18393,9 +18430,10 @@
               badgeIcon: '🔥',
               badgeText: 'Triple Kill Streak',
               title: '3 Beads Captured Back-to-Back!',
-              subtitle: 'Bakhti salutes your lethal board dominance!',
+              subtitle: 'Bakhti salutes your lethal board dominance! Match paused.',
               btnLabel: 'Continue Match',
-              autoCloseMs: 2700
+              autoCloseMs,
+              fromRemote: false
             });
           } else if (variant === 2) {
             try {
@@ -18408,25 +18446,107 @@
               badgeIcon: '⚡',
               badgeText: 'Double Mill Mastery',
               title: 'Running Mill Created (See-Saw)!',
-              subtitle: 'Bakhti: Unstoppable back-and-forth mill trap established!',
+              subtitle: 'Bakhti: Unstoppable back-and-forth mill trap established! Match paused.',
               btnLabel: 'Continue Match',
-              autoCloseMs: 2900
+              autoCloseMs,
+              fromRemote: false
             });
           }
         },
 
         showLossStreakModal(onContinue) {
           this.lastLossStreakMatchHandled = true;
+          const autoCloseMs = 6500;
+          if (GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
+            WebRTCManager.send({
+              type: 'BAKHTI_FUN',
+              subType: 'SHOW',
+              variant: 3,
+              authorRole: GameState.localPlayerRole || 1,
+              autoCloseMs
+            });
+          }
           this.showModal({
             imgSrc: './bakhti3.jpeg',
             badgeIcon: '🎶',
             badgeText: '6 Defeats in a Row',
             title: '6 Matches Lost Back-to-Back!',
-            subtitle: 'Bakhti is playing the mournful flute for your 6 consecutive defeats... stay strong!',
+            subtitle: 'Bakhti is playing the mournful flute for your 6 consecutive defeats... Match paused.',
             btnLabel: 'View Match Results',
-            autoCloseMs: 6500,
-            onClose: onContinue
+            autoCloseMs,
+            onClose: onContinue,
+            fromRemote: false
           });
+        },
+
+        handleRemotePacket(packet) {
+          if (!packet) return;
+          if (packet.subType === 'CONFIG_SYNC') {
+            GameState.enableBakhtiFun = Boolean(packet.enableBakhtiFun);
+            const chk = document.getElementById('chkEnableBakhtiFun');
+            if (chk) chk.checked = GameState.enableBakhtiFun;
+            savePersistentPrefs();
+            return;
+          }
+          if (packet.subType === 'SHOW') {
+            const author = packet.authorRole || 1;
+            const authorName = (typeof getThemePlayerNames === 'function')
+              ? getThemePlayerNames()[author - 1]
+              : `Player ${author}`;
+            if (packet.variant === 1) {
+              try {
+                if (typeof SoundEngine !== 'undefined' && SoundEngine.capture) {
+                  SoundEngine.capture(3);
+                }
+              } catch (e) {}
+              this.showModal({
+                imgSrc: './bakhti.jpeg',
+                badgeIcon: '🔥',
+                badgeText: 'Triple Kill Streak',
+                title: '3 Beads Captured Back-to-Back!',
+                subtitle: `${authorName} captured 3 beads back-to-back! Match paused.`,
+                btnLabel: 'Continue Match',
+                autoCloseMs: packet.autoCloseMs || 2700,
+                fromRemote: true
+              });
+            } else if (packet.variant === 2) {
+              if (packet.key) {
+                if (this.seenDoubleMills.includes(packet.key)) return;
+                this.seenDoubleMills.push(packet.key);
+              }
+              try {
+                if (typeof SoundEngine !== 'undefined' && SoundEngine.millFormed) {
+                  SoundEngine.millFormed();
+                }
+              } catch (e) {}
+              this.showModal({
+                imgSrc: './bakhti2.jpeg',
+                badgeIcon: '⚡',
+                badgeText: 'Double Mill Mastery',
+                title: 'Running Mill Created (See-Saw)!',
+                subtitle: `${authorName} created a Running Double Mill! Match paused.`,
+                btnLabel: 'Continue Match',
+                autoCloseMs: packet.autoCloseMs || 2900,
+                fromRemote: true
+              });
+            } else if (packet.variant === 3) {
+              this.showModal({
+                imgSrc: './bakhti3.jpeg',
+                badgeIcon: '🎶',
+                badgeText: '6 Defeats in a Row',
+                title: '6 Matches Lost Back-to-Back!',
+                subtitle: `Bakhti is playing the mournful flute for ${authorName}... Match paused.`,
+                btnLabel: 'View Match Results',
+                autoCloseMs: packet.autoCloseMs || 6500,
+                fromRemote: true
+              });
+            }
+            return;
+          }
+          if (packet.subType === 'CLOSE') {
+            this.closeModal(true);
+            return;
+          }
         },
 
         onTurnFinished(playerJustMoved) {
@@ -18463,17 +18583,29 @@
         checkDoubleMillOnMove(action, player, mills) {
           if (!this.isFunEnabled()) return;
           if (!mills || mills.length === 0) return;
-          let isDouble = (mills.length >= 2);
-          if (!isDouble && action && action.from !== null && action.from !== undefined) {
+          let isDouble = false;
+          let millKey = '';
+
+          if (mills.length >= 2) {
+            isDouble = true;
+            millKey = Array.from(new Set([...mills[0], ...mills[1]])).sort((a, b) => a - b).join('-');
+          } else if (action && action.from !== null && action.from !== undefined) {
             const sim = [...GameState.board];
             sim[action.to] = 0;
             sim[action.from] = player;
             const fromMills = getMillsContainingNode(action.from, player, sim);
             if (fromMills.length > 0) {
               isDouble = true;
+              millKey = Array.from(new Set([...mills[0], ...fromMills[0]])).sort((a, b) => a - b).join('-');
             }
           }
-          if (isDouble) {
+
+          if (isDouble && millKey) {
+            if (this.seenDoubleMills.includes(millKey)) {
+              return;
+            }
+            this.seenDoubleMills.push(millKey);
+
             const userRole = (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.getUserRole)
               ? PlayerAnalytics.getUserRole()
               : 1;
@@ -18481,7 +18613,7 @@
               ? (player === GameState.localPlayerRole)
               : (GameState.vsAI ? (player === userRole) : true);
             if (shouldShow) {
-              this.showFlash(2);
+              this.showFlash(2, millKey);
             }
           }
         }
@@ -18646,6 +18778,7 @@
           firstTurnSetting: GameState.firstTurnSetting,
           alternateFirstTurn: Boolean(GameState.alternateFirstTurn),
           lockSettingsMidGame: GameState.lockSettingsMidGame,
+          enableBakhtiFun: Boolean(GameState.enableBakhtiFun !== false),
           lastMove: GameState.lastMove,
           moveLog: GameState.moveLog,
           isStarted: Boolean(GameState.isStarted),
@@ -18719,6 +18852,11 @@
         if (remote.firstTurnSetting) GameState.firstTurnSetting = remote.firstTurnSetting;
         if (remote.alternateFirstTurn !== undefined) GameState.alternateFirstTurn = Boolean(remote.alternateFirstTurn);
         if (remote.lockSettingsMidGame !== undefined) GameState.lockSettingsMidGame = Boolean(remote.lockSettingsMidGame);
+        if (remote.enableBakhtiFun !== undefined) {
+          GameState.enableBakhtiFun = Boolean(remote.enableBakhtiFun);
+          const chkBakhti = document.getElementById('chkEnableBakhtiFun');
+          if (chkBakhti) chkBakhti.checked = GameState.enableBakhtiFun;
+        }
         GameState.lastMove = remote.lastMove || null;
         GameState.moveLog = remote.moveLog ? [...remote.moveLog] : [];
         GameState.gameOver = Boolean(remote.gameOver);
@@ -18731,6 +18869,9 @@
         } else if (fromNetwork && GameState.moveLog.length > 0) {
           GameState.isStarted = true;
           GameState.isPaused = false;
+        }
+        if (typeof BakhtiFunManager !== 'undefined' && BakhtiFunManager.isOpen()) {
+          GameState.isPaused = true;
         }
 
         syncSettingsControlsFromState();
@@ -21190,7 +21331,7 @@
 
           // Only meaningful gameplay / presence packets count as "the opponent is back".
           // Plain heartbeats must NOT cancel an away countdown (background tabs keep pinging).
-          const presenceTypes = ['MOVE_ACTION', 'SYNC_STATE', 'REQUEST_RESYNC', 'RESET_MATCH', 'MATCH_FLOW', 'REMATCH_REQUEST', 'PLAYER_RETURNED', 'HELLO_IDENTITY', 'HELLO_ACK'];
+          const presenceTypes = ['MOVE_ACTION', 'SYNC_STATE', 'REQUEST_RESYNC', 'RESET_MATCH', 'MATCH_FLOW', 'REMATCH_REQUEST', 'PLAYER_RETURNED', 'HELLO_IDENTITY', 'HELLO_ACK', 'BAKHTI_FUN'];
           if (presenceTypes.includes(packet.type) && GameState.graceTimerInterval && remoteRole && GameState.graceAbsentPlayer === remoteRole) {
             cancelGraceTimer(false);
             showBoardToast('👋 Opponent is back — match resumed.');
@@ -21315,6 +21456,13 @@
               showBoardToast('🔁 Rematch started with Player 2!');
             } else {
               showBoardToast('🔁 Player 2 requested to restart — tap 🔄 Restart in menu if you agree.');
+            }
+            return;
+          }
+
+          if (packet.type === 'BAKHTI_FUN') {
+            if (typeof BakhtiFunManager !== 'undefined') {
+              BakhtiFunManager.handleRemotePacket(packet);
             }
             return;
           }
@@ -22605,6 +22753,16 @@
         chkBakhti.addEventListener('change', (e) => {
           GameState.enableBakhtiFun = e.target.checked;
           savePersistentPrefs();
+          if (GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
+            WebRTCManager.send({
+              type: 'BAKHTI_FUN',
+              subType: 'CONFIG_SYNC',
+              enableBakhtiFun: GameState.enableBakhtiFun
+            });
+            if (GameState.localPlayerRole === 1) {
+              WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
+            }
+          }
         });
       }
 
@@ -22664,6 +22822,13 @@
         GameState.enableBakhtiFun = true;
         const chkBakhtiRestore = document.getElementById('chkEnableBakhtiFun');
         if (chkBakhtiRestore) chkBakhtiRestore.checked = true;
+        if (GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
+          WebRTCManager.send({
+            type: 'BAKHTI_FUN',
+            subType: 'CONFIG_SYNC',
+            enableBakhtiFun: true
+          });
+        }
         applyGridPresetConfig('6x6');
         initMatch(true);
         showBoardToast('Restored classic 6×6 Katar defaults');
@@ -26925,7 +27090,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=97d7e0cf93', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=83fd60948e', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
