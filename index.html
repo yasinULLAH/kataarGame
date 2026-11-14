@@ -5611,7 +5611,12 @@
        * 4. PRESET PROFILES & STARTING BOARD PLACEMENT ENGINE
        * ------------------------------------------------------------------- */
       function applyGridPresetConfig(preset) {
+        GameState._boardDirty = true;
         GameState.gridPreset = preset;
+        GameState.stepDirection = 'all';
+        GameState.mandatoryCapture = 'optional';
+        GameState.hasTriangularCamps = false;
+        GameState.morrisDiagonals = false;
         if (GameState.aiVsAi) {
           GameState.vsAI = true;
           GameState.aiPlayerRole = GameState.currentTurn || 1;
@@ -5942,6 +5947,9 @@
           GameState.openCenterMode = 'four_open';
           GameState.reserveMode = 'no_reserves';
           GameState.piecesPerPlayer = 6;
+        } else if (preset === 'custom') {
+          GameState.gameFamily = 'leap';
+          GameState.piecesPerPlayer = computeRecommendedPieces();
         }
         syncSettingsControlsFromState();
       }
@@ -6011,6 +6019,8 @@
           clearTimeout(aiTurnTimeoutId);
           aiTurnTimeoutId = null;
         }
+        GameState._inInitMatch = true;
+        GameState._boardDirty = true;
         GameState.puterAIThinking = false;
         cancelGraceTimer(false);
         hideFanoronaChoiceBar();
@@ -6371,13 +6381,16 @@
         if (typeof PlayerAnalytics !== 'undefined') {
           PlayerAnalytics.startNewMatchSession();
         }
+        GameState._boardDirty = false;
+        GameState._boardVersion = (GameState._boardVersion || 0) + 1;
         resetTurnTimer();
         resetMatchTimer();
-        syncSettingsControlsFromState();
         resizeCanvas();
+        syncSettingsControlsFromState();
         updateHUD();
         updateMoveLogUI();
         saveLiveMatchSnapshot(false);
+        GameState._inInitMatch = false;
         requestRender();
 
         if (typeof MainMenu !== 'undefined') {
@@ -17161,7 +17174,7 @@
         if (btnLock) {
           setResponsiveBtnIconText(btnLock, GameState.lockSettingsMidGame ? '🔒' : '🔓', GameState.lockSettingsMidGame ? 'Locked' : 'Unlocked');
         }
-        if (typeof MainMenu !== 'undefined' && MainMenu.isOpen && !MainMenu._inSync) {
+        if (typeof MainMenu !== 'undefined' && MainMenu.isOpen && !MainMenu._inSync && !GameState._inInitMatch && !GameState._boardDirty) {
           MainMenu.syncUI();
         }
       }
@@ -21639,6 +21652,11 @@
         SoundEngine.select();
         document.getElementById('modalRules').classList.add('hidden');
         document.getElementById('modalRules').classList.remove('flex');
+        if (GameState._boardDirty && !isMatchActivelyInProgress()) {
+          initMatch(true);
+        } else if (typeof MainMenu !== 'undefined') {
+          MainMenu.syncUI();
+        }
       });
 
       document.getElementById('btnToggleAudio').addEventListener('click', () => {
@@ -21677,10 +21695,12 @@
       });
 
       document.getElementById('selDiagonalMode').addEventListener('change', (e) => {
+        GameState._boardDirty = true;
         GameState.diagonalMode = e.target.value;
       });
 
       document.getElementById('rngCustomRows').addEventListener('input', (e) => {
+        GameState._boardDirty = true;
         GameState.gameFamily = 'leap';
         GameState.rows = parseInt(e.target.value, 10) || 6;
         GameState.gridPreset = 'custom';
@@ -21689,6 +21709,7 @@
       });
 
       document.getElementById('rngCustomCols').addEventListener('input', (e) => {
+        GameState._boardDirty = true;
         GameState.gameFamily = 'leap';
         GameState.cols = parseInt(e.target.value, 10) || 6;
         GameState.gridPreset = 'custom';
@@ -21697,6 +21718,7 @@
       });
 
       document.getElementById('btnToggleTriCamps').addEventListener('click', () => {
+        GameState._boardDirty = true;
         GameState.gameFamily = 'leap';
         GameState.hasTriangularCamps = !GameState.hasTriangularCamps;
         GameState.gridPreset = 'custom';
@@ -21705,6 +21727,7 @@
       });
 
       document.getElementById('selOpenCenterMode').addEventListener('change', (e) => {
+        GameState._boardDirty = true;
         GameState.openCenterMode = e.target.value;
         syncSettingsControlsFromState();
       });
@@ -24506,23 +24529,6 @@
           if (menuTypeBadge) menuTypeBadge.textContent = meta.typeBadge || 'Strategy Board Game';
           if (menuHowToPlay) menuHowToPlay.textContent = meta.howToPlay || meta.subtitle;
 
-          if (this.isOpen) {
-            const menuSnap = document.getElementById('menuBoardSnapshot');
-            const snapSig = `${GameState.gridPreset}|${GameState.pieceTheme}|${GameState.boardSurface}|${GameState.piecesPerPlayer}|${GameState.moveLog.length}|${GameState.morrisDiagonals ? 1 : 0}|${GameState.rows}x${GameState.cols}`;
-            if (menuSnap && this._lastMenuSnapSig !== snapSig && canvas && Nodes.length > 0 && canvas.width > 0) {
-              this._lastMenuSnapSig = snapSig;
-              try {
-                renderBoardFrame(performance.now());
-                const thumb = document.createElement('canvas');
-                thumb.width = 180;
-                thumb.height = 180;
-                const tctx = thumb.getContext('2d');
-                tctx.drawImage(canvas, 0, 0, 180, 180);
-                menuSnap.src = thumb.toDataURL('image/png');
-              } catch (e) {}
-            }
-          }
-
           const previewBanner = document.getElementById('gamePreviewBanner');
           const showPreviewBanner = !this.isOpen && !GameState.isStarted && !GameState.gameOver && !this.isPreviewDismissed;
           if (previewBanner) {
@@ -24566,7 +24572,60 @@
           }
           if (typeof updateContextualModeBar === 'function') updateContextualModeBar();
           this._inSync = false;
-          if (wasMenuOpen !== Boolean(this.isOpen)) {
+
+          if (this.isOpen && !GameState._boardDirty && !GameState._inInitMatch) {
+            const menuSnap = document.getElementById('menuBoardSnapshot');
+            const needsLayout = !canvas || canvas.width <= 0 || (Nodes.length > 1 && Nodes[0].x === 0 && Nodes[1].x === 0);
+            if (needsLayout && Nodes.length > 0) {
+              resizeCanvas();
+            }
+            const boardSig = Array.isArray(GameState.board) ? GameState.board.join('') : '';
+            const kingsSig = Array.isArray(GameState.kings) ? GameState.kings.map((k) => (k ? '1' : '0')).join('') : '';
+            const snapSig = [
+              GameState._boardVersion || 0,
+              GameState.gridPreset,
+              GameState.gameFamily,
+              GameState.rows,
+              GameState.cols,
+              GameState.hasTriangularCamps ? 1 : 0,
+              GameState.diagonalMode,
+              GameState.openCenterMode,
+              GameState.reserveMode,
+              GameState.piecesPerPlayer,
+              GameState.morrisDiagonals ? 1 : 0,
+              GameState.pieceTheme,
+              GameState.boardSurface,
+              GameState.nodeLabels,
+              GameState.boardFlipped ? 1 : 0,
+              Nodes.length,
+              Edges.length,
+              boardSig,
+              kingsSig
+            ].join('|');
+            if (menuSnap && this._lastMenuSnapSig !== snapSig && canvas && Nodes.length > 0 && canvas.width > 0) {
+              this._lastMenuSnapSig = snapSig;
+              try {
+                const savedMoving = VisualFX.movingPiece;
+                const savedParticles = VisualFX.particles;
+                const savedRings = VisualFX.pulseRings;
+                VisualFX.movingPiece = null;
+                VisualFX.particles = [];
+                VisualFX.pulseRings = [];
+                renderBoardFrame(performance.now());
+                VisualFX.movingPiece = savedMoving;
+                VisualFX.particles = savedParticles;
+                VisualFX.pulseRings = savedRings;
+                const thumb = document.createElement('canvas');
+                thumb.width = 240;
+                thumb.height = 240;
+                const tctx = thumb.getContext('2d');
+                tctx.imageSmoothingEnabled = true;
+                tctx.imageSmoothingQuality = 'high';
+                tctx.drawImage(canvas, 0, 0, 240, 240);
+                menuSnap.src = thumb.toDataURL('image/png');
+              } catch (e) {}
+            }
+          } else if (!this.isOpen && wasMenuOpen) {
             setTimeout(resizeCanvas, 0);
           }
 
@@ -26034,7 +26093,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=d7e0086ba3', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=3744310c8f', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
