@@ -6093,6 +6093,9 @@
         GameState.chainCount = 0;
         GameState.morrisPendingRemove = false;
         GameState.lastFormedMill = null;
+        if (typeof SarcasticRoastEngine !== 'undefined') {
+          SarcasticRoastEngine.lastRecordedMatchLen = -1;
+        }
         GameState.lastMove = null;
         GameState.gameOver = false;
         GameState.winner = null;
@@ -17882,52 +17885,106 @@
           this.save();
         },
 
-        didHumanLoseCurrentMatch() {
-          if (!GameState.gameOver || GameState.winner === 0 || GameState.winner === null) return false;
-          if (GameState.aiVsAi) return false;
+        teamStreaks: { 1: 0, 2: 0 },
+        lastRecordedMatchLen: -1,
+
+        getLoserAndWinnerInfo() {
+          if (!GameState.gameOver || (GameState.winner !== 1 && GameState.winner !== 2)) return null;
+          const winnerRole = GameState.winner;
+          const loserRole = winnerRole === 1 ? 2 : 1;
+          const [p1Title, p2Title] = getThemePlayerNames();
+          const loserTitle = loserRole === 1 ? p1Title : p2Title;
+          const winnerTitle = winnerRole === 1 ? p1Title : p2Title;
+          return { loserRole, winnerRole, loserTitle, winnerTitle };
+        },
+
+        shouldShowRoastCurrentMatch() {
+          const info = this.getLoserAndWinnerInfo();
+          if (!info) return false;
+          // 1. AI vs AI: always show roast directed at the losing AI team
+          if (GameState.aiVsAi) return true;
+          // 2. Online / Offline P2P (2 devices): show ONLY on the losing team's device
           if (GameState.mode === 'webrtc' && GameState.localPlayerRole) {
-            return GameState.winner !== GameState.localPlayerRole;
+            return GameState.localPlayerRole === info.loserRole;
           }
+          // 3. Solo vs AI (Built-in or Real Puter AI): show ONLY when the human player's team loses
           if (GameState.vsAI) {
             const userRole = PlayerAnalytics.getUserRole();
-            return GameState.winner !== userRole;
+            return info.loserRole === userRole;
           }
-          // In 2P local Pass & Play, one human always lost!
+          // 4. 2P Local Pass & Play (shared screen): show addressed strictly to the losing team
           return true;
         },
 
         collectLossContext() {
           this.load();
           PlayerAnalytics.load();
+          const info = this.getLoserAndWinnerInfo() || { loserRole: 1, winnerRole: 2, loserTitle: 'Player 1', winnerTitle: 'Player 2' };
+          const { loserRole, winnerRole, loserTitle, winnerTitle } = info;
+
+          // Update per-side consecutive loss streak once per finished match
+          const curFramesLen = (GameState.replayFrames && GameState.replayFrames.length) || (GameState.moveLog && GameState.moveLog.length) || 1;
+          if (this.lastRecordedMatchLen !== curFramesLen) {
+            this.lastRecordedMatchLen = curFramesLen;
+            this.teamStreaks[loserRole] = (this.teamStreaks[loserRole] || 0) + 1;
+            this.teamStreaks[winnerRole] = 0;
+          }
+
           const latestEv = (PlayerAnalytics.events && PlayerAnalytics.events[0]) || null;
           const allTime = PlayerAnalytics.getCachedAllTimeSummary();
-          const userRole = PlayerAnalytics.getUserRole();
-          const oppRole = userRole === 1 ? 2 : 1;
 
-          const userMoves = latestEv ? (Number(latestEv.userMoves) || 0) : Math.max(1, Math.ceil((GameState.moveLog.length || 2) / 2));
-          const durationMs = latestEv ? (Number(latestEv.durationMs) || 30000) : Math.max(5000, PlayerAnalytics.getCurrentSessionDurationMs());
-          const userThinkMs = latestEv ? (Number(latestEv.userThinkMs) || 0) : 0;
-          const longestThinkMs = latestEv ? (Number(latestEv.longestThinkMs) || 0) : 0;
-          const avgThinkMs = userMoves > 0 ? Math.round(userThinkMs / userMoves) : 0;
-          const beadsEaten = latestEv ? (Number(latestEv.beadsEaten) || 0) : (GameState.capturedBy[userRole] || 0);
-          const beadsLost = latestEv ? (Number(latestEv.beadsLost) || 0) : (GameState.capturedBy[oppRole] || 0);
-          const undos = latestEv ? (Number(latestEv.undos) || 0) : 0;
-          const hints = latestEv ? (Number(latestEv.hints) || 0) : 0;
-          const curLossStreak = Math.max(1, Number(allTime.curLossStreak) || 1);
-          const quitsAndRestarts = (Number(allTime.quitsMidGame) || 0) + (Number(allTime.restartsMidGame) || 0);
+          // Count exact moves made by the losing team from replayFrames if available
+          let loserMoves = 0;
+          if (Array.isArray(GameState.replayFrames) && GameState.replayFrames.length > 1) {
+            for (const f of GameState.replayFrames) {
+              if (f && f.lastMove && f.lastMove.player === loserRole && f.lastMove.type !== 'remove_opponent') {
+                loserMoves++;
+              }
+            }
+          }
+          if (loserMoves <= 0) {
+            loserMoves = latestEv && !GameState.aiVsAi && loserRole === PlayerAnalytics.getUserRole()
+              ? (Number(latestEv.userMoves) || 1)
+              : Math.max(1, Math.floor((GameState.moveLog.length || 2) / 2));
+          }
+
+          const durationMs = latestEv
+            ? (Number(latestEv.durationMs) || 30000)
+            : Math.max(5000, PlayerAnalytics.getCurrentSessionDurationMs());
+          const avgThinkMs = loserMoves > 0
+            ? Math.round((latestEv && !GameState.aiVsAi && loserRole === PlayerAnalytics.getUserRole() && latestEv.userThinkMs
+              ? Number(latestEv.userThinkMs)
+              : durationMs * 0.5) / loserMoves)
+            : 0;
+          const longestThinkMs = (latestEv && !GameState.aiVsAi && loserRole === PlayerAnalytics.getUserRole())
+            ? (Number(latestEv.longestThinkMs) || avgThinkMs)
+            : avgThinkMs;
+
+          const beadsEaten = Number(GameState.capturedBy[loserRole]) || 0;
+          const beadsLost = Number(GameState.capturedBy[winnerRole]) || 0;
+          const isUserLoser = !GameState.aiVsAi && loserRole === PlayerAnalytics.getUserRole();
+          const undos = (isUserLoser && latestEv) ? (Number(latestEv.undos) || 0) : ((PlayerAnalytics.session && PlayerAnalytics.session.undos) || 0);
+          const hints = (isUserLoser && latestEv) ? (Number(latestEv.hints) || 0) : ((PlayerAnalytics.session && PlayerAnalytics.session.hints) || 0);
+          const curLossStreak = Math.max(
+            this.teamStreaks[loserRole] || 1,
+            isUserLoser ? (Number(allTime.curLossStreak) || 1) : 1
+          );
+          const quitsAndRestarts = isUserLoser
+            ? ((Number(allTime.quitsMidGame) || 0) + (Number(allTime.restartsMidGame) || 0))
+            : 0;
 
           const matchedCategories = [];
-          if (GameState.vsAI && GameState.aiDifficulty === 'easy') {
+          if (GameState.vsAI && !GameState.aiVsAi && GameState.aiDifficulty === 'easy' && isUserLoser) {
             matchedCategories.push({ cat: 'easy_ai_lose', weight: 6, badge: '🌱 LOST TO EASY BOT' });
           }
-          if (undos > 0 || hints > 0) {
+          if (!GameState.aiVsAi && (undos > 0 || hints > 0)) {
             matchedCategories.push({ cat: 'blunder_assist', weight: 5, badge: `💡 ${undos + hints}× ASSIST FUMBLE` });
           }
           if (curLossStreak >= 2) {
             matchedCategories.push({ cat: 'streak_lose', weight: 5, badge: `📉 ${curLossStreak}× LOSS STREAK` });
           }
-          if (userMoves <= 9 || durationMs <= 42000) {
-            matchedCategories.push({ cat: 'fast_lose', weight: 5, badge: `⚡ ${userMoves}-MOVE SPEEDRUN LOSS` });
+          if (loserMoves <= 9 || durationMs <= 42000) {
+            matchedCategories.push({ cat: 'fast_lose', weight: 5, badge: `⚡ ${loserMoves}-MOVE SPEEDRUN LOSS` });
           }
           if (avgThinkMs >= 7000 || longestThinkMs >= 15000 || durationMs >= 210000) {
             matchedCategories.push({ cat: 'slow_move', weight: 5, badge: `🐌 ${PlayerAnalytics.formatMoveTime(avgThinkMs || longestThinkMs)} OVERTHINKER` });
@@ -17941,7 +17998,11 @@
           matchedCategories.push({ cat: 'general', weight: 2, badge: '🔥 GRANDMASTER ROAST' });
 
           return {
-            userMoves,
+            loserRole,
+            winnerRole,
+            loserTitle,
+            winnerTitle,
+            userMoves: loserMoves,
             durationMs,
             avgThinkMs,
             longestThinkMs,
@@ -17962,7 +18023,6 @@
             ...this.aiRoasts.map((r) => ({ ...r, source: 'puter_ai' }))
           ];
 
-          // Pick category weighted by stat relevance
           const totalW = ctx.matchedCategories.reduce((acc, c) => acc + c.weight, 0);
           let roll = Math.random() * totalW;
           let chosenCatObj = ctx.matchedCategories[0];
@@ -17979,7 +18039,6 @@
             candidates = allPool;
           }
 
-          // Filter out recently shown roasts so every loss feels fresh
           let fresh = candidates.filter((r) => !this.recentShown.includes(r.text));
           if (fresh.length === 0) {
             fresh = allPool.filter((r) => !this.recentShown.includes(r.text));
@@ -17997,11 +18056,13 @@
             .replace(/\{\{streak\}\}/g, String(ctx.curLossStreak))
             .replace(/\{\{moves\}\}/g, String(ctx.userMoves))
             .replace(/\{\{eaten\}\}/g, String(ctx.beadsEaten))
-            .replace(/\{\{time\}\}/g, PlayerAnalytics.formatDuration(ctx.durationMs, true));
+            .replace(/\{\{time\}\}/g, PlayerAnalytics.formatDuration(ctx.durationMs, true))
+            .replace(/\{\{loser\}\}/g, ctx.loserTitle);
 
           return {
             text: formattedText,
             badge: chosenCatObj.badge,
+            loserTitle: ctx.loserTitle,
             source: picked.source,
             totalBankSize: allPool.length,
             aiBankSize: this.aiRoasts.length
@@ -18015,18 +18076,18 @@
           const txtEl = document.getElementById('victoryRoastText');
           if (!banner || !txtEl) return;
 
-          if (!this.didHumanLoseCurrentMatch()) {
+          if (!this.shouldShowRoastCurrentMatch()) {
             banner.classList.add('hidden');
             return;
           }
 
           const roast = this.pickRoastForLoss();
           banner.classList.remove('hidden');
-          if (tagEl) tagEl.textContent = roast.badge;
+          if (tagEl) tagEl.textContent = `${roast.badge} • 💀 ${roast.loserTitle}`;
           if (srcEl) {
             srcEl.textContent = roast.source === 'puter_ai'
               ? `🧠 Real AI Roast • ${roast.totalBankSize} in bank`
-              : `🎭 Roast #${Math.floor(Math.random() * roast.totalBankSize) + 1} of ${roast.totalBankSize}`;
+              : `🎭 Losing Side Only (${roast.totalBankSize} roasts)`;
           }
           txtEl.textContent = `“${roast.text}”`;
 
@@ -26532,7 +26593,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=6471dce29d', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=6150ba0b9e', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {

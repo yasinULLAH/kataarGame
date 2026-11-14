@@ -2968,6 +2968,17 @@
         </div>
       </div>
 
+      <div id="victoryRoastBanner" class="hidden bg-gradient-to-r from-walnut-900 via-rose-950 to-walnut-900 border-2 border-amber-400 rounded-2xl p-3 text-left shadow-lg space-y-1.5">
+        <div class="flex items-center justify-between gap-1.5 flex-wrap">
+          <span id="victoryRoastTag" class="text-[9.5px] font-mono font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-400 text-walnut-900 shadow-sm">🔥 Savage Defeat Roast</span>
+          <div class="flex items-center gap-1.5 ml-auto">
+            <span id="victoryRoastSourceBadge" class="text-[9px] font-mono font-bold text-amber-200/85"></span>
+            <button id="btnAnotherRoast" type="button" class="android-btn px-2 py-0.5 rounded-lg bg-white/15 hover:bg-white/25 text-amber-200 text-[9.5px] font-extrabold border border-amber-300/30" title="Hit me with another sarcastic one-liner">🎲 Another Roast</button>
+          </div>
+        </div>
+        <p id="victoryRoastText" class="text-xs sm:text-[13px] font-extrabold text-amber-100 leading-snug italic"></p>
+      </div>
+
       <div id="victoryAIBrainBanner" class="hidden bg-rose-50 border border-rose-200 rounded-2xl p-2 text-center text-[10.5px] font-bold text-rose-900 shadow-sm">
         🧠 <span id="victoryAIBrainText">Adaptive AI Brain: 0 matches learned</span>
       </div>
@@ -7885,6 +7896,7 @@
             exportedAt: new Date().toISOString(),
             profile: this.data,
             playerAnalytics: PlayerAnalytics.exportData(),
+            sarcasticRoasts: SarcasticRoastEngine.exportData(),
             sessionStats: GameState.sessionStats,
             settings: {
               gridPreset: GameState.gridPreset,
@@ -7964,6 +7976,9 @@
           }
           if (bundle.playerAnalytics) {
             PlayerAnalytics.restoreData(bundle.playerAnalytics);
+          }
+          if (bundle.sarcasticRoasts) {
+            SarcasticRoastEngine.restoreData(bundle.sarcasticRoasts);
           }
           this.selectedAvatar = bundle.profile.avatar || '👑';
           this.save(bundle.profile);
@@ -17722,6 +17737,414 @@
         updateImmersiveHUD();
       }
 
+      const SarcasticRoastEngine = {
+        storageKey: 'katar_sarcastic_roasts_bank_v1',
+        loaded: false,
+        fetchingDaily: false,
+        lastFetchedDate: '',
+        totalFetchedBatches: 0,
+        recentShown: [],
+        aiRoasts: [],
+
+        builtinRoasts: [
+          // FAST LOSE (Speedrun defeats / low move count / short match)
+          { cat: 'fast_lose', text: "That wasn't a strategy match, that was a world-record speedrun to the 'Play Rematch' button." },
+          { cat: 'fast_lose', text: "My microwave takes longer to warm up a samosa than it took you to lose this entire board." },
+          { cat: 'fast_lose', text: "Did you have an urgent appointment, or do you always donate all your beads via express delivery?" },
+          { cat: 'fast_lose', text: "Even the app's loading screen lasted longer than your defense." },
+          { cat: 'fast_lose', text: "You played with the confidence of an emperor and the lifespan of a soap bubble." },
+          { cat: 'fast_lose', text: "Fastest fingers in the region—unfortunately, every single tap was a tactical felony." },
+          { cat: 'fast_lose', text: "I was still stretching my neural weights and you already folded like a lawn chair." },
+          { cat: 'fast_lose', text: "Blink and you'll miss it—actually, you kept both eyes open and still missed everything." },
+          { cat: 'fast_lose', text: "If losing in {{moves}} moves were an Olympic event, they'd鑄 a statue of you outside the stadium." },
+          { cat: 'fast_lose', text: "Traffic lights stay green longer than your army survived on this board." },
+
+          // SLOW MOVE (Overthinking / high average move time / long match and still lost)
+          { cat: 'slow_move', text: "You stared at the board like you were translating ancient Sanskrit, only to play the worst legal move." },
+          { cat: 'slow_move', text: "All that dramatic thinking time just to hand-deliver your beads on a silver platter?" },
+          { cat: 'slow_move', text: "Continental plates drift faster than your turns, and they still have a better sense of direction." },
+          { cat: 'slow_move', text: "I aged three software updates waiting for your turn, and THAT was your master plan?" },
+          { cat: 'slow_move', text: "You cooked that strategy for {{time}} and somehow still served it completely raw." },
+          { cat: 'slow_move', text: "NASA could have calculated a Mars trajectory in the time you spent planning that blunder." },
+          { cat: 'slow_move', text: "Deep meditation, furrowed brow, grandmaster posture… followed by a move a pigeon wouldn't tap." },
+          { cat: 'slow_move', text: "At least when a glacier moves slowly, it carves a valley. You just carved your own defeat." },
+          { cat: 'slow_move', text: "You burned the clock calculating 14,000 futures and still picked the one where you get cooked." },
+          { cat: 'slow_move', text: "Next time take even longer—maybe by 2035 you'll spot the obvious trap in the center." },
+
+          // STREAK LOSE (Back-to-back defeats / losing streak >= 2)
+          { cat: 'streak_lose', text: "{{streak}} losses in a row! At this point, losing isn't a result for you—it's a committed relationship." },
+          { cat: 'streak_lose', text: "Back-to-back defeats! Your loyalty to the 'Defeat' screen is genuinely touching." },
+          { cat: 'streak_lose', text: "You're on a losing streak so consistent that Swiss watchmakers are using you to calibrate clocks." },
+          { cat: 'streak_lose', text: "Collect one more consecutive 'L' and you qualify for a bulk wholesale discount." },
+          { cat: 'streak_lose', text: "They say practice makes perfect, but you're bravely pioneering the exact opposite theory." },
+          { cat: 'streak_lose', text: "Definition of optimism: tapping 'Rematch' with the exact same strategy after {{streak}} straight losses." },
+          { cat: 'streak_lose', text: "Even a broken clock is right twice a day, yet here you are extending the streak to {{streak}}." },
+          { cat: 'streak_lose', text: "Your beads are filing a union grievance—they refuse to spawn on your side for a {{streak}}th match." },
+          { cat: 'streak_lose', text: "I'd tell you to shake it off, but at this point your losing streak is structurally load-bearing." },
+          { cat: 'streak_lose', text: "Should I just pre-record your loss for the next match too, or do you want to tap the pieces yourself?" },
+
+          // CRUSHED / SHUTOUT (0 or 1 bead eaten, or massive capture deficit)
+          { cat: 'crushed', text: "Were you playing a war game or running a tax-free bead charity drive for my side?" },
+          { cat: 'crushed', text: "{{eaten}} captures?! I didn't fight a battle, I just conducted a peaceful real-estate takeover." },
+          { cat: 'crushed', text: "Your beads didn't even get to unpack their suitcases before getting evicted from the board." },
+          { cat: 'crushed', text: "Zero resistance detected. Honestly, the empty intersections put up a tougher fight than your lineup." },
+          { cat: 'crushed', text: "You guarded your pieces the way a screen door guards a submarine." },
+          { cat: 'crushed', text: "That wasn't a competitive match—that was a nature documentary where you played the grass." },
+          { cat: 'crushed', text: "Did you forget capturing enemy beads is allowed, or are you roleplaying as a strict pacifist?" },
+          { cat: 'crushed', text: "My pieces actually gained weight this match. Thank you for the five-star all-you-can-eat buffet." },
+          { cat: 'crushed', text: "If this board had a mercy rule, it would have gently closed the app ten moves ago." },
+          { cat: 'crushed', text: "I've seen wet paper bags hold a defensive line longer than your formation just did." },
+
+          // EASY AI LOSE (Lost to Easy / Novice AI)
+          { cat: 'easy_ai_lose', text: "You just lost to Easy AI—an algorithm literally programmed to trip over its own shoelaces." },
+          { cat: 'easy_ai_lose', text: "Easy AI picks half its moves by coin flip and vibes, and it STILL outsmarted you!" },
+          { cat: 'easy_ai_lose', text: "I had 92% of my brain cells turned off for 'Easy Mode' and still won. Please explain yourself." },
+          { cat: 'easy_ai_lose', text: "Losing on Easy difficulty is a historic milestone—my random-number generator sends its regards." },
+          { cat: 'easy_ai_lose', text: "Even the Novice bot is staring at the board wondering how it accidentally defeated a human." },
+          { cat: 'easy_ai_lose', text: "Wait… you lost to Easy AI?! I need a moment to process the secondhand embarrassment." },
+
+          // BLUNDER ASSIST (Used Hints or Undos and STILL lost)
+          { cat: 'blunder_assist', text: "You used time-travel Undos AND tactical Hints, and STILL found a way to lose?! Truly iconic." },
+          { cat: 'blunder_assist', text: "I literally drew glowing gold arrows showing you the answer, and you still steered straight into a ditch." },
+          { cat: 'blunder_assist', text: "Rewinding time with 'Undo' only helps if you don't replace a bad move with an even worse one." },
+          { cat: 'blunder_assist', text: "Even with the Hint engine whispering answers in your ear, you managed to fail an open-book test." },
+          { cat: 'blunder_assist', text: "Using Hints and still losing is like having GPS on a straight highway and driving into a canal." },
+          { cat: 'blunder_assist', text: "Dr. Strange rewound the board with your Undo button and still couldn't find a timeline where that move worked." },
+
+          // QUIT / RESTART HISTORY (Player with many mid-game quits/restarts who finally finished a loss)
+          { cat: 'quit_history', text: "Hey, respect for not smashing 'Restart' mid-game this time—taking the full L builds character!" },
+          { cat: 'quit_history', text: "Usually you hit the emergency eject button before the final blow. Brave of you to stay for the credits." },
+          { cat: 'quit_history', text: "Your 'Restart' button is breathing a sigh of relief that you finally let a loss reach the finish line." },
+
+          // GENERAL SAVAGE GRANDMASTER ROASTS
+          { cat: 'general', text: "I've seen better board vision from a blindfolded potato during a total solar eclipse." },
+          { cat: 'general', text: "Your strategy had so many holes in it we could use it to strain rice for a 500-guest wedding." },
+          { cat: 'general', text: "If Sun Tzu watched that match, he would have deleted 'The Art of War' and opened a juice bar." },
+          { cat: 'general', text: "You didn't just miss the trap—you paved the road, paid the toll, and escorted me into your back rank." },
+          { cat: 'general', text: "My CPU didn't even warm up. My cooling fan is literally filing for unemployment right now." },
+          { cat: 'general', text: "You're playing 1D tic-tac-toe while the rest of the board is operating in the 4th dimension." },
+          { cat: 'general', text: "That last move was a plot twist nobody asked for—especially your own pieces." },
+          { cat: 'general', text: "I'd offer you a strategy tutorial, but we'd have to start with Chapter 1: 'What Is a Straight Line?'" },
+          { cat: 'general', text: "Somewhere outside, a tree is working overtime producing oxygen for that move you just played." },
+          { cat: 'general', text: "Your game plan was 10% hope, 20% panic, and 70% donating beads to the opposition." },
+          { cat: 'general', text: "Don't feel bad—statistically, someone has to make the AI look like an undefeated supercomputer." },
+          { cat: 'general', text: "Every move you made was unpredictable—mostly because no rational strategist would ever consider it." },
+          { cat: 'general', text: "Bold strategy leaving your entire flank unguarded. Let's see if it pays off in the next century." },
+          { cat: 'general', text: "Even the wooden board grain is curving away from your moves out of sheer self-preservation." },
+          { cat: 'general', text: "If confidence alone won board games, you'd be champion. Unfortunately, the rules require actual moves." }
+        ],
+
+        load() {
+          if (this.loaded) return;
+          this.loaded = true;
+          try {
+            const raw = SafeStorage.getItem(this.storageKey);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed && typeof parsed === 'object') {
+                this.lastFetchedDate = String(parsed.lastFetchedDate || '');
+                this.totalFetchedBatches = Number(parsed.totalFetchedBatches) || 0;
+                this.recentShown = Array.isArray(parsed.recentShown) ? parsed.recentShown.slice(-40) : [];
+                this.aiRoasts = Array.isArray(parsed.aiRoasts) ? parsed.aiRoasts.slice(0, 600) : [];
+              }
+            }
+          } catch (e) {}
+        },
+
+        save() {
+          try {
+            this.aiRoasts = this.aiRoasts.slice(0, 600);
+            this.recentShown = this.recentShown.slice(-40);
+            SafeStorage.setItem(this.storageKey, JSON.stringify({
+              lastFetchedDate: this.lastFetchedDate,
+              totalFetchedBatches: this.totalFetchedBatches,
+              recentShown: this.recentShown,
+              aiRoasts: this.aiRoasts
+            }));
+          } catch (e) {}
+        },
+
+        exportData() {
+          this.load();
+          return {
+            lastFetchedDate: this.lastFetchedDate,
+            totalFetchedBatches: this.totalFetchedBatches,
+            aiRoasts: this.aiRoasts
+          };
+        },
+
+        restoreData(data) {
+          if (!data || typeof data !== 'object') return;
+          this.loaded = true;
+          if (typeof data.lastFetchedDate === 'string') this.lastFetchedDate = data.lastFetchedDate;
+          if (typeof data.totalFetchedBatches === 'number') this.totalFetchedBatches = data.totalFetchedBatches;
+          if (Array.isArray(data.aiRoasts)) this.aiRoasts = data.aiRoasts.slice(0, 600);
+          this.save();
+        },
+
+        didHumanLoseCurrentMatch() {
+          if (!GameState.gameOver || GameState.winner === 0 || GameState.winner === null) return false;
+          if (GameState.aiVsAi) return false;
+          if (GameState.mode === 'webrtc' && GameState.localPlayerRole) {
+            return GameState.winner !== GameState.localPlayerRole;
+          }
+          if (GameState.vsAI) {
+            const userRole = PlayerAnalytics.getUserRole();
+            return GameState.winner !== userRole;
+          }
+          // In 2P local Pass & Play, one human always lost!
+          return true;
+        },
+
+        collectLossContext() {
+          this.load();
+          PlayerAnalytics.load();
+          const latestEv = (PlayerAnalytics.events && PlayerAnalytics.events[0]) || null;
+          const allTime = PlayerAnalytics.getCachedAllTimeSummary();
+          const userRole = PlayerAnalytics.getUserRole();
+          const oppRole = userRole === 1 ? 2 : 1;
+
+          const userMoves = latestEv ? (Number(latestEv.userMoves) || 0) : Math.max(1, Math.ceil((GameState.moveLog.length || 2) / 2));
+          const durationMs = latestEv ? (Number(latestEv.durationMs) || 30000) : Math.max(5000, PlayerAnalytics.getCurrentSessionDurationMs());
+          const userThinkMs = latestEv ? (Number(latestEv.userThinkMs) || 0) : 0;
+          const longestThinkMs = latestEv ? (Number(latestEv.longestThinkMs) || 0) : 0;
+          const avgThinkMs = userMoves > 0 ? Math.round(userThinkMs / userMoves) : 0;
+          const beadsEaten = latestEv ? (Number(latestEv.beadsEaten) || 0) : (GameState.capturedBy[userRole] || 0);
+          const beadsLost = latestEv ? (Number(latestEv.beadsLost) || 0) : (GameState.capturedBy[oppRole] || 0);
+          const undos = latestEv ? (Number(latestEv.undos) || 0) : 0;
+          const hints = latestEv ? (Number(latestEv.hints) || 0) : 0;
+          const curLossStreak = Math.max(1, Number(allTime.curLossStreak) || 1);
+          const quitsAndRestarts = (Number(allTime.quitsMidGame) || 0) + (Number(allTime.restartsMidGame) || 0);
+
+          const matchedCategories = [];
+          if (GameState.vsAI && GameState.aiDifficulty === 'easy') {
+            matchedCategories.push({ cat: 'easy_ai_lose', weight: 6, badge: '🌱 LOST TO EASY BOT' });
+          }
+          if (undos > 0 || hints > 0) {
+            matchedCategories.push({ cat: 'blunder_assist', weight: 5, badge: `💡 ${undos + hints}× ASSIST FUMBLE` });
+          }
+          if (curLossStreak >= 2) {
+            matchedCategories.push({ cat: 'streak_lose', weight: 5, badge: `📉 ${curLossStreak}× LOSS STREAK` });
+          }
+          if (userMoves <= 9 || durationMs <= 42000) {
+            matchedCategories.push({ cat: 'fast_lose', weight: 5, badge: `⚡ ${userMoves}-MOVE SPEEDRUN LOSS` });
+          }
+          if (avgThinkMs >= 7000 || longestThinkMs >= 15000 || durationMs >= 210000) {
+            matchedCategories.push({ cat: 'slow_move', weight: 5, badge: `🐌 ${PlayerAnalytics.formatMoveTime(avgThinkMs || longestThinkMs)} OVERTHINKER` });
+          }
+          if (beadsEaten === 0 || (beadsEaten <= 1 && beadsLost >= 5) || (beadsLost - beadsEaten >= 6)) {
+            matchedCategories.push({ cat: 'crushed', weight: 5, badge: `💀 SHUTOUT (${beadsEaten} EATEN)` });
+          }
+          if (quitsAndRestarts >= 3) {
+            matchedCategories.push({ cat: 'quit_history', weight: 3, badge: '🚪 FINISHED WITHOUT QUITTING' });
+          }
+          matchedCategories.push({ cat: 'general', weight: 2, badge: '🔥 GRANDMASTER ROAST' });
+
+          return {
+            userMoves,
+            durationMs,
+            avgThinkMs,
+            longestThinkMs,
+            beadsEaten,
+            beadsLost,
+            undos,
+            hints,
+            curLossStreak,
+            quitsAndRestarts,
+            matchedCategories
+          };
+        },
+
+        pickRoastForLoss() {
+          const ctx = this.collectLossContext();
+          const allPool = [
+            ...this.builtinRoasts.map((r) => ({ ...r, source: 'builtin' })),
+            ...this.aiRoasts.map((r) => ({ ...r, source: 'puter_ai' }))
+          ];
+
+          // Pick category weighted by stat relevance
+          const totalW = ctx.matchedCategories.reduce((acc, c) => acc + c.weight, 0);
+          let roll = Math.random() * totalW;
+          let chosenCatObj = ctx.matchedCategories[0];
+          for (const c of ctx.matchedCategories) {
+            roll -= c.weight;
+            if (roll <= 0) {
+              chosenCatObj = c;
+              break;
+            }
+          }
+
+          let candidates = allPool.filter((r) => r.cat === chosenCatObj.cat);
+          if (candidates.length === 0) {
+            candidates = allPool;
+          }
+
+          // Filter out recently shown roasts so every loss feels fresh
+          let fresh = candidates.filter((r) => !this.recentShown.includes(r.text));
+          if (fresh.length === 0) {
+            fresh = allPool.filter((r) => !this.recentShown.includes(r.text));
+          }
+          if (fresh.length === 0) {
+            this.recentShown = [];
+            fresh = candidates;
+          }
+
+          const picked = fresh[Math.floor(Math.random() * fresh.length)];
+          this.recentShown.push(picked.text);
+          this.save();
+
+          const formattedText = String(picked.text || '')
+            .replace(/\{\{streak\}\}/g, String(ctx.curLossStreak))
+            .replace(/\{\{moves\}\}/g, String(ctx.userMoves))
+            .replace(/\{\{eaten\}\}/g, String(ctx.beadsEaten))
+            .replace(/\{\{time\}\}/g, PlayerAnalytics.formatDuration(ctx.durationMs, true));
+
+          return {
+            text: formattedText,
+            badge: chosenCatObj.badge,
+            source: picked.source,
+            totalBankSize: allPool.length,
+            aiBankSize: this.aiRoasts.length
+          };
+        },
+
+        renderIntoVictoryModal() {
+          const banner = document.getElementById('victoryRoastBanner');
+          const tagEl = document.getElementById('victoryRoastTag');
+          const srcEl = document.getElementById('victoryRoastSourceBadge');
+          const txtEl = document.getElementById('victoryRoastText');
+          if (!banner || !txtEl) return;
+
+          if (!this.didHumanLoseCurrentMatch()) {
+            banner.classList.add('hidden');
+            return;
+          }
+
+          const roast = this.pickRoastForLoss();
+          banner.classList.remove('hidden');
+          if (tagEl) tagEl.textContent = roast.badge;
+          if (srcEl) {
+            srcEl.textContent = roast.source === 'puter_ai'
+              ? `🧠 Real AI Roast • ${roast.totalBankSize} in bank`
+              : `🎭 Roast #${Math.floor(Math.random() * roast.totalBankSize) + 1} of ${roast.totalBankSize}`;
+          }
+          txtEl.textContent = `“${roast.text}”`;
+
+          if (GameState.usePuterAI) {
+            this.maybeFetchDailyRealAIRoasts(false);
+          }
+        },
+
+        async maybeFetchDailyRealAIRoasts(force = false) {
+          this.load();
+          if (!GameState.usePuterAI && !force) return false;
+          if (this.fetchingDaily) return false;
+          if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
+
+          const todayKey = PlayerAnalytics.getLocalDateKey();
+          if (!force && this.lastFetchedDate === todayKey && this.aiRoasts.some((r) => r && r.date === todayKey)) {
+            return false;
+          }
+
+          this.fetchingDaily = true;
+          try {
+            const sdkOk = await PuterAIManager.ensureSdkLoaded(6000);
+            if (!sdkOk || typeof puter === 'undefined' || !puter.ai || typeof puter.ai.chat !== 'function') {
+              this.fetchingDaily = false;
+              return false;
+            }
+
+            const st = PuterAIManager.getWindowStats();
+            if (PuterAIManager.hasServerSync && st.effectiveRemMicro <= 0) {
+              this.fetchingDaily = false;
+              return false;
+            }
+
+            const sysPrompt = 'You are the world\'s funniest, wittiest, most sarcastic grandmaster board-game commentator. Generate 50 brand-new, hilariously sarcastic, clean (PG-13), razor-sharp one-liner roasts for a player who just lost a strategy board game. Output ONLY a valid JSON array of 50 objects with keys "cat" and "text", where "cat" is one of: "fast_lose", "slow_move", "streak_lose", "crushed", "easy_ai_lose", "blunder_assist", "general". Keep each "text" punchy (12 to 24 words).';
+            const usrPrompt = `Generate 50 unique, maximally funny & sarcastic defeat one-liners for date ${todayKey}. Distribute across: fast_lose (8), slow_move (8), streak_lose (8), crushed (8), easy_ai_lose (4), blunder_assist (4), general (10). Return JSON array only.`;
+
+            const t0 = performance.now();
+            const model = 'gpt-4o-mini';
+            const resp = await puter.ai.chat(
+              [
+                { role: 'system', content: sysPrompt },
+                { role: 'user', content: usrPrompt }
+              ],
+              { model, max_tokens: 2400, temperature: 0.92 }
+            );
+
+            let rawText = '';
+            if (typeof resp === 'string') rawText = resp;
+            else if (resp && resp.message && typeof resp.message.content === 'string') rawText = resp.message.content;
+            else if (resp && resp.message && Array.isArray(resp.message.content)) {
+              rawText = resp.message.content.map((c) => c.text || '').join(' ');
+            } else if (resp && typeof resp.text === 'string') rawText = resp.text;
+            else rawText = JSON.stringify(resp || '');
+
+            const validCats = new Set(['fast_lose', 'slow_move', 'streak_lose', 'crushed', 'easy_ai_lose', 'blunder_assist', 'quit_history', 'general']);
+            const parsedItems = [];
+
+            const arrMatch = rawText.match(/\[[\s\S]*\]/);
+            if (arrMatch) {
+              try {
+                const arr = JSON.parse(arrMatch[0]);
+                if (Array.isArray(arr)) {
+                  for (const item of arr) {
+                    if (item && typeof item.text === 'string' && item.text.trim().length > 10) {
+                      const c = validCats.has(item.cat) ? item.cat : 'general';
+                      parsedItems.push({ cat: c, text: item.text.trim(), date: todayKey });
+                    } else if (typeof item === 'string' && item.trim().length > 10) {
+                      parsedItems.push({ cat: 'general', text: item.trim(), date: todayKey });
+                    }
+                  }
+                }
+              } catch (e) {}
+            }
+
+            if (parsedItems.length < 10) {
+              const lines = rawText.split(/\r?\n/);
+              const catCycle = ['fast_lose', 'slow_move', 'streak_lose', 'crushed', 'easy_ai_lose', 'blunder_assist', 'general'];
+              let idx = 0;
+              for (const line of lines) {
+                const cleaned = line.replace(/^\s*[-*\d.)]+\s*/, '').replace(/^["']|["'],?$/g, '').trim();
+                if (cleaned.length >= 18 && cleaned.length <= 220 && !cleaned.startsWith('{') && !cleaned.startsWith('[')) {
+                  parsedItems.push({ cat: catCycle[idx % catCycle.length], text: cleaned, date: todayKey });
+                  idx++;
+                }
+              }
+            }
+
+            if (parsedItems.length > 0) {
+              const existingTexts = new Set([
+                ...this.builtinRoasts.map((r) => r.text.toLowerCase()),
+                ...this.aiRoasts.map((r) => (r.text || '').toLowerCase())
+              ]);
+              let addedCount = 0;
+              for (const item of parsedItems) {
+                const k = item.text.toLowerCase();
+                if (!existingTexts.has(k)) {
+                  existingTexts.add(k);
+                  this.aiRoasts.unshift(item);
+                  addedCount++;
+                }
+              }
+              this.lastFetchedDate = todayKey;
+              this.totalFetchedBatches = (this.totalFetchedBatches || 0) + 1;
+              this.save();
+
+              const tokensUsed = PuterAIManager.extractResponseTokens(resp, sysPrompt, usrPrompt, rawText);
+              const latency = Math.round(performance.now() - t0);
+              PuterAIManager.recordCallTelemetry(model, GameState.aiDifficulty, tokensUsed, latency, `Loaded ${addedCount} fresh daily sarcastic roasts (${todayKey})`);
+              showBoardToast(`🎭 Real AI loaded ${addedCount} new sarcastic roasts for today!`);
+              this.fetchingDaily = false;
+              return true;
+            }
+          } catch (err) {}
+          this.fetchingDaily = false;
+          return false;
+        }
+      };
+
       let victoryModalDelayTimer = null;
 
       function populateAndOpenVictoryModal() {
@@ -17768,6 +18191,8 @@
             : '<div>No moves recorded.</div>';
           recentMovesEl.scrollTop = recentMovesEl.scrollHeight;
         }
+
+        SarcasticRoastEngine.renderIntoVictoryModal();
 
         const vBanner = document.getElementById('victoryAIBrainBanner');
         const vText = document.getElementById('victoryAIBrainText');
@@ -21996,6 +22421,14 @@
         });
       }
 
+      const btnAnotherRoast = document.getElementById('btnAnotherRoast');
+      if (btnAnotherRoast) {
+        btnAnotherRoast.addEventListener('click', () => {
+          SoundEngine.select();
+          SarcasticRoastEngine.renderIntoVictoryModal();
+        });
+      }
+
       const btnReopenVictory = document.getElementById('btnReopenVictoryModal');
       if (btnReopenVictory) {
         btnReopenVictory.addEventListener('click', () => {
@@ -23312,6 +23745,7 @@
           if (GameState.usePuterAI) {
             const mod = PuterAIManager.getModelForDifficulty(GameState.aiDifficulty).primary;
             showBoardToast(`🧠 Real AI Mode ON! Playing vs Puter Cloud (${mod})`);
+            SarcasticRoastEngine.maybeFetchDailyRealAIRoasts(false);
           } else {
             showBoardToast(`🤖 Switched to Built-in Grandmaster AI`);
           }
@@ -23375,6 +23809,7 @@
           updateHUD();
           const mod = PuterAIManager.getModelForDifficulty(GameState.aiDifficulty).primary;
           showBoardToast(`🧠 Real AI (Puter) Active — Model: ${mod}`);
+          SarcasticRoastEngine.maybeFetchDailyRealAIRoasts(false);
           if (GameState.currentTurn === GameState.aiPlayerRole && !GameState.gameOver) {
             scheduleAITurn(360);
           }
@@ -25000,6 +25435,7 @@
           savePersistentPrefs();
           SoundEngine.select();
           PuterAIManager.refreshQuotaFromPuter(true);
+          SarcasticRoastEngine.maybeFetchDailyRealAIRoasts(false);
           syncSettingsControlsFromState();
           updateHUD();
           MainMenu.syncUI();
@@ -26096,7 +26532,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=09ea29501e', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=6471dce29d', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
@@ -26741,8 +27177,12 @@
           ProfileManager.save({ name: 'Player 1', title: 'Sardar', avatar: '👑', p2Name: 'Player 2' });
         }
         MatchHistoryManager.renderLists();
+        SarcasticRoastEngine.load();
         PuterAIManager.load();
         PuterAIManager.refreshQuotaFromPuter(true);
+        if (GameState.usePuterAI) {
+          SarcasticRoastEngine.maybeFetchDailyRealAIRoasts(false);
+        }
         if (inviteRoom) {
           try { history.replaceState({ katarAppGuard: true }, '', location.pathname + (location.search || '')); } catch (e) {}
           ensureBackGuardState();
