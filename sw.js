@@ -12,7 +12,7 @@
  * when offline and caused the old "libraries not loaded" bug.
  */
 
-const CACHE_NAME = 'katar-offline-630429b021';
+const CACHE_NAME = 'katar-offline-e456826aa4';
 const OFFLINE_URL = './offline.html';
 
 const PRECACHE_ASSETS = [
@@ -34,6 +34,7 @@ const PRECACHE_ASSETS = [
   "./index.html",
   "./jsqr.min.js",
   "./logo.png",
+  "./main.js",
   "./manifest.webmanifest",
   "./mqtt.min.js",
   "./offline.html",

@@ -612,6 +612,18 @@
         display: none !important;
       }
     }
+    @media (max-width: 767px) {
+      #mainMenuOverlay,
+      #modalProfile,
+      #modalRules,
+      #modalEncyclopedia,
+      #modalConnection,
+      #modalPuterStats,
+      #modalVictory {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+    }
     @media (max-width: 1023px) {
       .mobile-compact-panel {
         padding: 4px 8px !important;
@@ -942,6 +954,14 @@
         <span id="lblHeaderPause" class="hidden sm:inline font-black">Pause</span>
       </button>
 
+      <button id="btnHeaderQuit" type="button" class="android-btn shrink-0 w-7 h-7 sm:w-7.5 sm:h-7.5 flex items-center justify-center rounded-lg bg-gradient-to-b from-rose-500 to-rose-700 hover:from-rose-400 hover:to-rose-600 text-white border border-rose-900 shadow-[0_1.5px_0_#881337] active:translate-y-0.5" aria-label="Exit or quit current game" title="Exit / Quit Current Game to Main Menu">
+        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+      </button>
+
       <button id="btnPlayImmersive" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 h-7 sm:h-7.5 px-2 rounded-lg text-[10.5px] sm:text-[11px] font-extrabold bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white border border-teal-800 shadow-[0_1.5px_0_#115E59] active:translate-y-0.5 active:shadow-none" aria-label="Play in fullscreen immersive mode" title="Play Fullscreen (Distraction-Free Immersive Mode)">
         <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
@@ -1155,14 +1175,17 @@
       </div>
 
       <div id="mainMorrisRuleGroup" class="hidden flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
-        <button id="btnQuickMorrisDropOrder" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm" title="Toggle Bead Laying Order: Alternate 1-by-1 vs Lay All 9 Beads First Then Opponent Lays All 9">
+        <button id="btnQuickMorrisDropOrder" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm" title="Toggle Bead Laying Order: Alternate 1-by-1 vs Lay All Beads First Then Opponent Lays All">
           🔄 1-by-1 Lay
         </button>
-        <button id="btnQuickMorrisFirstTurn" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm" title="Choose who lays their beads first (Player 1 / Player 2 or AI / Random)">
+        <button id="btnQuickAlternateLay" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-700 text-white shadow-sm" title="Alternate who lays beads first each match (Match 1: P1, Match 2: P2/AI, etc.) — Tap to Enable/Disable">
+          🔁 Alt Lay: ON
+        </button>
+        <button id="btnQuickMorrisFirstTurn" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm" title="Choose who lays their beads first (Player 1 / Player 2 or AI / Random Toss)">
           1️⃣ P1 First
         </button>
-        <button id="btnQuickMorrisDropMill" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500 text-walnut-900 shadow-sm" title="Toggle whether forming a full 3-in-a-row Katar is allowed during initial bead placement">
-          ⭐ Katar on Land: ON
+        <button id="btnQuickMorrisDropMill" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-600 text-white shadow-sm" title="Toggle whether forming a full 3-in-a-row Katar is allowed during initial bead placement">
+          🚫 No Katar on Land
         </button>
         <button id="btnQuickMorrisKillAny" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-600 text-white shadow-sm" title="Local Area Rule: Can kill and remove ANY opponent bead even in a 3-in-a-row line">
           🎯 Kill Any Bead
@@ -1205,6 +1228,9 @@
       <div id="mainGomokuGroup" class="hidden flex items-center gap-1 bg-parchment-200/80 p-0.5 rounded-lg border border-parchment-300">
         <button id="btnQuickGomokuSize" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm" title="Cycle Gomoku Grid Size (9×9 / 7×7 / 6×6)">
           ⚫ 9×9 Grid (81 Pts)
+        </button>
+        <button id="btnQuickGomokuAlternateLay" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-700 text-white shadow-sm" title="Alternate who opens each match (Match 1: P1, Match 2: P2/AI, etc.)">
+          🔁 Alt Lay: ON
         </button>
         <button id="btnQuickFirstTurnToggle" type="button" class="android-btn px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm" title="Cycle Who Plays First (P1 / P2 / Random)">
           1️⃣ P1 Opens
@@ -1306,6 +1332,12 @@
 
         <div id="victoryInspectBar" class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-30 bg-walnut-900/95 border-2 border-amber-400 rounded-2xl px-3 py-2 shadow-2xl flex items-center gap-2 text-xs text-white backdrop-blur-md">
           <span id="victoryInspectLabel" class="font-extrabold text-amber-300 truncate max-w-[130px] sm:max-w-[220px]">Match Finished</span>
+          <button id="btnInspectDownloadSnapshot" type="button" class="android-btn w-7 h-7 rounded-xl bg-amber-400 hover:bg-amber-300 text-walnut-900 border border-amber-600 flex items-center justify-center shadow shrink-0" aria-label="Download Match Snapshot" title="Take / Download Last Win/Lose Snapshot">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </button>
           <button id="btnInspectWatchReplay" type="button" class="android-btn px-2.5 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold shadow shrink-0">
             🎬 Replay
           </button>
@@ -1402,7 +1434,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-4 gap-1 sm:gap-1.5 bg-parchment-100 border border-parchment-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-sm">
+      <div class="grid grid-cols-5 gap-1 sm:gap-1.5 bg-parchment-100 border border-parchment-300 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-sm">
         <button id="btnUndoMove" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1.5 sm:py-1 px-1 rounded-lg sm:rounded-xl bg-white hover:bg-parchment-50 text-walnut-800 border border-parchment-300 shadow-[0_2px_0_#CBB08A] text-[10px] sm:text-[11px] font-bold gap-1 sm:gap-0.5" aria-label="Undo Last Turn" title="Undo Last Turn">
           <svg class="w-4 h-4 text-walnut-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M3 7v6h6" />
@@ -1430,11 +1462,20 @@
           <span class="hidden sm:inline">Rotate</span>
         </button>
 
-        <button id="btnResetMatch" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1.5 sm:py-1 px-1 rounded-lg sm:rounded-xl bg-gradient-to-b from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white border border-rose-700 shadow-[0_2px_0_#9F1239] text-[10px] sm:text-[11px] font-extrabold gap-1 sm:gap-0.5" aria-label="New Match" title="New Match">
+        <button id="btnResetMatch" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1.5 sm:py-1 px-1 rounded-lg sm:rounded-xl bg-gradient-to-b from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white border border-rose-700 shadow-[0_2px_0_#9F1239] text-[10px] sm:text-[11px] font-extrabold gap-1 sm:gap-0.5" aria-label="New Match" title="Restart Match">
           <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
           </svg>
           <span class="hidden sm:inline">Restart</span>
+        </button>
+
+        <button id="btnQuitMatch" type="button" class="android-btn flex flex-row sm:flex-col items-center justify-center py-1.5 sm:py-1 px-1 rounded-lg sm:rounded-xl bg-walnut-800 hover:bg-walnut-700 text-amber-200 border border-walnut-900 shadow-[0_2px_0_#2B170A] text-[10px] sm:text-[11px] font-extrabold gap-1 sm:gap-0.5" aria-label="Exit or Quit Game" title="Exit / Quit Game to Main Menu">
+          <svg class="w-4 h-4 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          <span class="hidden sm:inline">Quit</span>
         </button>
       </div>
 
@@ -1773,6 +1814,14 @@
           <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
         </svg>
         <span>Restart</span>
+      </button>
+      <button type="button" data-imm-action="quit" class="imm-act imm-danger" aria-label="Exit or quit game" title="Exit / Quit Game to Main Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+        <span>Quit</span>
       </button>
       <button type="button" data-imm-action="move-dock" class="imm-act" aria-label="Move dock position" title="Move Dock (Right / Left / Bottom)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -2691,8 +2740,8 @@
             <div>
               <label for="selMorrisDropMillRule" class="block text-xs font-extrabold text-walnut-900 mb-1">3-in-a-Row Katar on First Landing</label>
               <select id="selMorrisDropMillRule" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-amber-900 focus:outline-none">
-                <option value="allow_mill" selected>Allow 3-in-a-Row Katar on Initial Landing (Eat Immediately)</option>
-                <option value="forbid_mill">Disable 3-in-a-Row Katar on Landing (Cannot Form Line of 3 While Laying)</option>
+                <option value="forbid_mill" selected>Disable 3-in-a-Row Katar on Landing (Cannot Form Line of 3 While Laying)</option>
+                <option value="allow_mill">Allow 3-in-a-Row Katar on Initial Landing (Eat Immediately)</option>
               </select>
             </div>
 
@@ -2709,12 +2758,22 @@
               </select>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div class="sm:col-span-2 bg-emerald-50/90 border border-emerald-300 rounded-xl p-2.5 flex items-center justify-between gap-2">
+              <div>
+                <div class="text-xs font-extrabold text-emerald-950">🔁 Alternate Laying Beads Every Match</div>
+                <div class="text-[10.5px] text-emerald-800">Default ON: Match 1 one player lays first, Match 2 the other lays first (works in 1-by-1 &amp; Lay All)</div>
+              </div>
+              <button id="btnSettingsAlternateLay" type="button" class="android-btn px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-600 text-white shadow-sm shrink-0">
+                ON (Enabled)
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:col-span-2">
               <div>
                 <label for="selFirstTurn" class="block text-xs font-extrabold text-walnut-900 mb-1">Opening Turn</label>
                 <select id="selFirstTurn" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-2.5 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
                   <option value="1" selected>P1 (South)</option>
-                  <option value="2">P2 (North)</option>
+                  <option value="2">P2 / AI (North)</option>
                   <option value="random">Random Toss</option>
                 </select>
               </div>
@@ -2877,9 +2936,17 @@
       </div>
 
       <div class="bg-walnut-900/95 border-2 border-amber-500/80 rounded-2xl p-2 shadow-inner space-y-1.5">
-        <div class="flex items-center justify-between px-1 text-[10px] font-bold text-amber-200">
-          <span>📸 Final Board Snapshot</span>
-          <span id="victoryLastMoveBadge" class="font-mono text-amber-300 truncate max-w-[200px]">Last move highlighted</span>
+        <div class="flex items-center justify-between px-1 text-[10px] font-bold text-amber-200 gap-1.5">
+          <span class="shrink-0">📸 Final Board Snapshot</span>
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span id="victoryLastMoveBadge" class="font-mono text-amber-300 truncate max-w-[165px]">Last move highlighted</span>
+            <button id="btnDownloadVictorySnapshot" type="button" class="android-btn w-7 h-7 rounded-lg bg-amber-400 hover:bg-amber-300 text-walnut-900 border border-amber-600 flex items-center justify-center shadow shrink-0" aria-label="Take or download match snapshot" title="Take / Download Last Win/Lose Snapshot">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+            </button>
+          </div>
         </div>
         <img id="victoryBoardSnapshot" alt="Final Board Snapshot" class="w-48 h-48 sm:w-56 sm:h-56 mx-auto rounded-xl border border-amber-400/50 object-contain bg-parchment-100 shadow-md" />
         <div id="victoryRecentMovesList" class="text-[10px] font-mono text-parchment-200 bg-black/35 rounded-xl px-2.5 py-1.5 text-left max-h-16 overflow-y-auto custom-scroll"></div>
@@ -2973,6 +3040,7 @@
             <div id="savedReplaysListEnc" class="space-y-1.5 max-h-44 overflow-y-auto custom-scroll pr-0.5">
               <div class="text-[11px] text-walnut-500 italic py-2 text-center">Finished matches are automatically saved here for fullscreen replay.</div>
             </div>
+            <div id="savedReplaysPagerEnc" class="hidden pt-1 flex items-center justify-between gap-2 text-[10px] font-mono"></div>
           </div>
         </div>
 
@@ -3180,6 +3248,7 @@
             <div id="savedReplaysListProfile" class="space-y-1.5 max-h-48 overflow-y-auto custom-scroll pr-0.5">
               <div class="text-[11px] text-walnut-500 italic py-2 text-center">No completed matches saved yet — finish a match to watch its replay anytime!</div>
             </div>
+            <div id="savedReplaysPagerProfile" class="hidden pt-1 flex items-center justify-between gap-2 text-[10px] font-mono"></div>
           </div>
         </div>
 
@@ -3373,6 +3442,7 @@
                 <tbody id="stDailySummaryTableBody" class="divide-y divide-parchment-200 font-mono bg-white"></tbody>
               </table>
             </div>
+            <div id="stDailySummaryPager" class="hidden pt-1 flex items-center justify-between gap-2 text-[10px] font-mono"></div>
           </div>
 
           <!-- 6. Per-Game Variant Summary -->
@@ -3400,6 +3470,7 @@
                 <tbody id="stVariantSummaryTableBody" class="divide-y divide-parchment-200 font-mono bg-white"></tbody>
               </table>
             </div>
+            <div id="stVariantSummaryPager" class="hidden pt-1 flex items-center justify-between gap-2 text-[10px] font-mono"></div>
           </div>
 
           <!-- 7. Detailed Match, Quit & Restart Log -->
@@ -3409,6 +3480,7 @@
               <button id="btnResetPlayerAnalytics" type="button" class="android-btn text-[10px] font-bold text-rose-700 hover:underline shrink-0">Reset Stats</button>
             </div>
             <div id="stRecentSessionsFeed" class="space-y-1.5 max-h-60 overflow-y-auto custom-scroll pr-0.5"></div>
+            <div id="stRecentSessionsPager" class="hidden pt-1 flex items-center justify-between gap-2 text-[10px] font-mono"></div>
           </div>
         </div>
 
@@ -3765,7 +3837,7 @@
         morrisMillRemovalRule: 'any',
         morrisFlyingRule: 'disabled',
         morrisDropOrder: 'alternating',
-        morrisDropMillRule: 'allow_mill',
+        morrisDropMillRule: 'forbid_mill',
         lastMove: null,
         diagonalMode: 'full',
         openCenterMode: 'four_open',
@@ -3775,6 +3847,10 @@
         mandatoryCapture: 'optional',
         stepDirection: 'all',
         firstTurnSetting: '1',
+        alternateFirstTurn: true,
+        lastMatchFirstPlayer: null,
+        _bootInitialized: false,
+        _forceAdvanceAlternation: false,
         turnTimerSeconds: 0,
         matchTimerSeconds: 0,
         matchTimeLeft: 0,
@@ -5464,7 +5540,7 @@
           GameState.morrisVariant = 'three';
           GameState.morrisDiagonals = true;
           GameState.morrisFlyingRule = 'disabled';
-          GameState.morrisDropMillRule = 'allow_mill';
+          GameState.morrisDropMillRule = GameState.morrisDropMillRule || 'forbid_mill';
           GameState.rows = 3;
           GameState.cols = 3;
           GameState.hasTriangularCamps = false;
@@ -5474,7 +5550,7 @@
           GameState.morrisVariant = 'three';
           GameState.morrisDiagonals = true;
           GameState.morrisFlyingRule = 'disabled';
-          GameState.morrisDropMillRule = 'allow_mill';
+          GameState.morrisDropMillRule = GameState.morrisDropMillRule || 'forbid_mill';
           GameState.rows = 3;
           GameState.cols = 3;
           GameState.hasTriangularCamps = false;
@@ -5484,7 +5560,7 @@
           GameState.morrisVariant = 'six';
           GameState.morrisDiagonals = false;
           GameState.morrisFlyingRule = 'disabled';
-          GameState.morrisDropMillRule = 'allow_mill';
+          GameState.morrisDropMillRule = GameState.morrisDropMillRule || 'forbid_mill';
           GameState.rows = 5;
           GameState.cols = 5;
           GameState.hasTriangularCamps = false;
@@ -5494,7 +5570,7 @@
           GameState.morrisVariant = 'six';
           GameState.morrisDiagonals = false;
           GameState.morrisFlyingRule = 'disabled';
-          GameState.morrisDropMillRule = 'allow_mill';
+          GameState.morrisDropMillRule = GameState.morrisDropMillRule || 'forbid_mill';
           GameState.rows = 5;
           GameState.cols = 5;
           GameState.hasTriangularCamps = false;
@@ -5504,7 +5580,7 @@
           GameState.morrisVariant = 'nine';
           GameState.morrisDiagonals = false;
           GameState.morrisFlyingRule = 'disabled';
-          GameState.morrisDropMillRule = 'allow_mill';
+          GameState.morrisDropMillRule = GameState.morrisDropMillRule || 'forbid_mill';
           GameState.rows = 7;
           GameState.cols = 7;
           GameState.hasTriangularCamps = false;
@@ -5514,7 +5590,7 @@
           GameState.morrisVariant = 'twelve';
           GameState.morrisDiagonals = true;
           GameState.morrisFlyingRule = 'disabled';
-          GameState.morrisDropMillRule = 'allow_mill';
+          GameState.morrisDropMillRule = GameState.morrisDropMillRule || 'forbid_mill';
           GameState.rows = 7;
           GameState.cols = 7;
           GameState.hasTriangularCamps = false;
@@ -5524,7 +5600,7 @@
           GameState.morrisVariant = 'twelve';
           GameState.morrisDiagonals = false;
           GameState.morrisFlyingRule = 'disabled';
-          GameState.morrisDropMillRule = 'allow_mill';
+          GameState.morrisDropMillRule = GameState.morrisDropMillRule || 'forbid_mill';
           GameState.rows = 7;
           GameState.cols = 7;
           GameState.hasTriangularCamps = false;
@@ -5867,15 +5943,39 @@
         GameState.turkishDamaLastDir = null;
         GameState.gomokuWinningLine = null;
 
-        if (GameState.gameFamily === 'tiger_goat') {
+        const hadActivityBeforeReset = Boolean(
+          GameState._forceAdvanceAlternation ||
+          GameState.gameOver ||
+          (GameState.moveLog && GameState.moveLog.length > 0) ||
+          (GameState.history && GameState.history.length > 0)
+        );
+        GameState._forceAdvanceAlternation = false;
+
+        const rollRandomPlayer = () => {
+          try {
+            const buf = new Uint32Array(1);
+            crypto.getRandomValues(buf);
+            return (buf[0] & 1) === 0 ? 1 : 2;
+          } catch (e) {
+            return Math.random() < 0.5 ? 1 : 2;
+          }
+        };
+
+        if (GameState.gameFamily === 'tiger_goat' && !GameState.alternateFirstTurn && GameState.firstTurnSetting === '1') {
           GameState.currentTurn = 1;
+        } else if (GameState.alternateFirstTurn && GameState._bootInitialized && hadActivityBeforeReset && GameState.lastMatchFirstPlayer) {
+          GameState.currentTurn = GameState.lastMatchFirstPlayer === 1 ? 2 : 1;
         } else if (GameState.firstTurnSetting === '2') {
           GameState.currentTurn = 2;
         } else if (GameState.firstTurnSetting === 'random') {
-          GameState.currentTurn = Math.random() < 0.5 ? 1 : 2;
+          GameState.currentTurn = rollRandomPlayer();
+        } else if (GameState.alternateFirstTurn && GameState.lastMatchFirstPlayer) {
+          GameState.currentTurn = GameState.lastMatchFirstPlayer;
         } else {
           GameState.currentTurn = 1;
         }
+        GameState.lastMatchFirstPlayer = GameState.currentTurn;
+        GameState._bootInitialized = true;
 
         if (GameState.aiVsAi) {
           GameState.vsAI = true;
@@ -6558,6 +6658,14 @@
         events: [],
         quickRestartsCount: 0,
         session: null,
+        pageDaily: 1,
+        pageVariant: 1,
+        pageSessions: 1,
+        pageSizeDaily: 6,
+        pageSizeVariant: 6,
+        pageSizeSessions: 6,
+        _cachedAllTimeSum: null,
+        _lastSummaryCache: null,
 
         getLocalDateKey(ts = Date.now()) {
           const d = new Date(ts);
@@ -6714,6 +6822,8 @@
         },
 
         save() {
+          this._cachedAllTimeSum = null;
+          this._lastSummaryCache = null;
           try {
             this.events = this.events.slice(0, 600);
             SafeStorage.setItem(this.storageKey, JSON.stringify({
@@ -6722,6 +6832,13 @@
               events: this.events
             }));
           } catch (e) {}
+        },
+
+        getCachedAllTimeSummary() {
+          if (!this._cachedAllTimeSum) {
+            this._cachedAllTimeSum = this.computeSummary('all');
+          }
+          return this._cachedAllTimeSum;
         },
 
         exportData() {
@@ -7300,14 +7417,49 @@
           setTxt('stEatenVsLost', `${sum.beadsEaten} / ${sum.beadsLost}`);
           setTxt('stMillsAndAssistsSub', `Katars: ${sum.mills} (Opp: ${sum.oppMills}) • U:${sum.undos} H:${sum.hints}`);
 
-          // Date-by-Date Table
+          const renderPager = (pagerId, curPage, totalItems, pageSize, onPageChange) => {
+            const pEl = document.getElementById(pagerId);
+            if (!pEl) return;
+            const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+            if (totalItems <= pageSize) {
+              pEl.classList.add('hidden');
+              pEl.innerHTML = '';
+              return;
+            }
+            pEl.classList.remove('hidden');
+            const startItem = (curPage - 1) * pageSize + 1;
+            const endItem = Math.min(totalItems, curPage * pageSize);
+            pEl.innerHTML = `
+              <span class="text-walnut-600 font-bold">Showing ${startItem}–${endItem} of ${totalItems}</span>
+              <div class="flex items-center gap-1">
+                <button type="button" data-pg-dir="prev" ${curPage <= 1 ? 'disabled' : ''} class="android-btn px-2 py-0.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold border border-parchment-400 disabled:opacity-40">◀ Prev</button>
+                <span class="px-1.5 font-extrabold text-walnut-800">${curPage}/${totalPages}</span>
+                <button type="button" data-pg-dir="next" ${curPage >= totalPages ? 'disabled' : ''} class="android-btn px-2 py-0.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold border border-parchment-400 disabled:opacity-40">Next ▶</button>
+              </div>
+            `;
+            pEl.querySelectorAll('button[data-pg-dir]').forEach((b) => {
+              b.addEventListener('click', () => {
+                const dir = b.getAttribute('data-pg-dir');
+                const nextP = dir === 'prev' ? Math.max(1, curPage - 1) : Math.min(totalPages, curPage + 1);
+                if (nextP !== curPage) {
+                  SoundEngine.select();
+                  onPageChange(nextP);
+                }
+              });
+            });
+          };
+
+          // Date-by-Date Table (Paginated)
           const dailyBody = document.getElementById('stDailySummaryTableBody');
           if (dailyBody) {
             const dayRows = Array.from(sum.byDateMap.values()).sort((a, b) => b.dateKey.localeCompare(a.dateKey));
+            const totalPagesD = Math.max(1, Math.ceil(dayRows.length / this.pageSizeDaily));
+            if (this.pageDaily > totalPagesD) this.pageDaily = totalPagesD;
             if (dayRows.length === 0) {
               dailyBody.innerHTML = '<tr><td colspan="7" class="py-3 text-center font-sans text-walnut-500 italic">No match sessions recorded in this date range yet.</td></tr>';
             } else {
-              dailyBody.innerHTML = dayRows.map((d) => `<tr class="hover:bg-parchment-100/70">
+              const sliceD = dayRows.slice((this.pageDaily - 1) * this.pageSizeDaily, this.pageDaily * this.pageSizeDaily);
+              dailyBody.innerHTML = sliceD.map((d) => `<tr class="hover:bg-parchment-100/70">
                 <td class="py-2 pl-2.5 pr-2 font-bold text-walnut-900 whitespace-nowrap sticky left-0 z-10 bg-white shadow-[1px_0_0_rgba(207,178,138,0.45)] sm:shadow-none">${d.dateKey}</td>
                 <td class="py-2 px-2 text-center font-bold whitespace-nowrap">${d.started}</td>
                 <td class="py-2 px-2 text-center whitespace-nowrap"><span class="text-teal-700 font-extrabold">${d.wins}W</span> / <span class="text-rose-600 font-extrabold">${d.losses}L (${d.lossesAI} AI)</span> / ${d.draws}D</td>
@@ -7317,16 +7469,23 @@
                 <td class="py-2 pl-2 pr-2.5 text-right whitespace-nowrap"><span class="text-teal-700 font-bold">${d.eaten}</span> / <span class="text-rose-600">${d.lost}</span></td>
               </tr>`).join('');
             }
+            renderPager('stDailySummaryPager', this.pageDaily, dayRows.length, this.pageSizeDaily, (np) => {
+              this.pageDaily = np;
+              this.renderDashboard();
+            });
           }
 
-          // Per-Game Variant Table
+          // Per-Game Variant Table (Paginated)
           const varBody = document.getElementById('stVariantSummaryTableBody');
           if (varBody) {
             const varRows = Array.from(sum.byVariantMap.values()).sort((a, b) => b.started - a.started);
+            const totalPagesV = Math.max(1, Math.ceil(varRows.length / this.pageSizeVariant));
+            if (this.pageVariant > totalPagesV) this.pageVariant = totalPagesV;
             if (varRows.length === 0) {
               varBody.innerHTML = '<tr><td colspan="7" class="py-3 text-center font-sans text-walnut-500 italic">No game variants played in this date range yet.</td></tr>';
             } else {
-              varBody.innerHTML = varRows.map((v) => `<tr class="hover:bg-parchment-100/70">
+              const sliceV = varRows.slice((this.pageVariant - 1) * this.pageSizeVariant, this.pageVariant * this.pageSizeVariant);
+              varBody.innerHTML = sliceV.map((v) => `<tr class="hover:bg-parchment-100/70">
                 <td class="py-2 pl-2.5 pr-2 font-sans font-extrabold text-walnut-900 whitespace-nowrap sticky left-0 z-10 bg-white shadow-[1px_0_0_rgba(207,178,138,0.45)] sm:shadow-none">${v.title}</td>
                 <td class="py-2 px-2 text-center font-bold whitespace-nowrap">${v.started}</td>
                 <td class="py-2 px-2 text-center whitespace-nowrap"><span class="text-teal-700 font-extrabold">${v.wins}W</span> / <span class="text-rose-600 font-extrabold">${v.losses}L (${v.lossesAI} AI)</span></td>
@@ -7336,15 +7495,23 @@
                 <td class="py-2 pl-2 pr-2.5 text-right whitespace-nowrap"><span class="text-teal-700 font-bold">${v.eaten}</span> / <span class="text-rose-600">${v.lost}</span></td>
               </tr>`).join('');
             }
+            renderPager('stVariantSummaryPager', this.pageVariant, varRows.length, this.pageSizeVariant, (np) => {
+              this.pageVariant = np;
+              this.renderDashboard();
+            });
           }
 
-          // Recent Sessions Feed
+          // Recent Sessions Feed (Paginated)
           const feedEl = document.getElementById('stRecentSessionsFeed');
           if (feedEl) {
-            if (sum.recentEvents.length === 0) {
+            const allRecent = sum.recentEvents;
+            const totalPagesS = Math.max(1, Math.ceil(allRecent.length / this.pageSizeSessions));
+            if (this.pageSessions > totalPagesS) this.pageSessions = totalPagesS;
+            if (allRecent.length === 0) {
               feedEl.innerHTML = '<div class="text-[11px] text-walnut-500 italic py-2 text-center">No sessions recorded in this date range yet — play, restart, or finish a match to see live telemetry!</div>';
             } else {
-              feedEl.innerHTML = sum.recentEvents.map((ev) => {
+              const sliceS = allRecent.slice((this.pageSessions - 1) * this.pageSizeSessions, this.pageSessions * this.pageSizeSessions);
+              feedEl.innerHTML = sliceS.map((ev) => {
                 const dt = new Date(ev.ts || Date.now());
                 const timeStr = dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 let badgeCls = 'bg-amber-100 text-amber-900 border-amber-300';
@@ -7386,6 +7553,10 @@
                 </div>`;
               }).join('');
             }
+            renderPager('stRecentSessionsPager', this.pageSessions, allRecent.length, this.pageSizeSessions, (np) => {
+              this.pageSessions = np;
+              this.renderDashboard();
+            });
           }
         }
       };
@@ -7526,7 +7697,7 @@
           });
 
           const c = (this.data && this.data.career) || { totalMatches: 0, wins: 0, bestStreak: 0, beadsEaten: 0 };
-          const allTimeSum = PlayerAnalytics.computeSummary('all');
+          const allTimeSum = PlayerAnalytics.getCachedAllTimeSummary();
           const totalCompleted = Math.max(c.totalMatches || 0, allTimeSum.completed || 0);
           const totalWins = Math.max(c.wins || 0, allTimeSum.wins || 0);
           const bestStreak = Math.max(c.bestStreak || 0, allTimeSum.bestWinStreak || 0);
@@ -7559,9 +7730,12 @@
 
         openModal(isFirstTimeOnboarding = false) {
           this.syncHeaderAndFormUI();
-          PlayerAnalytics.renderDashboard();
+          const panelAn = document.getElementById('panelProfileAnalytics');
+          if (panelAn && !panelAn.classList.contains('hidden')) {
+            PlayerAnalytics.renderDashboard();
+          }
           if (typeof MatchHistoryManager !== 'undefined') {
-            MatchHistoryManager.renderLists();
+            MatchHistoryManager.renderLists(true);
           }
           const modal = document.getElementById('modalProfile');
           const btnClose = document.getElementById('btnCloseProfileModal');
@@ -7821,6 +7995,7 @@
       function savePersistentPrefs() {
         try {
           const prefs = {
+            prefsSchemaVersion: 2,
             gridPreset: GameState.gridPreset,
             gameFamily: GameState.gameFamily,
             morrisVariant: GameState.morrisVariant,
@@ -7842,6 +8017,7 @@
             damaKingMode: GameState.damaKingMode,
             tigerCaptureTarget: GameState.tigerCaptureTarget,
             firstTurnSetting: GameState.firstTurnSetting,
+            alternateFirstTurn: Boolean(GameState.alternateFirstTurn),
             turnTimerSeconds: GameState.turnTimerSeconds,
             matchTimerSeconds: GameState.matchTimerSeconds,
             disconnectGraceSeconds: GameState.disconnectGraceSeconds,
@@ -7869,6 +8045,7 @@
           if (!raw) return false;
           const p = JSON.parse(raw);
           if (!p || !p.gridPreset) return false;
+          const isV2 = (Number(p.prefsSchemaVersion) || 0) >= 2;
           applyGridPresetConfig(p.gridPreset);
           if (p.rows) GameState.rows = p.rows;
           if (p.cols) GameState.cols = p.cols;
@@ -7885,10 +8062,19 @@
           if (p.morrisMillRemovalRule) GameState.morrisMillRemovalRule = p.morrisMillRemovalRule;
           if (p.morrisFlyingRule) GameState.morrisFlyingRule = p.morrisFlyingRule;
           if (p.morrisDropOrder) GameState.morrisDropOrder = p.morrisDropOrder;
-          if (p.morrisDropMillRule) GameState.morrisDropMillRule = p.morrisDropMillRule;
+          if (isV2 && p.morrisDropMillRule) {
+            GameState.morrisDropMillRule = p.morrisDropMillRule;
+          } else {
+            GameState.morrisDropMillRule = 'forbid_mill';
+          }
           if (p.damaKingMode) GameState.damaKingMode = p.damaKingMode;
           if (p.tigerCaptureTarget) GameState.tigerCaptureTarget = p.tigerCaptureTarget;
           if (p.firstTurnSetting) GameState.firstTurnSetting = p.firstTurnSetting;
+          if (isV2 && p.alternateFirstTurn !== undefined) {
+            GameState.alternateFirstTurn = Boolean(p.alternateFirstTurn);
+          } else {
+            GameState.alternateFirstTurn = true;
+          }
           if (p.turnTimerSeconds !== undefined) GameState.turnTimerSeconds = p.turnTimerSeconds;
           if (p.matchTimerSeconds !== undefined) GameState.matchTimerSeconds = p.matchTimerSeconds;
           if (p.disconnectGraceSeconds !== undefined) GameState.disconnectGraceSeconds = p.disconnectGraceSeconds;
@@ -8022,24 +8208,35 @@
       const MatchHistoryManager = {
         storageKey: 'katar_match_history_replays_v1',
         maxSavedMatches: 25,
+        _cache: null,
+        pageProfile: 1,
+        pageEnc: 1,
+        pageSize: 5,
 
         getAll() {
+          if (this._cache) return this._cache;
           try {
             const raw = SafeStorage.getItem(this.storageKey);
-            if (!raw) return [];
+            if (!raw) {
+              this._cache = [];
+              return this._cache;
+            }
             const parsed = JSON.parse(raw);
-            return Array.isArray(parsed) ? parsed : [];
+            this._cache = Array.isArray(parsed) ? parsed : [];
+            return this._cache;
           } catch (e) {
-            return [];
+            this._cache = [];
+            return this._cache;
           }
         },
 
         saveAll(list) {
+          const trimmed = Array.isArray(list) ? list.slice(0, this.maxSavedMatches) : [];
+          this._cache = trimmed;
           try {
-            const trimmed = Array.isArray(list) ? list.slice(0, this.maxSavedMatches) : [];
             SafeStorage.setItem(this.storageKey, JSON.stringify(trimmed));
           } catch (e) {}
-          this.renderLists();
+          this.renderLists(false);
         },
 
         restoreAll(list) {
@@ -8126,7 +8323,7 @@
             }))
           };
 
-          const list = this.getAll();
+          const list = [...this.getAll()];
           list.unshift(entry);
           this.saveAll(list);
         },
@@ -8134,29 +8331,44 @@
         deleteMatch(matchId) {
           const list = this.getAll().filter((m) => m && m.id !== matchId);
           this.saveAll(list);
+          this.renderLists(true);
         },
 
         clearAll() {
           this.saveAll([]);
+          this.renderLists(true);
         },
 
-        renderLists() {
+        renderLists(forceRenderDom = false) {
           const list = this.getAll();
           const badgeMenu = document.getElementById('badgeMenuReplayCount');
           if (badgeMenu) badgeMenu.textContent = String(list.length);
 
+          const profModal = document.getElementById('modalProfile');
+          const encModal = document.getElementById('modalEncyclopedia');
+          const isProfVisible = forceRenderDom || Boolean(profModal && !profModal.classList.contains('hidden'));
+          const isEncVisible = forceRenderDom || Boolean(encModal && !encModal.classList.contains('hidden'));
+          if (!isProfVisible && !isEncVisible) return;
+
           const containers = [
-            { el: document.getElementById('savedReplaysListProfile'), sourceModal: 'modalProfile' },
-            { el: document.getElementById('savedReplaysListEnc'), sourceModal: 'modalEncyclopedia' }
+            { el: document.getElementById('savedReplaysListProfile'), pagerId: 'savedReplaysPagerProfile', pageKey: 'pageProfile', sourceModal: 'modalProfile', active: isProfVisible },
+            { el: document.getElementById('savedReplaysListEnc'), pagerId: 'savedReplaysPagerEnc', pageKey: 'pageEnc', sourceModal: 'modalEncyclopedia', active: isEncVisible }
           ];
 
-          for (const { el, sourceModal } of containers) {
-            if (!el) continue;
+          for (const { el, pagerId, pageKey, sourceModal, active } of containers) {
+            if (!el || !active) continue;
+            const pagerEl = document.getElementById(pagerId);
             if (list.length === 0) {
               el.innerHTML = '<div class="text-[11px] text-walnut-500 italic py-2 text-center">No completed matches saved yet — finish a match to watch its replay anytime!</div>';
+              if (pagerEl) { pagerEl.classList.add('hidden'); pagerEl.innerHTML = ''; }
               continue;
             }
-            el.innerHTML = list.map((m) => {
+            const totalPages = Math.max(1, Math.ceil(list.length / this.pageSize));
+            if (this[pageKey] > totalPages) this[pageKey] = totalPages;
+            const curPage = this[pageKey];
+            const pageSlice = list.slice((curPage - 1) * this.pageSize, curPage * this.pageSize);
+
+            el.innerHTML = pageSlice.map((m) => {
               const dateObj = new Date(m.savedAt || Date.now());
               const dateStr = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
               const isP1Win = m.winner === 1;
@@ -8208,6 +8420,33 @@
                 showBoardToast('Removed match replay from history');
               });
             });
+
+            if (pagerEl) {
+              if (list.length <= this.pageSize) {
+                pagerEl.classList.add('hidden');
+                pagerEl.innerHTML = '';
+              } else {
+                pagerEl.classList.remove('hidden');
+                const sIdx = (curPage - 1) * this.pageSize + 1;
+                const eIdx = Math.min(list.length, curPage * this.pageSize);
+                pagerEl.innerHTML = `
+                  <span class="text-walnut-600 font-bold">${sIdx}–${eIdx} of ${list.length}</span>
+                  <div class="flex items-center gap-1">
+                    <button type="button" data-rp-dir="prev" ${curPage <= 1 ? 'disabled' : ''} class="android-btn px-2 py-0.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold border border-parchment-400 disabled:opacity-40">◀ Prev</button>
+                    <span class="px-1 font-extrabold text-walnut-800">${curPage}/${totalPages}</span>
+                    <button type="button" data-rp-dir="next" ${curPage >= totalPages ? 'disabled' : ''} class="android-btn px-2 py-0.5 rounded-lg bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold border border-parchment-400 disabled:opacity-40">Next ▶</button>
+                  </div>
+                `;
+                pagerEl.querySelectorAll('button[data-rp-dir]').forEach((b) => {
+                  b.addEventListener('click', () => {
+                    const dir = b.getAttribute('data-rp-dir');
+                    this[pageKey] = dir === 'prev' ? Math.max(1, curPage - 1) : Math.min(totalPages, curPage + 1);
+                    SoundEngine.select();
+                    this.renderLists(true);
+                  });
+                });
+              }
+            }
           }
         }
       };
@@ -8589,6 +8828,9 @@
               type: 'remove_opponent',
               capturedIds: [remId]
             };
+            if (typeof LoopTracker !== 'undefined') {
+              LoopTracker.recordAction(player, action, GameState.board, GameState.reserves, GameState.kings, true);
+            }
             if (GameState.vsAI && player !== GameState.aiPlayerRole && typeof MorrisLearner !== 'undefined') {
               MorrisLearner.onHumanCapturedAiBead();
             }
@@ -11795,12 +12037,12 @@
         }
 
         score += (aiSeeSaw - hmSeeSaw) * 10500;
-        score += (aiRepeatableMills - hmRepeatableMills) * (protectMills ? 4400 : 3400);
-        score += (aiLockedMills - hmLockedMills) * (protectMills ? 2600 : 650);
+        score += (aiRepeatableMills - hmRepeatableMills) * (protectMills ? 3200 : 2200);
+        score += (aiLockedMills - hmLockedMills) * (protectMills ? 1800 : 450);
         score += (aiPinnedOppMills - hmPinnedAiMills) * 2100;
         score += (aiPinnedBlockerLocks - hmPinnedBlockerLocks) * 6800;
-        score += (aiUncontestedReadySet.size - hmUncontestedReadySet.size) * 7500;
-        score += ((aiReadyEmptySet.size - aiUncontestedReadySet.size) - (hmReadyEmptySet.size - hmUncontestedReadySet.size)) * 3200;
+        score += (aiUncontestedReadySet.size - hmUncontestedReadySet.size) * 9500;
+        score += ((aiReadyEmptySet.size - aiUncontestedReadySet.size) - (hmReadyEmptySet.size - hmUncontestedReadySet.size)) * 4600;
         score += (aiOpenEmptySet.size - hmOpenEmptySet.size) * (isDropPhase && forbidLandingMill ? 4800 : 1200);
         score += (aiForks - hmForks) * 4200;
         score += (aiCoveredLines - hmCoveredLines) * 340;
@@ -11808,6 +12050,27 @@
         score += (aiMob - hmMob) * 210;
         score += (aiFrontierCount - hmFrontierCount) * 380;
         score += (hmTrapped - aiTrapped) * 1750;
+
+        if (!isDropPhase && hmTotal <= 3) {
+          score -= hmMob * 650;
+          if (aiUncontestedReadySet.size >= 1 && hmReadyEmptySet.size === 0) {
+            score += 45000;
+          }
+          if (aiReadyEmptySet.size >= 2 && hmReadyEmptySet.size === 0) {
+            score += 55000;
+          }
+          for (const empId of aiOpenEmptySet) {
+            if (!aiReadyEmptySet.has(empId)) {
+              for (const nb of Adjacency[empId]) {
+                if (board[nb] === 0) {
+                  for (const nb2 of Adjacency[nb]) {
+                    if (board[nb2] === aiP) score += 2800;
+                  }
+                }
+              }
+            }
+          }
+        }
 
         if (isDropPhase && !forbidLandingMill) {
           score += (aiEmptyForkIntersections - hmEmptyForkIntersections) * 3200;
@@ -11827,15 +12090,16 @@
         }
 
         if (turnPlayer === aiP) {
-          if (aiReadyEmptySet.size >= 1 && (!isDropPhase || !forbidLandingMill)) score += 14500;
-          if (aiReadyEmptySet.size >= 2) score += 8500;
+          if (aiReadyEmptySet.size >= 1 && (!isDropPhase || !forbidLandingMill)) score += 16500;
+          if (aiReadyEmptySet.size >= 2) score += 11000;
           if (hmReadyEmptySet.size >= 2 && aiReadyEmptySet.size === 0) score -= 14000;
-          if (hmUncontestedReadySet.size >= 1 && aiReadyEmptySet.size === 0) score -= 9500;
+          if (hmUncontestedReadySet.size >= 1 && aiReadyEmptySet.size === 0) score -= 12500;
         } else {
-          if (hmReadyEmptySet.size >= 1 && (!isDropPhase || !forbidLandingMill)) score -= 14500;
-          if (hmReadyEmptySet.size >= 2) score -= 8500;
-          if (aiReadyEmptySet.size >= 2 && hmReadyEmptySet.size === 0) score += 14000;
-          if (aiUncontestedReadySet.size >= 1 && hmReadyEmptySet.size === 0) score += 9500;
+          if (hmReadyEmptySet.size >= 1 && (!isDropPhase || !forbidLandingMill)) score -= 16500;
+          if (hmReadyEmptySet.size >= 2) score -= 11000;
+          if (aiReadyEmptySet.size >= 2 && hmReadyEmptySet.size === 0) score += 24000;
+          if (aiUncontestedReadySet.size >= 1 && hmReadyEmptySet.size === 0) score += 18500;
+          if (aiReadyEmptySet.size === 1 && hmReadyEmptySet.size === 0) score += 6200;
         }
 
         return score;
@@ -11930,8 +12194,14 @@
                 if (board[nb] === opp) { oppCanEnterFrom = true; break; }
               }
             }
-            if (!oppCanEnterFrom) priority += 42000;
-            else priority -= 38000;
+            const oppBeadsCount = countPlayerTotalPieces(opp, board, res);
+            if (!oppCanEnterFrom) {
+              priority += oppBeadsCount <= 3 ? 115000 : 62000;
+            } else if (oppBeadsCount <= 3) {
+              priority += 18000;
+            } else {
+              priority -= 22000;
+            }
           }
 
           const oppMillsAtTo = fastWouldCompleteMill(m.to, opp, board);
@@ -12121,8 +12391,8 @@
         const res = { 1: res1, 2: res2 };
         const aiTotal = countPlayerTotalPieces(aiP, board, res);
         const hmTotal = countPlayerTotalPieces(humanP, board, res);
-        if (hmTotal <= 2) return 95000 + depth * 250;
-        if (aiTotal <= 2) return -95000 - depth * 250;
+        if (hmTotal <= 2) return 500000 + depth * 15000;
+        if (aiTotal <= 2) return -500000 - depth * 15000;
 
         const ttKey = computeMorrisStateKey(board, res1, res2, turnPlayer, aiP);
         if (pathSet && pathSet.has(ttKey)) {
@@ -12141,7 +12411,8 @@
         }
 
         let ttBestMoveKey = 0;
-        const cached = MorrisTT.get(ttKey);
+        const canUseTT = (!pathSet || pathSet.size <= 1);
+        const cached = canUseTT ? MorrisTT.get(ttKey) : null;
         if (cached) {
           ttBestMoveKey = cached.bestMoveKey || 0;
           if (cached.depth >= depth) {
@@ -12154,7 +12425,7 @@
 
         const rawMoves = getAllLegalActionsForPlayer(turnPlayer, board, res).allSteps;
         if (rawMoves.length === 0) {
-          return turnPlayer === aiP ? (-93000 - depth * 200) : (93000 + depth * 200);
+          return turnPlayer === aiP ? (-490000 - depth * 15000) : (490000 + depth * 15000);
         }
 
         const opp = turnPlayer === 1 ? 2 : 1;
@@ -12284,7 +12555,7 @@
           if (beta <= alpha) break;
         }
 
-        if (!morrisSearchAborted && MorrisTT.size < 180000) {
+        if (!morrisSearchAborted && canUseTT && MorrisTT.size < 180000) {
           let flag = 0;
           if (bestVal <= alphaOrig) flag = 2;
           else if (bestVal >= betaOrig) flag = 1;
@@ -12296,11 +12567,8 @@
 
       function computeBestLocalMorrisAction(aiP = (GameState.aiPlayerRole || 2)) {
         ensureMorrisTopologyCache();
-        const curRuleSig = getMorrisRuleSignature();
-        if (curRuleSig !== morrisLastRuleSig) {
-          MorrisTT.clear();
-          morrisLastRuleSig = curRuleSig;
-        }
+        MorrisTT.clear();
+        morrisLastRuleSig = getMorrisRuleSignature();
 
         const humanP = aiP === 1 ? 2 : 1;
         const diff = GameState.aiDifficulty;
@@ -12308,6 +12576,15 @@
         if (GameState.morrisPendingRemove) {
           const candidates = getRemovableOpponentNodes(humanP);
           if (candidates.length === 0) return null;
+          const hmRemainingBefore = countPlayerTotalPieces(humanP, GameState.board, GameState.reserves);
+          if (hmRemainingBefore <= 3 && (GameState.reserves[humanP] || 0) === 0) {
+            const bestWinRem = pickBestMorrisRemoval(GameState.board, aiP, humanP);
+            const chosen = bestWinRem !== -1 ? bestWinRem : candidates[0];
+            return {
+              bestAction: { type: 'remove_opponent', capturedId: chosen },
+              ranked: candidates.map((c) => ({ action: { type: 'remove_opponent', capturedId: c }, score: 500000 }))
+            };
+          }
           if (diff === 'easy') {
             const pick = candidates[Math.floor(Math.random() * candidates.length)];
             return { bestAction: { type: 'remove_opponent', capturedId: pick }, ranked: candidates.map((c) => ({ action: { type: 'remove_opponent', capturedId: c }, score: 0 })) };
@@ -12318,7 +12595,6 @@
             return { bestAction: act, ranked: candidates.map((c) => ({ action: { type: 'remove_opponent', capturedId: c }, score: scoreMorrisRemovalTarget(c, GameState.board, aiP, humanP) })) };
           }
 
-          if (MorrisTT.size > 150000) MorrisTT.clear();
           morrisSearchAborted = false;
           const intel = MorrisLearner.getIntelligenceLevel();
           morrisSearchDeadline = performance.now() + (diff === 'hardest' ? 480 : 300);
@@ -12349,7 +12625,7 @@
               humanP,
               new Set()
             );
-            const total = futureVal + immediateScore * 0.11 + learned * 0.5;
+            const total = futureVal >= 400000 ? (futureVal + immediateScore * 0.01) : (futureVal + immediateScore * 0.11 + learned * 0.5);
             ranked.push({ action: remAct, score: Math.round(total) });
             if (total > bestVal) {
               bestVal = total;
@@ -12386,6 +12662,33 @@
         const orderedMoves = orderMorrisMoves(allSteps, GameState.board, aiP, humanP, GameState.reserves[1], GameState.reserves[2], true, 0, 0);
         if (orderedMoves.length === 0) return null;
 
+        const hmCurrentTotal = countPlayerTotalPieces(humanP, GameState.board, GameState.reserves);
+        const isMovePhaseNow = (GameState.reserves[1] || 0) === 0 && (GameState.reserves[2] || 0) === 0;
+        const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill' || GameState.gridPreset === 'dara');
+
+        // 1. INSTANT 1-TURN WIN CHECK (Katar Mill Finisher or Total Blockade when opponent has <= 3 beads)
+        for (const mv of orderedMoves) {
+          const sim = [...GameState.board];
+          if (mv.type === 'step' && mv.from >= 0) sim[mv.from] = 0;
+          sim[mv.to] = aiP;
+          const formsMill = !(mv.type === 'drop' && forbidLandingMill) && fastCountMillsAtNode(mv.to, aiP, sim) > 0;
+          if (formsMill && hmCurrentTotal <= 3 && (GameState.reserves[humanP] || 0) === 0 && getRemovableOpponentNodes(humanP, sim).length > 0) {
+            return {
+              bestAction: mv,
+              ranked: [{ action: mv, score: 650000 }, ...orderedMoves.filter((x) => x !== mv).map((x, idx) => ({ action: x, score: 1000 - idx }))]
+            };
+          }
+          if (isMovePhaseNow) {
+            const oppMovesAfter = getAllLegalActionsForPlayer(humanP, sim, { 1: 0, 2: 0 }).allSteps.length;
+            if (oppMovesAfter === 0) {
+              return {
+                bestAction: mv,
+                ranked: [{ action: mv, score: 640000 }, ...orderedMoves.filter((x) => x !== mv).map((x, idx) => ({ action: x, score: 1000 - idx }))]
+              };
+            }
+          }
+        }
+
         if (diff === 'easy') {
           const pick = Math.random() < 0.72
             ? orderedMoves[Math.floor(Math.random() * Math.min(5, orderedMoves.length))]
@@ -12393,40 +12696,18 @@
           return { bestAction: pick, ranked: orderedMoves.map((m, i) => ({ action: m, score: 100 - i })) };
         }
 
-        if (diff === 'medium') {
-          let bestMed = orderedMoves[0];
-          let bestMedScore = -Infinity;
-          const ranked = [];
-          for (const mv of orderedMoves.slice(0, 10)) {
-            const states = expandMorrisMoveStates(GameState.board, GameState.reserves[1], GameState.reserves[2], mv, aiP, aiP, humanP, 1);
-            const st = states[0];
-            const loopInfo = LoopTracker.evaluateLoopPenalty(mv, GameState.board, st.board, aiP, st.res1, st.res2, st.formedMill);
-            const val = evaluateMorrisBoardState(st.board, st.res1, st.res2, humanP, aiP, humanP)
-              - loopInfo.penalty + loopInfo.breakthroughBonus + (Math.random() * 70 - 35);
-            ranked.push({ action: mv, score: Math.round(val), isLoop: loopInfo.isForbiddenLoop });
-            if (val > bestMedScore) {
-              bestMedScore = val;
-              bestMed = mv;
-            }
-          }
-          ranked.sort((a, b) => b.score - a.score);
-          return { bestAction: bestMed, ranked };
-        }
-
-        if (MorrisTT.size > 150000) MorrisTT.clear();
         morrisSearchAborted = false;
         const intel = MorrisLearner.getIntelligenceLevel();
         const isDropPhase = allSteps.every((m) => m.type === 'drop');
-        const forbidLandingMill = (GameState.morrisDropOrder === 'all_at_once' || GameState.morrisDropMillRule === 'forbid_mill' || GameState.gridPreset === 'dara');
         const isSmallBoard = (Nodes.length <= 16);
         const timeBudgetMs = diff === 'hardest'
-          ? (isDropPhase ? 560 : (680 + intel.depthBonus * 110))
-          : (isDropPhase ? 330 : 410);
+          ? (isDropPhase ? 520 : (620 + intel.depthBonus * 90))
+          : (diff === 'hard' ? (isDropPhase ? 300 : 380) : 110);
         morrisSearchDeadline = performance.now() + timeBudgetMs;
 
         const maxDepth = diff === 'hardest'
           ? (isSmallBoard ? 12 : (isDropPhase ? (8 + Math.min(2, intel.depthBonus)) : (11 + intel.depthBonus)))
-          : (isSmallBoard ? 8 : (isDropPhase ? 6 : 8));
+          : (diff === 'hard' ? (isSmallBoard ? 8 : (isDropPhase ? 6 : 8)) : (isDropPhase ? 3 : 4));
         const rootPool = orderedMoves.slice(0, Math.min(isDropPhase ? 18 : 24, orderedMoves.length));
         let bestMove = rootPool[0];
         let latestScores = new Map();
@@ -12438,7 +12719,7 @@
           const iterMap = new Map();
 
           for (const mv of rootPool) {
-            const states = expandMorrisMoveStates(GameState.board, GameState.reserves[1], GameState.reserves[2], mv, aiP, aiP, humanP, 3);
+            const states = expandMorrisMoveStates(GameState.board, GameState.reserves[1], GameState.reserves[2], mv, aiP, aiP, humanP, diff === 'medium' ? 2 : 3);
             let bestBranchVal = -Infinity;
             const learnedBias = (diff === 'hardest')
               ? MorrisLearner.getHardestBonus(GameState.board, mv, aiP, GameState.reserves[aiP], GameState.reserves[humanP])
@@ -12450,10 +12731,10 @@
 
             for (const st of states) {
               const nextTurn = humanP;
-              const millBonus = st.formedMill ? 2600 : 0;
+              const millBonus = st.formedMill ? 6500 : 0;
               const loopInfo = LoopTracker.evaluateLoopPenalty(mv, GameState.board, st.board, aiP, st.res1, st.res2, st.formedMill);
               const rootAdditive = millBonus + placementTieBreaker + learnedBias - loopInfo.penalty + loopInfo.breakthroughBonus;
-              const childAlpha = (rawAlpha > -900000) ? (rawAlpha - rootAdditive - 100) : -Infinity;
+              const childAlpha = (rawAlpha > -900000 && rawAlpha < 350000) ? (rawAlpha - rootAdditive - 100) : -Infinity;
               const mmVal = minimaxMorris(
                 st.board,
                 st.res1,
@@ -12467,7 +12748,10 @@
                 new Set(),
                 4
               );
-              const v = mmVal + rootAdditive;
+              // Never allow learnedBias or loop penalties to delay a forced Mate/Win
+              const v = mmVal >= 400000
+                ? (mmVal + (st.formedMill ? 5000 : 0))
+                : (mmVal + rootAdditive);
               if (v > bestBranchVal) bestBranchVal = v;
               if (morrisSearchAborted) break;
             }
@@ -12486,13 +12770,14 @@
             bestMove = iterBestMove;
             latestScores = iterMap;
             rootPool.sort((a, b) => (latestScores.get(b) ?? -999999) - (latestScores.get(a) ?? -999999));
-            if (iterBestVal >= 90000) break;
+            if (iterBestVal >= 480000) break;
           } else {
             break;
           }
         }
 
-        if ((diff !== 'hardest' || GameState.aiVsAi) && bestMove.type === 'step' && rootPool.length > 1) {
+        const bestMoveScore = latestScores.get(bestMove) ?? 0;
+        if (bestMoveScore < 400000 && (diff !== 'hardest' || GameState.aiVsAi) && bestMove.type === 'step' && rootPool.length > 1) {
           const checkSim = [...GameState.board];
           checkSim[bestMove.from] = 0;
           checkSim[bestMove.to] = aiP;
@@ -15928,7 +16213,17 @@
             ctx.lineWidth = 2.4;
             ctx.stroke();
             ctx.restore();
-            needsMoreFrames = true;
+            const isUiOverlayCovering = Boolean(
+              document.body.classList.contains('menu-open') ||
+              GameState.isPaused ||
+              ['modalProfile', 'modalRules', 'modalEncyclopedia', 'modalConnection', 'modalPuterStats', 'modalVictory', 'scannerModal'].some((id) => {
+                const mEl = document.getElementById(id);
+                return mEl && !mEl.classList.contains('hidden');
+              })
+            );
+            if (!isUiOverlayCovering) {
+              needsMoreFrames = true;
+            }
           }
 
           const isKing = Boolean(GameState.kings && GameState.kings[i]);
@@ -16654,9 +16949,33 @@
             ? 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-indigo-600 text-white shadow-sm'
             : 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-teal-700 text-white shadow-sm';
         }
+        const syncAlternateBtn = (btn) => {
+          if (!btn) return;
+          const isAlt = Boolean(GameState.alternateFirstTurn);
+          setResponsiveBtnIconText(btn, '🔁', isAlt ? 'Alt Lay: ON' : 'Alt Lay: OFF');
+          btn.className = isAlt
+            ? 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-700 text-white shadow-sm'
+            : 'android-btn px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold bg-white text-walnut-800 border border-parchment-300 shadow-sm';
+        };
+        syncAlternateBtn(document.getElementById('btnQuickAlternateLay'));
+        syncAlternateBtn(document.getElementById('btnQuickGomokuAlternateLay'));
+
+        const btnSettingsAlt = document.getElementById('btnSettingsAlternateLay');
+        if (btnSettingsAlt) {
+          btnSettingsAlt.textContent = GameState.alternateFirstTurn ? 'ON (Enabled)' : 'OFF (Disabled)';
+          btnSettingsAlt.className = GameState.alternateFirstTurn
+            ? 'android-btn px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-600 text-white shadow-sm shrink-0'
+            : 'android-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-parchment-200 text-walnut-800 border border-parchment-400 shrink-0';
+        }
+
         const btnMorrisFirst = document.getElementById('btnQuickMorrisFirstTurn');
         if (btnMorrisFirst) {
-          const ftMap = { '1': ['1️⃣', 'P1 First'], '2': ['2️⃣', 'P2/AI First'], 'random': ['🎲', 'Random First'] };
+          const curTurnTag = GameState.currentTurn === 2 ? 'P2/AI' : 'P1';
+          const ftMap = {
+            '1': ['1️⃣', GameState.alternateFirstTurn ? `Alt (${curTurnTag} Now)` : 'P1 First'],
+            '2': ['2️⃣', GameState.alternateFirstTurn ? `Alt (${curTurnTag} Now)` : 'P2/AI First'],
+            'random': ['🎲', `Random (${curTurnTag} Now)`]
+          };
           const [fIcon, fTxt] = ftMap[GameState.firstTurnSetting] || ['1️⃣', 'P1 First'];
           setResponsiveBtnIconText(btnMorrisFirst, fIcon, fTxt);
         }
@@ -16732,7 +17051,12 @@
         }
         const btnFirstT = document.getElementById('btnQuickFirstTurnToggle');
         if (btnFirstT) {
-          const ftMap = { '1': ['1️⃣', 'P1 Opens'], '2': ['2️⃣', 'P2 Opens'], 'random': ['🎲', 'Random Open'] };
+          const curTurnTag = GameState.currentTurn === 2 ? 'P2/AI' : 'P1';
+          const ftMap = {
+            '1': ['1️⃣', GameState.alternateFirstTurn ? `Alt (${curTurnTag})` : 'P1 Opens'],
+            '2': ['2️⃣', GameState.alternateFirstTurn ? `Alt (${curTurnTag})` : 'P2 Opens'],
+            'random': ['🎲', `Random (${curTurnTag})`]
+          };
           const [fIcon, fTxt] = ftMap[GameState.firstTurnSetting] || ['1️⃣', 'P1 Opens'];
           setResponsiveBtnIconText(btnFirstT, fIcon, fTxt);
         }
@@ -16788,7 +17112,7 @@
 
         const selDropMill = document.getElementById('selMorrisDropMillRule');
         if (selDropMill) {
-          selDropMill.value = GameState.morrisDropMillRule || 'allow_mill';
+          selDropMill.value = GameState.morrisDropMillRule || 'forbid_mill';
           selDropMill.disabled = (GameState.morrisDropOrder === 'all_at_once');
         }
 
@@ -17427,6 +17751,7 @@
           morrisDropMillRule: GameState.morrisDropMillRule,
           damaKingMode: GameState.damaKingMode,
           firstTurnSetting: GameState.firstTurnSetting,
+          alternateFirstTurn: Boolean(GameState.alternateFirstTurn),
           lockSettingsMidGame: GameState.lockSettingsMidGame,
           lastMove: GameState.lastMove,
           moveLog: GameState.moveLog,
@@ -17496,9 +17821,10 @@
         GameState.morrisMillRemovalRule = remote.morrisMillRemovalRule || 'any';
         GameState.morrisFlyingRule = remote.morrisFlyingRule || 'disabled';
         GameState.morrisDropOrder = remote.morrisDropOrder || 'alternating';
-        GameState.morrisDropMillRule = remote.morrisDropMillRule || (GameState.morrisDropOrder === 'all_at_once' ? 'forbid_mill' : 'allow_mill');
+        GameState.morrisDropMillRule = remote.morrisDropMillRule || 'forbid_mill';
         if (remote.damaKingMode) GameState.damaKingMode = remote.damaKingMode;
         if (remote.firstTurnSetting) GameState.firstTurnSetting = remote.firstTurnSetting;
+        if (remote.alternateFirstTurn !== undefined) GameState.alternateFirstTurn = Boolean(remote.alternateFirstTurn);
         if (remote.lockSettingsMidGame !== undefined) GameState.lockSettingsMidGame = Boolean(remote.lockSettingsMidGame);
         GameState.lastMove = remote.lastMove || null;
         GameState.moveLog = remote.moveLog ? [...remote.moveLog] : [];
@@ -21132,19 +21458,50 @@
         });
       }
 
+      const toggleAlternateLayMode = () => {
+        GameState.alternateFirstTurn = !GameState.alternateFirstTurn;
+        SoundEngine.select();
+        syncSettingsControlsFromState();
+        savePersistentPrefs();
+        if (GameState.mode === 'webrtc' && WebRTCManager.isConnected() && GameState.localPlayerRole === 1) {
+          WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState() });
+        }
+        showBoardToast(
+          GameState.alternateFirstTurn
+            ? `🔁 Alternate Lay Per Match: ON (Current opener: Player ${GameState.currentTurn}, next match: Player ${GameState.currentTurn === 1 ? 2 : 1})`
+            : `🔁 Alternate Lay Per Match: OFF (Using fixed/random opening turn)`
+        );
+      };
+
+      const btnQuickAltLay = document.getElementById('btnQuickAlternateLay');
+      if (btnQuickAltLay) btnQuickAltLay.addEventListener('click', toggleAlternateLayMode);
+      const btnQuickGomokuAltLay = document.getElementById('btnQuickGomokuAlternateLay');
+      if (btnQuickGomokuAltLay) btnQuickGomokuAltLay.addEventListener('click', toggleAlternateLayMode);
+      const btnSettingsAltLay = document.getElementById('btnSettingsAlternateLay');
+      if (btnSettingsAltLay) btnSettingsAltLay.addEventListener('click', toggleAlternateLayMode);
+
       const btnFirstTurnQuick = document.getElementById('btnQuickFirstTurnToggle');
       if (btnFirstTurnQuick) {
         btnFirstTurnQuick.addEventListener('click', () => {
           const order = ['1', '2', 'random'];
-          GameState.firstTurnSetting = order[(order.indexOf(GameState.firstTurnSetting) + 1) % order.length];
+          const nextFirst = order[(order.indexOf(GameState.firstTurnSetting) + 1) % order.length];
           SoundEngine.select();
-          syncSettingsControlsFromState();
-          if (GameState.history.length === 0 && GameState.moveLog.length === 0) {
+          guardMidGameAction('Switch Who Opens First', () => {
+            GameState.firstTurnSetting = nextFirst;
+            GameState._bootInitialized = false;
+            if (typeof MainMenu !== 'undefined' && !MainMenu.isOpen) {
+              GameState.isStarted = true;
+              GameState.isPaused = false;
+            }
             initMatch(true);
-          } else {
-            syncRulesToPeer();
-          }
-          showBoardToast(`Opening Turn: ${btnFirstTurnQuick.textContent}`);
+            const [p1Title, p2Title] = getThemePlayerNames();
+            const openerName = GameState.currentTurn === 1 ? p1Title : p2Title;
+            showBoardToast(
+              nextFirst === 'random'
+                ? `🎲 Random Toss: ${openerName} opens first!`
+                : `Opening Turn: ${openerName} opens first!`
+            );
+          });
         });
       }
 
@@ -21298,6 +21655,13 @@
 
       document.getElementById('selFirstTurn').addEventListener('change', (e) => {
         GameState.firstTurnSetting = e.target.value;
+        if (GameState.moveLog.length === 0 && GameState.history.length === 0) {
+          GameState._bootInitialized = false;
+          initMatch(true);
+        } else {
+          syncSettingsControlsFromState();
+          savePersistentPrefs();
+        }
       });
 
       document.getElementById('selTurnTimer').addEventListener('change', (e) => {
@@ -21352,9 +21716,11 @@
         GameState.diagonalMode = 'full';
         GameState.chainRule = 'multi_optional';
         GameState.morrisMillRemovalRule = 'any';
+        GameState.morrisDropMillRule = 'forbid_mill';
         GameState.mandatoryCapture = 'optional';
         GameState.stepDirection = 'all';
         GameState.firstTurnSetting = '1';
+        GameState.alternateFirstTurn = true;
         GameState.turnTimerSeconds = 0;
         GameState.matchTimerSeconds = 0;
         GameState.pieceTheme = 'traditional';
@@ -21519,6 +21885,122 @@
         btnInspectRematch.addEventListener('click', () => {
           document.getElementById('btnVictoryPlayAgain').click();
         });
+      }
+
+      function downloadMatchSnapshot() {
+        SoundEngine.select();
+        try {
+          const savedMoving = VisualFX.movingPiece;
+          VisualFX.movingPiece = null;
+          renderBoardFrame(performance.now());
+          VisualFX.movingPiece = savedMoving;
+
+          const outW = 920;
+          const outH = 1080;
+          const off = document.createElement('canvas');
+          off.width = outW;
+          off.height = outH;
+          const octx = off.getContext('2d');
+
+          const bg = octx.createLinearGradient(0, 0, 0, outH);
+          bg.addColorStop(0, '#2B170A');
+          bg.addColorStop(0.5, '#1C1008');
+          bg.addColorStop(1, '#120904');
+          octx.fillStyle = bg;
+          octx.fillRect(0, 0, outW, outH);
+
+          octx.strokeStyle = '#F59E0B';
+          octx.lineWidth = 6;
+          octx.strokeRect(16, 16, outW - 32, outH - 32);
+
+          const [p1Title, p2Title] = getThemePlayerNames();
+          const winCapP1 = getWinCaptureTargetForPlayer(1);
+          const winCapP2 = getWinCaptureTargetForPlayer(2);
+          const headlineTxt = GameState.winner === 1
+            ? `🏆 ${p1Title} Wins!`
+            : (GameState.winner === 2 ? `🏆 ${p2Title} Wins!` : (GameState.gameOver ? '🤝 Match Drawn!' : `${p1Title} vs ${p2Title}`));
+          const subReason = GameState.winReason || document.getElementById('modeSubtitle')?.textContent || 'Katar & Navakankari Royal Board Game';
+
+          octx.textAlign = 'center';
+          octx.fillStyle = '#FBBF24';
+          octx.font = '800 32px Cinzel, Georgia, serif';
+          octx.fillText(headlineTxt, outW / 2, 68);
+
+          octx.fillStyle = '#FDE68A';
+          octx.font = '600 18px Inter, system-ui, sans-serif';
+          octx.fillText(String(subReason).slice(0, 78), outW / 2, 102);
+
+          const boardBoxSize = 780;
+          const boardX = Math.round((outW - boardBoxSize) / 2);
+          const boardY = 128;
+          octx.fillStyle = '#4A2A14';
+          octx.fillRect(boardX - 8, boardY - 8, boardBoxSize + 16, boardBoxSize + 16);
+          octx.strokeStyle = '#D97706';
+          octx.lineWidth = 3;
+          octx.strokeRect(boardX - 8, boardY - 8, boardBoxSize + 16, boardBoxSize + 16);
+
+          if (canvas && canvas.width > 0) {
+            octx.drawImage(canvas, boardX, boardY, boardBoxSize, boardBoxSize);
+          }
+
+          octx.fillStyle = '#FBF5EA';
+          octx.font = '800 22px "JetBrains Mono", monospace';
+          octx.fillText(`${p1Title}: ${GameState.capturedBy[1]}/${winCapP1}   •   ${p2Title}: ${GameState.capturedBy[2]}/${winCapP2}`, outW / 2, 962);
+
+          const stamp = new Date().toLocaleString();
+          octx.fillStyle = '#CFB28A';
+          octx.font = '600 15px Inter, system-ui, sans-serif';
+          octx.fillText(`Katar & Navakankari — By Yasin Ullah • ${stamp}`, outW / 2, 1002);
+
+          const fileTag = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+          const fileName = `katar-match-snapshot-${fileTag}.png`;
+          const triggerDl = (url) => {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          };
+
+          if (typeof off.toBlob === 'function') {
+            off.toBlob((blob) => {
+              if (blob) {
+                const objUrl = URL.createObjectURL(blob);
+                triggerDl(objUrl);
+                setTimeout(() => URL.revokeObjectURL(objUrl), 2500);
+              } else {
+                triggerDl(off.toDataURL('image/png'));
+              }
+              showBoardToast('📸 Match snapshot downloaded!');
+            }, 'image/png');
+          } else {
+            triggerDl(off.toDataURL('image/png'));
+            showBoardToast('📸 Match snapshot downloaded!');
+          }
+        } catch (err) {
+          try {
+            const fallbackUrl = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = fallbackUrl;
+            a.download = `katar-snapshot-${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showBoardToast('📸 Match snapshot downloaded!');
+          } catch (e2) {
+            showBoardToast('Could not save snapshot on this device.');
+          }
+        }
+      }
+
+      const btnDlVictorySnap = document.getElementById('btnDownloadVictorySnapshot');
+      if (btnDlVictorySnap) {
+        btnDlVictorySnap.addEventListener('click', downloadMatchSnapshot);
+      }
+      const btnInspectDlSnap = document.getElementById('btnInspectDownloadSnapshot');
+      if (btnInspectDlSnap) {
+        btnInspectDlSnap.addEventListener('click', downloadMatchSnapshot);
       }
 
       const ReplayManager = {
@@ -23394,6 +23876,7 @@
             return;
           }
           GameState._nextInitReason = 'restarted';
+          GameState._forceAdvanceAlternation = true;
           GameState.isStarted = true;
           GameState.isPaused = false;
           this.isOpen = false;
@@ -23466,10 +23949,17 @@
 
           if (this.isOpen) {
             const menuSnap = document.getElementById('menuBoardSnapshot');
-            if (menuSnap && canvas && Nodes.length > 0 && canvas.width > 0) {
+            const snapSig = `${GameState.gridPreset}|${GameState.pieceTheme}|${GameState.boardSurface}|${GameState.piecesPerPlayer}|${GameState.moveLog.length}|${GameState.morrisDiagonals ? 1 : 0}|${GameState.rows}x${GameState.cols}`;
+            if (menuSnap && this._lastMenuSnapSig !== snapSig && canvas && Nodes.length > 0 && canvas.width > 0) {
+              this._lastMenuSnapSig = snapSig;
               try {
                 renderBoardFrame(performance.now());
-                menuSnap.src = canvas.toDataURL('image/png');
+                const thumb = document.createElement('canvas');
+                thumb.width = 180;
+                thumb.height = 180;
+                const tctx = thumb.getContext('2d');
+                tctx.drawImage(canvas, 0, 0, 180, 180);
+                menuSnap.src = thumb.toDataURL('image/png');
               } catch (e) {}
             }
           }
@@ -24086,8 +24576,39 @@
         document.getElementById('btnEndChainTurn').click();
       });
 
+      function quitCurrentGameToMenu() {
+        SoundEngine.select();
+        if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
+          ReplayManager.close(false);
+        }
+        if (typeof Immersive !== 'undefined' && Immersive.active) {
+          Immersive.exit();
+        }
+        const mv = document.getElementById('modalVictory');
+        if (mv) {
+          mv.classList.add('hidden');
+          mv.classList.remove('flex');
+        }
+        const vib = document.getElementById('victoryInspectBar');
+        if (vib) vib.classList.add('hidden');
+        if (GameState.mode === 'webrtc' || WebRTCManager.roomCode) {
+          WebRTCManager.leaveRoom(true, 'quit match');
+        }
+        MainMenu.exitToStandby();
+      }
+
+      const btnHeaderQuitEl = document.getElementById('btnHeaderQuit');
+      if (btnHeaderQuitEl) {
+        btnHeaderQuitEl.addEventListener('click', quitCurrentGameToMenu);
+      }
+      const btnQuitMatchEl = document.getElementById('btnQuitMatch');
+      if (btnQuitMatchEl) {
+        btnQuitMatchEl.addEventListener('click', quitCurrentGameToMenu);
+      }
+
       const immActionMap = {
         pause: 'btnHeaderPause',
+        quit: 'btnHeaderQuit',
         undo: 'btnUndoMove',
         hint: 'btnHintMove',
         flip: 'btnFlipBoard',
@@ -24147,14 +24668,16 @@
             GameState.morrisDropOrder = nextOrder;
             if (nextOrder === 'all_at_once') {
               GameState.morrisDropMillRule = 'forbid_mill';
-            } else {
-              GameState.morrisDropMillRule = 'allow_mill';
+            }
+            if (typeof MainMenu !== 'undefined' && !MainMenu.isOpen) {
+              GameState.isStarted = true;
+              GameState.isPaused = false;
             }
             initMatch(true);
             showBoardToast(
               nextOrder === 'all_at_once'
                 ? `📦 Lay All ${GameState.piecesPerPlayer} First • No Katar on Land`
-                : '🔄 1-by-1 Alternating Bead Placement (3-in-a-Row Katar allowed on landing)'
+                : `🔄 1-by-1 Alternating Bead Placement (${GameState.morrisDropMillRule === 'forbid_mill' ? 'No Katar on Land' : 'Katar on Land ON'})`
             );
           });
         });
@@ -24168,11 +24691,20 @@
           SoundEngine.select();
           guardMidGameAction('Switch Who Lays Beads First', () => {
             GameState.firstTurnSetting = nextFirst;
+            GameState._bootInitialized = false;
+            if (typeof MainMenu !== 'undefined' && !MainMenu.isOpen) {
+              GameState.isStarted = true;
+              GameState.isPaused = false;
+            }
             initMatch(true);
+            const [p1Title, p2Title] = getThemePlayerNames();
+            const openerName = GameState.currentTurn === 1 ? p1Title : p2Title;
             showBoardToast(
               nextFirst === '2'
-                ? '2️⃣ Player 2 / AI lays beads first!'
-                : (nextFirst === 'random' ? '🎲 Random toss decides who lays first!' : '1️⃣ Player 1 lays beads first!')
+                ? `2️⃣ ${p2Title} lays beads first!`
+                : (nextFirst === 'random'
+                  ? `🎲 Random Toss: ${openerName} lays beads first!`
+                  : `1️⃣ ${p1Title} lays beads first!`)
             );
           });
         });
@@ -24943,7 +25475,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=630429b021', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=e456826aa4', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
@@ -25093,6 +25625,9 @@
           const r = btn.getAttribute('data-stats-range') || 'all';
           SoundEngine.select();
           PlayerAnalytics.activeFilter = r;
+          PlayerAnalytics.pageDaily = 1;
+          PlayerAnalytics.pageVariant = 1;
+          PlayerAnalytics.pageSessions = 1;
           if (r === 'custom') {
             const inpFrom = document.getElementById('inpStatsDateFrom');
             const inpTo = document.getElementById('inpStatsDateTo');
@@ -25114,6 +25649,9 @@
           const inpFrom = document.getElementById('inpStatsDateFrom');
           const inpTo = document.getElementById('inpStatsDateTo');
           PlayerAnalytics.activeFilter = 'custom';
+          PlayerAnalytics.pageDaily = 1;
+          PlayerAnalytics.pageVariant = 1;
+          PlayerAnalytics.pageSessions = 1;
           PlayerAnalytics.customFrom = inpFrom ? inpFrom.value : '';
           PlayerAnalytics.customTo = inpTo ? inpTo.value : '';
           PlayerAnalytics.renderDashboard();
