@@ -619,6 +619,7 @@
       #modalEncyclopedia,
       #modalConnection,
       #modalPuterStats,
+      #modalBakhtiFun,
       #modalVictory {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
@@ -2896,6 +2897,10 @@
               <input id="chkEnableHaptics" type="checkbox" checked class="w-4 h-4 accent-teal-600 rounded" />
               <span class="text-xs text-walnut-900 font-bold">Android Haptic Vibration</span>
             </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input id="chkEnableBakhtiFun" type="checkbox" checked class="w-4 h-4 accent-amber-600 rounded" />
+              <span class="text-xs text-walnut-900 font-bold">Bakhti Fun Celebrations &amp; Memes</span>
+            </label>
           </div>
         </div>
 
@@ -3004,6 +3009,34 @@
         </div>
         <button id="btnVictoryExitToMenu" type="button" class="android-btn w-full py-2 rounded-xl bg-parchment-200 hover:bg-parchment-300 text-walnut-800 font-extrabold text-xs border border-parchment-400 shadow-[0_1.5px_0_#B8976C] flex items-center justify-center gap-1.5">
           <span>🏠</span> <span>Exit to Main Menu</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalBakhtiFun" class="fixed inset-0 z-50 bg-walnut-900/75 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div id="bakhtiCard" class="relative w-full max-w-sm bg-gradient-to-b from-parchment-50 via-parchment-100 to-amber-50 border-4 border-amber-500 rounded-3xl p-4 sm:p-5 text-center shadow-2xl space-y-3 text-walnut-900 my-auto">
+      <button id="btnCloseBakhtiFun" type="button" class="android-btn absolute top-3 right-3 w-8 h-8 rounded-full bg-walnut-900 text-amber-300 hover:bg-walnut-800 font-black text-base flex items-center justify-center shadow-md border border-amber-400" title="Close">
+        &times;
+      </button>
+      <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 border border-amber-600 text-walnut-950 font-black text-[11px] uppercase tracking-wider shadow-sm">
+        <span id="bakhtiBadgeIcon">&#128293;</span>
+        <span id="bakhtiBadgeText">Bakhti Celebration</span>
+      </div>
+      <div class="relative mx-auto w-48 h-48 sm:w-56 sm:h-56 rounded-2xl overflow-hidden border-4 border-amber-500 shadow-xl bg-black">
+        <img id="bakhtiImg" src="./bakhti.jpeg" alt="Bakhti Meme" class="w-full h-full object-cover" />
+      </div>
+      <div>
+        <h3 id="bakhtiTitle" class="font-display text-base sm:text-lg font-extrabold text-walnut-900 leading-tight">
+          3 Beads Captured Back-to-Back!
+        </h3>
+        <p id="bakhtiSubtitle" class="text-xs font-bold text-walnut-700 mt-1 leading-snug">
+          Bakhti is celebrating your legendary streak!
+        </p>
+      </div>
+      <div class="pt-1">
+        <button id="btnContinueBakhtiFun" type="button" class="android-btn w-full py-2.5 rounded-2xl bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-walnut-950 font-extrabold text-xs shadow-[0_3px_0_#B45309] uppercase tracking-wider flex items-center justify-center gap-1.5">
+          <span id="bakhtiBtnLabel">Continue Match</span>
         </button>
       </div>
     </div>
@@ -3959,6 +3992,7 @@
         boardSurface: 'sandstone',
         nodeLabels: 'off',
         showGuides: true,
+        enableBakhtiFun: true,
         damaKingMode: 'flying',
         aiDifficulty: 'medium',
         aiPlayerRole: 2,
@@ -6021,6 +6055,9 @@
         }
         const vibInit = document.getElementById('victoryInspectBar');
         if (vibInit) vibInit.classList.add('hidden');
+        if (typeof BakhtiFunManager !== 'undefined') {
+          BakhtiFunManager.resetMatchState();
+        }
         if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
           ReplayManager.close(false);
         }
@@ -6093,6 +6130,9 @@
         GameState.chainCount = 0;
         GameState.morrisPendingRemove = false;
         GameState.lastFormedMill = null;
+        if (typeof SarcasticRoastEngine !== 'undefined') {
+          SarcasticRoastEngine.lastRecordedMatchLen = -1;
+        }
         GameState.lastMove = null;
         GameState.gameOver = false;
         GameState.winner = null;
@@ -8146,7 +8186,8 @@
             customAiDelayMs: GameState.customAiDelayMs,
             customAnimDurationMs: GameState.customAnimDurationMs,
             autoRotate: GameState.autoRotate,
-            lockSettingsMidGame: GameState.lockSettingsMidGame
+            lockSettingsMidGame: GameState.lockSettingsMidGame,
+            enableBakhtiFun: GameState.enableBakhtiFun !== undefined ? Boolean(GameState.enableBakhtiFun) : true
           };
           SafeStorage.setItem('katar_user_prefs_v1', JSON.stringify(prefs));
         } catch (err) {}
@@ -8204,6 +8245,7 @@
           if (p.customAnimDurationMs) GameState.customAnimDurationMs = Number(p.customAnimDurationMs) || 175;
           if (p.autoRotate !== undefined) GameState.autoRotate = Boolean(p.autoRotate);
           if (p.lockSettingsMidGame !== undefined) GameState.lockSettingsMidGame = Boolean(p.lockSettingsMidGame);
+          if (p.enableBakhtiFun !== undefined) GameState.enableBakhtiFun = Boolean(p.enableBakhtiFun);
           return true;
         } catch (err) {
           return false;
@@ -8588,6 +8630,9 @@
         }
         ProfileManager.recordMatchResult(winner);
         MatchHistoryManager.saveCompletedMatch(winner);
+        if (typeof BakhtiFunManager !== 'undefined') {
+          BakhtiFunManager.recordMatchFinished(winner);
+        }
         updateMoveLogUI();
       }
 
@@ -9013,6 +9058,9 @@
 
             const mills = forbidLandingMill ? [] : getMillsContainingNode(action.to, player);
             if (mills.length > 0 && getRemovableOpponentNodes(opponent).length > 0) {
+              if (typeof BakhtiFunManager !== 'undefined') {
+                BakhtiFunManager.checkDoubleMillOnMove(action, player, mills);
+              }
               GameState.morrisPendingRemove = true;
               GameState.lastFormedMill = mills[0];
               SoundEngine.millFormed();
@@ -9090,6 +9138,9 @@
 
             const mills = getMillsContainingNode(action.to, player);
             if (mills.length > 0 && getRemovableOpponentNodes(opponent).length > 0) {
+              if (typeof BakhtiFunManager !== 'undefined') {
+                BakhtiFunManager.checkDoubleMillOnMove(action, player, mills);
+              }
               GameState.morrisPendingRemove = true;
               GameState.lastFormedMill = mills[0];
               SoundEngine.millFormed();
@@ -9370,6 +9421,9 @@
       }
 
       function finishTurnAndCheckWin(playerJustMoved, isRemote = false, lastAction = null) {
+        if (typeof BakhtiFunManager !== 'undefined') {
+          BakhtiFunManager.onTurnFinished(playerJustMoved);
+        }
         const opponent = playerJustMoved === 1 ? 2 : 1;
         hideFanoronaChoiceBar();
         GameState.selectedNode = null;
@@ -17246,6 +17300,8 @@
         document.getElementById('selNodeLabels').value = GameState.nodeLabels;
         document.getElementById('chkShowGuides').checked = GameState.showGuides;
         document.getElementById('chkEnableHaptics').checked = SoundEngine.hapticsEnabled;
+        const chkBakhti = document.getElementById('chkEnableBakhtiFun');
+        if (chkBakhti) chkBakhti.checked = (GameState.enableBakhtiFun !== false);
         document.getElementById('selAIDifficulty').value = GameState.aiDifficulty;
 
         const selMorrisRule = document.getElementById('selMorrisRemovalRule');
@@ -17882,52 +17938,106 @@
           this.save();
         },
 
-        didHumanLoseCurrentMatch() {
-          if (!GameState.gameOver || GameState.winner === 0 || GameState.winner === null) return false;
-          if (GameState.aiVsAi) return false;
+        teamStreaks: { 1: 0, 2: 0 },
+        lastRecordedMatchLen: -1,
+
+        getLoserAndWinnerInfo() {
+          if (!GameState.gameOver || (GameState.winner !== 1 && GameState.winner !== 2)) return null;
+          const winnerRole = GameState.winner;
+          const loserRole = winnerRole === 1 ? 2 : 1;
+          const [p1Title, p2Title] = getThemePlayerNames();
+          const loserTitle = loserRole === 1 ? p1Title : p2Title;
+          const winnerTitle = winnerRole === 1 ? p1Title : p2Title;
+          return { loserRole, winnerRole, loserTitle, winnerTitle };
+        },
+
+        shouldShowRoastCurrentMatch() {
+          const info = this.getLoserAndWinnerInfo();
+          if (!info) return false;
+          // 1. AI vs AI: always show roast directed at the losing AI team
+          if (GameState.aiVsAi) return true;
+          // 2. Online / Offline P2P (2 devices): show ONLY on the losing team's device
           if (GameState.mode === 'webrtc' && GameState.localPlayerRole) {
-            return GameState.winner !== GameState.localPlayerRole;
+            return GameState.localPlayerRole === info.loserRole;
           }
+          // 3. Solo vs AI (Built-in or Real Puter AI): show ONLY when the human player's team loses
           if (GameState.vsAI) {
             const userRole = PlayerAnalytics.getUserRole();
-            return GameState.winner !== userRole;
+            return info.loserRole === userRole;
           }
-          // In 2P local Pass & Play, one human always lost!
+          // 4. 2P Local Pass & Play (shared screen): show addressed strictly to the losing team
           return true;
         },
 
         collectLossContext() {
           this.load();
           PlayerAnalytics.load();
+          const info = this.getLoserAndWinnerInfo() || { loserRole: 1, winnerRole: 2, loserTitle: 'Player 1', winnerTitle: 'Player 2' };
+          const { loserRole, winnerRole, loserTitle, winnerTitle } = info;
+
+          // Update per-side consecutive loss streak once per finished match
+          const curFramesLen = (GameState.replayFrames && GameState.replayFrames.length) || (GameState.moveLog && GameState.moveLog.length) || 1;
+          if (this.lastRecordedMatchLen !== curFramesLen) {
+            this.lastRecordedMatchLen = curFramesLen;
+            this.teamStreaks[loserRole] = (this.teamStreaks[loserRole] || 0) + 1;
+            this.teamStreaks[winnerRole] = 0;
+          }
+
           const latestEv = (PlayerAnalytics.events && PlayerAnalytics.events[0]) || null;
           const allTime = PlayerAnalytics.getCachedAllTimeSummary();
-          const userRole = PlayerAnalytics.getUserRole();
-          const oppRole = userRole === 1 ? 2 : 1;
 
-          const userMoves = latestEv ? (Number(latestEv.userMoves) || 0) : Math.max(1, Math.ceil((GameState.moveLog.length || 2) / 2));
-          const durationMs = latestEv ? (Number(latestEv.durationMs) || 30000) : Math.max(5000, PlayerAnalytics.getCurrentSessionDurationMs());
-          const userThinkMs = latestEv ? (Number(latestEv.userThinkMs) || 0) : 0;
-          const longestThinkMs = latestEv ? (Number(latestEv.longestThinkMs) || 0) : 0;
-          const avgThinkMs = userMoves > 0 ? Math.round(userThinkMs / userMoves) : 0;
-          const beadsEaten = latestEv ? (Number(latestEv.beadsEaten) || 0) : (GameState.capturedBy[userRole] || 0);
-          const beadsLost = latestEv ? (Number(latestEv.beadsLost) || 0) : (GameState.capturedBy[oppRole] || 0);
-          const undos = latestEv ? (Number(latestEv.undos) || 0) : 0;
-          const hints = latestEv ? (Number(latestEv.hints) || 0) : 0;
-          const curLossStreak = Math.max(1, Number(allTime.curLossStreak) || 1);
-          const quitsAndRestarts = (Number(allTime.quitsMidGame) || 0) + (Number(allTime.restartsMidGame) || 0);
+          // Count exact moves made by the losing team from replayFrames if available
+          let loserMoves = 0;
+          if (Array.isArray(GameState.replayFrames) && GameState.replayFrames.length > 1) {
+            for (const f of GameState.replayFrames) {
+              if (f && f.lastMove && f.lastMove.player === loserRole && f.lastMove.type !== 'remove_opponent') {
+                loserMoves++;
+              }
+            }
+          }
+          if (loserMoves <= 0) {
+            loserMoves = latestEv && !GameState.aiVsAi && loserRole === PlayerAnalytics.getUserRole()
+              ? (Number(latestEv.userMoves) || 1)
+              : Math.max(1, Math.floor((GameState.moveLog.length || 2) / 2));
+          }
+
+          const durationMs = latestEv
+            ? (Number(latestEv.durationMs) || 30000)
+            : Math.max(5000, PlayerAnalytics.getCurrentSessionDurationMs());
+          const avgThinkMs = loserMoves > 0
+            ? Math.round((latestEv && !GameState.aiVsAi && loserRole === PlayerAnalytics.getUserRole() && latestEv.userThinkMs
+              ? Number(latestEv.userThinkMs)
+              : durationMs * 0.5) / loserMoves)
+            : 0;
+          const longestThinkMs = (latestEv && !GameState.aiVsAi && loserRole === PlayerAnalytics.getUserRole())
+            ? (Number(latestEv.longestThinkMs) || avgThinkMs)
+            : avgThinkMs;
+
+          const beadsEaten = Number(GameState.capturedBy[loserRole]) || 0;
+          const beadsLost = Number(GameState.capturedBy[winnerRole]) || 0;
+          const isUserLoser = !GameState.aiVsAi && loserRole === PlayerAnalytics.getUserRole();
+          const undos = (isUserLoser && latestEv) ? (Number(latestEv.undos) || 0) : ((PlayerAnalytics.session && PlayerAnalytics.session.undos) || 0);
+          const hints = (isUserLoser && latestEv) ? (Number(latestEv.hints) || 0) : ((PlayerAnalytics.session && PlayerAnalytics.session.hints) || 0);
+          const curLossStreak = Math.max(
+            this.teamStreaks[loserRole] || 1,
+            isUserLoser ? (Number(allTime.curLossStreak) || 1) : 1
+          );
+          const quitsAndRestarts = isUserLoser
+            ? ((Number(allTime.quitsMidGame) || 0) + (Number(allTime.restartsMidGame) || 0))
+            : 0;
 
           const matchedCategories = [];
-          if (GameState.vsAI && GameState.aiDifficulty === 'easy') {
+          if (GameState.vsAI && !GameState.aiVsAi && GameState.aiDifficulty === 'easy' && isUserLoser) {
             matchedCategories.push({ cat: 'easy_ai_lose', weight: 6, badge: '🌱 LOST TO EASY BOT' });
           }
-          if (undos > 0 || hints > 0) {
+          if (!GameState.aiVsAi && (undos > 0 || hints > 0)) {
             matchedCategories.push({ cat: 'blunder_assist', weight: 5, badge: `💡 ${undos + hints}× ASSIST FUMBLE` });
           }
           if (curLossStreak >= 2) {
             matchedCategories.push({ cat: 'streak_lose', weight: 5, badge: `📉 ${curLossStreak}× LOSS STREAK` });
           }
-          if (userMoves <= 9 || durationMs <= 42000) {
-            matchedCategories.push({ cat: 'fast_lose', weight: 5, badge: `⚡ ${userMoves}-MOVE SPEEDRUN LOSS` });
+          if (loserMoves <= 9 || durationMs <= 42000) {
+            matchedCategories.push({ cat: 'fast_lose', weight: 5, badge: `⚡ ${loserMoves}-MOVE SPEEDRUN LOSS` });
           }
           if (avgThinkMs >= 7000 || longestThinkMs >= 15000 || durationMs >= 210000) {
             matchedCategories.push({ cat: 'slow_move', weight: 5, badge: `🐌 ${PlayerAnalytics.formatMoveTime(avgThinkMs || longestThinkMs)} OVERTHINKER` });
@@ -17941,7 +18051,11 @@
           matchedCategories.push({ cat: 'general', weight: 2, badge: '🔥 GRANDMASTER ROAST' });
 
           return {
-            userMoves,
+            loserRole,
+            winnerRole,
+            loserTitle,
+            winnerTitle,
+            userMoves: loserMoves,
             durationMs,
             avgThinkMs,
             longestThinkMs,
@@ -17962,7 +18076,6 @@
             ...this.aiRoasts.map((r) => ({ ...r, source: 'puter_ai' }))
           ];
 
-          // Pick category weighted by stat relevance
           const totalW = ctx.matchedCategories.reduce((acc, c) => acc + c.weight, 0);
           let roll = Math.random() * totalW;
           let chosenCatObj = ctx.matchedCategories[0];
@@ -17979,7 +18092,6 @@
             candidates = allPool;
           }
 
-          // Filter out recently shown roasts so every loss feels fresh
           let fresh = candidates.filter((r) => !this.recentShown.includes(r.text));
           if (fresh.length === 0) {
             fresh = allPool.filter((r) => !this.recentShown.includes(r.text));
@@ -17997,11 +18109,13 @@
             .replace(/\{\{streak\}\}/g, String(ctx.curLossStreak))
             .replace(/\{\{moves\}\}/g, String(ctx.userMoves))
             .replace(/\{\{eaten\}\}/g, String(ctx.beadsEaten))
-            .replace(/\{\{time\}\}/g, PlayerAnalytics.formatDuration(ctx.durationMs, true));
+            .replace(/\{\{time\}\}/g, PlayerAnalytics.formatDuration(ctx.durationMs, true))
+            .replace(/\{\{loser\}\}/g, ctx.loserTitle);
 
           return {
             text: formattedText,
             badge: chosenCatObj.badge,
+            loserTitle: ctx.loserTitle,
             source: picked.source,
             totalBankSize: allPool.length,
             aiBankSize: this.aiRoasts.length
@@ -18015,18 +18129,18 @@
           const txtEl = document.getElementById('victoryRoastText');
           if (!banner || !txtEl) return;
 
-          if (!this.didHumanLoseCurrentMatch()) {
+          if (!this.shouldShowRoastCurrentMatch()) {
             banner.classList.add('hidden');
             return;
           }
 
           const roast = this.pickRoastForLoss();
           banner.classList.remove('hidden');
-          if (tagEl) tagEl.textContent = roast.badge;
+          if (tagEl) tagEl.textContent = `${roast.badge} • 💀 ${roast.loserTitle}`;
           if (srcEl) {
             srcEl.textContent = roast.source === 'puter_ai'
               ? `🧠 Real AI Roast • ${roast.totalBankSize} in bank`
-              : `🎭 Roast #${Math.floor(Math.random() * roast.totalBankSize) + 1} of ${roast.totalBankSize}`;
+              : `🎭 Losing Side Only (${roast.totalBankSize} roasts)`;
           }
           txtEl.textContent = `“${roast.text}”`;
 
@@ -18145,6 +18259,366 @@
         }
       };
 
+      const BakhtiFunManager = {
+        activeTimer: null,
+        pendingCallback: null,
+        turnStartCaptures: { 1: 0, 2: 0 },
+        consecutiveCaptureTurns: { 1: 0, 2: 0 },
+        cumulativeBackToBack: { 1: 0, 2: 0 },
+        hasFiredStreak: { 1: false, 2: false },
+        lastLossStreakMatchHandled: false,
+        wasPausedBefore: false,
+        seenDoubleMills: [],
+
+        resetMatchState() {
+          this.turnStartCaptures = { 1: (GameState.capturedBy && GameState.capturedBy[1]) || 0, 2: (GameState.capturedBy && GameState.capturedBy[2]) || 0 };
+          this.consecutiveCaptureTurns = { 1: 0, 2: 0 };
+          this.cumulativeBackToBack = { 1: 0, 2: 0 };
+          this.hasFiredStreak = { 1: false, 2: false };
+          this.lastLossStreakMatchHandled = false;
+          this.wasPausedBefore = false;
+          this.seenDoubleMills = [];
+        },
+
+        isFunEnabled() {
+          return GameState.enableBakhtiFun !== false;
+        },
+
+        isOpen() {
+          const modal = document.getElementById('modalBakhtiFun');
+          return Boolean(modal && !modal.classList.contains('hidden'));
+        },
+
+        getLossStreak() {
+          const raw = SafeStorage.getItem('katar_consecutive_losses');
+          const stored = raw !== null ? Number(raw) : 0;
+          let analyticsStreak = 0;
+          if (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.computeSummary) {
+            try {
+              const sum = PlayerAnalytics.computeSummary('all');
+              analyticsStreak = Number(sum.curLossStreak) || 0;
+            } catch (e) {}
+          }
+          return Math.max(stored, analyticsStreak);
+        },
+
+        recordMatchFinished(winner) {
+          const userRole = (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.getUserRole)
+            ? PlayerAnalytics.getUserRole()
+            : 1;
+          let losses = Number(SafeStorage.getItem('katar_consecutive_losses')) || 0;
+          if (winner !== 0 && winner !== null && winner !== userRole) {
+            losses++;
+            SafeStorage.setItem('katar_consecutive_losses', String(losses));
+          } else if (winner === userRole) {
+            SafeStorage.setItem('katar_consecutive_losses', '0');
+          }
+        },
+
+        shouldShowBakhti3() {
+          if (!this.isFunEnabled()) return false;
+          if (this.lastLossStreakMatchHandled) return false;
+          const userRole = (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.getUserRole)
+            ? PlayerAnalytics.getUserRole()
+            : 1;
+          if (GameState.winner === 0 || GameState.winner === null || GameState.winner === userRole) {
+            return false;
+          }
+          const streak = this.getLossStreak();
+          return streak >= 6;
+        },
+
+        showModal({ imgSrc, badgeText, badgeIcon, title, subtitle, btnLabel, autoCloseMs, onClose, fromRemote = false }) {
+          if (!this.isFunEnabled()) {
+            if (typeof onClose === 'function') onClose();
+            return;
+          }
+          if (this.activeTimer) {
+            clearTimeout(this.activeTimer);
+            this.activeTimer = null;
+          }
+          this.pendingCallback = onClose || null;
+
+          const modal = document.getElementById('modalBakhtiFun');
+          const img = document.getElementById('bakhtiImg');
+          const bText = document.getElementById('bakhtiBadgeText');
+          const bIcon = document.getElementById('bakhtiBadgeIcon');
+          const t = document.getElementById('bakhtiTitle');
+          const sub = document.getElementById('bakhtiSubtitle');
+          const bLbl = document.getElementById('bakhtiBtnLabel');
+
+          if (!modal || !img) {
+            if (typeof onClose === 'function') onClose();
+            return;
+          }
+
+          this.wasPausedBefore = Boolean(GameState.isPaused);
+          GameState.isPaused = true;
+
+          img.src = imgSrc;
+          if (bText) bText.textContent = badgeText;
+          if (bIcon) bIcon.textContent = badgeIcon;
+          if (t) t.textContent = title;
+          if (sub) sub.textContent = subtitle;
+          if (bLbl) bLbl.textContent = btnLabel;
+
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+          if (typeof ensureBackGuardState === 'function') {
+            ensureBackGuardState();
+          }
+
+          if (autoCloseMs && autoCloseMs > 0) {
+            this.activeTimer = setTimeout(() => {
+              this.closeModal(false);
+            }, autoCloseMs);
+          }
+        },
+
+        closeModal(fromRemote = false) {
+          if (this.activeTimer) {
+            clearTimeout(this.activeTimer);
+            this.activeTimer = null;
+          }
+          const modal = document.getElementById('modalBakhtiFun');
+          if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+          }
+          if (!this.wasPausedBefore) {
+            GameState.isPaused = false;
+            resetTurnTimer();
+            resetMatchTimer(true);
+            if (GameState.vsAI && (GameState.aiVsAi || GameState.currentTurn === GameState.aiPlayerRole) && !GameState.gameOver) {
+              scheduleAITurn(300);
+            }
+          }
+          if (!fromRemote && GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
+            WebRTCManager.send({
+              type: 'BAKHTI_FUN',
+              subType: 'CLOSE'
+            });
+          }
+          const cb = this.pendingCallback;
+          this.pendingCallback = null;
+          if (typeof cb === 'function') {
+            cb();
+          }
+        },
+
+        showFlash(variant, key = '') {
+          if (!this.isFunEnabled()) return;
+          const autoCloseMs = (variant === 1) ? 2700 : 2900;
+          if (GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
+            WebRTCManager.send({
+              type: 'BAKHTI_FUN',
+              subType: 'SHOW',
+              variant,
+              key: key || '',
+              authorRole: GameState.localPlayerRole || 1,
+              autoCloseMs
+            });
+          }
+          if (variant === 1) {
+            try {
+              if (typeof SoundEngine !== 'undefined' && SoundEngine.capture) {
+                SoundEngine.capture(3);
+              }
+            } catch (e) {}
+            this.showModal({
+              imgSrc: './bakhti.jpeg',
+              badgeIcon: '🔥',
+              badgeText: 'Triple Kill Streak',
+              title: '3 Beads Captured Back-to-Back!',
+              subtitle: 'Bakhti salutes your lethal board dominance! Match paused.',
+              btnLabel: 'Continue Match',
+              autoCloseMs,
+              fromRemote: false
+            });
+          } else if (variant === 2) {
+            try {
+              if (typeof SoundEngine !== 'undefined' && SoundEngine.millFormed) {
+                SoundEngine.millFormed();
+              }
+            } catch (e) {}
+            this.showModal({
+              imgSrc: './bakhti2.jpeg',
+              badgeIcon: '⚡',
+              badgeText: 'Double Mill Mastery',
+              title: 'Running Mill Created (See-Saw)!',
+              subtitle: 'Bakhti: Unstoppable back-and-forth mill trap established! Match paused.',
+              btnLabel: 'Continue Match',
+              autoCloseMs,
+              fromRemote: false
+            });
+          }
+        },
+
+        showLossStreakModal(onContinue) {
+          this.lastLossStreakMatchHandled = true;
+          const autoCloseMs = 6500;
+          if (GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
+            WebRTCManager.send({
+              type: 'BAKHTI_FUN',
+              subType: 'SHOW',
+              variant: 3,
+              authorRole: GameState.localPlayerRole || 1,
+              autoCloseMs
+            });
+          }
+          this.showModal({
+            imgSrc: './bakhti3.jpeg',
+            badgeIcon: '🎶',
+            badgeText: '6 Defeats in a Row',
+            title: '6 Matches Lost Back-to-Back!',
+            subtitle: 'Bakhti is playing the mournful flute for your 6 consecutive defeats... Match paused.',
+            btnLabel: 'View Match Results',
+            autoCloseMs,
+            onClose: onContinue,
+            fromRemote: false
+          });
+        },
+
+        handleRemotePacket(packet) {
+          if (!packet) return;
+          if (packet.subType === 'CONFIG_SYNC') {
+            GameState.enableBakhtiFun = Boolean(packet.enableBakhtiFun);
+            const chk = document.getElementById('chkEnableBakhtiFun');
+            if (chk) chk.checked = GameState.enableBakhtiFun;
+            savePersistentPrefs();
+            return;
+          }
+          if (packet.subType === 'SHOW') {
+            const author = packet.authorRole || 1;
+            const authorName = (typeof getThemePlayerNames === 'function')
+              ? getThemePlayerNames()[author - 1]
+              : `Player ${author}`;
+            if (packet.variant === 1) {
+              try {
+                if (typeof SoundEngine !== 'undefined' && SoundEngine.capture) {
+                  SoundEngine.capture(3);
+                }
+              } catch (e) {}
+              this.showModal({
+                imgSrc: './bakhti.jpeg',
+                badgeIcon: '🔥',
+                badgeText: 'Triple Kill Streak',
+                title: '3 Beads Captured Back-to-Back!',
+                subtitle: `${authorName} captured 3 beads back-to-back! Match paused.`,
+                btnLabel: 'Continue Match',
+                autoCloseMs: packet.autoCloseMs || 2700,
+                fromRemote: true
+              });
+            } else if (packet.variant === 2) {
+              if (packet.key) {
+                if (this.seenDoubleMills.includes(packet.key)) return;
+                this.seenDoubleMills.push(packet.key);
+              }
+              try {
+                if (typeof SoundEngine !== 'undefined' && SoundEngine.millFormed) {
+                  SoundEngine.millFormed();
+                }
+              } catch (e) {}
+              this.showModal({
+                imgSrc: './bakhti2.jpeg',
+                badgeIcon: '⚡',
+                badgeText: 'Double Mill Mastery',
+                title: 'Running Mill Created (See-Saw)!',
+                subtitle: `${authorName} created a Running Double Mill! Match paused.`,
+                btnLabel: 'Continue Match',
+                autoCloseMs: packet.autoCloseMs || 2900,
+                fromRemote: true
+              });
+            } else if (packet.variant === 3) {
+              this.showModal({
+                imgSrc: './bakhti3.jpeg',
+                badgeIcon: '🎶',
+                badgeText: '6 Defeats in a Row',
+                title: '6 Matches Lost Back-to-Back!',
+                subtitle: `Bakhti is playing the mournful flute for ${authorName}... Match paused.`,
+                btnLabel: 'View Match Results',
+                autoCloseMs: packet.autoCloseMs || 6500,
+                fromRemote: true
+              });
+            }
+            return;
+          }
+          if (packet.subType === 'CLOSE') {
+            this.closeModal(true);
+            return;
+          }
+        },
+
+        onTurnFinished(playerJustMoved) {
+          if (!this.isFunEnabled()) return;
+          const curCap = (GameState.capturedBy && GameState.capturedBy[playerJustMoved]) || 0;
+          const prevCap = this.turnStartCaptures[playerJustMoved] !== undefined ? this.turnStartCaptures[playerJustMoved] : 0;
+          const eatenThisTurn = Math.max(0, curCap - prevCap);
+          this.turnStartCaptures[playerJustMoved] = curCap;
+
+          if (eatenThisTurn > 0) {
+            this.consecutiveCaptureTurns[playerJustMoved] = (this.consecutiveCaptureTurns[playerJustMoved] || 0) + 1;
+            this.cumulativeBackToBack[playerJustMoved] = (this.cumulativeBackToBack[playerJustMoved] || 0) + eatenThisTurn;
+            if (!this.hasFiredStreak[playerJustMoved]) {
+              if (eatenThisTurn >= 3 || this.consecutiveCaptureTurns[playerJustMoved] >= 3 || this.cumulativeBackToBack[playerJustMoved] >= 3) {
+                this.hasFiredStreak[playerJustMoved] = true;
+                const userRole = (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.getUserRole)
+                  ? PlayerAnalytics.getUserRole()
+                  : 1;
+                const shouldShow = (GameState.mode === 'webrtc')
+                  ? (playerJustMoved === GameState.localPlayerRole)
+                  : (GameState.vsAI ? (playerJustMoved === userRole) : true);
+                if (shouldShow) {
+                  this.showFlash(1);
+                }
+              }
+            }
+          } else {
+            this.consecutiveCaptureTurns[playerJustMoved] = 0;
+            this.cumulativeBackToBack[playerJustMoved] = 0;
+            this.hasFiredStreak[playerJustMoved] = false;
+          }
+        },
+
+        checkDoubleMillOnMove(action, player, mills) {
+          if (!this.isFunEnabled()) return;
+          if (!mills || mills.length === 0) return;
+          let isDouble = false;
+          let millKey = '';
+
+          if (mills.length >= 2) {
+            isDouble = true;
+            millKey = Array.from(new Set([...mills[0], ...mills[1]])).sort((a, b) => a - b).join('-');
+          } else if (action && action.from !== null && action.from !== undefined) {
+            const sim = [...GameState.board];
+            sim[action.to] = 0;
+            sim[action.from] = player;
+            const fromMills = getMillsContainingNode(action.from, player, sim);
+            if (fromMills.length > 0) {
+              isDouble = true;
+              millKey = Array.from(new Set([...mills[0], ...fromMills[0]])).sort((a, b) => a - b).join('-');
+            }
+          }
+
+          if (isDouble && millKey) {
+            if (this.seenDoubleMills.includes(millKey)) {
+              return;
+            }
+            this.seenDoubleMills.push(millKey);
+
+            const userRole = (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.getUserRole)
+              ? PlayerAnalytics.getUserRole()
+              : 1;
+            const shouldShow = (GameState.mode === 'webrtc')
+              ? (player === GameState.localPlayerRole)
+              : (GameState.vsAI ? (player === userRole) : true);
+            if (shouldShow) {
+              this.showFlash(2, millKey);
+            }
+          }
+        }
+      };
+
       let victoryModalDelayTimer = null;
 
       function populateAndOpenVictoryModal() {
@@ -18236,6 +18710,12 @@
           victoryModalDelayTimer = null;
         }
         if (immediate) {
+          if (GameState.gameOver && typeof BakhtiFunManager !== 'undefined' && BakhtiFunManager.shouldShowBakhti3()) {
+            BakhtiFunManager.showLossStreakModal(() => {
+              populateAndOpenVictoryModal();
+            });
+            return;
+          }
           populateAndOpenVictoryModal();
           return;
         }
@@ -18243,6 +18723,12 @@
         victoryModalDelayTimer = setTimeout(() => {
           victoryModalDelayTimer = null;
           if (GameState.gameOver) {
+            if (typeof BakhtiFunManager !== 'undefined' && BakhtiFunManager.shouldShowBakhti3()) {
+              BakhtiFunManager.showLossStreakModal(() => {
+                populateAndOpenVictoryModal();
+              });
+              return;
+            }
             populateAndOpenVictoryModal();
           }
         }, animWait);
@@ -18292,6 +18778,7 @@
           firstTurnSetting: GameState.firstTurnSetting,
           alternateFirstTurn: Boolean(GameState.alternateFirstTurn),
           lockSettingsMidGame: GameState.lockSettingsMidGame,
+          enableBakhtiFun: Boolean(GameState.enableBakhtiFun !== false),
           lastMove: GameState.lastMove,
           moveLog: GameState.moveLog,
           isStarted: Boolean(GameState.isStarted),
@@ -18365,6 +18852,11 @@
         if (remote.firstTurnSetting) GameState.firstTurnSetting = remote.firstTurnSetting;
         if (remote.alternateFirstTurn !== undefined) GameState.alternateFirstTurn = Boolean(remote.alternateFirstTurn);
         if (remote.lockSettingsMidGame !== undefined) GameState.lockSettingsMidGame = Boolean(remote.lockSettingsMidGame);
+        if (remote.enableBakhtiFun !== undefined) {
+          GameState.enableBakhtiFun = Boolean(remote.enableBakhtiFun);
+          const chkBakhti = document.getElementById('chkEnableBakhtiFun');
+          if (chkBakhti) chkBakhti.checked = GameState.enableBakhtiFun;
+        }
         GameState.lastMove = remote.lastMove || null;
         GameState.moveLog = remote.moveLog ? [...remote.moveLog] : [];
         GameState.gameOver = Boolean(remote.gameOver);
@@ -18377,6 +18869,9 @@
         } else if (fromNetwork && GameState.moveLog.length > 0) {
           GameState.isStarted = true;
           GameState.isPaused = false;
+        }
+        if (typeof BakhtiFunManager !== 'undefined' && BakhtiFunManager.isOpen()) {
+          GameState.isPaused = true;
         }
 
         syncSettingsControlsFromState();
@@ -20836,7 +21331,7 @@
 
           // Only meaningful gameplay / presence packets count as "the opponent is back".
           // Plain heartbeats must NOT cancel an away countdown (background tabs keep pinging).
-          const presenceTypes = ['MOVE_ACTION', 'SYNC_STATE', 'REQUEST_RESYNC', 'RESET_MATCH', 'MATCH_FLOW', 'REMATCH_REQUEST', 'PLAYER_RETURNED', 'HELLO_IDENTITY', 'HELLO_ACK'];
+          const presenceTypes = ['MOVE_ACTION', 'SYNC_STATE', 'REQUEST_RESYNC', 'RESET_MATCH', 'MATCH_FLOW', 'REMATCH_REQUEST', 'PLAYER_RETURNED', 'HELLO_IDENTITY', 'HELLO_ACK', 'BAKHTI_FUN'];
           if (presenceTypes.includes(packet.type) && GameState.graceTimerInterval && remoteRole && GameState.graceAbsentPlayer === remoteRole) {
             cancelGraceTimer(false);
             showBoardToast('👋 Opponent is back — match resumed.');
@@ -20961,6 +21456,13 @@
               showBoardToast('🔁 Rematch started with Player 2!');
             } else {
               showBoardToast('🔁 Player 2 requested to restart — tap 🔄 Restart in menu if you agree.');
+            }
+            return;
+          }
+
+          if (packet.type === 'BAKHTI_FUN') {
+            if (typeof BakhtiFunManager !== 'undefined') {
+              BakhtiFunManager.handleRemotePacket(packet);
             }
             return;
           }
@@ -22246,6 +22748,47 @@
         SoundEngine.hapticsEnabled = e.target.checked;
       });
 
+      const chkBakhti = document.getElementById('chkEnableBakhtiFun');
+      if (chkBakhti) {
+        chkBakhti.addEventListener('change', (e) => {
+          GameState.enableBakhtiFun = e.target.checked;
+          savePersistentPrefs();
+          if (GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
+            WebRTCManager.send({
+              type: 'BAKHTI_FUN',
+              subType: 'CONFIG_SYNC',
+              enableBakhtiFun: GameState.enableBakhtiFun
+            });
+            if (GameState.localPlayerRole === 1) {
+              WebRTCManager.send({ type: 'SYNC_STATE', state: serializeGameState(), authoritative: true });
+            }
+          }
+        });
+      }
+
+      const btnCloseBakhti = document.getElementById('btnCloseBakhtiFun');
+      if (btnCloseBakhti) {
+        btnCloseBakhti.addEventListener('click', () => {
+          BakhtiFunManager.closeModal();
+        });
+      }
+
+      const btnContinueBakhti = document.getElementById('btnContinueBakhtiFun');
+      if (btnContinueBakhti) {
+        btnContinueBakhti.addEventListener('click', () => {
+          BakhtiFunManager.closeModal();
+        });
+      }
+
+      const modalBakhti = document.getElementById('modalBakhtiFun');
+      if (modalBakhti) {
+        modalBakhti.addEventListener('click', (e) => {
+          if (e.target === modalBakhti) {
+            BakhtiFunManager.closeModal();
+          }
+        });
+      }
+
       document.getElementById('btnApplySettingsAndStart').addEventListener('click', () => {
         SoundEngine.select();
         document.getElementById('modalRules').classList.add('hidden');
@@ -22276,6 +22819,16 @@
         GameState.boardSurface = 'sandstone';
         GameState.nodeLabels = 'off';
         GameState.showGuides = true;
+        GameState.enableBakhtiFun = true;
+        const chkBakhtiRestore = document.getElementById('chkEnableBakhtiFun');
+        if (chkBakhtiRestore) chkBakhtiRestore.checked = true;
+        if (GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
+          WebRTCManager.send({
+            type: 'BAKHTI_FUN',
+            subType: 'CONFIG_SYNC',
+            enableBakhtiFun: true
+          });
+        }
         applyGridPresetConfig('6x6');
         initMatch(true);
         showBoardToast('Restored classic 6×6 Katar defaults');
@@ -26109,6 +26662,11 @@
             pushBackGuardState();
             return;
           }
+          if (isShown('modalBakhtiFun')) {
+            BakhtiFunManager.closeModal();
+            pushBackGuardState();
+            return;
+          }
           for (const mid of ['modalExportVideo', 'modalRules', 'modalEncyclopedia', 'modalPuterStats']) {
             if (isShown(mid)) {
               const el = document.getElementById(mid);
@@ -26532,7 +27090,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=6471dce29d', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=8f0f0fbf13', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {

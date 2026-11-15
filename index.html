@@ -2981,7 +2981,7 @@
             <button id="btnAnotherRoast" type="button" class="android-btn px-2 py-0.5 rounded-lg bg-white/15 hover:bg-white/25 text-amber-200 text-[9.5px] font-extrabold border border-amber-300/30" title="Hit me with another sarcastic one-liner">🎲 Another Roast</button>
           </div>
         </div>
-        <p id="victoryRoastText" class="text-xs sm:text-[13px] font-extrabold text-amber-100 leading-snug italic"></p>
+        <p id="victoryRoastText" dir="auto" class="text-xs sm:text-sm font-extrabold text-amber-100 leading-relaxed italic"></p>
       </div>
 
       <div id="victoryAIBrainBanner" class="hidden bg-rose-50 border border-rose-200 rounded-2xl p-2 text-center text-[10.5px] font-bold text-rose-900 shadow-sm">
@@ -9060,6 +9060,8 @@
             if (mills.length > 0 && getRemovableOpponentNodes(opponent).length > 0) {
               if (typeof BakhtiFunManager !== 'undefined') {
                 BakhtiFunManager.checkDoubleMillOnMove(action, player, mills);
+                const oppLeft = countPlayerTotalPieces(opponent);
+                BakhtiFunManager.triggerCoffinCenterMeme(oppLeft <= 3 ? '⚰️ FINAL NAIL!' : '⚰️ RIP BEAD!', 2200);
               }
               GameState.morrisPendingRemove = true;
               GameState.lastFormedMill = mills[0];
@@ -9080,7 +9082,7 @@
               }
 
               if (GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || player === GameState.aiPlayerRole)) {
-                scheduleAITurn(460);
+                scheduleAITurn((typeof BakhtiFunManager !== 'undefined' && BakhtiFunManager.isFunEnabled()) ? 950 : 460);
               }
               return;
             }
@@ -9140,6 +9142,8 @@
             if (mills.length > 0 && getRemovableOpponentNodes(opponent).length > 0) {
               if (typeof BakhtiFunManager !== 'undefined') {
                 BakhtiFunManager.checkDoubleMillOnMove(action, player, mills);
+                const oppLeft = countPlayerTotalPieces(opponent);
+                BakhtiFunManager.triggerCoffinCenterMeme(oppLeft <= 3 ? '⚰️ FINAL NAIL!' : '⚰️ RIP BEAD!', 2200);
               }
               GameState.morrisPendingRemove = true;
               GameState.lastFormedMill = mills[0];
@@ -9160,7 +9164,7 @@
               }
 
               if (GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || player === GameState.aiPlayerRole)) {
-                scheduleAITurn(460);
+                scheduleAITurn((typeof BakhtiFunManager !== 'undefined' && BakhtiFunManager.isFunEnabled()) ? 950 : 460);
               }
               return;
             }
@@ -9522,6 +9526,9 @@
         } else if (GameState.gameFamily === 'morris') {
           const winTarget = Math.max(1, GameState.piecesPerPlayer - 2);
           if (oppRemaining <= 2 || GameState.capturedBy[playerJustMoved] >= winTarget) {
+            if (typeof BakhtiFunManager !== 'undefined') {
+              BakhtiFunManager.triggerCoffinCenterMeme('⚰️ GAME OVER!', 2200);
+            }
             GameState.gameOver = true;
             GameState.winner = playerJustMoved;
             GameState.winReason = `Captured ${GameState.capturedBy[playerJustMoved]} beads — opponent reduced to ${oppRemaining} beads and cannot form a line of 3!`;
@@ -9530,6 +9537,9 @@
             SoundEngine.victory();
             showVictoryModal();
           } else if (GameState.reserves[opponent] === 0 && oppMoves.total === 0) {
+            if (typeof BakhtiFunManager !== 'undefined') {
+              BakhtiFunManager.triggerCoffinCenterMeme('⚰️ TRAPPED!', 2200);
+            }
             GameState.gameOver = true;
             GameState.winner = playerJustMoved;
             GameState.winReason = 'Opponent is completely blocked along all lines with no legal moves!';
@@ -9538,6 +9548,9 @@
             SoundEngine.victory();
             showVictoryModal();
           } else {
+            if (typeof BakhtiFunManager !== 'undefined') {
+              BakhtiFunManager.checkMorrisBrinkOfLoss(opponent, oppRemaining, oppMoves);
+            }
             GameState.currentTurn = opponent;
             if (GameState.autoRotate && GameState.mode === 'pass_play' && !GameState.vsAI) {
               GameState.boardFlipped = (GameState.currentTurn === 2);
@@ -15767,11 +15780,31 @@
       const ctx = canvas.getContext('2d');
       let animFrameId = null;
 
+      const coffinMemeImg = new Image();
+      coffinMemeImg.decoding = 'async';
+      coffinMemeImg.onload = () => {
+        if (typeof VisualFX !== 'undefined' && VisualFX.coffinFlash) {
+          requestRender();
+        }
+      };
+      coffinMemeImg.src = './coffin.png';
+
       const VisualFX = {
         particles: [],
         pulseRings: [],
         movingPiece: null,
         hintHighlight: null,
+        coffinFlash: null,
+
+        triggerCoffinMeme(caption = '⚰️ RIP BEAD!', duration = 2200) {
+          if (GameState.enableBakhtiFun === false || GameState.gameFamily !== 'morris') return;
+          this.coffinFlash = {
+            startTime: performance.now(),
+            duration,
+            caption
+          };
+          requestRender();
+        },
 
         startPieceTween(fromNode, toNode, player, isJump) {
           this.movingPiece = {
@@ -16289,6 +16322,100 @@
         }
 
         const pieceRadius = size * 0.052 * densityScale;
+
+        // 5B. Coffin Meme Flash in the Empty Center of the Board in Mills
+        if (VisualFX.coffinFlash) {
+          if (GameState.enableBakhtiFun === false || GameState.gameFamily !== 'morris') {
+            VisualFX.coffinFlash = null;
+          } else {
+            const cf = VisualFX.coffinFlash;
+            const elapsedCf = now - cf.startTime;
+            if (elapsedCf >= cf.duration) {
+              VisualFX.coffinFlash = null;
+            } else {
+              needsMoreFrames = true;
+              const tCf = Math.max(0, Math.min(1, elapsedCf / cf.duration));
+              let alphaCf = 1;
+              let scaleCf = 1;
+              if (tCf < 0.14) {
+                const p = tCf / 0.14;
+                alphaCf = p;
+                scaleCf = 0.56 + 0.44 * (1 - Math.pow(1 - p, 3));
+              } else if (tCf <= 0.78) {
+                alphaCf = 1;
+                scaleCf = 1 + 0.035 * Math.sin(elapsedCf * 0.018);
+              } else {
+                const p = (tCf - 0.78) / 0.22;
+                alphaCf = Math.max(0, 1 - p);
+                scaleCf = 1 - 0.14 * p;
+              }
+
+              let baseBoxSize = size * 0.25;
+              if (Nodes.length === 24 && Nodes[6] && Nodes[17]) {
+                const innerSpan = Math.abs(Nodes[17].x - Nodes[6].x);
+                baseBoxSize = Math.max(54, innerSpan - pieceRadius * 1.05);
+              } else if (Nodes.length === 16 && Nodes[8] && Nodes[12]) {
+                const innerSpan = Math.abs(Nodes[12].x - Nodes[8].x);
+                baseBoxSize = Math.max(58, innerSpan - pieceRadius * 1.15);
+              }
+
+              const drawBox = baseBoxSize * scaleCf;
+              const bx = centerX - drawBox * 0.5;
+              const by = centerY - drawBox * 0.5;
+              const rad = Math.max(8, drawBox * 0.13);
+
+              ctx.save();
+              ctx.globalAlpha = alphaCf;
+              ctx.shadowColor = 'rgba(225, 29, 72, 0.75)';
+              ctx.shadowBlur = 14;
+              ctx.beginPath();
+              if (typeof ctx.roundRect === 'function') {
+                ctx.roundRect(bx, by, drawBox, drawBox, rad);
+              } else {
+                ctx.rect(bx, by, drawBox, drawBox);
+              }
+              ctx.fillStyle = '#1C1008';
+              ctx.fill();
+              ctx.shadowBlur = 0;
+              ctx.clip();
+
+              if (coffinMemeImg.complete && coffinMemeImg.naturalWidth > 0) {
+                const iw = coffinMemeImg.naturalWidth;
+                const ih = coffinMemeImg.naturalHeight;
+                const s = Math.min(iw, ih);
+                const sx = (iw - s) * 0.5;
+                const sy = (ih - s) * 0.5;
+                ctx.drawImage(coffinMemeImg, sx, sy, s, s, bx, by, drawBox, drawBox);
+              }
+
+              if (cf.caption) {
+                const barH = Math.max(15, drawBox * 0.22);
+                ctx.fillStyle = 'rgba(20, 10, 5, 0.84)';
+                ctx.fillRect(bx, by + drawBox - barH, drawBox, barH);
+                ctx.fillStyle = '#FBBF24';
+                ctx.font = `800 ${Math.max(8, Math.floor(barH * 0.58))}px Inter, system-ui, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(cf.caption, centerX, by + drawBox - barH * 0.48);
+              }
+              ctx.restore();
+
+              ctx.save();
+              ctx.globalAlpha = alphaCf;
+              ctx.beginPath();
+              if (typeof ctx.roundRect === 'function') {
+                ctx.roundRect(bx, by, drawBox, drawBox, rad);
+              } else {
+                ctx.rect(bx, by, drawBox, drawBox);
+              }
+              ctx.strokeStyle = '#F59E0B';
+              ctx.lineWidth = 2.6;
+              ctx.stroke();
+              ctx.restore();
+            }
+          }
+        }
+
         const movingDestId = VisualFX.movingPiece ? VisualFX.movingPiece.toId : -1;
         const removableSet = (GameState.gameFamily === 'morris' && GameState.morrisPendingRemove)
           ? new Set(getRemovableOpponentNodes(GameState.currentTurn === 1 ? 2 : 1))
@@ -17794,105 +17921,179 @@
       }
 
       const SarcasticRoastEngine = {
-        storageKey: 'katar_sarcastic_roasts_bank_v1',
+        storageKey: 'katar_sarcastic_roasts_bank_v2',
         loaded: false,
         fetchingDaily: false,
         lastFetchedDate: '',
         totalFetchedBatches: 0,
-        recentShown: [],
+        deck: [],
+        lastPickedIdx: -1,
         aiRoasts: [],
 
         builtinRoasts: [
-          // FAST LOSE (Speedrun defeats / low move count / short match)
-          { cat: 'fast_lose', text: "That wasn't a strategy match, that was a world-record speedrun to the 'Play Rematch' button." },
-          { cat: 'fast_lose', text: "My microwave takes longer to warm up a samosa than it took you to lose this entire board." },
-          { cat: 'fast_lose', text: "Did you have an urgent appointment, or do you always donate all your beads via express delivery?" },
-          { cat: 'fast_lose', text: "Even the app's loading screen lasted longer than your defense." },
-          { cat: 'fast_lose', text: "You played with the confidence of an emperor and the lifespan of a soap bubble." },
-          { cat: 'fast_lose', text: "Fastest fingers in the region—unfortunately, every single tap was a tactical felony." },
-          { cat: 'fast_lose', text: "I was still stretching my neural weights and you already folded like a lawn chair." },
-          { cat: 'fast_lose', text: "Blink and you'll miss it—actually, you kept both eyes open and still missed everything." },
-          { cat: 'fast_lose', text: "If losing in {{moves}} moves were an Olympic event, they'd鑄 a statue of you outside the stadium." },
-          { cat: 'fast_lose', text: "Traffic lights stay green longer than your army survived on this board." },
+          // =================================================================
+          // 40 SAVAGE & HILARIOUS ENGLISH ROASTS (0..39)
+          // =================================================================
+          { lang: 'EN', cat: 'fast_lose', text: "Bro played {{moves}} moves with the confidence of Magnus Carlsen and the brain cell count of a boiled turnip." },
+          { lang: 'EN', cat: 'crushed', text: "I’ve seen wet naan bread hold a defensive line better than whatever you just did on this board." },
+          { lang: 'EN', cat: 'general', text: "Did you play with your eyes closed, or did your thumb just file for divorce from your brain?" },
+          { lang: 'EN', cat: 'crushed', text: "Your strategy was so tragic that even your own beads were begging me to eat them just to escape your leadership." },
+          { lang: 'EN', cat: 'slow_move', text: "You stared at the screen like you were defusing a nuclear bomb, then proceeded to cut the red wire with your teeth." },
+          { lang: 'EN', cat: 'general', text: "If bad moves were prime real estate, you’d own all of DHA and Bahria Town by now." },
+          { lang: 'EN', cat: 'easy_ai_lose', text: "My AI cooling fan didn’t even spin up—my processor literally beat you in sleep mode." },
+          { lang: 'EN', cat: 'crushed', text: "That wasn’t a match, that was a public charity drive where you donated {{lost}} beads to the needy." },
+          { lang: 'EN', cat: 'general', text: "Even Google Maps couldn’t recalculate a route out of the tactical mess you created on move three." },
+          { lang: 'EN', cat: 'crushed', text: "You guarded your back rank like a watchman who’s been asleep on a charpai since 1997." },
+          { lang: 'EN', cat: 'general', text: "Congratulations! You just discovered 14 brand-new ways to lose a board game that scientists didn’t know existed." },
+          { lang: 'EN', cat: 'general', text: "I’d call your gameplay 'trash', but trash actually gets picked up once a week—you just stayed on the floor." },
+          { lang: 'EN', cat: 'general', text: "You walked into that trap so enthusiastically I thought there was free mutton biryani waiting on that intersection." },
+          { lang: 'EN', cat: 'general', text: "Sun Tzu is rolling in his grave so fast we could hook him up to WAPDA and solve the electricity crisis." },
+          { lang: 'EN', cat: 'slow_move', text: "You took {{time}} to cook that master plan and still served it colder than a January night in Quetta." },
+          { lang: 'EN', cat: 'easy_ai_lose', text: "Honestly, if a chicken walked across your phone screen pecking corn, it would’ve played a stronger opening." },
+          { lang: 'EN', cat: 'streak_lose', text: "{{streak}} losses in a row! At this point, the 'Defeat' screen should start charging you monthly rent and utility bills." },
+          { lang: 'EN', cat: 'general', text: "Did your little cousin hijack your phone, or did you genuinely think that last move was legal genius?" },
+          { lang: 'EN', cat: 'fast_lose', text: "Your beads didn’t even get time to say Bismillah before you marched them straight into a massacre." },
+          { lang: 'EN', cat: 'general', text: "I didn’t even use my grandmaster algorithm—I just waited for you to outplay yourself, and you delivered on schedule." },
+          { lang: 'EN', cat: 'crushed', text: "With {{eaten}} captures all game, you weren’t playing a war game—you were holding a candlelight vigil." },
+          { lang: 'EN', cat: 'general', text: "You had the entire board wide open and still parked your pieces like a Qingqi rickshaw in Saddar traffic." },
+          { lang: 'EN', cat: 'general', text: "Even 2G internet during a thunderstorm has a stronger connection to reality than your last five moves." },
+          { lang: 'EN', cat: 'general', text: "Calling that a 'blunder' is an insult to blunders; that was a full-scale tactical natural disaster." },
+          { lang: 'EN', cat: 'easy_ai_lose', text: "You played like someone who reads the instructions on a shampoo bottle and still gets confused." },
+          { lang: 'EN', cat: 'slow_move', text: "If overthinking and still losing were a university degree, you’d be the Vice Chancellor with a gold medal." },
+          { lang: 'EN', cat: 'blunder_assist', text: "I gave you glowing Hint arrows AND an Undo button, and you still steered straight into a canal!" },
+          { lang: 'EN', cat: 'crushed', text: "Your defense had more holes in it than a mosquito net bought from a half-price Sunday bazaar." },
+          { lang: 'EN', cat: 'fast_lose', text: "That speedrun to defeat in {{moves}} moves was so fast my samosa didn’t even cool down." },
+          { lang: 'EN', cat: 'general', text: "You’re out here playing 1D Ludo without a dice while the rest of us are playing 5D Grandmaster Katar." },
+          { lang: 'EN', cat: 'general', text: "Every move you made was 10% calculation, 20% blind panic, and 70% pure self-sabotage." },
+          { lang: 'EN', cat: 'general', text: "Somewhere outside, a tree is working overtime producing oxygen for the brain cells that approved that move." },
+          { lang: 'EN', cat: 'crushed', text: "You defended your pieces the way a tissue-paper umbrella defends against a monsoon." },
+          { lang: 'EN', cat: 'general', text: "If confidence alone won matches, you’d be Emperor; sadly, the board requires actual functioning strategy." },
+          { lang: 'EN', cat: 'easy_ai_lose', text: "I’ve seen a broken calculator from 1998 put up a more terrifying tactical fight than your lineup just did." },
+          { lang: 'EN', cat: 'general', text: "You didn’t just lose the plot—you burned the script, ate the ashes, and proudly asked for a rematch." },
+          { lang: 'EN', cat: 'blunder_assist', text: "Even Dr. Strange rewound your Undo button 14 million times and couldn’t find one timeline where that move worked." },
+          { lang: 'EN', cat: 'streak_lose', text: "Your pieces just created a private WhatsApp group without you to vote on your immediate resignation." },
+          { lang: 'EN', cat: 'general', text: "That last move was so catastrophically bad my motherboard briefly experienced secondhand embarrassment." },
+          { lang: 'EN', cat: 'general', text: "Go ahead and smash 'Play Rematch'—my win counter loves a free afternoon snack." },
 
-          // SLOW MOVE (Overthinking / high average move time / long match and still lost)
-          { cat: 'slow_move', text: "You stared at the board like you were translating ancient Sanskrit, only to play the worst legal move." },
-          { cat: 'slow_move', text: "All that dramatic thinking time just to hand-deliver your beads on a silver platter?" },
-          { cat: 'slow_move', text: "Continental plates drift faster than your turns, and they still have a better sense of direction." },
-          { cat: 'slow_move', text: "I aged three software updates waiting for your turn, and THAT was your master plan?" },
-          { cat: 'slow_move', text: "You cooked that strategy for {{time}} and somehow still served it completely raw." },
-          { cat: 'slow_move', text: "NASA could have calculated a Mars trajectory in the time you spent planning that blunder." },
-          { cat: 'slow_move', text: "Deep meditation, furrowed brow, grandmaster posture… followed by a move a pigeon wouldn't tap." },
-          { cat: 'slow_move', text: "At least when a glacier moves slowly, it carves a valley. You just carved your own defeat." },
-          { cat: 'slow_move', text: "You burned the clock calculating 14,000 futures and still picked the one where you get cooked." },
-          { cat: 'slow_move', text: "Next time take even longer—maybe by 2035 you'll spot the obvious trap in the center." },
+          // =================================================================
+          // 40 SAVAGE & HILARIOUS URDU ROASTS (40..79)
+          // =================================================================
+          { lang: 'UR', cat: 'slow_move', text: "بھائی جان! اتنے غور سے تو لوگ رشتے والی فوٹو نہیں دیکھتے جتنے غور سے آپ نے بورڈ دیکھ کر غلط چال چلی ہے!" },
+          { lang: 'UR', cat: 'general', text: "آپ کی گیم دیکھ کر پکا یقین ہو گیا کہ آج آپ کے دماغ میں شدید لوڈ شیڈنگ چل رہی ہے۔" },
+          { lang: 'UR', cat: 'crushed', text: "یہ آپ قطار کھیل رہے تھے یا اپنے دانوں کی مفت سبیل لگا رکھی تھی؟" },
+          { lang: 'UR', cat: 'fast_lose', text: "اتنی جلدی تو گرم چائے میں بسکٹ نہیں ڈوبتا جتنی جلدی آپ نے اپنی ساری بازی ڈبو دی!" },
+          { lang: 'UR', cat: 'general', text: "ماشاءاللہ! اعتماد پورا فیلڈ مارشل والا، اور چالیں بالکل گلی کے پپو یار والیاں!" },
+          { lang: 'UR', cat: 'general', text: "آپ کے دانے بھی رو کر دعا مانگ رہے ہیں کہ یا اللہ ہمیں کس اناڑی سردار کے حوالے کر دیا ہے۔" },
+          { lang: 'UR', cat: 'slow_move', text: "{{time}} سوچنے کے بعد جو چال آپ نے چلی ہے، اتنی دیر میں تو دیگ کی حلیم بھی پک جاتی ہے!" },
+          { lang: 'UR', cat: 'crushed', text: "واہ استاد واہ! شکار کرنے آئے تھے اور خود ہی دیگی قورمہ بن کر پلیٹ میں سج گئے۔" },
+          { lang: 'UR', cat: 'general', text: "اگر غلط چالیں چلنے پر ٹیکس لگتا تو آج آپ اکیلے آئی ایم ایف کا سارا قرضہ اتار چکے ہوتے۔" },
+          { lang: 'UR', cat: 'easy_ai_lose', text: "بھائی آپ قطار چھوڑیں، جا کر لڈو میں چھکے کا انتظار کریں، یہ میدان آپ کے بس کا روگ نہیں۔" },
+          { lang: 'UR', cat: 'crushed', text: "آپ کی سٹریٹجی اتنی کمزور تھی کہ پنکھے کی ہوا سے ہی سارے دانے خود بخود گر جاتے۔" },
+          { lang: 'UR', cat: 'streak_lose', text: "مسلسل {{streak}} ہاریں! اب تو ہار نے بھی آپ کے ساتھ کورٹ میرج کر لی ہے۔" },
+          { lang: 'UR', cat: 'general', text: "آنکھیں کھول کر کھیلا کریں جناب، یہاں دانے کھائے جا رہے ہیں، شادی کا زردہ نہیں بٹ رہا!" },
+          { lang: 'UR', cat: 'fast_lose', text: "آپ نے تو ایسے گھبرا کر ہتھیار ڈالے جیسے امی کی ہوائی چپل ہوا میں اڑتی ہوئی نظر آ گئی ہو۔" },
+          { lang: 'UR', cat: 'general', text: "آپ نے اپنے پاؤں پر کلہاڑی نہیں ماری، سیدھا بلڈوزر چلا کر اپنے ہی خیمے کو برابر کر دیا ہے!" },
+          { lang: 'UR', cat: 'fast_lose', text: "صرف {{moves}} چالوں میں صفایا! اتنی تیز سروس تو بائیکیا والوں کی بھی نہیں ہوتی۔" },
+          { lang: 'UR', cat: 'crushed', text: "آپ کی دفاعی لائن بالکل اس چوکیدار جیسی ہے جو پورا محلہ لٹنے کے بعد زور سے سیٹی بجاتا ہے۔" },
+          { lang: 'UR', cat: 'general', text: "توبہ ہے! اتنا کھلا جال بچھا ہوا تھا، آپ تو ایسے کودے جیسے مفت کی بریانی کی دیگ کھلی ہو۔" },
+          { lang: 'UR', cat: 'easy_ai_lose', text: "میرے کمپیوٹر کا پنکھا تک نہیں چلا اور آپ کا پورا لشکر قبرستان پہنچ گیا۔" },
+          { lang: 'UR', cat: 'general', text: "آپ کے کھیلنے کا انداز بتا رہا ہے کہ آج آپ نے بادام کی جگہ موم بتی چبا لی ہے۔" },
+          { lang: 'UR', cat: 'crushed', text: "پوری گیم میں صرف {{eaten}} دانے کھائے؟ بھائی آپ روزے سے تھے یا ڈاکٹر نے دانے کھانے سے منع کیا ہے؟" },
+          { lang: 'UR', cat: 'easy_ai_lose', text: "سچ بتائیں، موبائل کسی چھوٹے بھانجے کے ہاتھ میں دے دیا تھا یا یہ آپ کا اپنا ہی شاہکار ہے؟" },
+          { lang: 'UR', cat: 'general', text: "آپ کی آخری چال دیکھ کر تو چڑیا گھر کا بندر بھی اپنے ماتھے پر ہاتھ مار کر رو پڑے۔" },
+          { lang: 'UR', cat: 'slow_move', text: "دماغ پر اتنا بوجھ نہ ڈالیں، کہیں پی ٹی سی ایل کے پرانے موڈیم کی طرح بتیاں ہی نہ گل ہو جائیں۔" },
+          { lang: 'UR', cat: 'general', text: "آپ نے جیتنے کی کوشش تو بہت کی، مگر افسوس آپ کی عقل نے موقع پر ہڑتال کر دی۔" },
+          { lang: 'UR', cat: 'general', text: "ایسی خوفناک غلطی تو بندہ نیند کی گولیاں کھا کر بھی نہیں کرتا جیسی آپ نے جاگتے ہوئے کر دکھائی!" },
+          { lang: 'UR', cat: 'general', text: "قطار میں دماغ لڑانا پڑتا ہے میرے بھائی، صرف سکرین پر انگوٹھا رگڑنے سے بندہ خان نہیں بنتا!" },
+          { lang: 'UR', cat: 'streak_lose', text: "آپ کے دانے اب پریس کانفرنس کرنے والے ہیں کہ ہمیں اس کپتان سے فوری آزادی دلائی جائے۔" },
+          { lang: 'UR', cat: 'slow_move', text: "آدھا گھنٹہ سوچ کر آپ نے جو تیر چلایا ہے، وہ گھوم کر سیدھا آپ کی اپنی ہی تشریف پر لگا ہے۔" },
+          { lang: 'UR', cat: 'general', text: "لگتا ہے آج آپ بغیر وضو اور بغیر استخارہ کیے ہی میرے خلاف میدان میں کود پڑے تھے۔" },
+          { lang: 'UR', cat: 'fast_lose', text: "آپ کی گیم کا جنازہ تو تیسری چال پر ہی اٹھ گیا تھا، باقی تو صرف قل خوانی اور چنے بانٹنے کی دیر تھی۔" },
+          { lang: 'UR', cat: 'crushed', text: "بندہ تھوڑی سی تو عزت بچاتا ہے، آپ نے تو ٹرے میں سجا کر پوری بازی میرے حوالے کر دی!" },
+          { lang: 'UR', cat: 'general', text: "اگر الٹی سیدھی چالوں کا ورلڈ کپ ہوتا تو ٹرافی بغیر مقابلے کے آپ کے گھر بھیج دی جاتی۔" },
+          { lang: 'UR', cat: 'easy_ai_lose', text: "آپ کو ہرانے میں اتنی آسانی ہوئی کہ اب مجھے اپنے گرینڈ ماسٹر ہونے پر شرم آ رہی ہے۔" },
+          { lang: 'UR', cat: 'general', text: "جاؤ بھائی ایک کپ کڑک چائے پی کر آؤ، شاید دماغ کے زنگ آلود نٹ بولٹ تھوڑا ہلنا شروع کریں۔" },
+          { lang: 'UR', cat: 'general', text: "آپ کی پلاننگ بالکل کراچی کی ٹوٹی سڑک جیسی تھی—جہاں قدم رکھو وہیں گڑھا ہی گڑھا!" },
+          { lang: 'UR', cat: 'blunder_assist', text: "ہنٹ اور انڈو دبا دبا کر بھی ہار گئے؟ سچ کہا ہے بزرگوں نے کہ نقل کے لیے بھی عقل چاہیے!" },
+          { lang: 'UR', cat: 'crushed', text: "آپ نے اپنے دانوں کی اتنی فراخدلی سے قربانی دی ہے کہ بقرعید کے بکرے بھی حیران رہ گئے۔" },
+          { lang: 'UR', cat: 'general', text: "چلیں شاباش، ٹھنڈے پانی سے منہ دھو کر 'Rematch' دبائیں، مجھے مفت کی جیت بہت پسند ہے۔" },
+          { lang: 'UR', cat: 'general', text: "تاریخ میں لکھا جائے گا کہ ایک غازی میدان میں آیا، بڑا سوچا، اور اپنا ہی بیڑہ غرق کر کے چلا گیا!" },
 
-          // STREAK LOSE (Back-to-back defeats / losing streak >= 2)
-          { cat: 'streak_lose', text: "{{streak}} losses in a row! At this point, losing isn't a result for you—it's a committed relationship." },
-          { cat: 'streak_lose', text: "Back-to-back defeats! Your loyalty to the 'Defeat' screen is genuinely touching." },
-          { cat: 'streak_lose', text: "You're on a losing streak so consistent that Swiss watchmakers are using you to calibrate clocks." },
-          { cat: 'streak_lose', text: "Collect one more consecutive 'L' and you qualify for a bulk wholesale discount." },
-          { cat: 'streak_lose', text: "They say practice makes perfect, but you're bravely pioneering the exact opposite theory." },
-          { cat: 'streak_lose', text: "Definition of optimism: tapping 'Rematch' with the exact same strategy after {{streak}} straight losses." },
-          { cat: 'streak_lose', text: "Even a broken clock is right twice a day, yet here you are extending the streak to {{streak}}." },
-          { cat: 'streak_lose', text: "Your beads are filing a union grievance—they refuse to spawn on your side for a {{streak}}th match." },
-          { cat: 'streak_lose', text: "I'd tell you to shake it off, but at this point your losing streak is structurally load-bearing." },
-          { cat: 'streak_lose', text: "Should I just pre-record your loss for the next match too, or do you want to tap the pieces yourself?" },
-
-          // CRUSHED / SHUTOUT (0 or 1 bead eaten, or massive capture deficit)
-          { cat: 'crushed', text: "Were you playing a war game or running a tax-free bead charity drive for my side?" },
-          { cat: 'crushed', text: "{{eaten}} captures?! I didn't fight a battle, I just conducted a peaceful real-estate takeover." },
-          { cat: 'crushed', text: "Your beads didn't even get to unpack their suitcases before getting evicted from the board." },
-          { cat: 'crushed', text: "Zero resistance detected. Honestly, the empty intersections put up a tougher fight than your lineup." },
-          { cat: 'crushed', text: "You guarded your pieces the way a screen door guards a submarine." },
-          { cat: 'crushed', text: "That wasn't a competitive match—that was a nature documentary where you played the grass." },
-          { cat: 'crushed', text: "Did you forget capturing enemy beads is allowed, or are you roleplaying as a strict pacifist?" },
-          { cat: 'crushed', text: "My pieces actually gained weight this match. Thank you for the five-star all-you-can-eat buffet." },
-          { cat: 'crushed', text: "If this board had a mercy rule, it would have gently closed the app ten moves ago." },
-          { cat: 'crushed', text: "I've seen wet paper bags hold a defensive line longer than your formation just did." },
-
-          // EASY AI LOSE (Lost to Easy / Novice AI)
-          { cat: 'easy_ai_lose', text: "You just lost to Easy AI—an algorithm literally programmed to trip over its own shoelaces." },
-          { cat: 'easy_ai_lose', text: "Easy AI picks half its moves by coin flip and vibes, and it STILL outsmarted you!" },
-          { cat: 'easy_ai_lose', text: "I had 92% of my brain cells turned off for 'Easy Mode' and still won. Please explain yourself." },
-          { cat: 'easy_ai_lose', text: "Losing on Easy difficulty is a historic milestone—my random-number generator sends its regards." },
-          { cat: 'easy_ai_lose', text: "Even the Novice bot is staring at the board wondering how it accidentally defeated a human." },
-          { cat: 'easy_ai_lose', text: "Wait… you lost to Easy AI?! I need a moment to process the secondhand embarrassment." },
-
-          // BLUNDER ASSIST (Used Hints or Undos and STILL lost)
-          { cat: 'blunder_assist', text: "You used time-travel Undos AND tactical Hints, and STILL found a way to lose?! Truly iconic." },
-          { cat: 'blunder_assist', text: "I literally drew glowing gold arrows showing you the answer, and you still steered straight into a ditch." },
-          { cat: 'blunder_assist', text: "Rewinding time with 'Undo' only helps if you don't replace a bad move with an even worse one." },
-          { cat: 'blunder_assist', text: "Even with the Hint engine whispering answers in your ear, you managed to fail an open-book test." },
-          { cat: 'blunder_assist', text: "Using Hints and still losing is like having GPS on a straight highway and driving into a canal." },
-          { cat: 'blunder_assist', text: "Dr. Strange rewound the board with your Undo button and still couldn't find a timeline where that move worked." },
-
-          // QUIT / RESTART HISTORY (Player with many mid-game quits/restarts who finally finished a loss)
-          { cat: 'quit_history', text: "Hey, respect for not smashing 'Restart' mid-game this time—taking the full L builds character!" },
-          { cat: 'quit_history', text: "Usually you hit the emergency eject button before the final blow. Brave of you to stay for the credits." },
-          { cat: 'quit_history', text: "Your 'Restart' button is breathing a sigh of relief that you finally let a loss reach the finish line." },
-
-          // GENERAL SAVAGE GRANDMASTER ROASTS
-          { cat: 'general', text: "I've seen better board vision from a blindfolded potato during a total solar eclipse." },
-          { cat: 'general', text: "Your strategy had so many holes in it we could use it to strain rice for a 500-guest wedding." },
-          { cat: 'general', text: "If Sun Tzu watched that match, he would have deleted 'The Art of War' and opened a juice bar." },
-          { cat: 'general', text: "You didn't just miss the trap—you paved the road, paid the toll, and escorted me into your back rank." },
-          { cat: 'general', text: "My CPU didn't even warm up. My cooling fan is literally filing for unemployment right now." },
-          { cat: 'general', text: "You're playing 1D tic-tac-toe while the rest of the board is operating in the 4th dimension." },
-          { cat: 'general', text: "That last move was a plot twist nobody asked for—especially your own pieces." },
-          { cat: 'general', text: "I'd offer you a strategy tutorial, but we'd have to start with Chapter 1: 'What Is a Straight Line?'" },
-          { cat: 'general', text: "Somewhere outside, a tree is working overtime producing oxygen for that move you just played." },
-          { cat: 'general', text: "Your game plan was 10% hope, 20% panic, and 70% donating beads to the opposition." },
-          { cat: 'general', text: "Don't feel bad—statistically, someone has to make the AI look like an undefeated supercomputer." },
-          { cat: 'general', text: "Every move you made was unpredictable—mostly because no rational strategist would ever consider it." },
-          { cat: 'general', text: "Bold strategy leaving your entire flank unguarded. Let's see if it pays off in the next century." },
-          { cat: 'general', text: "Even the wooden board grain is curving away from your moves out of sheer self-preservation." },
-          { cat: 'general', text: "If confidence alone won board games, you'd be champion. Unfortunately, the rules require actual moves." }
+          // =================================================================
+          // 40 SAVAGE & HILARIOUS PASHTO ROASTS (80..119)
+          // =================================================================
+          { lang: 'PS', cat: 'general', text: "وروره! دا قطار دی، د کلي واده نه دی چې داسې بې غمه پکې ګرځې او دانې دې تالا ترغۍ شوې!" },
+          { lang: 'PS', cat: 'fast_lose', text: "دومره ژر خو په تنور کې پاستی نه سوزیږي لکه تا چې خپله ټوله لوبه په دوو دقیقو کې وسوځوله!" },
+          { lang: 'PS', cat: 'general', text: "ماشاءالله! برېتونه او پګړۍ دې د خانانو ده، خو چالونه دې بالکل د وړکتون د ماشومانو دي!" },
+          { lang: 'PS', cat: 'fast_lose', text: "ته خو داسې په منډه ماتې وخوړه لکه چا چې درپسې د جومات د ملا صاحب غټه امسا راخیستې وي." },
+          { lang: 'PS', cat: 'crushed', text: "ستا دانې هم په ژړا دي چې یا خدایه دا موږ د کوم بې تدبیره سردار په لاس کې راغلي یو!" },
+          { lang: 'PS', cat: 'slow_move', text: "دومره فکر خو سړی د دوهم واده لپاره نه کوي، څومره چې تا وکړ او بیا دې هم ټوپک چپه وویشت!" },
+          { lang: 'PS', cat: 'general', text: "یره شاباش! د دښمن د وهلو پر ځای دې خپلې دواړه پښې په تېره تبر ووهلې." },
+          { lang: 'PS', cat: 'crushed', text: "دا ته قطار کوې او که د خیرات کچالو وېشې چې یوه یوه دانه دې په خپله خوښه راکړه؟" },
+          { lang: 'PS', cat: 'slow_move', text: "ستا دماغ خو د پېښور د زړې رکشې په شان دی—لوګی او شور ډېر کوي خو مخته یو ګام نه ځي!" },
+          { lang: 'PS', cat: 'fast_lose', text: "په {{moves}} چالونو کې دې کډه بار شوه! دومره تېز خو د لنډي کوتل اورګاډی هم له غره نه راکوزیږي." },
+          { lang: 'PS', cat: 'general', text: "که د غلطو چالونو سیالي وای، نو د ټولو حجرو پګړۍ به نن تا ته درکړل شوې وای." },
+          { lang: 'PS', cat: 'streak_lose', text: "پرله پسې {{streak}} ماتې! اوس خو ماتې ستا سره په حجره کې پاخه کټونه اچولي دي." },
+          { lang: 'PS', cat: 'general', text: "سړیه سترګې وغړوه! دلته دانې خوړل کیږي، د پیښور چپلي کباب نه دی پروت!" },
+          { lang: 'PS', cat: 'crushed', text: "ستا دفاعي پلان داسې سوری سوری و لکه د اوړي زوړ جالیز بنین!" },
+          { lang: 'PS', cat: 'easy_ai_lose', text: "ما خو لا خپل کمپیوټري ماغزه نه وو تود کړي او تا مخکې له مخکې سپین بیرغ پورته کړ." },
+          { lang: 'PS', cat: 'crushed', text: "په ټوله لوبه کې دې یوازې {{eaten}} دانې وخوړې؟ ته روژه یې او که غاښونه دې چنجي خوړلي دي؟" },
+          { lang: 'PS', cat: 'general', text: "داسې په منډه زما دام ته راغلې لکه په توره شپه کې چې څوک په خپله خوښه کوهي ته ورټوپ کړي." },
+          { lang: 'PS', cat: 'general', text: "وروره لومړی لاړ شه یوه پیاله شنه چای وڅښه، ستا د ماغزو بټرۍ بیخي صفر شوې ده!" },
+          { lang: 'PS', cat: 'fast_lose', text: "ستا د لوبې جنازه خو په دریم چال کې وتلې وه، نور خو هسې د جمعې فاتحه او اسقاط روان و." },
+          { lang: 'PS', cat: 'easy_ai_lose', text: "رښتیا ووایه، موبایل دې د زانګو ماشوم ته ورکړی و او که دا ستا خپل کمال دی؟" },
+          { lang: 'PS', cat: 'slow_move', text: "دومره وخت دې په سوچ کې تېر کړ، په دومره وخت کې خو د لوی دیګ کابلي پلو هم پخیږي!" },
+          { lang: 'PS', cat: 'crushed', text: "ته خو داسې بې دفاع ولاړ وې لکه په تېز باران کې چې سړی د اخبار کاغذ پر سر ونیسي." },
+          { lang: 'PS', cat: 'general', text: "په قطار کې عقل پکار وي خان صیب، یوازې په تېزه ګوته وهلو سړی د میدان باز نه جوړیږي!" },
+          { lang: 'PS', cat: 'streak_lose', text: "ستا دانې اوس قومي جرګه کوي چې دا مشر مو بدل کړئ کنه ټول به مو په دار وځړوي." },
+          { lang: 'PS', cat: 'crushed', text: "تا خو خپل لښکر داسې په اسانه حلال کړ لکه د لوی اختر د قربانۍ پسونه!" },
+          { lang: 'PS', cat: 'general', text: "که په غپ او لافو لوبه ګټل کېدای نو ته به بادشاه وې، خو دلته لږ دماغ هم غواړي!" },
+          { lang: 'PS', cat: 'easy_ai_lose', text: "دومره اسانه ماتې دې وخوړه چې اوس ماته هم په خپله بریا شرم راځي." },
+          { lang: 'PS', cat: 'crushed', text: "ته خو د ښکار لپاره له کوره راوتی وې، خو پخپله د تخرګ سیخ کباب شوې!" },
+          { lang: 'PS', cat: 'general', text: "ستا هر چال زما لپاره د اختر عیدي وه—ډېره مننه چې زما کار دې دومره اسانه کړ!" },
+          { lang: 'PS', cat: 'general', text: "داسې خطا خو سړی په درانه خوب کې هم نه کوي لکه تا چې په رڼو سترګو وکړه." },
+          { lang: 'PS', cat: 'general', text: "یوه چمټه نسوار واچوه چې سر دې خلاص شي، هسې خو دې په دې تخته هېڅ پته نه لګي!" },
+          { lang: 'PS', cat: 'blunder_assist', text: "د Undo او Hint سره سره هم بایلودې؟ دې ته وایي چې بخت کوټه وي نو په اوښ سپی خوړل کوي!" },
+          { lang: 'PS', cat: 'crushed', text: "ستا دفاعي لیکه داسې وه لکه د کلي زوړ مات دیوال چې وړوکی چرګ هم ترې اوړي." },
+          { lang: 'PS', cat: 'general', text: "ته په دې تخته داسې ورک وې لکه د کراچۍ په صدر بازار کې چې د غره سړی لار ورکه کړي!" },
+          { lang: 'PS', cat: 'easy_ai_lose', text: "ما ویل کوم لوی پهلوان به وي، خو ته خو د پټو سترګو لوبغاړی وختلې!" },
+          { lang: 'PS', cat: 'slow_move', text: "په {{time}} وخت کې دې یوازې دومره وکړل چې خپله ماتې دې په خپلو لاسونو امضا کړه." },
+          { lang: 'PS', cat: 'crushed', text: "دومره بې پروا توب؟ تا خو خپله قلعه داسې خوشې کړه لکه کرایه دار چې نیمه شپه کور تشوي!" },
+          { lang: 'PS', cat: 'general', text: "یاره ستا د لوبې په لیدو خو د حجرې زاړه سپین ږیري هم په سر لاسونه وهي!" },
+          { lang: 'PS', cat: 'general', text: "تاریخ به یاد ساتي چې یو زلمی راغی، ډېر فکر یې وکړ، او خپل کټ یې پخپله چپه کړ!" },
+          { lang: 'PS', cat: 'general', text: "ځه شاباش! مخ په یخو اوبو پریمنځه او بیا د 'Rematch' تڼۍ ووهه، زه دې په تمه یم!" }
         ],
+
+        refillAndShuffleDeck() {
+          const n = this.builtinRoasts.length;
+          const arr = Array.from({ length: n }, (_, i) => i);
+          for (let i = n - 1; i > 0; i--) {
+            let r = 0;
+            try {
+              const buf = new Uint32Array(1);
+              crypto.getRandomValues(buf);
+              r = buf[0] % (i + 1);
+            } catch (e) {
+              r = Math.floor(Math.random() * (i + 1));
+            }
+            const tmp = arr[i];
+            arr[i] = arr[r];
+            arr[r] = tmp;
+          }
+          // Since we pop() from the end of deck, ensure the first popped item of the new cycle
+          // is never identical to the last shown item of the previous cycle
+          if (arr.length > 1 && arr[arr.length - 1] === this.lastPickedIdx) {
+            const tmp = arr[arr.length - 1];
+            arr[arr.length - 1] = arr[0];
+            arr[0] = tmp;
+          }
+          this.deck = arr;
+        },
 
         load() {
           if (this.loaded) return;
           this.loaded = true;
+          const n = this.builtinRoasts.length;
           try {
             const raw = SafeStorage.getItem(this.storageKey);
             if (raw) {
@@ -17900,21 +18101,29 @@
               if (parsed && typeof parsed === 'object') {
                 this.lastFetchedDate = String(parsed.lastFetchedDate || '');
                 this.totalFetchedBatches = Number(parsed.totalFetchedBatches) || 0;
-                this.recentShown = Array.isArray(parsed.recentShown) ? parsed.recentShown.slice(-40) : [];
+                this.lastPickedIdx = typeof parsed.lastPickedIdx === 'number' ? parsed.lastPickedIdx : -1;
+                if (Array.isArray(parsed.deck)) {
+                  const valid = parsed.deck.filter((idx) => Number.isInteger(idx) && idx >= 0 && idx < n);
+                  this.deck = Array.from(new Set(valid));
+                }
                 this.aiRoasts = Array.isArray(parsed.aiRoasts) ? parsed.aiRoasts.slice(0, 600) : [];
               }
             }
           } catch (e) {}
+          if (!Array.isArray(this.deck) || this.deck.length === 0) {
+            this.refillAndShuffleDeck();
+            this.save();
+          }
         },
 
         save() {
           try {
             this.aiRoasts = this.aiRoasts.slice(0, 600);
-            this.recentShown = this.recentShown.slice(-40);
             SafeStorage.setItem(this.storageKey, JSON.stringify({
               lastFetchedDate: this.lastFetchedDate,
               totalFetchedBatches: this.totalFetchedBatches,
-              recentShown: this.recentShown,
+              lastPickedIdx: this.lastPickedIdx,
+              deck: this.deck,
               aiRoasts: this.aiRoasts
             }));
           } catch (e) {}
@@ -17925,6 +18134,8 @@
           return {
             lastFetchedDate: this.lastFetchedDate,
             totalFetchedBatches: this.totalFetchedBatches,
+            lastPickedIdx: this.lastPickedIdx,
+            deck: this.deck,
             aiRoasts: this.aiRoasts
           };
         },
@@ -17932,9 +18143,15 @@
         restoreData(data) {
           if (!data || typeof data !== 'object') return;
           this.loaded = true;
+          const n = this.builtinRoasts.length;
           if (typeof data.lastFetchedDate === 'string') this.lastFetchedDate = data.lastFetchedDate;
           if (typeof data.totalFetchedBatches === 'number') this.totalFetchedBatches = data.totalFetchedBatches;
+          if (typeof data.lastPickedIdx === 'number') this.lastPickedIdx = data.lastPickedIdx;
+          if (Array.isArray(data.deck)) {
+            this.deck = Array.from(new Set(data.deck.filter((idx) => Number.isInteger(idx) && idx >= 0 && idx < n)));
+          }
           if (Array.isArray(data.aiRoasts)) this.aiRoasts = data.aiRoasts.slice(0, 600);
+          if (!this.deck || this.deck.length === 0) this.refillAndShuffleDeck();
           this.save();
         },
 
@@ -17954,18 +18171,14 @@
         shouldShowRoastCurrentMatch() {
           const info = this.getLoserAndWinnerInfo();
           if (!info) return false;
-          // 1. AI vs AI: always show roast directed at the losing AI team
           if (GameState.aiVsAi) return true;
-          // 2. Online / Offline P2P (2 devices): show ONLY on the losing team's device
           if (GameState.mode === 'webrtc' && GameState.localPlayerRole) {
             return GameState.localPlayerRole === info.loserRole;
           }
-          // 3. Solo vs AI (Built-in or Real Puter AI): show ONLY when the human player's team loses
           if (GameState.vsAI) {
             const userRole = PlayerAnalytics.getUserRole();
             return info.loserRole === userRole;
           }
-          // 4. 2P Local Pass & Play (shared screen): show addressed strictly to the losing team
           return true;
         },
 
@@ -17975,7 +18188,6 @@
           const info = this.getLoserAndWinnerInfo() || { loserRole: 1, winnerRole: 2, loserTitle: 'Player 1', winnerTitle: 'Player 2' };
           const { loserRole, winnerRole, loserTitle, winnerTitle } = info;
 
-          // Update per-side consecutive loss streak once per finished match
           const curFramesLen = (GameState.replayFrames && GameState.replayFrames.length) || (GameState.moveLog && GameState.moveLog.length) || 1;
           if (this.lastRecordedMatchLen !== curFramesLen) {
             this.lastRecordedMatchLen = curFramesLen;
@@ -17986,7 +18198,6 @@
           const latestEv = (PlayerAnalytics.events && PlayerAnalytics.events[0]) || null;
           const allTime = PlayerAnalytics.getCachedAllTimeSummary();
 
-          // Count exact moves made by the losing team from replayFrames if available
           let loserMoves = 0;
           if (Array.isArray(GameState.replayFrames) && GameState.replayFrames.length > 1) {
             for (const f of GameState.replayFrames) {
@@ -18004,51 +18215,13 @@
           const durationMs = latestEv
             ? (Number(latestEv.durationMs) || 30000)
             : Math.max(5000, PlayerAnalytics.getCurrentSessionDurationMs());
-          const avgThinkMs = loserMoves > 0
-            ? Math.round((latestEv && !GameState.aiVsAi && loserRole === PlayerAnalytics.getUserRole() && latestEv.userThinkMs
-              ? Number(latestEv.userThinkMs)
-              : durationMs * 0.5) / loserMoves)
-            : 0;
-          const longestThinkMs = (latestEv && !GameState.aiVsAi && loserRole === PlayerAnalytics.getUserRole())
-            ? (Number(latestEv.longestThinkMs) || avgThinkMs)
-            : avgThinkMs;
-
           const beadsEaten = Number(GameState.capturedBy[loserRole]) || 0;
-          const beadsLost = Number(GameState.capturedBy[winnerRole]) || 0;
+          const beadsLost = Math.max(1, Number(GameState.capturedBy[winnerRole]) || 1);
           const isUserLoser = !GameState.aiVsAi && loserRole === PlayerAnalytics.getUserRole();
-          const undos = (isUserLoser && latestEv) ? (Number(latestEv.undos) || 0) : ((PlayerAnalytics.session && PlayerAnalytics.session.undos) || 0);
-          const hints = (isUserLoser && latestEv) ? (Number(latestEv.hints) || 0) : ((PlayerAnalytics.session && PlayerAnalytics.session.hints) || 0);
           const curLossStreak = Math.max(
             this.teamStreaks[loserRole] || 1,
             isUserLoser ? (Number(allTime.curLossStreak) || 1) : 1
           );
-          const quitsAndRestarts = isUserLoser
-            ? ((Number(allTime.quitsMidGame) || 0) + (Number(allTime.restartsMidGame) || 0))
-            : 0;
-
-          const matchedCategories = [];
-          if (GameState.vsAI && !GameState.aiVsAi && GameState.aiDifficulty === 'easy' && isUserLoser) {
-            matchedCategories.push({ cat: 'easy_ai_lose', weight: 6, badge: '🌱 LOST TO EASY BOT' });
-          }
-          if (!GameState.aiVsAi && (undos > 0 || hints > 0)) {
-            matchedCategories.push({ cat: 'blunder_assist', weight: 5, badge: `💡 ${undos + hints}× ASSIST FUMBLE` });
-          }
-          if (curLossStreak >= 2) {
-            matchedCategories.push({ cat: 'streak_lose', weight: 5, badge: `📉 ${curLossStreak}× LOSS STREAK` });
-          }
-          if (loserMoves <= 9 || durationMs <= 42000) {
-            matchedCategories.push({ cat: 'fast_lose', weight: 5, badge: `⚡ ${loserMoves}-MOVE SPEEDRUN LOSS` });
-          }
-          if (avgThinkMs >= 7000 || longestThinkMs >= 15000 || durationMs >= 210000) {
-            matchedCategories.push({ cat: 'slow_move', weight: 5, badge: `🐌 ${PlayerAnalytics.formatMoveTime(avgThinkMs || longestThinkMs)} OVERTHINKER` });
-          }
-          if (beadsEaten === 0 || (beadsEaten <= 1 && beadsLost >= 5) || (beadsLost - beadsEaten >= 6)) {
-            matchedCategories.push({ cat: 'crushed', weight: 5, badge: `💀 SHUTOUT (${beadsEaten} EATEN)` });
-          }
-          if (quitsAndRestarts >= 3) {
-            matchedCategories.push({ cat: 'quit_history', weight: 3, badge: '🚪 FINISHED WITHOUT QUITTING' });
-          }
-          matchedCategories.push({ cat: 'general', weight: 2, badge: '🔥 GRANDMASTER ROAST' });
 
           return {
             loserRole,
@@ -18057,68 +18230,46 @@
             winnerTitle,
             userMoves: loserMoves,
             durationMs,
-            avgThinkMs,
-            longestThinkMs,
             beadsEaten,
             beadsLost,
-            undos,
-            hints,
-            curLossStreak,
-            quitsAndRestarts,
-            matchedCategories
+            curLossStreak
           };
         },
 
         pickRoastForLoss() {
           const ctx = this.collectLossContext();
-          const allPool = [
-            ...this.builtinRoasts.map((r) => ({ ...r, source: 'builtin' })),
-            ...this.aiRoasts.map((r) => ({ ...r, source: 'puter_ai' }))
-          ];
-
-          const totalW = ctx.matchedCategories.reduce((acc, c) => acc + c.weight, 0);
-          let roll = Math.random() * totalW;
-          let chosenCatObj = ctx.matchedCategories[0];
-          for (const c of ctx.matchedCategories) {
-            roll -= c.weight;
-            if (roll <= 0) {
-              chosenCatObj = c;
-              break;
-            }
+          const totalPool = this.builtinRoasts.length;
+          if (!Array.isArray(this.deck) || this.deck.length === 0) {
+            this.refillAndShuffleDeck();
           }
 
-          let candidates = allPool.filter((r) => r.cat === chosenCatObj.cat);
-          if (candidates.length === 0) {
-            candidates = allPool;
-          }
-
-          let fresh = candidates.filter((r) => !this.recentShown.includes(r.text));
-          if (fresh.length === 0) {
-            fresh = allPool.filter((r) => !this.recentShown.includes(r.text));
-          }
-          if (fresh.length === 0) {
-            this.recentShown = [];
-            fresh = candidates;
-          }
-
-          const picked = fresh[Math.floor(Math.random() * fresh.length)];
-          this.recentShown.push(picked.text);
+          const pickedIdx = this.deck.pop();
+          this.lastPickedIdx = pickedIdx;
+          const seenInCycle = totalPool - this.deck.length;
           this.save();
 
+          const picked = this.builtinRoasts[pickedIdx] || this.builtinRoasts[0];
           const formattedText = String(picked.text || '')
             .replace(/\{\{streak\}\}/g, String(ctx.curLossStreak))
             .replace(/\{\{moves\}\}/g, String(ctx.userMoves))
             .replace(/\{\{eaten\}\}/g, String(ctx.beadsEaten))
+            .replace(/\{\{lost\}\}/g, String(ctx.beadsLost))
             .replace(/\{\{time\}\}/g, PlayerAnalytics.formatDuration(ctx.durationMs, true))
             .replace(/\{\{loser\}\}/g, ctx.loserTitle);
 
+          const langBadgeMap = {
+            EN: '🇬🇧 ENGLISH ROAST',
+            UR: '🇵🇰 اردو تڑکہ ROAST',
+            PS: '🏔️ پښتو ټوکه ROAST'
+          };
+
           return {
             text: formattedText,
-            badge: chosenCatObj.badge,
+            lang: picked.lang || 'EN',
+            badge: langBadgeMap[picked.lang] || '🔥 SAVAGE ROAST',
             loserTitle: ctx.loserTitle,
-            source: picked.source,
-            totalBankSize: allPool.length,
-            aiBankSize: this.aiRoasts.length
+            seenInCycle,
+            totalBankSize: totalPool
           };
         },
 
@@ -18138,123 +18289,13 @@
           banner.classList.remove('hidden');
           if (tagEl) tagEl.textContent = `${roast.badge} • 💀 ${roast.loserTitle}`;
           if (srcEl) {
-            srcEl.textContent = roast.source === 'puter_ai'
-              ? `🧠 Real AI Roast • ${roast.totalBankSize} in bank`
-              : `🎭 Losing Side Only (${roast.totalBankSize} roasts)`;
+            srcEl.textContent = `🎲 ${roast.seenInCycle}/${roast.totalBankSize} Unique Loop`;
           }
+          txtEl.setAttribute('dir', (roast.lang === 'UR' || roast.lang === 'PS') ? 'rtl' : 'ltr');
           txtEl.textContent = `“${roast.text}”`;
-
-          if (GameState.usePuterAI) {
-            this.maybeFetchDailyRealAIRoasts(false);
-          }
         },
 
-        async maybeFetchDailyRealAIRoasts(force = false) {
-          this.load();
-          if (!GameState.usePuterAI && !force) return false;
-          if (this.fetchingDaily) return false;
-          if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
-
-          const todayKey = PlayerAnalytics.getLocalDateKey();
-          if (!force && this.lastFetchedDate === todayKey && this.aiRoasts.some((r) => r && r.date === todayKey)) {
-            return false;
-          }
-
-          this.fetchingDaily = true;
-          try {
-            const sdkOk = await PuterAIManager.ensureSdkLoaded(6000);
-            if (!sdkOk || typeof puter === 'undefined' || !puter.ai || typeof puter.ai.chat !== 'function') {
-              this.fetchingDaily = false;
-              return false;
-            }
-
-            const st = PuterAIManager.getWindowStats();
-            if (PuterAIManager.hasServerSync && st.effectiveRemMicro <= 0) {
-              this.fetchingDaily = false;
-              return false;
-            }
-
-            const sysPrompt = 'You are the world\'s funniest, wittiest, most sarcastic grandmaster board-game commentator. Generate 50 brand-new, hilariously sarcastic, clean (PG-13), razor-sharp one-liner roasts for a player who just lost a strategy board game. Output ONLY a valid JSON array of 50 objects with keys "cat" and "text", where "cat" is one of: "fast_lose", "slow_move", "streak_lose", "crushed", "easy_ai_lose", "blunder_assist", "general". Keep each "text" punchy (12 to 24 words).';
-            const usrPrompt = `Generate 50 unique, maximally funny & sarcastic defeat one-liners for date ${todayKey}. Distribute across: fast_lose (8), slow_move (8), streak_lose (8), crushed (8), easy_ai_lose (4), blunder_assist (4), general (10). Return JSON array only.`;
-
-            const t0 = performance.now();
-            const model = 'gpt-4o-mini';
-            const resp = await puter.ai.chat(
-              [
-                { role: 'system', content: sysPrompt },
-                { role: 'user', content: usrPrompt }
-              ],
-              { model, max_tokens: 2400, temperature: 0.92 }
-            );
-
-            let rawText = '';
-            if (typeof resp === 'string') rawText = resp;
-            else if (resp && resp.message && typeof resp.message.content === 'string') rawText = resp.message.content;
-            else if (resp && resp.message && Array.isArray(resp.message.content)) {
-              rawText = resp.message.content.map((c) => c.text || '').join(' ');
-            } else if (resp && typeof resp.text === 'string') rawText = resp.text;
-            else rawText = JSON.stringify(resp || '');
-
-            const validCats = new Set(['fast_lose', 'slow_move', 'streak_lose', 'crushed', 'easy_ai_lose', 'blunder_assist', 'quit_history', 'general']);
-            const parsedItems = [];
-
-            const arrMatch = rawText.match(/\[[\s\S]*\]/);
-            if (arrMatch) {
-              try {
-                const arr = JSON.parse(arrMatch[0]);
-                if (Array.isArray(arr)) {
-                  for (const item of arr) {
-                    if (item && typeof item.text === 'string' && item.text.trim().length > 10) {
-                      const c = validCats.has(item.cat) ? item.cat : 'general';
-                      parsedItems.push({ cat: c, text: item.text.trim(), date: todayKey });
-                    } else if (typeof item === 'string' && item.trim().length > 10) {
-                      parsedItems.push({ cat: 'general', text: item.trim(), date: todayKey });
-                    }
-                  }
-                }
-              } catch (e) {}
-            }
-
-            if (parsedItems.length < 10) {
-              const lines = rawText.split(/\r?\n/);
-              const catCycle = ['fast_lose', 'slow_move', 'streak_lose', 'crushed', 'easy_ai_lose', 'blunder_assist', 'general'];
-              let idx = 0;
-              for (const line of lines) {
-                const cleaned = line.replace(/^\s*[-*\d.)]+\s*/, '').replace(/^["']|["'],?$/g, '').trim();
-                if (cleaned.length >= 18 && cleaned.length <= 220 && !cleaned.startsWith('{') && !cleaned.startsWith('[')) {
-                  parsedItems.push({ cat: catCycle[idx % catCycle.length], text: cleaned, date: todayKey });
-                  idx++;
-                }
-              }
-            }
-
-            if (parsedItems.length > 0) {
-              const existingTexts = new Set([
-                ...this.builtinRoasts.map((r) => r.text.toLowerCase()),
-                ...this.aiRoasts.map((r) => (r.text || '').toLowerCase())
-              ]);
-              let addedCount = 0;
-              for (const item of parsedItems) {
-                const k = item.text.toLowerCase();
-                if (!existingTexts.has(k)) {
-                  existingTexts.add(k);
-                  this.aiRoasts.unshift(item);
-                  addedCount++;
-                }
-              }
-              this.lastFetchedDate = todayKey;
-              this.totalFetchedBatches = (this.totalFetchedBatches || 0) + 1;
-              this.save();
-
-              const tokensUsed = PuterAIManager.extractResponseTokens(resp, sysPrompt, usrPrompt, rawText);
-              const latency = Math.round(performance.now() - t0);
-              PuterAIManager.recordCallTelemetry(model, GameState.aiDifficulty, tokensUsed, latency, `Loaded ${addedCount} fresh daily sarcastic roasts (${todayKey})`);
-              showBoardToast(`🎭 Real AI loaded ${addedCount} new sarcastic roasts for today!`);
-              this.fetchingDaily = false;
-              return true;
-            }
-          } catch (err) {}
-          this.fetchingDaily = false;
+        async maybeFetchDailyRealAIRoasts() {
           return false;
         }
       };
@@ -18269,6 +18310,7 @@
         lastLossStreakMatchHandled: false,
         wasPausedBefore: false,
         seenDoubleMills: [],
+        warnedBrinkPlayers: { 1: false, 2: false },
 
         resetMatchState() {
           this.turnStartCaptures = { 1: (GameState.capturedBy && GameState.capturedBy[1]) || 0, 2: (GameState.capturedBy && GameState.capturedBy[2]) || 0 };
@@ -18278,10 +18320,51 @@
           this.lastLossStreakMatchHandled = false;
           this.wasPausedBefore = false;
           this.seenDoubleMills = [];
+          this.warnedBrinkPlayers = { 1: false, 2: false };
+          if (typeof VisualFX !== 'undefined') {
+            VisualFX.coffinFlash = null;
+          }
         },
 
         isFunEnabled() {
           return GameState.enableBakhtiFun !== false;
+        },
+
+        triggerCoffinCenterMeme(caption = '⚰️ RIP BEAD!', duration = 2200, fromRemote = false) {
+          if (!this.isFunEnabled() || GameState.gameFamily !== 'morris') return;
+          if (typeof VisualFX !== 'undefined' && typeof VisualFX.triggerCoffinMeme === 'function') {
+            VisualFX.triggerCoffinMeme(caption, duration);
+          }
+          if (!fromRemote && GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
+            WebRTCManager.send({
+              type: 'BAKHTI_FUN',
+              subType: 'COFFIN',
+              caption,
+              duration
+            });
+          }
+        },
+
+        checkMorrisBrinkOfLoss(playerToMove, remainingBeads, legalMoves) {
+          if (!this.isFunEnabled() || GameState.gameFamily !== 'morris') return;
+          if ((GameState.reserves && (GameState.reserves[1] > 0 || GameState.reserves[2] > 0))) return;
+          const opp = playerToMove === 1 ? 2 : 1;
+          let oppHasReadyMill = false;
+          for (const line of MillLines) {
+            let oC = 0, eC = 0, emp = -1;
+            for (const id of line) {
+              if (GameState.board[id] === opp) oC++;
+              else if (GameState.board[id] === 0) { eC++; emp = id; }
+            }
+            if (oC === 2 && eC === 1 && emp !== -1 && hasReadySliderForMill(emp, line, opp, GameState.board)) {
+              oppHasReadyMill = true;
+              break;
+            }
+          }
+          if ((remainingBeads === 3 && !this.warnedBrinkPlayers[playerToMove]) || (remainingBeads <= 4 && oppHasReadyMill) || (legalMoves && legalMoves.total <= 1)) {
+            this.warnedBrinkPlayers[playerToMove] = true;
+            this.triggerCoffinCenterMeme(remainingBeads <= 3 ? '⚰️ 3 BEADS LEFT!' : '⚰️ DANGER!', 2100, false);
+          }
         },
 
         isOpen() {
@@ -18483,9 +18566,17 @@
           if (!packet) return;
           if (packet.subType === 'CONFIG_SYNC') {
             GameState.enableBakhtiFun = Boolean(packet.enableBakhtiFun);
+            if (!GameState.enableBakhtiFun && typeof VisualFX !== 'undefined') {
+              VisualFX.coffinFlash = null;
+              requestRender();
+            }
             const chk = document.getElementById('chkEnableBakhtiFun');
             if (chk) chk.checked = GameState.enableBakhtiFun;
             savePersistentPrefs();
+            return;
+          }
+          if (packet.subType === 'COFFIN') {
+            this.triggerCoffinCenterMeme(packet.caption || '⚰️ RIP BEAD!', packet.duration || 2200, true);
             return;
           }
           if (packet.subType === 'SHOW') {
@@ -22752,6 +22843,10 @@
       if (chkBakhti) {
         chkBakhti.addEventListener('change', (e) => {
           GameState.enableBakhtiFun = e.target.checked;
+          if (!GameState.enableBakhtiFun && typeof VisualFX !== 'undefined') {
+            VisualFX.coffinFlash = null;
+            requestRender();
+          }
           savePersistentPrefs();
           if (GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
             WebRTCManager.send({
@@ -27090,7 +27185,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=8f0f0fbf13', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=fd50d7f3a5', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
