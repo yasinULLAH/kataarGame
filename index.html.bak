@@ -2987,7 +2987,7 @@
             <button id="btnAnotherRoast" type="button" class="android-btn px-2 py-0.5 rounded-lg bg-white/15 hover:bg-white/25 text-amber-200 text-[9.5px] font-extrabold border border-amber-300/30" title="Hit me with another sarcastic one-liner">🎲 Another Roast</button>
           </div>
         </div>
-        <p id="victoryRoastText" dir="auto" class="text-xs sm:text-sm font-extrabold text-amber-100 leading-relaxed italic"></p>
+        <p id="victoryRoastText" dir="auto" style="font-family: Calibri, 'Segoe UI', Tahoma, sans-serif;" class="text-xs sm:text-sm font-bold text-amber-100 leading-relaxed"></p>
       </div>
 
       <div id="victoryAIBrainBanner" class="hidden bg-rose-50 border border-rose-200 rounded-2xl p-2 text-center text-[10.5px] font-bold text-rose-900 shadow-sm">
@@ -9064,10 +9064,13 @@
 
             const mills = forbidLandingMill ? [] : getMillsContainingNode(action.to, player);
             if (mills.length > 0 && getRemovableOpponentNodes(opponent).length > 0) {
+              const oppLeft = countPlayerTotalPieces(opponent);
+              const showCoffinNow = (GameState.reserves[opponent] || 0) === 0 && (oppLeft === 3 || oppLeft === 4);
               if (typeof BakhtiFunManager !== 'undefined') {
                 BakhtiFunManager.checkDoubleMillOnMove(action, player, mills);
-                const oppLeft = countPlayerTotalPieces(opponent);
-                BakhtiFunManager.triggerCoffinCenterMeme(oppLeft <= 3 ? '⚰️ FINAL NAIL!' : '⚰️ RIP BEAD!', 2200);
+                if (showCoffinNow) {
+                  BakhtiFunManager.triggerCoffinCenterMeme(oppLeft === 3 ? '⚰️ FINAL NAIL!' : '⚰️ 4 BEADS LEFT!', 2200);
+                }
               }
               GameState.morrisPendingRemove = true;
               GameState.lastFormedMill = mills[0];
@@ -9088,7 +9091,7 @@
               }
 
               if (GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || player === GameState.aiPlayerRole)) {
-                scheduleAITurn((typeof BakhtiFunManager !== 'undefined' && BakhtiFunManager.isFunEnabled()) ? 950 : 460);
+                scheduleAITurn((showCoffinNow && typeof BakhtiFunManager !== 'undefined' && BakhtiFunManager.isFunEnabled()) ? 950 : 460);
               }
               return;
             }
@@ -9146,10 +9149,13 @@
 
             const mills = getMillsContainingNode(action.to, player);
             if (mills.length > 0 && getRemovableOpponentNodes(opponent).length > 0) {
+              const oppLeft = countPlayerTotalPieces(opponent);
+              const showCoffinNow = (GameState.reserves[opponent] || 0) === 0 && (oppLeft === 3 || oppLeft === 4);
               if (typeof BakhtiFunManager !== 'undefined') {
                 BakhtiFunManager.checkDoubleMillOnMove(action, player, mills);
-                const oppLeft = countPlayerTotalPieces(opponent);
-                BakhtiFunManager.triggerCoffinCenterMeme(oppLeft <= 3 ? '⚰️ FINAL NAIL!' : '⚰️ RIP BEAD!', 2200);
+                if (showCoffinNow) {
+                  BakhtiFunManager.triggerCoffinCenterMeme(oppLeft === 3 ? '⚰️ FINAL NAIL!' : '⚰️ 4 BEADS LEFT!', 2200);
+                }
               }
               GameState.morrisPendingRemove = true;
               GameState.lastFormedMill = mills[0];
@@ -9170,7 +9176,7 @@
               }
 
               if (GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || player === GameState.aiPlayerRole)) {
-                scheduleAITurn((typeof BakhtiFunManager !== 'undefined' && BakhtiFunManager.isFunEnabled()) ? 950 : 460);
+                scheduleAITurn((showCoffinNow && typeof BakhtiFunManager !== 'undefined' && BakhtiFunManager.isFunEnabled()) ? 950 : 460);
               }
               return;
             }
@@ -9532,9 +9538,6 @@
         } else if (GameState.gameFamily === 'morris') {
           const winTarget = Math.max(1, GameState.piecesPerPlayer - 2);
           if (oppRemaining <= 2 || GameState.capturedBy[playerJustMoved] >= winTarget) {
-            if (typeof BakhtiFunManager !== 'undefined') {
-              BakhtiFunManager.triggerCoffinCenterMeme('⚰️ GAME OVER!', 2200);
-            }
             GameState.gameOver = true;
             GameState.winner = playerJustMoved;
             GameState.winReason = `Captured ${GameState.capturedBy[playerJustMoved]} beads — opponent reduced to ${oppRemaining} beads and cannot form a line of 3!`;
@@ -9543,7 +9546,7 @@
             SoundEngine.victory();
             showVictoryModal();
           } else if (GameState.reserves[opponent] === 0 && oppMoves.total === 0) {
-            if (typeof BakhtiFunManager !== 'undefined') {
+            if ((oppRemaining === 3 || oppRemaining === 4) && typeof BakhtiFunManager !== 'undefined') {
               BakhtiFunManager.triggerCoffinCenterMeme('⚰️ TRAPPED!', 2200);
             }
             GameState.gameOver = true;
@@ -18292,13 +18295,20 @@
           }
 
           const roast = this.pickRoastForLoss();
+          const isRtl = (roast.lang === 'UR' || roast.lang === 'PS');
           banner.classList.remove('hidden');
           if (tagEl) tagEl.textContent = `${roast.badge} • 💀 ${roast.loserTitle}`;
           if (srcEl) {
             srcEl.textContent = `🎲 ${roast.seenInCycle}/${roast.totalBankSize} Unique Loop`;
           }
-          txtEl.setAttribute('dir', (roast.lang === 'UR' || roast.lang === 'PS') ? 'rtl' : 'ltr');
-          txtEl.textContent = `“${roast.text}”`;
+          txtEl.setAttribute('dir', isRtl ? 'rtl' : 'ltr');
+          txtEl.setAttribute('lang', roast.lang === 'UR' ? 'ur' : (roast.lang === 'PS' ? 'ps' : 'en'));
+          txtEl.style.fontFamily = "Calibri, 'Segoe UI', Tahoma, sans-serif";
+          txtEl.style.direction = isRtl ? 'rtl' : 'ltr';
+          txtEl.style.textAlign = isRtl ? 'right' : 'left';
+          txtEl.style.unicodeBidi = 'plaintext';
+          txtEl.style.fontStyle = 'normal';
+          txtEl.textContent = roast.text;
         },
 
         async maybeFetchDailyRealAIRoasts() {
@@ -18354,6 +18364,7 @@
         checkMorrisBrinkOfLoss(playerToMove, remainingBeads, legalMoves) {
           if (!this.isFunEnabled() || GameState.gameFamily !== 'morris') return;
           if ((GameState.reserves && (GameState.reserves[1] > 0 || GameState.reserves[2] > 0))) return;
+          if (remainingBeads !== 3 && remainingBeads !== 4) return;
           const opp = playerToMove === 1 ? 2 : 1;
           let oppHasReadyMill = false;
           for (const line of MillLines) {
@@ -18367,9 +18378,10 @@
               break;
             }
           }
-          if ((remainingBeads === 3 && !this.warnedBrinkPlayers[playerToMove]) || (remainingBeads <= 4 && oppHasReadyMill) || (legalMoves && legalMoves.total <= 1)) {
-            this.warnedBrinkPlayers[playerToMove] = true;
-            this.triggerCoffinCenterMeme(remainingBeads <= 3 ? '⚰️ 3 BEADS LEFT!' : '⚰️ DANGER!', 2100, false);
+          const stateKey = `${playerToMove}_${remainingBeads}`;
+          if (!this.warnedBrinkPlayers[stateKey] && (remainingBeads === 3 || oppHasReadyMill || (legalMoves && legalMoves.total <= 1))) {
+            this.warnedBrinkPlayers[stateKey] = true;
+            this.triggerCoffinCenterMeme(remainingBeads === 3 ? '⚰️ 3 BEADS LEFT!' : '⚰️ 4 BEADS LEFT!', 2100, false);
           }
         },
 
@@ -27191,7 +27203,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=03d3b5b96c', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=fe19c6b85d', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {

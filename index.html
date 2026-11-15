@@ -18327,6 +18327,7 @@
         wasPausedBefore: false,
         seenDoubleMills: [],
         warnedBrinkPlayers: { 1: false, 2: false },
+        sideLossStreaks: { 1: 0, 2: 0 },
 
         resetMatchState() {
           this.turnStartCaptures = { 1: (GameState.capturedBy && GameState.capturedBy[1]) || 0, 2: (GameState.capturedBy && GameState.capturedBy[2]) || 0 };
@@ -18404,6 +18405,11 @@
         },
 
         recordMatchFinished(winner) {
+          if (winner === 1 || winner === 2) {
+            const loser = winner === 1 ? 2 : 1;
+            this.sideLossStreaks[loser] = (this.sideLossStreaks[loser] || 0) + 1;
+            this.sideLossStreaks[winner] = 0;
+          }
           const userRole = (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.getUserRole)
             ? PlayerAnalytics.getUserRole()
             : 1;
@@ -18419,13 +18425,18 @@
         shouldShowBakhti3() {
           if (!this.isFunEnabled()) return false;
           if (this.lastLossStreakMatchHandled) return false;
+          if (GameState.winner !== 1 && GameState.winner !== 2) return false;
+          const loserRole = GameState.winner === 1 ? 2 : 1;
+          if (GameState.aiVsAi || !GameState.vsAI) {
+            return (this.sideLossStreaks[loserRole] || 0) >= 6;
+          }
           const userRole = (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.getUserRole)
             ? PlayerAnalytics.getUserRole()
             : 1;
-          if (GameState.winner === 0 || GameState.winner === null || GameState.winner === userRole) {
+          if (GameState.winner === userRole) {
             return false;
           }
-          const streak = this.getLossStreak();
+          const streak = Math.max(this.getLossStreak(), this.sideLossStreaks[loserRole] || 0);
           return streak >= 6;
         },
 
@@ -18507,16 +18518,21 @@
           }
         },
 
-        showFlash(variant, key = '') {
+        showFlash(variant, key = '', actorRole = null) {
           if (!this.isFunEnabled()) return;
           const autoCloseMs = (variant === 1) ? 2700 : 2900;
+          const role = actorRole || GameState.currentTurn || 1;
+          const actorName = (typeof getThemePlayerNames === 'function')
+            ? getThemePlayerNames()[role - 1]
+            : `Player ${role}`;
+          const showActorPrefix = Boolean(GameState.aiVsAi || !GameState.vsAI);
           if (GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
             WebRTCManager.send({
               type: 'BAKHTI_FUN',
               subType: 'SHOW',
               variant,
               key: key || '',
-              authorRole: GameState.localPlayerRole || 1,
+              authorRole: GameState.localPlayerRole || role,
               autoCloseMs
             });
           }
@@ -18531,7 +18547,9 @@
               badgeIcon: '🔥',
               badgeText: 'Triple Kill Streak',
               title: '3 Beads Captured Back-to-Back!',
-              subtitle: 'Bakhti salutes your lethal board dominance! Match paused.',
+              subtitle: showActorPrefix
+                ? `${actorName} captured 3 beads back-to-back! Match paused.`
+                : 'Bakhti salutes your lethal board dominance! Match paused.',
               btnLabel: 'Continue Match',
               autoCloseMs,
               fromRemote: false
@@ -18547,7 +18565,9 @@
               badgeIcon: '⚡',
               badgeText: 'Double Mill Mastery',
               title: 'Running Mill Created (See-Saw)!',
-              subtitle: 'Bakhti: Unstoppable back-and-forth mill trap established! Match paused.',
+              subtitle: showActorPrefix
+                ? `${actorName} created an unstoppable Running Double Mill! Match paused.`
+                : 'Bakhti: Unstoppable back-and-forth mill trap established! Match paused.',
               btnLabel: 'Continue Match',
               autoCloseMs,
               fromRemote: false
@@ -18558,12 +18578,16 @@
         showLossStreakModal(onContinue) {
           this.lastLossStreakMatchHandled = true;
           const autoCloseMs = 6500;
+          const loserRole = GameState.winner === 1 ? 2 : 1;
+          const loserName = (typeof getThemePlayerNames === 'function')
+            ? getThemePlayerNames()[loserRole - 1]
+            : `Player ${loserRole}`;
           if (GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
             WebRTCManager.send({
               type: 'BAKHTI_FUN',
               subType: 'SHOW',
               variant: 3,
-              authorRole: GameState.localPlayerRole || 1,
+              authorRole: GameState.localPlayerRole || loserRole,
               autoCloseMs
             });
           }
@@ -18572,7 +18596,9 @@
             badgeIcon: '🎶',
             badgeText: '6 Defeats in a Row',
             title: '6 Matches Lost Back-to-Back!',
-            subtitle: 'Bakhti is playing the mournful flute for your 6 consecutive defeats... Match paused.',
+            subtitle: (GameState.aiVsAi || !GameState.vsAI)
+              ? `Bakhti is playing the mournful flute for ${loserName}'s 6 consecutive defeats...`
+              : 'Bakhti is playing the mournful flute for your 6 consecutive defeats... Match paused.',
             btnLabel: 'View Match Results',
             autoCloseMs,
             onClose: onContinue,
@@ -18676,9 +18702,9 @@
                   : 1;
                 const shouldShow = (GameState.mode === 'webrtc')
                   ? (playerJustMoved === GameState.localPlayerRole)
-                  : (GameState.vsAI ? (playerJustMoved === userRole) : true);
+                  : ((GameState.vsAI && !GameState.aiVsAi) ? (playerJustMoved === userRole) : true);
                 if (shouldShow) {
-                  this.showFlash(1);
+                  this.showFlash(1, '', playerJustMoved);
                 }
               }
             }
@@ -18720,9 +18746,9 @@
               : 1;
             const shouldShow = (GameState.mode === 'webrtc')
               ? (player === GameState.localPlayerRole)
-              : (GameState.vsAI ? (player === userRole) : true);
+              : ((GameState.vsAI && !GameState.aiVsAi) ? (player === userRole) : true);
             if (shouldShow) {
-              this.showFlash(2, millKey);
+              this.showFlash(2, millKey, player);
             }
           }
         }
@@ -27203,7 +27229,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=fe19c6b85d', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=58cc4362e0', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
