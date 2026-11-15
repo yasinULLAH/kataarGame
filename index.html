@@ -820,12 +820,18 @@
 
       #mainMenuBodyGrid {
         -webkit-overflow-scrolling: touch;
-         overscroll-behavior: contain;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
+      }
+
+      #mainMenuBodyGrid * {
+        touch-action: pan-y;
       }
 
       #menuQuickGameStrip {
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
+        max-height: none !important;
+        overflow: visible !important;
+        overscroll-behavior: auto !important;
       }
 
       #menuQuickConfigSlot #quickConfigStrip {
@@ -1539,7 +1545,7 @@
               <button type="button" data-menu-cat="all" class="menu-cat-tab android-btn py-1.5 lg:py-1 px-1 sm:px-1.5 rounded-lg text-[9.5px] sm:text-[10px] font-extrabold whitespace-nowrap truncate">✨ All</button>
             </div>
 
-            <div id="menuQuickGameStrip" class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 content-start flex-1 max-h-[164px] sm:max-h-[190px] md:max-h-[180px] lg:max-h-[195px] overflow-y-auto custom-scroll pr-0.5">
+            <div id="menuQuickGameStrip" class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 content-start flex-1 lg:max-h-[195px] lg:overflow-y-auto custom-scroll pr-0.5">
               <button type="button" data-menu-preset="6x6" data-menu-cat="leap" class="menu-game-chip android-btn px-2 py-1 rounded-xl text-left flex items-center justify-between gap-1 text-[10.5px] font-extrabold"><span class="truncate">👑 6×6 Katar</span><span class="text-[9px] font-mono opacity-75 shrink-0">36N</span></button>
               <button type="button" data-menu-preset="atharah_guti" data-menu-cat="leap" class="menu-game-chip android-btn px-2 py-1 rounded-xl text-left flex items-center justify-between gap-1 text-[10.5px] font-extrabold"><span class="truncate">🏕️ Atharah Guti</span><span class="text-[9px] font-mono opacity-75 shrink-0">49N</span></button>
               <button type="button" data-menu-preset="gol_ekuish" data-menu-cat="leap" class="menu-game-chip android-btn px-2 py-1 rounded-xl text-left flex items-center justify-between gap-1 text-[10.5px] font-extrabold"><span class="truncate">☸️ Gol Ekuish</span><span class="text-[9px] font-mono opacity-75 shrink-0">33N</span></button>
@@ -25842,8 +25848,8 @@
           const gameStrip = document.getElementById('menuQuickGameStrip');
           if (gameStrip) {
             gameStrip.className = activeCat === 'all'
-              ? 'grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1 content-start flex-1 max-h-[164px] sm:max-h-[190px] md:max-h-[180px] lg:max-h-[195px] overflow-y-auto custom-scroll pr-0.5'
-              : 'grid grid-cols-2 sm:grid-cols-3 gap-1.5 content-start flex-1 max-h-[164px] sm:max-h-[190px] md:max-h-[180px] lg:max-h-[195px] overflow-y-auto custom-scroll pr-0.5';
+              ? 'grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1 content-start flex-1 lg:max-h-[195px] lg:overflow-y-auto custom-scroll pr-0.5'
+              : 'grid grid-cols-2 sm:grid-cols-3 gap-1.5 content-start flex-1 lg:max-h-[195px] lg:overflow-y-auto custom-scroll pr-0.5';
           }
 
           let visibleCount = 0;
@@ -27185,7 +27191,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=fd50d7f3a5', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=03d3b5b96c', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
