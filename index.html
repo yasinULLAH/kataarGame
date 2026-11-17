@@ -15767,7 +15767,7 @@
         const humanP = aiP === 1 ? 2 : 1;
 
         if (GameState.chainJumpingNode !== null) {
-          return Math.floor(220 + Math.random() * 80);
+          return Math.floor(200 + Math.random() * 80);
         }
 
         if (GameState.morrisPendingRemove) {
@@ -15775,9 +15775,9 @@
             ? getRemovableOpponentNodes(humanP)
             : [];
           if (removable.length <= 1) {
-            return Math.floor(250 + Math.random() * 90);
+            return Math.floor(220 + Math.random() * 80);
           }
-          return Math.floor(750 + Math.random() * 350);
+          return Math.floor(800 + Math.random() * 400);
         }
 
         let totalActions = 0;
@@ -15794,15 +15794,15 @@
         } catch (err) {}
 
         if (totalActions <= 1) {
-          return Math.floor(220 + Math.random() * 90);
+          return Math.floor(200 + Math.random() * 90);
         }
 
         if (jumpCount === 1 && (GameState.mandatoryCapture === 'forced' || GameState.gameFamily === 'fanorona')) {
-          return Math.floor(240 + Math.random() * 90);
+          return Math.floor(220 + Math.random() * 90);
         }
 
         if (GameState.moveLog && GameState.moveLog.length <= 2) {
-          return Math.floor(380 + Math.random() * 180);
+          return Math.floor(300 + Math.random() * 150);
         }
 
         if (GameState.gameFamily === 'morris') {
@@ -15828,59 +15828,59 @@
           } catch (e) {}
 
           if (opponentMillThreat) {
-            return Math.floor(1900 + Math.random() * 800);
+            return Math.floor(1800 + Math.random() * 600);
           }
           if (myMillFound) {
-            return Math.floor(450 + Math.random() * 200);
+            return Math.floor(400 + Math.random() * 200);
           }
           if (GameState.reserves && (GameState.reserves[aiP] > 0 || GameState.reserves[humanP] > 0)) {
             if (totalActions > 12) {
-              return Math.floor(1400 + Math.random() * 600);
+              return Math.floor(1200 + Math.random() * 600);
             }
-            return Math.floor(700 + Math.random() * 350);
+            return Math.floor(800 + Math.random() * 350);
           }
           if (totalActions >= 10) {
-            return Math.floor(1600 + Math.random() * 700);
+            return Math.floor(1400 + Math.random() * 700);
           }
-          return Math.floor(800 + Math.random() * 400);
+          return Math.floor(800 + Math.random() * 350);
         }
 
         if (GameState.gameFamily === 'gomoku') {
           if (GameState.moveLog && GameState.moveLog.length <= 3) {
-            return Math.floor(350 + Math.random() * 180);
+            return Math.floor(300 + Math.random() * 150);
           }
           if (totalActions > 25) {
-            return Math.floor(1300 + Math.random() * 700);
+            return Math.floor(1400 + Math.random() * 800);
           }
-          return Math.floor(900 + Math.random() * 450);
+          return Math.floor(850 + Math.random() * 450);
         }
 
         if (GameState.gameFamily === 'tiger_goat') {
           if (jumpCount > 1) {
-            return Math.floor(1700 + Math.random() * 700);
+            return Math.floor(1500 + Math.random() * 700);
           }
           if (jumpCount === 1) {
-            return Math.floor(450 + Math.random() * 200);
+            return Math.floor(400 + Math.random() * 180);
           }
           if (totalActions >= 12) {
-            return Math.floor(1500 + Math.random() * 650);
+            return Math.floor(1300 + Math.random() * 700);
           }
-          return Math.floor(700 + Math.random() * 350);
+          return Math.floor(800 + Math.random() * 350);
         }
 
         if (jumpCount > 1) {
-          return Math.floor(1600 + Math.random() * 700);
+          return Math.floor(1400 + Math.random() * 700);
         }
 
         if (totalActions >= 12) {
-          return Math.floor(1600 + Math.random() * 750);
+          return Math.floor(1500 + Math.random() * 750);
         }
 
         if (totalActions <= 3) {
-          return Math.floor(400 + Math.random() * 200);
+          return Math.floor(350 + Math.random() * 150);
         }
 
-        return Math.floor(750 + Math.random() * 400);
+        return Math.floor(800 + Math.random() * 350);
       }
 
       function getMoveAnimDuration(isJump = false) {
@@ -15932,7 +15932,7 @@
         if (GameState.mode !== 'pass_play' || !GameState.vsAI) return;
         if (!GameState.aiVsAi && GameState.currentTurn !== GameState.aiPlayerRole) return;
         const delay = getAITurnDelay(defaultMs);
-        if (delay >= 1100) {
+        if (delay >= 800) {
           const [p1Title, p2Title] = getThemePlayerNames();
           const activeAiName = GameState.currentTurn === 1 ? p1Title : p2Title;
           const headline = document.getElementById('turnHeadline');
@@ -17711,7 +17711,7 @@
         if (rngAiDelay) rngAiDelay.value = String(effAiMs);
         if (valAiDelay) {
           valAiDelay.textContent = GameState.moveSpeedPreset === 'human'
-            ? 'Dynamic (~0.2s - 2.7s)'
+            ? 'Dynamic (~0.2s - 2.4s)'
             : `${(effAiMs / 1000).toFixed(2)}s (${effAiMs}ms)`;
         }
         if (rngAnimSpd) rngAnimSpd.value = String(effAnimMs);
@@ -27520,7 +27520,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=83a6709ab5', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=c7519b6a13', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
