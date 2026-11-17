@@ -1278,6 +1278,7 @@
               <div class="flex items-center gap-1 sm:gap-1.5 min-w-0">
                 <span id="p2NameLabel" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Medium AI (Sang)</span>
                 <span id="p2RoleBadge" class="text-[9px] sm:text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300">NORTH</span>
+                <span id="p2ThinkingBadge" class="hidden text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">🧠 Thinking…</span>
               </div>
               <div class="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-walnut-700">
                 <span>Active: <strong id="p2RemainingCount" class="text-rose-700 font-mono font-extrabold">18</strong>/<span id="p2MaxPiecesLabel" class="font-mono">18</span></span>
@@ -1307,6 +1308,11 @@
             <div id="turnHeadline" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Player 1's Turn (Feroza)</div>
             <div id="turnSubtext" class="text-[10px] sm:text-[11px] font-medium text-walnut-600 leading-snug whitespace-normal sm:truncate">Tap a piece to inspect legal moves</div>
           </div>
+        </div>
+
+        <div id="aiThinkingBadge" class="hidden items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-amber-100 border border-amber-300 text-amber-900 font-extrabold text-[10px] sm:text-xs shrink-0 shadow-sm animate-pulse">
+          <span class="inline-block animate-spin text-[11px] sm:text-xs">🧠</span>
+          <span id="aiThinkingBadgeText">Thinking…</span>
         </div>
 
         <button id="btnEndChainTurn" type="button" class="hidden android-btn chain-pulse px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-[11px] sm:text-xs shrink-0 shadow-[0_3px_0_#B45309] border border-amber-600/40">
@@ -1420,6 +1426,7 @@
               <div class="flex items-center gap-1 sm:gap-1.5 min-w-0">
                 <span id="p1NameLabel" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Player 1 (Feroza)</span>
                 <span id="p1RoleBadge" class="text-[9px] sm:text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-300">SOUTH</span>
+                <span id="p1ThinkingBadge" class="hidden text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">🧠 Thinking…</span>
               </div>
               <div class="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-walnut-700">
                 <span>Active: <strong id="p1RemainingCount" class="text-teal-700 font-mono font-extrabold">18</strong>/<span id="p1MaxPiecesLabel" class="font-mono">18</span></span>
@@ -15932,18 +15939,7 @@
         if (GameState.mode !== 'pass_play' || !GameState.vsAI) return;
         if (!GameState.aiVsAi && GameState.currentTurn !== GameState.aiPlayerRole) return;
         const delay = getAITurnDelay(defaultMs);
-        if (delay >= 800) {
-          const [p1Title, p2Title] = getThemePlayerNames();
-          const activeAiName = GameState.currentTurn === 1 ? p1Title : p2Title;
-          const headline = document.getElementById('turnHeadline');
-          if (headline) {
-            headline.textContent = `${activeAiName} is thinking... 🤔`;
-          }
-          const immTurn = document.getElementById('immTurnText');
-          if (immTurn) {
-            immTurn.textContent = `${activeAiName} Thinking...`;
-          }
-        }
+        updateHUD();
         aiTurnTimeoutId = setTimeout(() => {
           aiTurnTimeoutId = null;
           runAITurn();
@@ -17923,10 +17919,21 @@
         document.getElementById('immP1Target').textContent = `/${winCapP1}`;
         document.getElementById('immP2Target').textContent = `/${winCapP2}`;
 
-        document.getElementById('immTurnText').textContent = `Player ${GameState.currentTurn}'s Turn`;
-        document.getElementById('immTurnDot').className = GameState.currentTurn === 1
-          ? 'imm-dot imm-dot-p1'
-          : 'imm-dot imm-dot-p2';
+        const isAITurnNowImm = Boolean(
+          GameState.vsAI &&
+          !GameState.gameOver &&
+          (GameState.aiVsAi || GameState.currentTurn === (GameState.aiPlayerRole || 2))
+        );
+        if (isAITurnNowImm) {
+          const aiImmTitle = GameState.currentTurn === 1 ? p1Title : p2Title;
+          document.getElementById('immTurnText').textContent = `🧠 ${aiImmTitle} Thinking…`;
+          document.getElementById('immTurnDot').className = (GameState.currentTurn === 1 ? 'imm-dot imm-dot-p1' : 'imm-dot imm-dot-p2') + ' animate-pulse';
+        } else {
+          document.getElementById('immTurnText').textContent = `Player ${GameState.currentTurn}'s Turn`;
+          document.getElementById('immTurnDot').className = GameState.currentTurn === 1
+            ? 'imm-dot imm-dot-p1'
+            : 'imm-dot imm-dot-p2';
+        }
 
         const originEndChain = document.getElementById('btnEndChainTurn');
         document.getElementById('immEndChain').classList.toggle('hidden', originEndChain.classList.contains('hidden'));
@@ -18026,13 +18033,46 @@
         const headline = document.getElementById('turnHeadline');
         const subtext = document.getElementById('turnSubtext');
         const btnEndChain = document.getElementById('btnEndChainTurn');
+        const aiThinkingBadge = document.getElementById('aiThinkingBadge');
+        const p1ThinkingBadge = document.getElementById('p1ThinkingBadge');
+        const p2ThinkingBadge = document.getElementById('p2ThinkingBadge');
+
+        const isAITurnNow = Boolean(
+          GameState.vsAI &&
+          !GameState.gameOver &&
+          (GameState.aiVsAi || GameState.currentTurn === (GameState.aiPlayerRole || 2))
+        );
+
+        if (aiThinkingBadge) {
+          if (isAITurnNow) {
+            aiThinkingBadge.classList.remove('hidden');
+            aiThinkingBadge.classList.add('flex');
+          } else {
+            aiThinkingBadge.classList.add('hidden');
+            aiThinkingBadge.classList.remove('flex');
+          }
+        }
+        if (p1ThinkingBadge) {
+          p1ThinkingBadge.classList.toggle('hidden', !(isAITurnNow && GameState.currentTurn === 1));
+        }
+        if (p2ThinkingBadge) {
+          p2ThinkingBadge.classList.toggle('hidden', !(isAITurnNow && GameState.currentTurn === 2));
+        }
 
         if (GameState.currentTurn === 1) {
-          dot.className = 'w-3.5 h-3.5 rounded-full bg-teal-600 shrink-0 ring-4 ring-teal-500/20';
-          headline.textContent = `${p1Title}'s Bari (Turn)`;
+          dot.className = isAITurnNow
+            ? 'w-3.5 h-3.5 rounded-full bg-teal-600 shrink-0 ring-4 ring-teal-500/40 animate-pulse'
+            : 'w-3.5 h-3.5 rounded-full bg-teal-600 shrink-0 ring-4 ring-teal-500/20';
+          headline.textContent = isAITurnNow
+            ? `${p1Title} is thinking... 🤔`
+            : `${p1Title}'s Bari (Turn)`;
         } else {
-          dot.className = 'w-3.5 h-3.5 rounded-full bg-rose-600 shrink-0 ring-4 ring-rose-500/20';
-          headline.textContent = `${p2Title}'s Bari (Turn)`;
+          dot.className = isAITurnNow
+            ? 'w-3.5 h-3.5 rounded-full bg-rose-600 shrink-0 ring-4 ring-rose-500/40 animate-pulse'
+            : 'w-3.5 h-3.5 rounded-full bg-rose-600 shrink-0 ring-4 ring-rose-500/20';
+          headline.textContent = isAITurnNow
+            ? `${p2Title} is thinking... 🤔`
+            : `${p2Title}'s Bari (Turn)`;
         }
 
         if (GameState.gameFamily === 'gomoku') {
@@ -18153,6 +18193,13 @@
               ? 'Dama: Advance forward/sideways — reach the far rank to crown a Flying King 👑!'
               : `Tap one of your beads (${GameState.chainRule === 'single_only' ? '1 Bead/Bari mode' : 'Multi-Eat mode'})`;
           }
+        }
+
+        if (isAITurnNow) {
+          const aiActiveTitle = GameState.currentTurn === 1 ? p1Title : p2Title;
+          subtext.textContent = GameState.morrisPendingRemove
+            ? `🧠 ${aiActiveTitle} is calculating which bead to capture...`
+            : `🧠 ${aiActiveTitle} is analyzing moves & calculating strategy...`;
         }
 
         document.getElementById('btnUndoMove').disabled = (
@@ -27520,7 +27567,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=c7519b6a13', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=9fed5f4c31', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
