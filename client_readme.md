@@ -372,11 +372,11 @@
 
 ---
 
-&lt;div align=&quot;center&quot;&gt;
+<div align="center">
 
 ### 🏆 روایتی کھیلیں • ہمارا فخر اور پہچان
 **یاسین اللہ – بنوں سافٹ ویئر سلوشنز**  
 📱 واٹس ایپ: 0336-1593533  
 *Dedicated with love to Muhib Ullah ❤️*
 
-&lt;/div&gt;
+</div>

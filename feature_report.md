@@ -53,7 +53,7 @@
 
 ### 👨💻 Created By
 
-&lt;div align=&quot;center&quot;&gt;
+<div align="center">
 
 **Yasin Ullah** – Bannu Software Solutions  
 📱 WhatsApp: 0336-1593533  
@@ -61,6 +61,6 @@
 *Building innovative cultural, educational, and tabletop gaming technology solutions for Pakistan and beyond*  
 *Dedicated with love to my little brother **Muhib Ullah** ❤️*
 
-&lt;/div&gt;
+</div>
 
 ---

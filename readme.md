@@ -422,7 +422,7 @@ Online and local tabletop games are frequently interrupted by phone calls, messa
 * **Zero Internet Required:** Phone 1 turns on **Personal Hotspot**; Phone 2 connects via Wi-Fi.
 * **Compact QR Handshake:** Phone 1 generates a Host Offer QR; Phone 2 scans it with its camera to generate an Answer QR; Phone 1 scans the return code.
 * **Pako Deflate Compression:** Compresses SDP credentials into ultra-short `pk:...` tokens for reliable, rapid camera scanning.
-* **PC Clipboard Fallback:** Devices without cameras can use `Copy Code` and `Paste Code` buttons or press &lt;kbd&gt;Ctrl+V&lt;/kbd&gt;.
+* **PC Clipboard Fallback:** Devices without cameras can use `Copy Code` and `Paste Code` buttons or press <kbd>Ctrl+V</kbd>.
 
 ### 3. Shared Wi-Fi / LAN MQTT Auto-Lobby
 * When connected to local Wi-Fi, devices automatically join a public WebSocket MQTT lobby (`broker.emqx.io:8084`).
@@ -662,11 +662,11 @@ Online and local tabletop games are frequently interrupted by phone calls, messa
 
 ---
 
-&lt;div align=&quot;center&quot;&gt;
+<div align="center">
 
 ### 🏆 روایتی کھیلیں • ہمارا فخر اور پہچان
 **یاسین اللہ – بنوں سافٹ ویئر سلوشنز**  
 📱 واٹس ایپ: **0336-1593533**  
 *Dedicated with love to my little brother **Muhib Ullah** ❤️*
 
-&lt;/div&gt;
+</div>
