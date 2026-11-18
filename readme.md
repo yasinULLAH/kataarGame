@@ -23,7 +23,7 @@ prohibited** without prior written permission from the author.
 
 Attribution, only where written permission has been granted, must read:
 
-> **Katar & Navakankari Game © 2026 Yasin Ullah**
+> **Katar & Navakankari Game © 2026 Yasin Ullah.**
 > https://github.com/yasinULLAH/kataarGame
 
 See [`LICENSE`](LICENSE) for the complete terms and
