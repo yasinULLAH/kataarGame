@@ -856,11 +856,9 @@
       }
     }
 
-    /* Always-On Pro Game Mode: no play/pause/exit/away clutter buttons */
+    /* Always-On Pro Game Mode: no away timer clutter buttons */
     #btnTriggerAwayGrace,
-    #btnResumeStashedMatch,
     #graceTimerBanner,
-    #modalMidGameGuard,
     [data-imm-action="away"] {
       display: none !important;
     }
@@ -6530,7 +6528,8 @@
             GameState.timerInterval = null;
             return;
           }
-          if (GameState.graceTimerInterval || GameState.isPaused || !GameState.isStarted) return;
+          const guardOpen = Boolean(document.getElementById('modalMidGameGuard') && !document.getElementById('modalMidGameGuard').classList.contains('hidden'));
+          if (GameState.graceTimerInterval || GameState.isPaused || !GameState.isStarted || guardOpen) return;
           GameState.timeLeft--;
           if (badge) {
             badge.textContent = `${Math.max(0, GameState.timeLeft)}s`;
@@ -6586,7 +6585,8 @@
             GameState.matchTimerInterval = null;
             return;
           }
-          if (GameState.graceTimerInterval || GameState.isPaused || !GameState.isStarted) return;
+          const guardOpen = Boolean(document.getElementById('modalMidGameGuard') && !document.getElementById('modalMidGameGuard').classList.contains('hidden'));
+          if (GameState.graceTimerInterval || GameState.isPaused || !GameState.isStarted || guardOpen) return;
           GameState.matchTimeLeft--;
           updateMatchTimerDisplay();
           if (GameState.matchTimeLeft <= 0) {
@@ -8131,13 +8131,17 @@
         pendingGuardDiscardCallback = options.onDiscard || null;
         pendingGuardCancelCallback = options.onCancel || null;
 
+        if (aiTurnTimeoutId) {
+          clearTimeout(aiTurnTimeoutId);
+          aiTurnTimeoutId = null;
+        }
         ensureBackGuardState();
         modalGuard.classList.remove('hidden');
         modalGuard.classList.add('flex');
         pushBackGuardState();
       }
 
-      function closeConfirmationModal() {
+      function closeConfirmationModal(resumeAiIfActive = false) {
         const modalGuard = document.getElementById('modalMidGameGuard');
         if (modalGuard) {
           modalGuard.classList.add('hidden');
@@ -8147,6 +8151,9 @@
         pendingGuardSaveCallback = null;
         pendingGuardDiscardCallback = null;
         pendingGuardCancelCallback = null;
+        if (resumeAiIfActive && !GameState.gameOver && GameState.isStarted && !GameState.isPaused && GameState.mode === 'pass_play' && GameState.vsAI && (GameState.aiVsAi || GameState.currentTurn === GameState.aiPlayerRole)) {
+          scheduleAITurn(300);
+        }
       }
 
       function isMatchActivelyInProgress() {
@@ -15675,6 +15682,7 @@
 
           const userPrompt = `Game: ${GameState.gridPreset} | Turn: P${aiP} | Reserves P1:${GameState.reserves[1]} P2:${GameState.reserves[2]} | Eaten P1:${GameState.capturedBy[1]} P2:${GameState.capturedBy[2]} | Recent: ${recentLog}\nCandidates:\n${optionsText}`;
 
+          const startBoardVer = GameState._boardVersion;
           const startTime = performance.now();
           let chosenAction = localBest;
           let chosenNote = 'Selected top grandmaster line';
@@ -15758,7 +15766,7 @@
             return;
           }
 
-          if (GameState.gameOver || GameState.currentTurn !== aiP) return;
+          if (GameState._boardVersion !== startBoardVer || !GameState.isStarted || GameState.isPaused || GameState.gameOver || !GameState.vsAI || GameState.currentTurn !== aiP) return;
           MorrisLearner.recordStep(GameState.board, chosenAction, aiP, GameState.reserves[aiP], GameState.reserves[aiP === 1 ? 2 : 1]);
           executeAction(chosenAction, false);
         }
@@ -15954,6 +15962,8 @@
         const aiP = GameState.aiPlayerRole || 2;
         if (GameState.gameOver || GameState.currentTurn !== aiP || !GameState.vsAI) return;
         if (!GameState.isStarted || GameState.isPaused) return;
+        const guardModal = document.getElementById('modalMidGameGuard');
+        if (guardModal && !guardModal.classList.contains('hidden')) return;
         if (GameState.graceTimerInterval || GameState.puterAIThinking) return;
 
         if (GameState.usePuterAI) {
@@ -24696,6 +24706,10 @@
           GameState.aiVsAi = true;
           GameState.aiPlayerRole = GameState.currentTurn;
           GameState.localPlayerRole = null;
+          if (typeof MainMenu !== 'undefined' && !MainMenu.isOpen && !GameState.isStarted) {
+            GameState.isStarted = true;
+            GameState.isPaused = false;
+          }
           savePersistentPrefs();
           SoundEngine.select();
           syncSettingsControlsFromState();
@@ -26133,7 +26147,7 @@
           if (btnReplay) btnReplay.classList.toggle('hidden', !GameState.isStarted && !hasMoves);
           if (btnExit) btnExit.classList.toggle('hidden', !GameState.isStarted);
           const btnHeaderQuit = document.getElementById('btnHeaderQuit');
-          if (btnHeaderQuit) btnHeaderQuit.classList.toggle('hidden', !GameState.isStarted || Boolean(this.isOpen));
+          if (btnHeaderQuit) btnHeaderQuit.classList.toggle('hidden', Boolean(this.isOpen));
 
           const baseModeBtnClass = 'android-btn flex flex-col lg:flex-row items-center justify-center gap-0.5 lg:gap-1.5 py-2 lg:py-1.5 px-1 lg:px-2 rounded-xl transition-all';
           const activeModeClass = 'bg-gradient-to-b from-teal-500 to-teal-700 text-white shadow-md ring-1 ring-teal-900/25';
@@ -27146,7 +27160,7 @@
             return;
           }
           if (isShown('modalMidGameGuard')) {
-            closeConfirmationModal();
+            closeConfirmationModal(true);
             pushBackGuardState();
             return;
           }
@@ -27298,7 +27312,7 @@
         btnGuardCancel.addEventListener('click', () => {
           SoundEngine.select();
           const cb = pendingGuardCancelCallback;
-          closeConfirmationModal();
+          closeConfirmationModal(true);
           if (cb) cb();
         });
       }
@@ -27449,7 +27463,7 @@
             return;
           }
           if (isShown('modalMidGameGuard')) {
-            closeConfirmationModal();
+            closeConfirmationModal(true);
             return;
           }
           for (const mid of ['modalExportVideo', 'modalRules', 'modalEncyclopedia', 'modalPuterStats']) {
@@ -27567,7 +27581,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=9fed5f4c31', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=583e0c48a9', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {

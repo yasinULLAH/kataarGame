@@ -1278,6 +1278,7 @@
               <div class="flex items-center gap-1 sm:gap-1.5 min-w-0">
                 <span id="p2NameLabel" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Medium AI (Sang)</span>
                 <span id="p2RoleBadge" class="text-[9px] sm:text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300">NORTH</span>
+                <span id="p2ThinkingBadge" class="hidden text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">🧠 Thinking…</span>
               </div>
               <div class="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-walnut-700">
                 <span>Active: <strong id="p2RemainingCount" class="text-rose-700 font-mono font-extrabold">18</strong>/<span id="p2MaxPiecesLabel" class="font-mono">18</span></span>
@@ -1307,6 +1308,11 @@
             <div id="turnHeadline" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Player 1's Turn (Feroza)</div>
             <div id="turnSubtext" class="text-[10px] sm:text-[11px] font-medium text-walnut-600 leading-snug whitespace-normal sm:truncate">Tap a piece to inspect legal moves</div>
           </div>
+        </div>
+
+        <div id="aiThinkingBadge" class="hidden items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-amber-100 border border-amber-300 text-amber-900 font-extrabold text-[10px] sm:text-xs shrink-0 shadow-sm animate-pulse">
+          <span class="inline-block animate-spin text-[11px] sm:text-xs">🧠</span>
+          <span id="aiThinkingBadgeText">Thinking…</span>
         </div>
 
         <button id="btnEndChainTurn" type="button" class="hidden android-btn chain-pulse px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-gradient-to-b from-amber-400 to-amber-500 text-walnut-900 font-extrabold text-[11px] sm:text-xs shrink-0 shadow-[0_3px_0_#B45309] border border-amber-600/40">
@@ -1420,6 +1426,7 @@
               <div class="flex items-center gap-1 sm:gap-1.5 min-w-0">
                 <span id="p1NameLabel" class="text-xs sm:text-sm font-extrabold text-walnut-900 truncate">Player 1 (Feroza)</span>
                 <span id="p1RoleBadge" class="text-[9px] sm:text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-300">SOUTH</span>
+                <span id="p1ThinkingBadge" class="hidden text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">🧠 Thinking…</span>
               </div>
               <div class="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-walnut-700">
                 <span>Active: <strong id="p1RemainingCount" class="text-teal-700 font-mono font-extrabold">18</strong>/<span id="p1MaxPiecesLabel" class="font-mono">18</span></span>
@@ -2833,6 +2840,7 @@
               <label for="selMoveSpeedPreset" class="block text-xs font-extrabold text-walnut-900 mb-1">Speed Preset</label>
               <select id="selMoveSpeedPreset" class="selectable-input w-full bg-parchment-100 border border-parchment-400 rounded-xl px-3 py-2 text-xs font-extrabold text-walnut-900 focus:outline-none">
                 <option value="default" selected>⚡ Default Fast (Current Speed • 0.48s AI / 0.18s Slide)</option>
+                <option value="human">🧠 Human-like &amp; Adaptive (Fast for Easy Moves • Thinking for Complex Moves)</option>
                 <option value="slow">🐢 Slow &amp; Relaxed (1.10s AI / 0.45s Slide)</option>
                 <option value="dramatic">🎭 Dramatic &amp; Cinematic (1.90s AI / 0.80s Slide)</option>
                 <option value="slowest">🐌 Slowest / Study Mode (3.00s AI / 1.25s Slide)</option>
@@ -3146,11 +3154,11 @@
   <div id="modalMidGameGuard" class="fixed inset-0 z-50 bg-walnut-900/75 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="w-full max-w-md bg-parchment-50 border-4 border-amber-500 rounded-3xl p-5 shadow-2xl space-y-4 text-walnut-900">
       <div class="flex items-start gap-3">
-        <div class="w-11 h-11 rounded-2xl bg-amber-100 border-2 border-amber-400 flex items-center justify-center text-xl shrink-0">
+        <div id="midGuardIcon" class="w-11 h-11 rounded-2xl bg-amber-100 border-2 border-amber-400 flex items-center justify-center text-xl shrink-0">
           🛡️
         </div>
         <div>
-          <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">Mid-Game Protection Active</span>
+          <span id="midGuardBadge" class="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">Mid-Game Protection Active</span>
           <h3 id="midGuardTitle" class="font-display text-base font-extrabold text-walnut-900 mt-1">Match Currently in Progress!</h3>
           <p id="midGuardDesc" class="text-xs text-walnut-700 mt-0.5 leading-relaxed">
             You have an active match underway. Would you like to save (stash) this match so you can resume it later, or discard it and switch now?
@@ -3160,13 +3168,13 @@
 
       <div class="space-y-2 pt-1">
         <button id="btnGuardSaveAndSwitch" type="button" class="android-btn w-full py-2.5 px-4 rounded-2xl bg-gradient-to-b from-teal-500 to-teal-700 text-white font-extrabold text-xs shadow-[0_3px_0_#115E59] flex items-center justify-center gap-2">
-          <span>💾 Save Current Match &amp; Switch (Resume Anytime)</span>
+          <span id="btnGuardSaveLabel">💾 Save Current Match &amp; Switch (Resume Anytime)</span>
         </button>
         <button id="btnGuardDiscardAndSwitch" type="button" class="android-btn w-full py-2.5 px-4 rounded-2xl bg-gradient-to-b from-rose-500 to-rose-600 text-white font-extrabold text-xs shadow-[0_3px_0_#9F1239] flex items-center justify-center gap-2">
-          <span>🔄 Discard Current Match &amp; Proceed</span>
+          <span id="btnGuardDiscardLabel">🔄 Discard Current Match &amp; Proceed</span>
         </button>
         <button id="btnGuardCancelKeepPlaying" type="button" class="android-btn w-full py-2.5 px-4 rounded-2xl bg-parchment-200 hover:bg-parchment-300 text-walnut-900 font-extrabold text-xs border border-parchment-400">
-          ↩️ Cancel — Keep Playing Current Match
+          <span id="btnGuardCancelLabel">↩️ Cancel — Keep Playing Current Match</span>
         </button>
       </div>
     </div>
@@ -8076,20 +8084,112 @@
       };
       GameState.lockSettingsMidGame = false;
       let pendingGuardedCallback = null;
+      let pendingGuardSaveCallback = null;
+      let pendingGuardDiscardCallback = null;
+      let pendingGuardCancelCallback = null;
+
+      function showConfirmationModal(options) {
+        const modalGuard = document.getElementById('modalMidGameGuard');
+        if (!modalGuard) {
+          if (options && options.onDiscard) options.onDiscard();
+          return;
+        }
+        const iconEl = document.getElementById('midGuardIcon');
+        const badgeEl = document.getElementById('midGuardBadge');
+        const titleEl = document.getElementById('midGuardTitle');
+        const descEl = document.getElementById('midGuardDesc');
+        const btnSave = document.getElementById('btnGuardSaveAndSwitch');
+        const saveLabelEl = document.getElementById('btnGuardSaveLabel');
+        const btnDiscard = document.getElementById('btnGuardDiscardAndSwitch');
+        const discardLabelEl = document.getElementById('btnGuardDiscardLabel');
+        const btnCancel = document.getElementById('btnGuardCancelKeepPlaying');
+        const cancelLabelEl = document.getElementById('btnGuardCancelLabel');
+
+        if (iconEl) iconEl.textContent = options.icon || '🛡️';
+        if (badgeEl) badgeEl.textContent = options.badge || 'Action Confirmation';
+        if (titleEl) titleEl.textContent = options.title || 'Confirm Action';
+        if (descEl) descEl.textContent = options.desc || '';
+
+        if (btnSave) {
+          if (options.showSave) {
+            btnSave.classList.remove('hidden');
+            if (saveLabelEl) saveLabelEl.textContent = options.saveLabel || '💾 Save Current Match & Proceed';
+          } else {
+            btnSave.classList.add('hidden');
+          }
+        }
+
+        if (btnDiscard) {
+          if (discardLabelEl) discardLabelEl.textContent = options.discardLabel || '🔄 Proceed';
+        }
+
+        if (btnCancel) {
+          if (cancelLabelEl) cancelLabelEl.textContent = options.cancelLabel || '↩️ Cancel';
+        }
+
+        pendingGuardSaveCallback = options.onSave || null;
+        pendingGuardDiscardCallback = options.onDiscard || null;
+        pendingGuardCancelCallback = options.onCancel || null;
+
+        ensureBackGuardState();
+        modalGuard.classList.remove('hidden');
+        modalGuard.classList.add('flex');
+        pushBackGuardState();
+      }
+
+      function closeConfirmationModal() {
+        const modalGuard = document.getElementById('modalMidGameGuard');
+        if (modalGuard) {
+          modalGuard.classList.add('hidden');
+          modalGuard.classList.remove('flex');
+        }
+        pendingGuardedCallback = null;
+        pendingGuardSaveCallback = null;
+        pendingGuardDiscardCallback = null;
+        pendingGuardCancelCallback = null;
+      }
 
       function isMatchActivelyInProgress() {
         return !GameState.gameOver && (GameState.history.length > 0 || GameState.moveLog.length > 0);
       }
 
-      function guardMidGameAction(actionDescription, proceedCallback) {
+      function guardMidGameAction(actionDescription, proceedCallback, cancelCallback = null) {
         if (GameState.mode === 'webrtc' && GameState.localPlayerRole === 2) {
           SoundEngine.invalid();
           showBoardToast('🛡️ Only the host (Player 1) can switch game variants during an online match.');
+          if (cancelCallback) cancelCallback();
           return;
         }
         if (GameState.lockSettingsMidGame) {
           SoundEngine.invalid();
           showBoardToast('🔒 Game Lock is ON! Tap "🔒 Locked" in the top bar to unlock game switching.');
+          if (cancelCallback) cancelCallback();
+          return;
+        }
+        if (isMatchActivelyInProgress()) {
+          SoundEngine.invalid();
+          const moveCount = GameState.moveLog.length;
+          showConfirmationModal({
+            icon: '🛡️',
+            badge: 'Mid-Game Protection Active',
+            title: `${actionDescription}?`,
+            desc: `You have an active match in progress (${moveCount} move${moveCount === 1 ? '' : 's'} played). Would you like to save this match to resume later, or discard it and proceed?`,
+            showSave: true,
+            saveLabel: `💾 Save Match & ${actionDescription}`,
+            discardLabel: `🔄 Discard & ${actionDescription}`,
+            cancelLabel: '↩️ Cancel — Keep Playing',
+            onSave: () => {
+              stashCurrentMatchToSlot();
+              proceedCallback();
+              showBoardToast('💾 Match saved! Click "📂 Resume" anytime to return to it.');
+            },
+            onDiscard: () => {
+              proceedCallback();
+            },
+            onCancel: () => {
+              if (cancelCallback) cancelCallback();
+            }
+          });
           return;
         }
         proceedCallback();
@@ -15669,6 +15769,127 @@
 
       let aiTurnTimeoutId = null;
 
+      function calculateHumanLikeDelay(defaultMs = 480) {
+        const aiP = GameState.currentTurn || GameState.aiPlayerRole || 2;
+        const humanP = aiP === 1 ? 2 : 1;
+
+        if (GameState.chainJumpingNode !== null) {
+          return Math.floor(200 + Math.random() * 80);
+        }
+
+        if (GameState.morrisPendingRemove) {
+          const removable = (typeof getRemovableOpponentNodes === 'function')
+            ? getRemovableOpponentNodes(humanP)
+            : [];
+          if (removable.length <= 1) {
+            return Math.floor(220 + Math.random() * 80);
+          }
+          return Math.floor(800 + Math.random() * 400);
+        }
+
+        let totalActions = 0;
+        let jumpCount = 0;
+        try {
+          if (typeof getAllLegalActionsForPlayer === 'function') {
+            const acts = getAllLegalActionsForPlayer(aiP);
+            if (acts) {
+              jumpCount = acts.allJumps ? acts.allJumps.length : 0;
+              const stepCount = acts.allSteps ? acts.allSteps.length : 0;
+              totalActions = acts.total !== undefined ? acts.total : (stepCount + jumpCount);
+            }
+          }
+        } catch (err) {}
+
+        if (totalActions <= 1) {
+          return Math.floor(200 + Math.random() * 90);
+        }
+
+        if (jumpCount === 1 && (GameState.mandatoryCapture === 'forced' || GameState.gameFamily === 'fanorona')) {
+          return Math.floor(220 + Math.random() * 90);
+        }
+
+        if (GameState.moveLog && GameState.moveLog.length <= 2) {
+          return Math.floor(300 + Math.random() * 150);
+        }
+
+        if (GameState.gameFamily === 'morris') {
+          let opponentMillThreat = false;
+          let myMillFound = false;
+          try {
+            if (typeof MillLines !== 'undefined' && Array.isArray(MillLines)) {
+              for (const line of MillLines) {
+                const c0 = GameState.board[line[0]];
+                const c1 = GameState.board[line[1]];
+                const c2 = GameState.board[line[2]];
+                const hmCount = (c0 === humanP ? 1 : 0) + (c1 === humanP ? 1 : 0) + (c2 === humanP ? 1 : 0);
+                const aiCount = (c0 === aiP ? 1 : 0) + (c1 === aiP ? 1 : 0) + (c2 === aiP ? 1 : 0);
+                const emptyCount = (c0 === 0 ? 1 : 0) + (c1 === 0 ? 1 : 0) + (c2 === 0 ? 1 : 0);
+                if (hmCount === 2 && emptyCount === 1) {
+                  opponentMillThreat = true;
+                }
+                if (aiCount === 2 && emptyCount === 1) {
+                  myMillFound = true;
+                }
+              }
+            }
+          } catch (e) {}
+
+          if (opponentMillThreat) {
+            return Math.floor(1800 + Math.random() * 600);
+          }
+          if (myMillFound) {
+            return Math.floor(400 + Math.random() * 200);
+          }
+          if (GameState.reserves && (GameState.reserves[aiP] > 0 || GameState.reserves[humanP] > 0)) {
+            if (totalActions > 12) {
+              return Math.floor(1200 + Math.random() * 600);
+            }
+            return Math.floor(800 + Math.random() * 350);
+          }
+          if (totalActions >= 10) {
+            return Math.floor(1400 + Math.random() * 700);
+          }
+          return Math.floor(800 + Math.random() * 350);
+        }
+
+        if (GameState.gameFamily === 'gomoku') {
+          if (GameState.moveLog && GameState.moveLog.length <= 3) {
+            return Math.floor(300 + Math.random() * 150);
+          }
+          if (totalActions > 25) {
+            return Math.floor(1400 + Math.random() * 800);
+          }
+          return Math.floor(850 + Math.random() * 450);
+        }
+
+        if (GameState.gameFamily === 'tiger_goat') {
+          if (jumpCount > 1) {
+            return Math.floor(1500 + Math.random() * 700);
+          }
+          if (jumpCount === 1) {
+            return Math.floor(400 + Math.random() * 180);
+          }
+          if (totalActions >= 12) {
+            return Math.floor(1300 + Math.random() * 700);
+          }
+          return Math.floor(800 + Math.random() * 350);
+        }
+
+        if (jumpCount > 1) {
+          return Math.floor(1400 + Math.random() * 700);
+        }
+
+        if (totalActions >= 12) {
+          return Math.floor(1500 + Math.random() * 750);
+        }
+
+        if (totalActions <= 3) {
+          return Math.floor(350 + Math.random() * 150);
+        }
+
+        return Math.floor(800 + Math.random() * 350);
+      }
+
       function getMoveAnimDuration(isJump = false) {
         if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
           const replayBase = Math.max(55, Math.round(300 / (ReplayManager.speed || 1)));
@@ -15676,7 +15897,8 @@
         }
         const preset = GameState.moveSpeedPreset || 'default';
         let base = 175;
-        if (preset === 'slow') base = 450;
+        if (preset === 'human') base = 190;
+        else if (preset === 'slow') base = 450;
         else if (preset === 'dramatic') base = 800;
         else if (preset === 'slowest') base = 1250;
         else if (preset === 'custom') base = Math.max(80, Number(GameState.customAnimDurationMs) || 175);
@@ -15686,11 +15908,12 @@
       function getAITurnDelay(defaultMs = 480) {
         const preset = GameState.moveSpeedPreset || 'default';
         let delay = defaultMs;
-        if (preset === 'slow') delay = 1100;
+        if (preset === 'human') delay = calculateHumanLikeDelay(defaultMs);
+        else if (preset === 'slow') delay = 1100;
         else if (preset === 'dramatic') delay = 1900;
         else if (preset === 'slowest') delay = 3000;
         else if (preset === 'custom') delay = Math.max(100, Number(GameState.customAiDelayMs) || 480);
-        if (preset !== 'default' && defaultMs < 400) {
+        if (preset !== 'default' && preset !== 'human' && defaultMs < 400) {
           delay = Math.round(delay * 0.8);
         }
         if (VisualFX && VisualFX.movingPiece) {
@@ -15715,10 +15938,12 @@
         if (GameState.gameOver || !GameState.isStarted || GameState.isPaused) return;
         if (GameState.mode !== 'pass_play' || !GameState.vsAI) return;
         if (!GameState.aiVsAi && GameState.currentTurn !== GameState.aiPlayerRole) return;
+        const delay = getAITurnDelay(defaultMs);
+        updateHUD();
         aiTurnTimeoutId = setTimeout(() => {
           aiTurnTimeoutId = null;
           runAITurn();
-        }, getAITurnDelay(defaultMs));
+        }, delay);
       }
 
       function runAITurn() {
@@ -17480,11 +17705,15 @@
         const effAiMs = getAITurnDelay(480);
         const effAnimMs = getMoveAnimDuration(false);
         if (rngAiDelay) rngAiDelay.value = String(effAiMs);
-        if (valAiDelay) valAiDelay.textContent = `${(effAiMs / 1000).toFixed(2)}s (${effAiMs}ms)`;
+        if (valAiDelay) {
+          valAiDelay.textContent = GameState.moveSpeedPreset === 'human'
+            ? 'Dynamic (~0.2s - 2.4s)'
+            : `${(effAiMs / 1000).toFixed(2)}s (${effAiMs}ms)`;
+        }
         if (rngAnimSpd) rngAnimSpd.value = String(effAnimMs);
         if (valAnimSpd) valAnimSpd.textContent = `${(effAnimMs / 1000).toFixed(2)}s (${effAnimMs}ms)`;
         if (badgeSpd) {
-          const spdNames = { default: 'Default Fast', slow: 'Slow & Relaxed', dramatic: 'Dramatic', slowest: 'Slowest', custom: 'Custom Time' };
+          const spdNames = { default: 'Default Fast', human: '🧠 Human-like', slow: 'Slow & Relaxed', dramatic: 'Dramatic', slowest: 'Slowest', custom: 'Custom Time' };
           badgeSpd.textContent = spdNames[GameState.moveSpeedPreset] || 'Default Fast';
         }
 
@@ -17690,10 +17919,21 @@
         document.getElementById('immP1Target').textContent = `/${winCapP1}`;
         document.getElementById('immP2Target').textContent = `/${winCapP2}`;
 
-        document.getElementById('immTurnText').textContent = `Player ${GameState.currentTurn}'s Turn`;
-        document.getElementById('immTurnDot').className = GameState.currentTurn === 1
-          ? 'imm-dot imm-dot-p1'
-          : 'imm-dot imm-dot-p2';
+        const isAITurnNowImm = Boolean(
+          GameState.vsAI &&
+          !GameState.gameOver &&
+          (GameState.aiVsAi || GameState.currentTurn === (GameState.aiPlayerRole || 2))
+        );
+        if (isAITurnNowImm) {
+          const aiImmTitle = GameState.currentTurn === 1 ? p1Title : p2Title;
+          document.getElementById('immTurnText').textContent = `🧠 ${aiImmTitle} Thinking…`;
+          document.getElementById('immTurnDot').className = (GameState.currentTurn === 1 ? 'imm-dot imm-dot-p1' : 'imm-dot imm-dot-p2') + ' animate-pulse';
+        } else {
+          document.getElementById('immTurnText').textContent = `Player ${GameState.currentTurn}'s Turn`;
+          document.getElementById('immTurnDot').className = GameState.currentTurn === 1
+            ? 'imm-dot imm-dot-p1'
+            : 'imm-dot imm-dot-p2';
+        }
 
         const originEndChain = document.getElementById('btnEndChainTurn');
         document.getElementById('immEndChain').classList.toggle('hidden', originEndChain.classList.contains('hidden'));
@@ -17793,13 +18033,46 @@
         const headline = document.getElementById('turnHeadline');
         const subtext = document.getElementById('turnSubtext');
         const btnEndChain = document.getElementById('btnEndChainTurn');
+        const aiThinkingBadge = document.getElementById('aiThinkingBadge');
+        const p1ThinkingBadge = document.getElementById('p1ThinkingBadge');
+        const p2ThinkingBadge = document.getElementById('p2ThinkingBadge');
+
+        const isAITurnNow = Boolean(
+          GameState.vsAI &&
+          !GameState.gameOver &&
+          (GameState.aiVsAi || GameState.currentTurn === (GameState.aiPlayerRole || 2))
+        );
+
+        if (aiThinkingBadge) {
+          if (isAITurnNow) {
+            aiThinkingBadge.classList.remove('hidden');
+            aiThinkingBadge.classList.add('flex');
+          } else {
+            aiThinkingBadge.classList.add('hidden');
+            aiThinkingBadge.classList.remove('flex');
+          }
+        }
+        if (p1ThinkingBadge) {
+          p1ThinkingBadge.classList.toggle('hidden', !(isAITurnNow && GameState.currentTurn === 1));
+        }
+        if (p2ThinkingBadge) {
+          p2ThinkingBadge.classList.toggle('hidden', !(isAITurnNow && GameState.currentTurn === 2));
+        }
 
         if (GameState.currentTurn === 1) {
-          dot.className = 'w-3.5 h-3.5 rounded-full bg-teal-600 shrink-0 ring-4 ring-teal-500/20';
-          headline.textContent = `${p1Title}'s Bari (Turn)`;
+          dot.className = isAITurnNow
+            ? 'w-3.5 h-3.5 rounded-full bg-teal-600 shrink-0 ring-4 ring-teal-500/40 animate-pulse'
+            : 'w-3.5 h-3.5 rounded-full bg-teal-600 shrink-0 ring-4 ring-teal-500/20';
+          headline.textContent = isAITurnNow
+            ? `${p1Title} is thinking... 🤔`
+            : `${p1Title}'s Bari (Turn)`;
         } else {
-          dot.className = 'w-3.5 h-3.5 rounded-full bg-rose-600 shrink-0 ring-4 ring-rose-500/20';
-          headline.textContent = `${p2Title}'s Bari (Turn)`;
+          dot.className = isAITurnNow
+            ? 'w-3.5 h-3.5 rounded-full bg-rose-600 shrink-0 ring-4 ring-rose-500/40 animate-pulse'
+            : 'w-3.5 h-3.5 rounded-full bg-rose-600 shrink-0 ring-4 ring-rose-500/20';
+          headline.textContent = isAITurnNow
+            ? `${p2Title} is thinking... 🤔`
+            : `${p2Title}'s Bari (Turn)`;
         }
 
         if (GameState.gameFamily === 'gomoku') {
@@ -17920,6 +18193,13 @@
               ? 'Dama: Advance forward/sideways — reach the far rank to crown a Flying King 👑!'
               : `Tap one of your beads (${GameState.chainRule === 'single_only' ? '1 Bead/Bari mode' : 'Multi-Eat mode'})`;
           }
+        }
+
+        if (isAITurnNow) {
+          const aiActiveTitle = GameState.currentTurn === 1 ? p1Title : p2Title;
+          subtext.textContent = GameState.morrisPendingRemove
+            ? `🧠 ${aiActiveTitle} is calculating which bead to capture...`
+            : `🧠 ${aiActiveTitle} is analyzing moves & calculating strategy...`;
         }
 
         document.getElementById('btnUndoMove').disabled = (
@@ -18327,6 +18607,7 @@
         wasPausedBefore: false,
         seenDoubleMills: [],
         warnedBrinkPlayers: { 1: false, 2: false },
+        sideLossStreaks: { 1: 0, 2: 0 },
 
         resetMatchState() {
           this.turnStartCaptures = { 1: (GameState.capturedBy && GameState.capturedBy[1]) || 0, 2: (GameState.capturedBy && GameState.capturedBy[2]) || 0 };
@@ -18404,6 +18685,11 @@
         },
 
         recordMatchFinished(winner) {
+          if (winner === 1 || winner === 2) {
+            const loser = winner === 1 ? 2 : 1;
+            this.sideLossStreaks[loser] = (this.sideLossStreaks[loser] || 0) + 1;
+            this.sideLossStreaks[winner] = 0;
+          }
           const userRole = (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.getUserRole)
             ? PlayerAnalytics.getUserRole()
             : 1;
@@ -18419,13 +18705,18 @@
         shouldShowBakhti3() {
           if (!this.isFunEnabled()) return false;
           if (this.lastLossStreakMatchHandled) return false;
+          if (GameState.winner !== 1 && GameState.winner !== 2) return false;
+          const loserRole = GameState.winner === 1 ? 2 : 1;
+          if (GameState.aiVsAi || !GameState.vsAI) {
+            return (this.sideLossStreaks[loserRole] || 0) >= 6;
+          }
           const userRole = (typeof PlayerAnalytics !== 'undefined' && PlayerAnalytics.getUserRole)
             ? PlayerAnalytics.getUserRole()
             : 1;
-          if (GameState.winner === 0 || GameState.winner === null || GameState.winner === userRole) {
+          if (GameState.winner === userRole) {
             return false;
           }
-          const streak = this.getLossStreak();
+          const streak = Math.max(this.getLossStreak(), this.sideLossStreaks[loserRole] || 0);
           return streak >= 6;
         },
 
@@ -18507,16 +18798,21 @@
           }
         },
 
-        showFlash(variant, key = '') {
+        showFlash(variant, key = '', actorRole = null) {
           if (!this.isFunEnabled()) return;
           const autoCloseMs = (variant === 1) ? 2700 : 2900;
+          const role = actorRole || GameState.currentTurn || 1;
+          const actorName = (typeof getThemePlayerNames === 'function')
+            ? getThemePlayerNames()[role - 1]
+            : `Player ${role}`;
+          const showActorPrefix = Boolean(GameState.aiVsAi || !GameState.vsAI);
           if (GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
             WebRTCManager.send({
               type: 'BAKHTI_FUN',
               subType: 'SHOW',
               variant,
               key: key || '',
-              authorRole: GameState.localPlayerRole || 1,
+              authorRole: GameState.localPlayerRole || role,
               autoCloseMs
             });
           }
@@ -18531,7 +18827,9 @@
               badgeIcon: '🔥',
               badgeText: 'Triple Kill Streak',
               title: '3 Beads Captured Back-to-Back!',
-              subtitle: 'Bakhti salutes your lethal board dominance! Match paused.',
+              subtitle: showActorPrefix
+                ? `${actorName} captured 3 beads back-to-back! Match paused.`
+                : 'Bakhti salutes your lethal board dominance! Match paused.',
               btnLabel: 'Continue Match',
               autoCloseMs,
               fromRemote: false
@@ -18547,7 +18845,9 @@
               badgeIcon: '⚡',
               badgeText: 'Double Mill Mastery',
               title: 'Running Mill Created (See-Saw)!',
-              subtitle: 'Bakhti: Unstoppable back-and-forth mill trap established! Match paused.',
+              subtitle: showActorPrefix
+                ? `${actorName} created an unstoppable Running Double Mill! Match paused.`
+                : 'Bakhti: Unstoppable back-and-forth mill trap established! Match paused.',
               btnLabel: 'Continue Match',
               autoCloseMs,
               fromRemote: false
@@ -18558,12 +18858,16 @@
         showLossStreakModal(onContinue) {
           this.lastLossStreakMatchHandled = true;
           const autoCloseMs = 6500;
+          const loserRole = GameState.winner === 1 ? 2 : 1;
+          const loserName = (typeof getThemePlayerNames === 'function')
+            ? getThemePlayerNames()[loserRole - 1]
+            : `Player ${loserRole}`;
           if (GameState.mode === 'webrtc' && typeof WebRTCManager !== 'undefined' && WebRTCManager.isConnected()) {
             WebRTCManager.send({
               type: 'BAKHTI_FUN',
               subType: 'SHOW',
               variant: 3,
-              authorRole: GameState.localPlayerRole || 1,
+              authorRole: GameState.localPlayerRole || loserRole,
               autoCloseMs
             });
           }
@@ -18572,7 +18876,9 @@
             badgeIcon: '🎶',
             badgeText: '6 Defeats in a Row',
             title: '6 Matches Lost Back-to-Back!',
-            subtitle: 'Bakhti is playing the mournful flute for your 6 consecutive defeats... Match paused.',
+            subtitle: (GameState.aiVsAi || !GameState.vsAI)
+              ? `Bakhti is playing the mournful flute for ${loserName}'s 6 consecutive defeats...`
+              : 'Bakhti is playing the mournful flute for your 6 consecutive defeats... Match paused.',
             btnLabel: 'View Match Results',
             autoCloseMs,
             onClose: onContinue,
@@ -18676,9 +18982,9 @@
                   : 1;
                 const shouldShow = (GameState.mode === 'webrtc')
                   ? (playerJustMoved === GameState.localPlayerRole)
-                  : (GameState.vsAI ? (playerJustMoved === userRole) : true);
+                  : ((GameState.vsAI && !GameState.aiVsAi) ? (playerJustMoved === userRole) : true);
                 if (shouldShow) {
-                  this.showFlash(1);
+                  this.showFlash(1, '', playerJustMoved);
                 }
               }
             }
@@ -18720,9 +19026,9 @@
               : 1;
             const shouldShow = (GameState.mode === 'webrtc')
               ? (player === GameState.localPlayerRole)
-              : (GameState.vsAI ? (player === userRole) : true);
+              : ((GameState.vsAI && !GameState.aiVsAi) ? (player === userRole) : true);
             if (shouldShow) {
-              this.showFlash(2, millKey);
+              this.showFlash(2, millKey, player);
             }
           }
         }
@@ -22728,7 +23034,14 @@
       });
 
       document.getElementById('selGridPreset').addEventListener('change', (e) => {
-        applyGridPresetConfig(e.target.value);
+        const nextVal = e.target.value;
+        const prevVal = GameState.gridPreset;
+        if (nextVal === prevVal) return;
+        guardMidGameAction(`Switch Game Board to ${nextVal.toUpperCase()}`, () => {
+          applyGridPresetConfig(nextVal);
+        }, () => {
+          e.target.value = prevVal;
+        });
       });
 
       document.getElementById('selDiagonalMode').addEventListener('change', (e) => {
@@ -24525,18 +24838,29 @@
       if (btnResetPuterLocal) {
         btnResetPuterLocal.addEventListener('click', () => {
           SoundEngine.select();
-          PuterAIManager.callEvents = [];
-          PuterAIManager.sessionCalls = 0;
-          PuterAIManager.sessionTokens = 0;
-          PuterAIManager.sessionMicrocents = 0;
-          PuterAIManager.totalLatencyMs = 0;
-          PuterAIManager.unconfirmedLocalMicrocents = 0;
-          if (!PuterAIManager.hasServerSync) {
-            PuterAIManager.remainingMicrocents = PuterAIManager.monthAllowanceMicrocents || 50000000;
-          }
-          PuterAIManager.save();
-          PuterAIManager.syncModalUI();
-          showBoardToast('Cleared local hourly, daily & session Puter counters.');
+          showConfirmationModal({
+            icon: '⚡',
+            badge: 'Puter Usage Reset',
+            title: 'Reset Puter AI Counters?',
+            desc: 'Are you sure you want to reset your local Puter usage and token counters?',
+            showSave: false,
+            discardLabel: '🔄 Reset Puter Counters',
+            cancelLabel: '↩️ Cancel — Keep Counters',
+            onDiscard: () => {
+              PuterAIManager.callEvents = [];
+              PuterAIManager.sessionCalls = 0;
+              PuterAIManager.sessionTokens = 0;
+              PuterAIManager.sessionMicrocents = 0;
+              PuterAIManager.totalLatencyMs = 0;
+              PuterAIManager.unconfirmedLocalMicrocents = 0;
+              if (!PuterAIManager.hasServerSync) {
+                PuterAIManager.remainingMicrocents = PuterAIManager.monthAllowanceMicrocents || 50000000;
+              }
+              PuterAIManager.save();
+              PuterAIManager.syncModalUI();
+              showBoardToast('Cleared local hourly, daily & session Puter counters.');
+            }
+          });
         });
       }
 
@@ -24544,11 +24868,22 @@
       if (btnResetBrain) {
         btnResetBrain.addEventListener('click', () => {
           SoundEngine.select();
-          MorrisLearner.resetBrain();
-          PuterAIManager.syncModalUI();
-          syncSettingsControlsFromState();
-          updateHUD();
-          showBoardToast('Adaptive AI memory reset to factory defaults.');
+          showConfirmationModal({
+            icon: '🧠',
+            badge: 'AI Memory Reset',
+            title: 'Reset AI Brain Memory?',
+            desc: 'Are you sure you want to reset the adaptive neural AI brain back to factory defaults? All learned match patterns and Q-values will be cleared.',
+            showSave: false,
+            discardLabel: '🧠 Reset AI Brain Memory',
+            cancelLabel: '↩️ Cancel — Keep Brain Data',
+            onDiscard: () => {
+              MorrisLearner.resetBrain();
+              PuterAIManager.syncModalUI();
+              syncSettingsControlsFromState();
+              updateHUD();
+              showBoardToast('Adaptive AI memory reset to factory defaults.');
+            }
+          });
         });
       }
 
@@ -24796,6 +25131,24 @@
       function handleCloseOrLeaveRoomClick() {
         SoundEngine.select();
         const shouldResetBoard = Boolean(isMatchActivelyInProgress() || (GameState.isStarted && !GameState.gameOver));
+        if (shouldResetBoard && WebRTCManager.isConnected()) {
+          showConfirmationModal({
+            icon: '🚪',
+            badge: 'Online Match Active',
+            title: 'Leave Active Online Match?',
+            desc: 'You are currently connected to an active online match. Leaving now will forfeit the game and close the room for both players. Are you sure you want to leave?',
+            showSave: false,
+            discardLabel: '🚪 Forfeit & Leave Room',
+            cancelLabel: '↩️ Cancel — Stay in Room',
+            onDiscard: () => {
+              WebRTCManager.leaveRoom(true, 'closed global room');
+              initMatch(false);
+              if (typeof MainMenu !== 'undefined') MainMenu.openStandby(true);
+              showBoardToast('🚪 Room closed.');
+            }
+          });
+          return;
+        }
         WebRTCManager.leaveRoom(true, 'closed global room');
         if (shouldResetBoard) {
           initMatch(false);
@@ -26301,23 +26654,50 @@
 
       function quitCurrentGameToMenu() {
         SoundEngine.select();
-        if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
-          ReplayManager.close(false);
+        const executeQuit = () => {
+          if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
+            ReplayManager.close(false);
+          }
+          if (typeof Immersive !== 'undefined' && Immersive.active) {
+            Immersive.exit();
+          }
+          const mv = document.getElementById('modalVictory');
+          if (mv) {
+            mv.classList.add('hidden');
+            mv.classList.remove('flex');
+          }
+          const vib = document.getElementById('victoryInspectBar');
+          if (vib) vib.classList.add('hidden');
+          if (GameState.mode === 'webrtc' || WebRTCManager.roomCode) {
+            WebRTCManager.leaveRoom(true, 'quit match');
+          }
+          MainMenu.exitToStandby();
+        };
+
+        if (isMatchActivelyInProgress()) {
+          const moveCount = GameState.moveLog.length;
+          showConfirmationModal({
+            icon: '🚪',
+            badge: 'Exit Match Confirmation',
+            title: 'Exit Match to Menu?',
+            desc: `You have an active match in progress (${moveCount} move${moveCount === 1 ? '' : 's'} played). If you exit to the main menu now, your match progress will be lost unless saved. Would you like to save this match to resume later, or exit now?`,
+            showSave: true,
+            saveLabel: '💾 Save Match & Exit to Menu',
+            discardLabel: '🚪 Discard & Exit to Menu',
+            cancelLabel: '↩️ Cancel — Keep Playing',
+            onSave: () => {
+              stashCurrentMatchToSlot();
+              executeQuit();
+              showBoardToast('💾 Match saved! Click "📂 Resume" anytime to return to it.');
+            },
+            onDiscard: () => {
+              executeQuit();
+            }
+          });
+          return;
         }
-        if (typeof Immersive !== 'undefined' && Immersive.active) {
-          Immersive.exit();
-        }
-        const mv = document.getElementById('modalVictory');
-        if (mv) {
-          mv.classList.add('hidden');
-          mv.classList.remove('flex');
-        }
-        const vib = document.getElementById('victoryInspectBar');
-        if (vib) vib.classList.add('hidden');
-        if (GameState.mode === 'webrtc' || WebRTCManager.roomCode) {
-          WebRTCManager.leaveRoom(true, 'quit match');
-        }
-        MainMenu.exitToStandby();
+
+        executeQuit();
       }
 
       const btnHeaderQuitEl = document.getElementById('btnHeaderQuit');
@@ -26766,12 +27146,7 @@
             return;
           }
           if (isShown('modalMidGameGuard')) {
-            pendingGuardedCallback = null;
-            const mg = document.getElementById('modalMidGameGuard');
-            if (mg) {
-              mg.classList.add('hidden');
-              mg.classList.remove('flex');
-            }
+            closeConfirmationModal();
             pushBackGuardState();
             return;
           }
@@ -26897,7 +27272,6 @@
         });
       }
 
-      const modalGuard = document.getElementById('modalMidGameGuard');
       const btnGuardSave = document.getElementById('btnGuardSaveAndSwitch');
       const btnGuardDiscard = document.getElementById('btnGuardDiscardAndSwitch');
       const btnGuardCancel = document.getElementById('btnGuardCancelKeepPlaying');
@@ -26905,43 +27279,27 @@
       if (btnGuardSave) {
         btnGuardSave.addEventListener('click', () => {
           SoundEngine.select();
-          stashCurrentMatchToSlot();
-          if (modalGuard) {
-            modalGuard.classList.add('hidden');
-            modalGuard.classList.remove('flex');
-          }
-          if (pendingGuardedCallback) {
-            const cb = pendingGuardedCallback;
-            pendingGuardedCallback = null;
-            cb();
-          }
-          showBoardToast('💾 Previous match saved! Click "📂 Resume" in the top bar anytime to return to it.');
+          const cb = pendingGuardSaveCallback;
+          closeConfirmationModal();
+          if (cb) cb();
         });
       }
 
       if (btnGuardDiscard) {
         btnGuardDiscard.addEventListener('click', () => {
           SoundEngine.select();
-          if (modalGuard) {
-            modalGuard.classList.add('hidden');
-            modalGuard.classList.remove('flex');
-          }
-          if (pendingGuardedCallback) {
-            const cb = pendingGuardedCallback;
-            pendingGuardedCallback = null;
-            cb();
-          }
+          const cb = pendingGuardDiscardCallback;
+          closeConfirmationModal();
+          if (cb) cb();
         });
       }
 
       if (btnGuardCancel) {
         btnGuardCancel.addEventListener('click', () => {
           SoundEngine.select();
-          pendingGuardedCallback = null;
-          if (modalGuard) {
-            modalGuard.classList.add('hidden');
-            modalGuard.classList.remove('flex');
-          }
+          const cb = pendingGuardCancelCallback;
+          closeConfirmationModal();
+          if (cb) cb();
         });
       }
 
@@ -27022,10 +27380,21 @@
       const btnResetStats = document.getElementById('btnResetSessionStats');
       if (btnResetStats) {
         btnResetStats.addEventListener('click', () => {
-          GameState.sessionStats = { p1Wins: 0, p2Wins: 0, draws: 0 };
           SoundEngine.select();
-          updateMoveLogUI();
-          showBoardToast('Session scoreboard reset');
+          showConfirmationModal({
+            icon: '🏆',
+            badge: 'Scoreboard Reset',
+            title: 'Reset Session Scoreboard?',
+            desc: 'Are you sure you want to reset the current session scores (P1 wins, P2 wins, and draws) to 0?',
+            showSave: false,
+            discardLabel: '🔄 Reset Scoreboard',
+            cancelLabel: '↩️ Cancel — Keep Scores',
+            onDiscard: () => {
+              GameState.sessionStats = { p1Wins: 0, p2Wins: 0, draws: 0 };
+              updateMoveLogUI();
+              showBoardToast('Session scoreboard reset');
+            }
+          });
         });
       }
 
@@ -27080,12 +27449,7 @@
             return;
           }
           if (isShown('modalMidGameGuard')) {
-            pendingGuardedCallback = null;
-            const mg = document.getElementById('modalMidGameGuard');
-            if (mg) {
-              mg.classList.add('hidden');
-              mg.classList.remove('flex');
-            }
+            closeConfirmationModal();
             return;
           }
           for (const mid of ['modalExportVideo', 'modalRules', 'modalEncyclopedia', 'modalPuterStats']) {
@@ -27203,7 +27567,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=fe19c6b85d', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=9fed5f4c31', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
@@ -27391,9 +27755,20 @@
       if (btnResetAnalytics) {
         btnResetAnalytics.addEventListener('click', () => {
           SoundEngine.select();
-          PlayerAnalytics.resetAll();
-          ProfileManager.syncHeaderAndFormUI();
-          showBoardToast('Cleared player analytics & session history');
+          showConfirmationModal({
+            icon: '📊',
+            badge: 'Analytics Reset',
+            title: 'Reset Player Analytics?',
+            desc: 'Are you sure you want to clear all player analytics, heatmaps, and telemetry history? This action cannot be undone.',
+            showSave: false,
+            discardLabel: '🗑️ Reset Analytics History',
+            cancelLabel: '↩️ Cancel — Keep Analytics',
+            onDiscard: () => {
+              PlayerAnalytics.resetAll();
+              ProfileManager.syncHeaderAndFormUI();
+              showBoardToast('Cleared player analytics & session history');
+            }
+          });
         });
       }
 
