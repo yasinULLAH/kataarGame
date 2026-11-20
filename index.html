@@ -862,6 +862,105 @@
     [data-imm-action="away"] {
       display: none !important;
     }
+
+    /* =========================================================
+       PWA & APK WEBVIEW LANDSCAPE / PORTRAIT ORIENTATION MODES
+       ========================================================= */
+    body.force-rotate-landscape {
+      position: fixed !important;
+      top: 0 !important;
+      left: 100vw !important;
+      width: 100vh !important;
+      height: 100vw !important;
+      transform-origin: 0 0 !important;
+      transform: rotate(90deg) !important;
+      overflow: hidden !important;
+    }
+    body.force-rotate-portrait {
+      position: fixed !important;
+      top: 100vh !important;
+      left: 0 !important;
+      width: 100vh !important;
+      height: 100vw !important;
+      transform-origin: 0 0 !important;
+      transform: rotate(-90deg) !important;
+      overflow: hidden !important;
+    }
+    @supports (width: 100dvh) {
+      body.force-rotate-landscape {
+        left: 100dvw !important;
+        width: 100dvh !important;
+        height: 100dvw !important;
+      }
+      body.force-rotate-portrait {
+        top: 100dvh !important;
+        width: 100dvh !important;
+        height: 100dvw !important;
+      }
+    }
+    body.force-rotate-landscape #gameMain,
+    body.force-rotate-portrait #gameMain,
+    body.force-rotate-landscape #boardContainerWrapper,
+    body.force-rotate-portrait #boardContainerWrapper {
+      height: 100% !important;
+    }
+    body.force-rotate-landscape .max-h-\[92vh\],
+    body.force-rotate-landscape .max-h-\[94vh\],
+    body.force-rotate-landscape .max-h-\[90vh\],
+    body.force-rotate-portrait .max-h-\[92vh\],
+    body.force-rotate-portrait .max-h-\[94vh\],
+    body.force-rotate-portrait .max-h-\[90vh\] {
+      max-height: 92% !important;
+    }
+
+    /* Landscape Game View Layout (side-by-side panels + center board) */
+    body.view-landscape #gameMain {
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 0.5rem !important;
+    }
+    body.view-landscape #sidePanelP2,
+    body.view-landscape #sidePanelP1 {
+      width: clamp(152px, 24%, 240px) !important;
+      max-height: 100% !important;
+      overflow-y: auto !important;
+      flex-shrink: 0 !important;
+    }
+    @media (min-width: 1024px) {
+      body.view-landscape:not(.force-rotate-landscape) #sidePanelP2,
+      body.view-landscape:not(.force-rotate-landscape) #sidePanelP1 {
+        width: 18rem !important;
+      }
+    }
+    body.view-landscape #sidePanelP1 .grid-cols-5 button span {
+      display: none !important;
+    }
+    @media (min-width: 1024px) {
+      body.view-landscape:not(.force-rotate-landscape) #sidePanelP1 .grid-cols-5 button span {
+        display: inline !important;
+      }
+    }
+    body.view-landscape #cardPlayer1,
+    body.view-landscape #cardPlayer2,
+    body.view-landscape #turnBanner {
+      padding: 6px 8px !important;
+    }
+
+    /* Portrait Game View Layout (stacked top/center/bottom) */
+    body.view-portrait #gameMain {
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+    }
+    body.view-portrait #sidePanelP2,
+    body.view-portrait #sidePanelP1 {
+      width: 100% !important;
+      max-width: 640px !important;
+    }
+    body.view-portrait #sidePanelP1 > div.lg\:block {
+      display: none !important;
+    }
   </style>
 </head>
 <body class="flex flex-col h-full w-full select-none overflow-hidden relative">
@@ -969,10 +1068,20 @@
       </button>
 
       <button id="btnPlayImmersive" type="button" class="android-btn shrink-0 flex items-center justify-center gap-1 h-7 sm:h-7.5 px-2 rounded-lg text-[10.5px] sm:text-[11px] font-extrabold bg-gradient-to-b from-teal-500 to-teal-700 hover:from-teal-400 hover:to-teal-600 text-white border border-teal-800 shadow-[0_1.5px_0_#115E59] active:translate-y-0.5 active:shadow-none" aria-label="Play in fullscreen immersive mode" title="Play Fullscreen (Distraction-Free Immersive Mode)">
-        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg id="iconModeFullscreen" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
         </svg>
-        <span class="hidden sm:inline font-black tracking-wide">Fullscreen</span>
+        <svg id="iconModeLandscape" class="hidden w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="6" width="20" height="12" rx="2.5" />
+          <path d="M8 12h8" />
+          <polyline points="13 9.5 16 12 13 14.5" />
+        </svg>
+        <svg id="iconModePortrait" class="hidden w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="6" y="2" width="12" height="20" rx="2.5" />
+          <path d="M12 8v8" />
+          <polyline points="9.5 13 12 16 14.5 13" />
+        </svg>
+        <span id="lblPlayImmersive" class="hidden sm:inline font-black tracking-wide">Fullscreen</span>
       </button>
 
       <button id="btnToggleAudio" type="button" class="android-btn shrink-0 w-7 h-7 sm:w-7.5 sm:h-7.5 flex items-center justify-center rounded-lg bg-gradient-to-b from-white to-parchment-200 hover:from-white hover:to-parchment-100 text-walnut-800 border border-parchment-400 shadow-[0_1.5px_0_#C4A67C] active:translate-y-0.5" aria-label="Toggle Sound" title="Toggle Sound">
@@ -3605,7 +3714,7 @@
           <span class="w-8 h-8 rounded-xl bg-indigo-500/30 border border-indigo-300/40 flex items-center justify-center text-base shadow-sm">🧠</span>
           <div>
             <h2 class="font-display text-sm sm:text-base font-extrabold text-white leading-tight">Play with Real AI (Puter) &amp; Live Quota Stats</h2>
-            <p id="puterModalSubheader" class="text-[11px] font-medium text-indigo-200">Auto-selects fastest/cheapest AI in Easy &amp; Medium, and smartest reasoning AI in Hard &amp; Hardest</p>
+            <p id="puterModalSubheader" class="text-[11px] font-medium text-indigo-200">Maximum Hardest Grandmaster intelligence on ALL levels (Easy, Medium, Hard &amp; Hardest) using the cheapest ultra-low-cost AI models</p>
           </div>
         </div>
         <button id="btnClosePuterModal" type="button" class="android-btn p-1.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20" aria-label="Close Puter AI Modal">
@@ -3653,8 +3762,7 @@
                 <span id="puterActiveModelPill" class="font-mono text-[10px] font-black px-1.5 py-0.5 rounded bg-indigo-600 text-white">gpt-4o-mini</span>
               </div>
               <div class="text-[10px] text-walnut-700 leading-snug mt-1">
-                <div><strong>Easy/Med:</strong> <code class="text-indigo-800">gpt-4o-mini</code> / <code class="text-indigo-800">deepseek-chat</code> (Fastest &amp; Cheapest)</div>
-                <div><strong>Hard/Hardest:</strong> <code class="text-rose-800">o3-mini</code> / <code class="text-rose-800">claude-3-7-sonnet</code> (Smartest)</div>
+                <div><strong>All Levels (Easy→Hardest):</strong> Full <code class="text-rose-800">Hardest Grandmaster</code> search depth + <code class="text-indigo-800">deepseek-chat</code> / <code class="text-indigo-800">gpt-4o-mini</code> (Smartest &amp; Cheapest)</div>
               </div>
             </div>
           </div>
@@ -15122,16 +15230,11 @@
           if (this.modelOverride && this.modelOverride !== 'auto') {
             return {
               primary: this.modelOverride,
-              fallbacks: [this.modelOverride, 'gpt-4o-mini', 'deepseek-chat', 'gemini-2.0-flash']
+              fallbacks: [this.modelOverride, 'deepseek-chat', 'gpt-4o-mini', 'gemini-2.0-flash']
             };
           }
-          if (diff === 'easy') {
-            return {
-              primary: 'gpt-4o-mini',
-              fallbacks: ['gpt-4o-mini', 'gemini-2.0-flash', 'deepseek-chat']
-            };
-          }
-          if (diff === 'medium') {
+          // Use the cheapest + highest-IQ models across Easy, Medium, Hard & Hardest
+          if (diff === 'easy' || diff === 'medium') {
             return {
               primary: 'deepseek-chat',
               fallbacks: ['deepseek-chat', 'gpt-4o-mini', 'gemini-2.0-flash']
@@ -15139,14 +15242,24 @@
           }
           if (diff === 'hard') {
             return {
-              primary: 'o3-mini',
-              fallbacks: ['o3-mini', 'deepseek-reasoner', 'gpt-4o', 'claude-3-7-sonnet-latest', 'gpt-4o-mini']
+              primary: 'deepseek-chat',
+              fallbacks: ['deepseek-chat', 'gpt-4o-mini', 'o3-mini', 'gemini-2.0-flash']
             };
           }
           return {
-            primary: 'claude-3-7-sonnet-latest',
-            fallbacks: ['claude-3-7-sonnet-latest', 'o3-mini', 'deepseek-reasoner', 'gpt-4o', 'gpt-4o-mini']
+            primary: 'deepseek-chat',
+            fallbacks: ['deepseek-chat', 'o3-mini', 'deepseek-reasoner', 'gpt-4o-mini', 'gemini-2.0-flash']
           };
+        },
+
+        runWithMaxGrandmasterStrength(fn) {
+          const prevDiff = GameState.aiDifficulty;
+          GameState.aiDifficulty = 'hardest';
+          try {
+            return fn();
+          } finally {
+            GameState.aiDifficulty = prevDiff;
+          }
         },
 
         estimateCallCostMicrocents(model, tokens) {
@@ -15626,31 +15739,35 @@
 
         async executePuterAITurn(aiP, fallbackFn) {
           this.load();
+          const runHardestFallback = () => this.runWithMaxGrandmasterStrength(fallbackFn);
           const sdkOk = await this.ensureSdkLoaded(5000);
           const st = this.getWindowStats();
           if (this.hasServerSync && st.effectiveRemMicro <= 0) {
             this.triggerQuotaExhaustedFallback('0 remaining quota');
-            fallbackFn();
+            runHardestFallback();
             return;
           }
           if (!sdkOk || typeof puter === 'undefined' || !puter.ai || typeof puter.ai.chat !== 'function') {
             this.triggerQuotaExhaustedFallback('Puter.js cloud SDK offline/unreachable');
-            fallbackFn();
+            runHardestFallback();
             return;
           }
 
           let candidateList = [];
           let localBest = null;
 
-          const res = (GameState.gameFamily === 'morris')
-            ? computeBestLocalMorrisAction(aiP)
-            : computeBestGeneralAction(aiP);
+          // Always evaluate board at HARDEST Grandmaster depth even in Easy and Medium modes
+          const res = this.runWithMaxGrandmasterStrength(() => (
+            GameState.gameFamily === 'morris'
+              ? computeBestLocalMorrisAction(aiP)
+              : computeBestGeneralAction(aiP)
+          ));
           if (!res || !res.bestAction) {
-            fallbackFn();
+            runHardestFallback();
             return;
           }
           localBest = normalizeDualActionForAI(res.bestAction);
-          candidateList = (res.ranked || [{ action: localBest, score: 1000 }]).slice(0, 8).map((item) => ({
+          candidateList = (res.ranked || [{ action: localBest, score: 1000 }]).slice(0, 4).map((item) => ({
             action: normalizeDualActionForAI(item.action),
             score: item.score
           }));
@@ -15668,24 +15785,21 @@
           GameState.puterAIThinking = true;
           const subEl = document.getElementById('turnSubtext');
           if (subEl) {
-            subEl.textContent = `🧠 Real AI (${activeModel}) analyzing board (${diff.toUpperCase()})...`;
+            subEl.textContent = `🧠 Real AI (${activeModel} • Grandmaster IQ) analyzing board...`;
           }
 
-          const optionsText = candidateList.map((item, idx) => {
-            return `${idx}: ${this.formatActionDesc(item.action)} [tacticalScore=${item.score}]`;
-          }).join('\n');
+          const optionsText = candidateList.map((item, idx) => (
+            `${idx}:${this.formatActionDesc(item.action)}[sc=${item.score}]`
+          )).join('\n');
 
-          const recentLog = GameState.moveLog.slice(-6).join(' | ') || 'Opening turn';
-          const rolePrompt = (diff === 'easy' || diff === 'medium')
-            ? `You are playing ${GameState.gridPreset} at ${diff.toUpperCase()} level. Pick a legal move index from the list below. Reply ONLY with compact JSON: {"idx":0,"note":"short reason"}`
-            : `You are a World Grandmaster playing ${GameState.gridPreset} (${GameState.gameFamily}) at ${diff.toUpperCase()} difficulty. Avoid any back-and-forth move loops, maximize mill/capture forks, and suffocate opponent mobility. Choose the strongest move index (0 is top engine line). Reply ONLY with compact JSON: {"idx":0,"note":"short tactical reason"}`;
-
-          const userPrompt = `Game: ${GameState.gridPreset} | Turn: P${aiP} | Reserves P1:${GameState.reserves[1]} P2:${GameState.reserves[2]} | Eaten P1:${GameState.capturedBy[1]} P2:${GameState.capturedBy[2]} | Recent: ${recentLog}\nCandidates:\n${optionsText}`;
+          // Token-minimal, maximum-intelligence Grandmaster prompt on ALL levels (Easy, Medium, Hard, Hardest)
+          const rolePrompt = `World Grandmaster ${GameState.gridPreset} AI. Always play the strongest winning/blocking move (idx 0 is depth-12 engine best; only pick idx>0 if score is virtually equal and creates a stronger fork). Reply ONLY JSON: {"idx":0,"note":"<=6 words"}`;
+          const userPrompt = `P${aiP}|R:${GameState.reserves[1]},${GameState.reserves[2]}|C:${GameState.capturedBy[1]},${GameState.capturedBy[2]}\n${optionsText}`;
 
           const startBoardVer = GameState._boardVersion;
           const startTime = performance.now();
           let chosenAction = localBest;
-          let chosenNote = 'Selected top grandmaster line';
+          let chosenNote = 'Grandmaster optimal line';
           let usedModel = activeModel;
           let succeeded = false;
 
@@ -15693,10 +15807,10 @@
             usedModel = tryModel;
             try {
               const isReasoningModel = /o3|reasoner|claude-3-7/i.test(tryModel);
-              const timeoutMs = isReasoningModel ? 16000 : 11000;
+              const timeoutMs = isReasoningModel ? 14000 : 9000;
               const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs));
-              const chatOpts = { model: tryModel, max_tokens: 110 };
-              if (!isReasoningModel) chatOpts.temperature = 0.15;
+              const chatOpts = { model: tryModel, max_tokens: 55 };
+              if (!isReasoningModel) chatOpts.temperature = 0.05;
               const chatPromise = puter.ai.chat(
                 [
                   { role: 'system', content: rolePrompt },
@@ -15723,20 +15837,21 @@
                   } else if (typeof parsed.moveIndex === 'number' && parsed.moveIndex >= 0 && parsed.moveIndex < candidateList.length) {
                     pickedIdx = parsed.moveIndex;
                   }
-                  if (parsed.note || parsed.plan) chosenNote = String(parsed.note || parsed.plan).slice(0, 90);
+                  if (parsed.note || parsed.plan) chosenNote = String(parsed.note || parsed.plan).slice(0, 80);
                 } catch (e) {}
               } else {
-                const numMatch = text.match(/\b([0-7])\b/);
+                const numMatch = text.match(/\b([0-3])\b/);
                 if (numMatch) {
                   const n = parseInt(numMatch[1], 10);
                   if (n >= 0 && n < candidateList.length) pickedIdx = n;
                 }
               }
 
-              if ((diff === 'hard' || diff === 'hardest') && pickedIdx > 0) {
+              // Strict Grandmaster anti-blunder guard on ALL difficulties (including Easy & Medium)
+              if (pickedIdx > 0) {
                 const topSc = candidateList[0].score;
                 const pickSc = candidateList[pickedIdx].score;
-                if (topSc - pickSc > 1800) {
+                if (topSc - pickSc > 350 || topSc >= 150000) {
                   pickedIdx = 0;
                 }
               }
@@ -15752,7 +15867,7 @@
               const errMsg = String((err && (err.message || err.code || err.status)) || err || '').toLowerCase();
               if (errMsg.includes('402') || errMsg.includes('insufficient') || errMsg.includes('quota') || errMsg.includes('limit') || errMsg.includes('credit')) {
                 this.triggerQuotaExhaustedFallback(errMsg.slice(0, 40));
-                fallbackFn();
+                runHardestFallback();
                 return;
               }
             }
@@ -15760,9 +15875,9 @@
 
           GameState.puterAIThinking = false;
           if (!succeeded) {
-            this.lastThought = 'Cloud AI timed out or offline — Built-in Grandmaster AI played this turn.';
+            this.lastThought = 'Cloud AI timed out or offline — Built-in Grandmaster AI played at Hardest strength.';
             this.syncModalUI();
-            fallbackFn();
+            runHardestFallback();
             return;
           }
 
@@ -16105,13 +16220,17 @@
         const aspectBox = document.getElementById('canvasAspectBox');
         if (!wrapper || !aspectBox || Nodes.length === 0) return;
 
+        const isCssRotated = document.body.classList.contains('force-rotate-landscape') || document.body.classList.contains('force-rotate-portrait');
         const rect = wrapper.getBoundingClientRect();
+        const wrapW = wrapper.clientWidth || (isCssRotated ? rect.height : rect.width);
+        const wrapH = wrapper.clientHeight || (isCssRotated ? rect.width : rect.height);
+        const effViewportW = isCssRotated ? window.innerHeight : window.innerWidth;
         const isImmersive = document.body.classList.contains('immersive-mode');
         const maxBoardSize = isImmersive ? 2400 : 720;
 
         // Reserve safe clearance in immersive mode so #immTopBar and #immDock NEVER overlap the board
-        let availW = rect.width - 8;
-        let availH = rect.height - 8;
+        let availW = wrapW - 8;
+        let availH = wrapH - 8;
         if (isImmersive && typeof ReplayManager !== 'undefined' && ReplayManager.active) {
           const topBarEl = document.getElementById('immTopBar');
           const replayBarEl = document.getElementById('replayControllerBar');
@@ -16119,8 +16238,8 @@
           const botH = (replayBarEl && !replayBarEl.classList.contains('hidden') && replayBarEl.offsetHeight > 0) ? replayBarEl.offsetHeight : 118;
           wrapper.style.paddingTop = `${topH + 4}px`;
           wrapper.style.paddingBottom = `${botH + 4}px`;
-          availH = rect.height - topH - botH - 16;
-          availW = rect.width - 12;
+          availH = wrapH - topH - botH - 16;
+          availW = wrapW - 12;
         } else {
           wrapper.style.paddingTop = '';
           wrapper.style.paddingBottom = '';
@@ -16129,7 +16248,7 @@
             const dock = document.getElementById('immDock');
             const isZen = hud && hud.classList.contains('zen-mode');
             const isCollapsed = dock && dock.classList.contains('is-collapsed');
-            const isBottomDock = dock && (dock.classList.contains('dock-bottom') || (!dock.classList.contains('dock-left') && !dock.classList.contains('dock-right') && window.innerWidth < 860));
+            const isBottomDock = dock && (dock.classList.contains('dock-bottom') || (!dock.classList.contains('dock-left') && !dock.classList.contains('dock-right') && effViewportW < 860));
             if (!isZen) {
               availH -= isBottomDock ? (isCollapsed ? 76 : 126) : 78;
               if (!isBottomDock && !isCollapsed) {
@@ -16140,14 +16259,15 @@
             const previewBanner = document.getElementById('gamePreviewBanner');
             if (previewBanner && !previewBanner.classList.contains('hidden')) {
               const bannerH = previewBanner.offsetHeight || 64;
-              if (availH - bannerH >= 200) {
+              if (availH - bannerH >= 180) {
                 availH -= (bannerH + 8);
               }
             }
           }
         }
 
-        const outerSize = Math.max(220, Math.floor(Math.min(availW, availH, maxBoardSize)));
+        const minClamp = Math.min(220, Math.max(150, Math.floor(Math.min(availW, availH))));
+        const outerSize = Math.max(minClamp, Math.floor(Math.min(availW, availH, maxBoardSize)));
         const framePad = isImmersive ? 10 : 14;
         const size = outerSize - framePad;
         aspectBox.style.width = `${outerSize}px`;
@@ -17111,13 +17231,21 @@
         }
 
         const rect = canvas.getBoundingClientRect();
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
+        let x = clientX - rect.left;
+        let y = clientY - rect.top;
+        if (document.body.classList.contains('force-rotate-landscape')) {
+          x = clientY - rect.top;
+          y = rect.right - clientX;
+        } else if (document.body.classList.contains('force-rotate-portrait')) {
+          x = rect.bottom - clientY;
+          y = clientX - rect.left;
+        }
 
         const maxDim = GameState.gameFamily === 'morris'
           ? 6
           : Math.max(GameState.rows + (GameState.hasTriangularCamps ? 4 : 0), GameState.cols);
-        const hitRadius = Math.max(22, (rect.width / maxDim) * 0.55);
+        const canvasCssSize = canvas.clientWidth || rect.width;
+        const hitRadius = Math.max(20, (canvasCssSize / maxDim) * 0.55);
         let closestId = -1;
         let closestDist = Infinity;
 
@@ -23236,7 +23364,7 @@
         }
         MainMenu.replay();
         showBoardToast(`Match started: ${Nodes.length} nodes (${GameState.piecesPerPlayer}v${GameState.piecesPerPlayer} Beads)`);
-        Immersive.enter();
+        if (!OrientationManager.isPwaOrWebView()) Immersive.enter();
       });
 
       document.getElementById('btnRestoreDefaultSettings').addEventListener('click', () => {
@@ -24988,7 +25116,7 @@
         document.getElementById('modalConnection').classList.remove('flex');
         SoundEngine.select();
         updateHUD();
-        Immersive.enter();
+        if (!OrientationManager.isPwaOrWebView()) Immersive.enter();
       });
 
       const btnRoleHost = document.getElementById('btnRoleHost');
@@ -26653,7 +26781,232 @@
         document.addEventListener(evt, handleFullscreenChange);
       });
 
-      document.getElementById('btnPlayImmersive').addEventListener('click', () => Immersive.enter());
+      const OrientationManager = {
+        mode: window.innerWidth > window.innerHeight ? 'landscape' : 'portrait',
+        userLocked: false,
+
+        isPwaOrWebView() {
+          try {
+            if (window.navigator.standalone === true) return true;
+            if (document.referrer && document.referrer.includes('android-app://')) return true;
+            if (window.matchMedia) {
+              if (
+                window.matchMedia('(display-mode: standalone)').matches ||
+                window.matchMedia('(display-mode: fullscreen)').matches ||
+                window.matchMedia('(display-mode: minimal-ui)').matches ||
+                window.matchMedia('(display-mode: window-controls-overlay)').matches
+              ) {
+                return true;
+              }
+            }
+            const ua = navigator.userAgent || navigator.vendor || window.opera || '';
+            const isAndroidWebView = /Android/i.test(ua) && (/; wv\)|\bWebView\b|Version\/[\d.]+.*Chrome\/[\d.]+/i.test(ua));
+            const isIosWebView = /(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i.test(ua);
+            const isHybridWrapper = Boolean(
+              window.Capacitor ||
+              window.cordova ||
+              window.Android ||
+              window.AndroidInterface ||
+              window.ReactNativeWebView ||
+              window.flutter_inappwebview ||
+              location.protocol === 'file:' ||
+              location.protocol === 'capacitor:' ||
+              location.protocol === 'app:'
+            );
+            const hasQueryFlag = /[?&](pwa|webview|standalone|apk)=1/i.test(location.search || '');
+            return Boolean(isAndroidWebView || isIosWebView || isHybridWrapper || hasQueryFlag);
+          } catch (e) {
+            return false;
+          }
+        },
+
+        isMobileTouchDevice() {
+          const ua = navigator.userAgent || '';
+          return Boolean(
+            /Android|iPhone|iPad|iPod|Mobile/i.test(ua) ||
+            (window.matchMedia && window.matchMedia('(pointer: coarse)').matches && Math.min(window.innerWidth, window.innerHeight) <= 960)
+          );
+        },
+
+        syncCssRotationFallback() {
+          if (!this.isPwaOrWebView() || !this.userLocked) {
+            document.body.classList.remove('force-rotate-landscape', 'force-rotate-portrait');
+            return;
+          }
+          const physLandscape = window.innerWidth >= window.innerHeight;
+          if (this.mode === 'landscape') {
+            document.body.classList.remove('force-rotate-portrait');
+            document.body.classList.toggle('force-rotate-landscape', !physLandscape);
+          } else {
+            document.body.classList.remove('force-rotate-landscape');
+            document.body.classList.toggle('force-rotate-portrait', physLandscape && this.isMobileTouchDevice());
+          }
+        },
+
+        syncButtonUI() {
+          const btn = document.getElementById('btnPlayImmersive');
+          const iconFull = document.getElementById('iconModeFullscreen');
+          const iconLand = document.getElementById('iconModeLandscape');
+          const iconPort = document.getElementById('iconModePortrait');
+          const lbl = document.getElementById('lblPlayImmersive');
+          if (!btn || !iconFull || !iconLand || !iconPort || !lbl) return;
+
+          if (!this.isPwaOrWebView()) {
+            iconFull.classList.remove('hidden');
+            iconLand.classList.add('hidden');
+            iconPort.classList.add('hidden');
+            lbl.textContent = 'Fullscreen';
+            lbl.className = 'hidden sm:inline font-black tracking-wide';
+            btn.setAttribute('aria-label', 'Play in fullscreen immersive mode');
+            btn.setAttribute('title', 'Play Fullscreen (Distraction-Free Immersive Mode)');
+            return;
+          }
+
+          iconFull.classList.add('hidden');
+          if (this.mode === 'landscape') {
+            iconLand.classList.add('hidden');
+            iconPort.classList.remove('hidden');
+            lbl.textContent = 'Portrait';
+            lbl.className = 'inline font-black tracking-wide';
+            btn.setAttribute('aria-label', 'Switch game view to Portrait mode');
+            btn.setAttribute('title', 'Landscape View Active — Tap to Switch to Portrait Mode');
+          } else {
+            iconPort.classList.add('hidden');
+            iconLand.classList.remove('hidden');
+            lbl.textContent = 'Landscape';
+            lbl.className = 'inline font-black tracking-wide';
+            btn.setAttribute('aria-label', 'Switch game view to Landscape mode');
+            btn.setAttribute('title', 'Portrait View Active — Tap to Switch to Landscape Mode');
+          }
+        },
+
+        async tryNativeOrientationLock(targetMode) {
+          try {
+            if (window.Android && typeof window.Android.setOrientation === 'function') {
+              window.Android.setOrientation(targetMode);
+            } else if (window.Android && typeof window.Android.setRequestedOrientation === 'function') {
+              window.Android.setRequestedOrientation(targetMode === 'landscape' ? 0 : 1);
+            } else if (window.AndroidInterface && typeof window.AndroidInterface.setOrientation === 'function') {
+              window.AndroidInterface.setOrientation(targetMode);
+            } else if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ScreenOrientation && typeof window.Capacitor.Plugins.ScreenOrientation.lock === 'function') {
+              window.Capacitor.Plugins.ScreenOrientation.lock({ orientation: targetMode });
+            }
+          } catch (e) {}
+
+          if (screen.orientation && typeof screen.orientation.lock === 'function') {
+            const primaryType = targetMode === 'landscape' ? 'landscape-primary' : 'portrait-primary';
+            try {
+              await screen.orientation.lock(primaryType);
+              return true;
+            } catch (e1) {
+              try {
+                await screen.orientation.lock(targetMode);
+                return true;
+              } catch (e2) {
+                try {
+                  const root = document.documentElement;
+                  const reqFs = root.requestFullscreen || root.webkitRequestFullscreen;
+                  if (reqFs && !document.fullscreenElement && !document.webkitFullscreenElement) {
+                    await reqFs.call(root, { navigationUI: 'hide' });
+                    await screen.orientation.lock(targetMode);
+                    return true;
+                  }
+                } catch (e3) {}
+              }
+            }
+          } else {
+            const legacyLock = screen.lockOrientation || screen.mozLockOrientation || screen.msLockOrientation;
+            if (legacyLock) {
+              try {
+                if (legacyLock.call(screen, targetMode === 'landscape' ? 'landscape' : 'portrait')) return true;
+              } catch (e) {}
+            }
+          }
+          return false;
+        },
+
+        async applyMode(targetMode, fromUserTap = false) {
+          this.mode = targetMode === 'landscape' ? 'landscape' : 'portrait';
+          if (fromUserTap) {
+            this.userLocked = true;
+            SafeStorage.setItem('katar_view_orientation_v1', this.mode);
+          }
+
+          document.body.classList.toggle('view-landscape', this.mode === 'landscape');
+          document.body.classList.toggle('view-portrait', this.mode === 'portrait');
+          this.syncButtonUI();
+
+          if (fromUserTap) {
+            await this.tryNativeOrientationLock(this.mode);
+          }
+          this.syncCssRotationFallback();
+          [0, 50, 160, 320].forEach((ms) => setTimeout(resizeCanvas, ms));
+        },
+
+        toggle() {
+          const nextMode = this.mode === 'landscape' ? 'portrait' : 'landscape';
+          SoundEngine.select();
+          this.applyMode(nextMode, true);
+          showBoardToast(
+            nextMode === 'landscape'
+              ? '📺 Switched to Landscape Game View (Tap Portrait to switch back)'
+              : '📱 Switched to Portrait Game View (Tap Landscape to switch back)'
+          );
+        },
+
+        init() {
+          const inApp = this.isPwaOrWebView();
+          const saved = SafeStorage.getItem('katar_view_orientation_v1');
+          if (inApp) {
+            if (saved === 'landscape' || saved === 'portrait') {
+              this.mode = saved;
+              this.userLocked = true;
+            } else {
+              this.mode = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+              this.userLocked = false;
+            }
+            document.body.classList.toggle('view-landscape', this.mode === 'landscape');
+            document.body.classList.toggle('view-portrait', this.mode === 'portrait');
+            this.syncCssRotationFallback();
+          }
+          this.syncButtonUI();
+
+          const onViewportChange = () => {
+            if (!this.isPwaOrWebView()) return;
+            if (!this.userLocked) {
+              this.mode = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+              document.body.classList.toggle('view-landscape', this.mode === 'landscape');
+              document.body.classList.toggle('view-portrait', this.mode === 'portrait');
+            }
+            this.syncCssRotationFallback();
+            this.syncButtonUI();
+            resizeCanvas();
+          };
+          window.addEventListener('resize', onViewportChange);
+          window.addEventListener('orientationchange', () => setTimeout(onViewportChange, 90));
+          if (window.matchMedia) {
+            ['(display-mode: standalone)', '(display-mode: fullscreen)', '(display-mode: minimal-ui)'].forEach((q) => {
+              try {
+                const mq = window.matchMedia(q);
+                if (mq && typeof mq.addEventListener === 'function') {
+                  mq.addEventListener('change', () => {
+                    this.syncButtonUI();
+                    onViewportChange();
+                  });
+                }
+              } catch (e) {}
+            });
+          }
+        }
+      };
+
+      document.getElementById('btnPlayImmersive').addEventListener('click', () => {
+        if (OrientationManager.isPwaOrWebView()) {
+          OrientationManager.toggle();
+        } else {
+          Immersive.enter();
+        }
+      });
       document.getElementById('btnExitImmersive').addEventListener('click', () => {
         if (typeof ReplayManager !== 'undefined' && ReplayManager.active) {
           ReplayManager.close(true);
@@ -27534,18 +27887,23 @@
         let startX = 0;
         let scrollStart = 0;
         let dragged = false;
+        const getAxisCoord = (e) => {
+          if (document.body.classList.contains('force-rotate-landscape')) return e.clientY;
+          if (document.body.classList.contains('force-rotate-portrait')) return -e.clientY;
+          return e.pageX;
+        };
 
         el.addEventListener('mousedown', (e) => {
           if (e.button !== 0) return;
           isDown = true;
           dragged = false;
-          startX = e.pageX - el.offsetLeft;
+          startX = getAxisCoord(e) - el.offsetLeft;
           scrollStart = el.scrollLeft;
         });
 
         window.addEventListener('mousemove', (e) => {
           if (!isDown) return;
-          const x = e.pageX - el.offsetLeft;
+          const x = getAxisCoord(e) - el.offsetLeft;
           const walk = x - startX;
           if (Math.abs(walk) > 5) {
             dragged = true;
@@ -27581,7 +27939,7 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=583e0c48a9', { scope: './' }).catch(() => {});
+          navigator.serviceWorker.register('./sw.js?v=650e98b67e', { scope: './' }).catch(() => {});
         });
         // Ask the browser/WebView not to evict the offline game cache under storage pressure.
         if (navigator.storage && typeof navigator.storage.persist === 'function') {
@@ -27590,12 +27948,12 @@
       }
 
       let deferredInstallPrompt = null;
-      const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      const isStandaloneMode = OrientationManager.isPwaOrWebView();
 
       function updatePwaInstallUI(installed = false) {
         const btnTop = document.getElementById('btnInstallPwa');
         const btnModal = document.getElementById('btnModalInstallPwa');
-        const isInstalled = installed || isStandaloneMode;
+        const isInstalled = installed || isStandaloneMode || OrientationManager.isPwaOrWebView();
         if (isInstalled) {
           if (btnTop) btnTop.classList.add('hidden');
           if (btnModal) {
@@ -27604,6 +27962,7 @@
             btnModal.className = 'android-btn px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-700 text-white opacity-80';
           }
         }
+        OrientationManager.syncButtonUI();
       }
 
       window.addEventListener('beforeinstallprompt', (e) => {
@@ -27657,6 +28016,7 @@
         });
       }
 
+      OrientationManager.init();
       updatePwaInstallUI(false);
 
       const btnOpenProf = document.getElementById('btnOpenProfileModal');
